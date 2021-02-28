@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <RootNamespace>CrossEngine</RootNamespace>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <AssemblyName>CrossEngine</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="src\CrossEngine\ColorX\**" />
+    <Compile Remove="src\CrossEngine\Physics\2D\**" />
+    <Compile Remove="src\CrossEngine\Scenes\**" />
+    <Compile Remove="src\Sandbox\**" />
+    <EmbeddedResource Remove="src\CrossEngine\ColorX\**" />
+    <EmbeddedResource Remove="src\CrossEngine\Physics\2D\**" />
+    <EmbeddedResource Remove="src\CrossEngine\Scenes\**" />
+    <EmbeddedResource Remove="src\Sandbox\**" />
+    <None Remove="src\CrossEngine\ColorX\**" />
+    <None Remove="src\CrossEngine\Physics\2D\**" />
+    <None Remove="src\CrossEngine\Scenes\**" />
+    <None Remove="src\Sandbox\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="src\Color.cs" />
+    <Compile Remove="src\CrossEngine\Input\KeyListener.cs" />
+    <Compile Remove="src\CrossEngine\Input\MouseListener.cs" />
+    <Compile Remove="src\CrossEngine\MainLoop\ScenedApplication.cs" />
+    <Compile Remove="src\CrossEngine\Menu.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Cameras\Camera2D.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Cameras\CameraControllers.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Geometry\Cube.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Geometry\Quad.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\GLVariables.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Lighting\Lights.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Lighting\LightSystem.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Text\StaticText.cs" />
+    <Compile Remove="src\Program.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AssimpNet" Version="4.1.0" />
+    <PackageReference Include="BulletSharp" Version="0.11.1" />
+    <PackageReference Include="OpenAL-Soft" Version="1.16.0" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.1" />
+  </ItemGroup>
+
+</Project>
