@@ -1,0 +1,101 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <RootNamespace>CrossEngine</RootNamespace>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <AssemblyName>CrossEngine</AssemblyName>
+    <Authors>Zexyp</Authors>
+    <Platforms>AnyCPU;x64;x86</Platforms>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="unused\**" />
+    <Compile Remove="vendor\glfw-net\Examples\**" />
+    <Compile Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
+    <Compile Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
+    <Compile Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram\**" />
+    <EmbeddedResource Remove="unused\**" />
+    <EmbeddedResource Remove="vendor\glfw-net\Examples\**" />
+    <EmbeddedResource Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
+    <EmbeddedResource Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
+    <EmbeddedResource Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram\**" />
+    <None Remove="unused\**" />
+    <None Remove="vendor\glfw-net\Examples\**" />
+    <None Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
+    <None Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
+    <None Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram\**" />
+  </ItemGroup>
+
+
+
+  <ItemGroup>
+    <PackageReference Include="OpenAL-Soft" Version="1.16.0" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
+    <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="vendor\dlls\glfw\x64\glfw3.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>glfw3.dll</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="vendor\dlls\imgui\x64\Release\cimgui.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>cimgui.dll</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="vendor\dlls\imgui\x64\Release\cimguizmo.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>cimguizmo.dll</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+
+</Project>
