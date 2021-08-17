@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenGL-CrossEngine\OpenGL-CrossEngine.csproj" />
+    <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
   </ItemGroup>
 
 </Project>
