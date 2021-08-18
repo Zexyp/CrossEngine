@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Numerics;
 using CrossEngine.Entities;
 using CrossEngine.Entities.Components;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngineEditor
 {
