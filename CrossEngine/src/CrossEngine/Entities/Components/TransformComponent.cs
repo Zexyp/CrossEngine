@@ -4,6 +4,7 @@ using CrossEngine.Rendering.Passes;
 using CrossEngine.Serialization.Json;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -23,6 +24,7 @@ namespace CrossEngine.Entities.Components
         private TransformComponent _parent;
         private Vector3 _eulerAngles;
 
+        #region Properties
         [EditorVector3Value]
         public Vector3 LocalPosition
         {
@@ -56,7 +58,7 @@ namespace CrossEngine.Entities.Components
             }
         }
         [EditorVector3Value]
-        public Vector3 EulerAngles
+        public Vector3 LocalEulerAngles
         {
             get
             {
@@ -170,7 +172,7 @@ namespace CrossEngine.Entities.Components
                 }
             }
         }
-
+        #endregion
 
         public TransformComponent()
         {
@@ -224,7 +226,7 @@ namespace CrossEngine.Entities.Components
             Matrix4x4Extension.SimpleDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, matrix);
 
             _position = translation;
-            EulerAngles = rotation;
+            LocalEulerAngles = rotation;
             _scale = scale;
 
             //Log.Core.Debug("tr: {0}; rt: {1}; sc: {2}", _position, _eulerAngles, _scale);
@@ -236,6 +238,16 @@ namespace CrossEngine.Entities.Components
             Matrix4x4.Decompose(matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation);
 
             _scale = scale;
+            LocalRotation = rotation;
+            _position = translation;
+
+            MarkForUpdate();
+        }
+
+        public void SetTranslationRotation(Matrix4x4 matrix)
+        {
+            Matrix4x4.Decompose(matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation);
+
             LocalRotation = rotation;
             _position = translation;
 

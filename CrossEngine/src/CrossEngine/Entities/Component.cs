@@ -5,7 +5,7 @@ namespace CrossEngine.Entities.Components
 {
     public abstract class Component
     {
-        private bool Active = false;
+        public bool Active { get; private set; } = false;
         private bool _enabled = true;
         public bool Enabled
         {
@@ -13,7 +13,7 @@ namespace CrossEngine.Entities.Components
             set
             {
                 if (_enabled == value) return;
-                else _enabled = value;
+                _enabled = value;
 
                 if (Active)
                 {

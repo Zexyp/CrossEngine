@@ -17,9 +17,11 @@ namespace CrossEngine.Rendering.Passes
     {
         public override void Render(SceneData data)
         {
+            Renderer.SetDepthFunc(DepthFunc.LessEqual);
             LineRenderer.BeginScene(data.ViewProjectionMatrix);
             data.Scene.OnRender(new LineRenderPassEvent());
             LineRenderer.EndScene();
+            Renderer.SetDepthFunc(DepthFunc.Default);
         }
     }
 }

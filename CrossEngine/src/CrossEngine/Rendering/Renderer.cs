@@ -133,6 +133,11 @@ namespace CrossEngine.Rendering
                 glDisable(GL_DEPTH_TEST);
         }
 
+        public static void SetDepthFunc(DepthFunc func)
+        {
+            glDepthFunc((int)func);
+        }
+
         public static void SetPolygonMode(PolygonMode polygonMode)
         {
             glPolygonMode(GL_FRONT_AND_BACK, (int)polygonMode);
@@ -1135,5 +1140,19 @@ namespace CrossEngine.Rendering
     public enum BlendFunc : int
     {
         OneMinusSrcAlpha = GL_ONE_MINUS_SRC_ALPHA
+    }
+
+    public enum DepthFunc : int
+    {
+        Default = Less,
+
+        Never = GL_NEVER,
+        Less = GL_LESS,
+        Equal = GL_EQUAL,
+        LessEqual = GL_LEQUAL,
+        Greater = GL_GREATER,
+        NotEqual = GL_NOTEQUAL,
+        GreaterEqual = GL_GEQUAL,
+        Always = GL_ALWAYS,
     }
 }

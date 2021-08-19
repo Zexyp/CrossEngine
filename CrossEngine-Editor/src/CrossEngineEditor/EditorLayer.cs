@@ -55,7 +55,11 @@ namespace CrossEngineEditor
             Entity ent = Scene.CreateEntity();
             ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
             ent.AddComponent(new TagComponent("asd"));
+            ent.AddComponent(new RigidBodyComponent());
+            ent.AddComponent(new Box2DColliderComponent());
             // ---
+
+            Scene.Start();
         }
 
         List<EditorModal> modals = new List<EditorModal>();
@@ -130,6 +134,11 @@ namespace CrossEngineEditor
             }
 
             ImGui.ShowDemoWindow(); // purely dev thing
+
+            ImGui.Begin("Debug");
+            if (ImGui.Button("Update physics"))
+                Scene.OnFixedUpdateRuntime();
+            ImGui.End();
 
             //ImGui.Text("editor camera:");
             //ImGui.Text(editorCamera.GetPosition().ToString());

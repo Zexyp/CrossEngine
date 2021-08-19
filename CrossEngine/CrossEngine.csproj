@@ -7,17 +7,12 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>CrossEngine</AssemblyName>
     <Authors>Zexyp</Authors>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Platforms>AnyCPU;x64</Platforms>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
@@ -28,11 +23,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
   </PropertyGroup>
@@ -60,10 +50,8 @@
     <None Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram\**" />
   </ItemGroup>
 
-
-
   <ItemGroup>
-    <PackageReference Include="OpenAL-Soft" Version="1.16.0" />
+    <PackageReference Include="BulletSharp" Version="0.11.1" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
   </ItemGroup>
@@ -84,18 +72,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath Include="vendor\dlls\glfw\x64\glfw3.dll">
+    <ContentWithTargetPath Include="vendor\lib\glfw\x64\glfw3.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>glfw3.dll</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="vendor\dlls\imgui\x64\Release\cimgui.dll">
+    <ContentWithTargetPath Include="vendor\lib\imgui\x64\Release\cimgui.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="vendor\dlls\imgui\x64\Release\cimguizmo.dll">
+    <ContentWithTargetPath Include="vendor\lib\imgui\x64\Release\cimguizmo.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>cimguizmo.dll</TargetPath>
     </ContentWithTargetPath>
+    <ContentWithTargetPath Include="vendor\lib\bulletsharp\x64\libbulletc.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>libbulletc.dll</TargetPath>
+    </ContentWithTargetPath>
   </ItemGroup>
-
 </Project>

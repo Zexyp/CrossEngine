@@ -23,6 +23,8 @@ namespace CrossEngine.Entities
         public string debugName = "";
 #endif
 
+        private bool isAttaching = false;
+
         public bool Enabled
         {
             get => _enabled;
@@ -46,6 +48,7 @@ namespace CrossEngine.Entities
 
         public TransformComponent Transform { get => GetComponent<TransformComponent>(); }
 
+        #region Events
         public delegate void OnComponentFunction(Entity sender, Component component);
         public event OnComponentFunction OnComonentAdded;
         public event OnComponentFunction OnComonentRemoved;
@@ -53,13 +56,13 @@ namespace CrossEngine.Entities
         public event Action<Entity> OnParentSet;
         public event Action<Entity, Entity> OnChildAdded;
         public event Action<Entity, Entity> OnChildRemoved;
+        #endregion
 
         internal Entity(Scene parentScene, int uid)
         {
             this.Scene = parentScene;
             this.UID = uid;
             HierarchyNode = new TreeNode<Entity>(this);
-            AddComponent(new TransformComponent());
         }
 
         #region ECS
@@ -68,35 +71,62 @@ namespace CrossEngine.Entities
             return _components.Contains(component);
         }
 
-        public bool HasComponent<T>() where T : Component
+        public bool HasComponent<T>(bool inherit = false) where T : Component
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                if (typeof(T) == _components[i].GetType())
+                if ((!inherit) ?
+                    typeof(T) == _components[i].GetType() :
+                    _components[i] is T)
                     return true;
             }
             return false;
         }
 
-        public T GetComponent<T>() where T : Component
+        public T GetComponent<T>(bool inherit = false) where T : Component
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                if (typeof(T) == _components[i].GetType())
-                    return (T)_components[i];
+                Component comp = _components[i];
+                if ((!inherit) ?
+                    typeof(T) == comp.GetType() :
+                    comp is T)
+                {
+                    if (!isAttaching)
+                        return (T)comp;
+                    else
+                    {
+                        if (!comp.Active)
+                            comp.OnAttach();
+                        return (T)comp;
+                    }
+                }
             }
 
             return null;
         }
 
-        public bool TryGetComponent<T>(out T component) where T : Component
+        public bool TryGetComponent<T>(out T component, bool inherit = false) where T : Component
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                if (typeof(T) == _components[i].GetType())
+                Component comp = _components[i];
+                if ((!inherit) ?
+                    typeof(T) == comp.GetType() :
+                    comp is T)
                 {
-                    component = (T)_components[i];
-                    return true;
+                    if (!isAttaching)
+                    {
+                        component = (T)comp;
+                        return true;
+                    }
+                    else
+                    {
+                        if (!comp.Active)
+                            comp.OnAttach();
+                        component = (T)comp;
+                        return true;
+                    }
                 }
             }
             component = null;
@@ -278,10 +308,12 @@ namespace CrossEngine.Entities
 
         public void OnAwake()
         {
+            isAttaching = true;
             for (int i = 0; i < _components.Count; i++)
             {
                 _components[i].OnAttach();
             }
+            isAttaching = false;
         }
         public void OnDie()
         {

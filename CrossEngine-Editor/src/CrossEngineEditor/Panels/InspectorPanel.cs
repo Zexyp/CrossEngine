@@ -226,6 +226,10 @@ namespace CrossEngineEditor
                 ImGui.PushID(componentType.Name + compi);
                 if (ImGui.CollapsingHeader(componentType.Name))
                 {
+                    bool enabled = component.Enabled;
+                    if (ImGui.Checkbox("Enabled", ref enabled))
+                        component.Enabled = enabled;
+
                     // maybe swap this for member info
                     FieldInfo[] fields = componentType.GetFields();
                     PropertyInfo[] props = componentType.GetProperties();

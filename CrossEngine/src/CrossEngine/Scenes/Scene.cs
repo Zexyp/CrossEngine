@@ -11,34 +11,49 @@ using CrossEngine.Entities.Components;
 using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Rendering;
-
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Physics;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Scenes
 {
     public class Scene
     {
+        public bool Running { get; private set; } = false;
+
         internal readonly ComponentRegistry Registry = new ComponentRegistry();
 
         private readonly List<Entity> _entities = new List<Entity>();
-        Dictionary<int, Entity> _uids = new Dictionary<int, Entity>();
-
         public ReadOnlyCollection<Entity> Entities { get => _entities.AsReadOnly(); }
 
-        public bool Running { get; private set; } = false;
+        Dictionary<int, Entity> _uids = new Dictionary<int, Entity>();
 
         public readonly TreeNode<Entity> HierarchyRoot = new TreeNode<Entity>();
 
+        public RigidBodyWorld RigidBodyWorld;
+
+        float fixedUpdateQueue = 0.0f;
+        int maxFixedUpdateQueue = 3;
+        float fixedUpdateRate = 60.0f;
+
         public Scene()
         {
-            
+            RigidBodyWorld = new RigidBodyWorld();
         }
 
         public Entity CreateEntity()
         {
+            Entity entity = CreateEmptyEntity();
+            entity.AddComponent(new TransformComponent());
+            return entity;
+        }
+
+        public Entity CreateEmptyEntity()
+        {
             int why;
-            if (_uids.Count > 0)
-                why = Enumerable.Range(0, _uids.Keys.Max() + 1).Except(_uids.Keys).First();
+
+            if (_uids.Keys.Count > 0)
+                why = Enumerable.Range(1, _uids.Keys.Max() + 2).Except(_uids.Keys).First();
             else
                 why = 1;
 
@@ -135,6 +150,26 @@ namespace CrossEngine.Scenes
                 if (_entities[i].Enabled)
                     _entities[i].OnUpdate(timestep);
             }
+
+            // fixed update mechanism
+            fixedUpdateQueue += timestep * fixedUpdateRate;
+            if (fixedUpdateQueue > maxFixedUpdateQueue)
+            {
+                fixedUpdateQueue = 0.0f;
+                Log.Core.Info("droped scene fixed update queue");
+            }
+            while (fixedUpdateQueue > 1.0f)
+            {
+                OnFixedUpdateRuntime();
+                fixedUpdateQueue--;
+            }
+        }
+
+        public void OnFixedUpdateRuntime()
+        {
+            RigidBodyWorld.Update(1.0f / 60);
+
+            OnEvent(new RigidBodyWorldUpdateEvent());
         }
 
         public void OnRednerRuntime()
