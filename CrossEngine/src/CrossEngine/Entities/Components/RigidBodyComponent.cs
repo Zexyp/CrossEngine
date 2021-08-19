@@ -81,9 +81,9 @@ namespace CrossEngine.Entities.Components
         public override void OnAttach()
         {
             using (RigidBodyConstructionInfo info = new RigidBodyConstructionInfo(_mass, new DefaultMotionState(Entity.Transform.WorldTransformMatrix), null))
-            {
                 rigidBody = new RigidBody(info);
-            }
+
+            rigidBody.CollisionFlags = CollisionFlags.None;
 
             if (Entity.TryGetComponent(out ColliderComponent cc, true))
             {
@@ -91,7 +91,6 @@ namespace CrossEngine.Entities.Components
                 rigidBody.CollisionShape = cc.Shape;
                 rigidBody.UpdateInertiaTensor();
             }
-            rigidBody.CollisionFlags = CollisionFlags.None;
         }
 
         public override void OnDetach()
