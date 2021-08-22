@@ -214,11 +214,10 @@ namespace CrossEngine.Serialization.Json.CustomConverters
 
             foreach (JsonElement entityEl in valueEl.GetProperty("Entities").GetProperty("$values").EnumerateArray())
             {
-                Entity entity = scene.CreateEntity();
+                Entity entity = scene.CreateEmptyEntity();
                 if (entityEl.TryGetProperty("debugName", out JsonElement debugNameEl))
                     entity.debugName = debugNameEl.GetString();
                 entity.Enabled = entityEl.GetProperty("Enabled").GetBoolean();
-                entity.ClearComponents();
                 foreach (Component item in (IEnumerable)context.DeserializationPass(entityEl.GetProperty("Components"), typeof(IEnumerable)))
                 {
                     entity.AddComponent(item);

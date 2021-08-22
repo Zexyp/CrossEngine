@@ -14,7 +14,7 @@ namespace CrossEngine.Utils.Editor
 
     // maybe add generics later
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public abstract class EditorValueAttribute : Attribute
+    public class EditorValueAttribute : Attribute
     {
         public string Name = null;
 

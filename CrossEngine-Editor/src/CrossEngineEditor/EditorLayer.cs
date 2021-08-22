@@ -55,14 +55,23 @@ namespace CrossEngineEditor
             Entity ent = Scene.CreateEntity();
             ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
             ent.AddComponent(new TagComponent("asd"));
-            ent.AddComponent(new RigidBodyComponent());
-            ent.AddComponent(new Box2DColliderComponent());
-            // ---
+            ent.AddComponent(new RigidBodyComponent() { /*LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1)*/ });
+            ent.AddComponent(new BoxColliderComponent());
+
+            Entity ground = Scene.CreateEntity();
+            ground.Transform.LocalScale = new Vector3(10, 1, 1);
+            ground.Transform.LocalPosition = new Vector3(0, -5, 0);
+            ground.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
+            ground.AddComponent(new RigidBodyComponent() { Mass = 0, /*LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1)*/ });
+            ground.AddComponent(new Box2DColliderComponent());
 
             Scene.Start();
+            // ---
         }
 
-        List<EditorModal> modals = new List<EditorModal>();
+        private List<EditorModal> _modals = new List<EditorModal>();
+
+        bool ph = false;
 
         public unsafe override void OnRender()
         {
@@ -72,10 +81,11 @@ namespace CrossEngineEditor
 
             SetupDockspace();
 
-            for (int i = 0; i < modals.Count; i++)
+            // draw modals
+            for (int i = 0; i < _modals.Count; i++)
             {
-                if (!modals[i].Draw())
-                    modals.RemoveAt(i);
+                if (!_modals[i].Draw())
+                    _modals.Remove(_modals[i]);
             }
 
             if (ImGui.BeginMenuBar())
@@ -84,7 +94,7 @@ namespace CrossEngineEditor
                 {
                     if (ImGui.MenuItem("New"))
                     {
-                        modals.Add(new NewSceneModal());
+                        _modals.Add(new NewSceneModal());
                     }
                     if (ImGui.MenuItem("Open..."))
                     {
@@ -135,14 +145,14 @@ namespace CrossEngineEditor
 
             ImGui.ShowDemoWindow(); // purely dev thing
 
+            // debug
             ImGui.Begin("Debug");
-            if (ImGui.Button("Update physics"))
-                Scene.OnFixedUpdateRuntime();
+            ImGui.Checkbox("Update physics", ref ph);
+            if (ph) Scene.OnFixedUpdateRuntime();
+            ImGui.Text("editor camera:");
+            ImGui.Text(EditorCamera.Position.ToString("0.00"));
             ImGui.End();
 
-            //ImGui.Text("editor camera:");
-            //ImGui.Text(editorCamera.GetPosition().ToString());
-            //ImGui.Text(editorCamera.GetForwardDirection().ToString());
 
             for (int i = 0; i < _panels.Count; i++)
             {

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define USE_TRANSFORM_CACHE
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
@@ -8,6 +10,7 @@ using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Entities.Components;
 using CrossEngine.Serialization.Json;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Entities
 {
@@ -31,8 +34,7 @@ namespace CrossEngine.Entities
             set
             {
                 if (_enabled == value) return;
-                else _enabled = value;
-
+                _enabled = value;
                 if (Active)
                 {
                     if (_enabled) OnEnable();
@@ -46,7 +48,12 @@ namespace CrossEngine.Entities
 
         internal readonly TreeNode<Entity> HierarchyNode;
 
+#if USE_TRANSFORM_CACHE
+        public TransformComponent Transform { get; private set; }
+#else
         public TransformComponent Transform { get => GetComponent<TransformComponent>(); }
+#endif
+
 
         #region Events
         public delegate void OnComponentFunction(Entity sender, Component component);
@@ -66,6 +73,7 @@ namespace CrossEngine.Entities
         }
 
         #region ECS
+        #region Has
         public bool HasComponent(Component component)
         {
             return _components.Contains(component);
@@ -83,6 +91,21 @@ namespace CrossEngine.Entities
             return false;
         }
 
+        public bool HasComponentOfType(Type type, bool inherit = false)
+        {
+            for (int i = 0; i < _components.Count; i++)
+            {
+                Type componentType = _components[i].GetType();
+                if ((!inherit) ?
+                    type == componentType :
+                    componentType.IsSubclassOf(type))
+                    return true;
+            }
+            return false;
+        }
+        #endregion
+
+        #region Get
         public T GetComponent<T>(bool inherit = false) where T : Component
         {
             for (int i = 0; i < _components.Count; i++)
@@ -132,9 +155,15 @@ namespace CrossEngine.Entities
             component = null;
             return false;
         }
+        #endregion
 
+        #region Add
         public void AddComponent(Component component)
         {
+#if USE_TRANSFORM_CACHE
+            if (Transform == null && component.GetType() == typeof(TransformComponent)) Transform = (TransformComponent)component;
+#endif
+
             _components.Add(component);
             component.Entity = this;
 
@@ -142,21 +171,31 @@ namespace CrossEngine.Entities
 
             if (Active)
             {
+                ValidateAllComponents();
+
                 component.OnAttach();
                 if (Enabled) component.Activate();
             }
 
             OnComonentAdded?.Invoke(this, component);
         }
+        #endregion
 
+        #region Remove
         public void RemoveComponent(Component component)
         {
+#if USE_TRANSFORM_CACHE
+            if (Transform == component) Transform = null;
+#endif
+
             if (!_components.Contains(component)) throw new Exception("Entity doesn't have this component");
 
             if (Scene != null) Scene.Registry.RemoveComponent(component);
 
             if (Active)
             {
+                if (Active) ValidateAllComponents();
+
                 if (Enabled) component.Deactivate();
                 component.OnDetach();
             }
@@ -164,6 +203,7 @@ namespace CrossEngine.Entities
             _components.Remove(component);
             component.Entity = null;
 
+            
             OnComonentRemoved?.Invoke(this, component);
         }
 
@@ -173,20 +213,7 @@ namespace CrossEngine.Entities
             {
                 if (typeof(T) == _components[i].GetType())
                 {
-                    Component component = _components[i];
-                    if (Scene != null) Scene.Registry.RemoveComponent(component);
-
-                    if (Active)
-                    {
-                        if (Enabled) component.Deactivate();
-                        component.OnDetach();
-                    }
-
-                    component.Entity = null;
-                    _components.Remove(component);
-
-                    OnComonentRemoved?.Invoke(this, component);
-                    return;
+                    RemoveComponent(_components[i]);
                 }
             }
 
@@ -197,53 +224,21 @@ namespace CrossEngine.Entities
         {
             if (!_components.Contains(component)) return false;
 
-            if (Scene != null) Scene.Registry.RemoveComponent(component);
-
-            if (Active)
-            {
-                if (Enabled) component.Deactivate();
-                component.OnDetach();
-            }
-
-            _components.Remove(component);
-            component.Entity = null;
-
-            OnComonentRemoved?.Invoke(this, component);
-
+            RemoveComponent(component);
             return true;
         }
 
         public bool TryRemoveComponent<T>() where T : Component
         {
-            for (int i = 0; i < _components.Count; i++)
+            if (TryGetComponent(out T component))
             {
-                if (typeof(T) == _components[i].GetType())
-                {
-                    Component component = _components[i];
-                    if (Scene != null) Scene.Registry.RemoveComponent(component);
-
-                    if (Active)
-                    {
-                        if (Enabled) component.Deactivate();
-                        component.OnDetach();
-                    }
-
-                    _components.Remove(component);
-                    component.Entity = null;
-
-                    OnComonentRemoved?.Invoke(this, component);
-
-                    return true;
-                }
+                RemoveComponent(component);
+                return true;
             }
 
             return false;
         }
-
-        public void ClearComponents()
-        {
-            while (_components.Count > 0) RemoveComponent(_components[0]);
-        }
+        #endregion
         #endregion
 
         #region Hierarchy
@@ -262,16 +257,16 @@ namespace CrossEngine.Entities
 
                 if (value != null)
                 {
-                    this.HierarchyNode.SetParent(value.HierarchyNode);
+                    this.HierarchyNode.Parent = value.HierarchyNode;
 
                     value.OnChildAdded?.Invoke(value, this);
                 }
                 else
                 {
                     if (Scene != null)
-                        this.HierarchyNode.Parent.SetParent(Scene.HierarchyRoot);
+                        this.HierarchyNode.Parent.Parent = Scene.HierarchyRoot;
                     else
-                        this.HierarchyNode.SetParent(null);
+                        this.HierarchyNode.Parent = null;
                 }
 
                 OnParentSet?.Invoke(this);
@@ -289,45 +284,36 @@ namespace CrossEngine.Entities
         internal void Activate()
         {
             Active = true;
+
+            isAttaching = true;
+            ValidateAllComponents(); // also handles activation
+            isAttaching = false;
+
             if (Enabled) OnEnable();
         }
         internal void Deactivate()
         {
             Active = false;
+            for (int i = 0; i < _components.Count; i++)
+                _components[i].Deactivate();
+
             if (Enabled) OnDisable();
         }
 
         void OnEnable()
         {
-            if (Enabled) for (int i = 0; i < _components.Count; i++) _components[i].Activate();
+            
         }
         void OnDisable()
         {
-            if (Enabled) for (int i = 0; i < _components.Count; i++) _components[i].Deactivate();
-        }
-
-        public void OnAwake()
-        {
-            isAttaching = true;
-            for (int i = 0; i < _components.Count; i++)
-            {
-                _components[i].OnAttach();
-            }
-            isAttaching = false;
-        }
-        public void OnDie()
-        {
-            for (int i = 0; i < _components.Count; i++)
-            {
-                _components[i].OnDetach();
-            }
+            
         }
 
         public void OnUpdate(float timestep)
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                if (_components[i].Enabled)
+                if (_components[i].Enabled && _components[i].Valid)
                     _components[i].OnUpdate(timestep);
             }
         }
@@ -336,7 +322,7 @@ namespace CrossEngine.Entities
         {
             for (int i = _components.Count - 1; i >= 0; i--)
             {
-                if (_components[i].Enabled)
+                if (_components[i].Enabled && _components[i].Valid)
                     _components[i].OnEvent(e);
             }
         }
@@ -345,8 +331,45 @@ namespace CrossEngine.Entities
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                if (_components[i].Enabled)
+                if (_components[i].Enabled && _components[i].Valid)
                     _components[i].OnRender(re);
+            }
+        }
+
+        void ValidateAllComponents()
+        {
+            for (int i = 0; i < _components.Count; i++)
+            {
+                Component component = _components[i];
+                object[] requireAttributes = component.GetType().GetCustomAttributes(typeof(RequireComponentAttribute), false);
+
+                bool valid = true;
+                for (int rai = 0; rai < requireAttributes.Length; rai++)
+                {
+                    if (!(HasComponentOfType(((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType) ||
+                        HasComponentOfType(((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType, true)))
+                    {
+                        Log.Core.Warn($"component of type {component.GetType().Name} needs component of type {((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType.Name}");
+                        valid = valid && false;
+                    }
+                    else
+                        valid = valid && true;
+                }
+
+                if (Active && component.Valid != valid)
+                {
+                    component.Valid = valid;
+                    if (valid)
+                    {
+                        component.OnAttach();
+                        component.Activate();
+                    }
+                    else
+                    {
+                        component.Deactivate();
+                        component.OnDetach();
+                    }
+                }
             }
         }
     }

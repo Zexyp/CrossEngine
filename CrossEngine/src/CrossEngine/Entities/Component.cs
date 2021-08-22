@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+
 using CrossEngine.Events;
 
 namespace CrossEngine.Entities.Components
@@ -14,7 +15,6 @@ namespace CrossEngine.Entities.Components
             {
                 if (_enabled == value) return;
                 _enabled = value;
-
                 if (Active)
                 {
                     if (_enabled) OnEnable();
@@ -22,6 +22,8 @@ namespace CrossEngine.Entities.Components
                 }
             }
         }
+
+        public bool Valid { get; internal set; } = false;
 
         public Entity Entity { get; internal set; } = null;
 
@@ -63,6 +65,16 @@ namespace CrossEngine.Entities.Components
         }
         public virtual void OnDetach()
         {
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class RequireComponentAttribute : Attribute
+    {
+        public readonly Type RequiredComponentType;
+        public RequireComponentAttribute(Type componentType)
+        {
+            RequiredComponentType = componentType;
         }
     }
 }

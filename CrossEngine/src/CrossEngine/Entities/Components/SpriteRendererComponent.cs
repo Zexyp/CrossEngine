@@ -20,6 +20,7 @@ namespace CrossEngine.Entities.Components
         Blending = 2
     }
 
+    [RequireComponent(typeof(TransformComponent))]
     public class SpriteRendererComponent : Component, ISerializable
     {
         public Sprite Sprite;

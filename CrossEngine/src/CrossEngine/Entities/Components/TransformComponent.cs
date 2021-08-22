@@ -24,6 +24,8 @@ namespace CrossEngine.Entities.Components
         private TransformComponent _parent;
         private Vector3 _eulerAngles;
 
+        public event Action<TransformComponent> OnTransformChanged;
+
         #region Properties
         [EditorVector3Value]
         public Vector3 LocalPosition
@@ -192,6 +194,8 @@ namespace CrossEngine.Entities.Components
             {
                 _children[i].MarkForUpdate();
             }
+
+            OnTransformChanged?.Invoke(this);
         }
 
         private void UpdateWorldTransform()

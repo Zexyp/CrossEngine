@@ -62,14 +62,13 @@ namespace CrossEngine.Scenes
             _uids.Add(why, entity);
             _entities.Add(entity);
 
-            entity.HierarchyNode.SetParent(HierarchyRoot);
+            entity.HierarchyNode.Parent = HierarchyRoot;
 
             //entity.OnComonentAdded += Entity_OnComonentAdded;
             //entity.OnComonentRemoved += Entity_OnComonentRemoved;
 
             if (Running)
             {
-                entity.OnAwake();
                 entity.Activate();
             }
 
@@ -91,13 +90,13 @@ namespace CrossEngine.Scenes
             if (Running)
             {
                 entity.Deactivate();
-                entity.OnDie();
             }
 
             //entity.OnComonentAdded -= Entity_OnComonentAdded;
             //entity.OnComonentRemoved -= Entity_OnComonentRemoved;
 
-            entity.HierarchyNode.SetParent(null);
+            entity.Parent = null;
+            entity.HierarchyNode.Parent = null;
 
             _entities.Remove(entity);
             _uids.Remove(entity.UID);
@@ -107,7 +106,6 @@ namespace CrossEngine.Scenes
         {
             for (int i = 0; i < _entities.Count; i++)
             {
-                _entities[i].OnAwake();
                 _entities[i].Activate();
             }
 
@@ -121,7 +119,6 @@ namespace CrossEngine.Scenes
             for (int i = 0; i < _entities.Count; i++)
             {
                 _entities[i].Deactivate();
-                _entities[i].OnDie();
             }
         }
 

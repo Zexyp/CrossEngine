@@ -1,27 +1,34 @@
 ﻿using System;
 using BulletSharp;
 
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Numerics;
 
-using CrossEngine.Utils;
+using CrossEngine.Events;
+using CrossEngine.Utils.Editor;
+using CrossEngine.Rendering.Lines;
+using CrossEngine.Rendering.Passes;
 
 namespace CrossEngine.Entities.Components
 {
+    [RequireComponent(typeof(TransformComponent))]
     public class BoxColliderComponent : ColliderComponent
     {
         private Vector3 _size = Vector3.One;
+
+        [EditorVector3Value]
         public Vector3 Size
         {
             get => _size;
             set
             {
+                if (_size == value) return;
                 _size = value;
                 if (Shape != null)
-                    ;//((BoxShape)Shape)..HalfExtentsWithoutMargin = _size; // TODO: fix!
+                {
+                    Shape.Dispose();
+                    Shape = new BoxShape(_size / 2 * Entity.Transform.WorldScale);
+                    ShapeChanged();
+                }
             }
         }
 
@@ -32,13 +39,21 @@ namespace CrossEngine.Entities.Components
 
         public override void OnAttach()
         {
-            Shape = new BoxShape(_size / 2);
+            Shape = new BoxShape(_size / 2 * Entity.Transform.WorldScale);
         }
 
         public override void OnDetach()
         {
             Shape.Dispose();
             Shape = null;
+        }
+
+        public override void OnRender(RenderEvent re)
+        {
+            if (re is LineRenderPassEvent)
+            {
+                LineRenderer.DrawBox(Matrix4x4.CreateScale(Size) * Entity.Transform.WorldTransformMatrix, ColliderRepresentationColor);
+            }
         }
     }
 }

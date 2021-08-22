@@ -15,6 +15,7 @@ using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Entities.Components
 {
+    [RequireComponent(typeof(TransformComponent))]
     public class Box2DColliderComponent : ColliderComponent
     {
         private Vector2 _size = Vector2.One;
@@ -25,12 +26,12 @@ namespace CrossEngine.Entities.Components
             get => _size;
             set
             {
-                if (_size == value) 
+                if (_size == value) return;
                 _size = value;
                 if (Shape != null)
                 {
                     Shape.Dispose();
-                    Shape = new Box2DShape(new Vector3(_size / 2, 1));
+                    Shape = new Box2DShape(new Vector3(_size / 2, 1) * Entity.Transform.WorldScale);
                     ShapeChanged();
                 }
             }
@@ -43,7 +44,7 @@ namespace CrossEngine.Entities.Components
 
         public override void OnAttach()
         {
-            Shape = new Box2DShape(new Vector3(_size / 2, 1));
+            Shape = new Box2DShape(new Vector3(_size / 2, 1) * Entity.Transform.WorldScale);
         }
 
         public override void OnDetach()
@@ -56,7 +57,7 @@ namespace CrossEngine.Entities.Components
         {
             if (re is LineRenderPassEvent)
             {
-                LineRenderer.DrawSquare(Entity.Transform.WorldTransformMatrix, ColliderRepresentationColor);
+                LineRenderer.DrawSquare(Matrix4x4.CreateScale(new Vector3(Size, 0)) * Entity.Transform.WorldTransformMatrix, ColliderRepresentationColor);
             }
         }
     }

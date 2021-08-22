@@ -1,15 +1,37 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace CrossEngine.Utils
 {
     public class TreeNode<T>
     {
-        public TreeNode<T> Parent { get; private set; } = null;
-
+        public TreeNode<T> _parent = null;
         private List<TreeNode<T>> _children = new List<TreeNode<T>>();
-        public ReadOnlyCollection<TreeNode<T>> Children { get => _children.AsReadOnly(); }
         public T Value;
+
+        public TreeNode<T> Parent
+        {
+            get
+            {
+                return _parent;
+            }
+            set
+            {
+                if (_parent != null)
+                {
+                    _parent.RemoveChild(this);
+                }
+
+                _parent = value;
+
+                if (_parent != null)
+                {
+                    _parent.AddChild(this);
+                }
+            }
+        }
+        public ReadOnlyCollection<TreeNode<T>> Children { get => _children.AsReadOnly(); }
 
         public TreeNode()
         {
@@ -21,17 +43,10 @@ namespace CrossEngine.Utils
             this.Value = value;
         }
 
-        public void SetParent(TreeNode<T> parent)
-        {
-            if (Parent != null) Parent.RemoveChild(this);
-            Parent = parent;
-            if (Parent != null) Parent.AddChild(this);
-        }
-
         private void AddChild(TreeNode<T> child)
         {
             _children.Add(child);
-            child.Parent = this;
+            child._parent = this;
 
             // TODO: check if it's not cyclic
         }
@@ -39,7 +54,7 @@ namespace CrossEngine.Utils
         private void RemoveChild(TreeNode<T> child)
         {
             _children.Remove(child);
-            child.Parent = null;
+            child._parent = null;
         }
 
         //public bool HasRoot(TreeNode<T> node)
