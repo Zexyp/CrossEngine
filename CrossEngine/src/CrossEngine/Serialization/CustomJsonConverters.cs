@@ -11,6 +11,7 @@ using CrossEngine.Scenes;
 using CrossEngine.Entities;
 using CrossEngine.Entities.Components;
 using CrossEngine.Rendering.Textures;
+using CrossEngine.Assets;
 
 namespace CrossEngine.Serialization.Json.CustomConverters
 {

@@ -192,20 +192,52 @@ namespace CrossEngineEditor
             } },
         };
 
+        List<Type> componentTypes = new List<Type>()
+        {
+            typeof(TransformComponent),
+            typeof(TagComponent),
+            typeof(SpriteRendererComponent),
+            typeof(CameraComponent),
+            typeof(RigidBodyComponent),
+            typeof(Box2DColliderComponent),
+        };
+
         public InspectorPanel() : base("Inspector")
         {
-            
+            WindowFlags = ImGuiWindowFlags.MenuBar;
         }
 
         protected override void DrawWindowContent()
         {
-
             if (ImGui.BeginMenuBar())
             {
                 if (ImGui.BeginMenu("Edit"))
                 {
-                    ImGui.MenuItem("Add");
-                    ImGui.MenuItem("Remove");
+                    if (EditorLayer.Instance.SelectedEntity != null)
+                    {
+                        if (ImGui.BeginMenu("Add Component"))
+                        {
+                            for (int i = 0; i < componentTypes.Count; i++)
+                            {
+                                if (ImGui.MenuItem(componentTypes[i].Name))
+                                {
+                                    EditorLayer.Instance.SelectedEntity.AddComponent((Component)componentTypes[i].GetConstructor(System.Type.EmptyTypes).Invoke(null));
+                                }
+                            }
+                            ImGui.EndMenu();
+                        }
+                        if (ImGui.BeginMenu("Remove Component"))
+                        {
+                            for (int i = 0; i < EditorLayer.Instance.SelectedEntity.Components.Count; i++)
+                            {
+                                if (ImGui.MenuItem(EditorLayer.Instance.SelectedEntity.Components[i].GetType().Name))
+                                {
+                                    EditorLayer.Instance.SelectedEntity.RemoveComponent(EditorLayer.Instance.SelectedEntity.Components[i]);
+                                }
+                            }
+                            ImGui.EndMenu();
+                        }
+                    }
 
                     ImGui.EndMenu();
                 }
@@ -217,18 +249,44 @@ namespace CrossEngineEditor
 
         void DrawComponents(Entity context)
         {
+            // TODO: fix
+            bool entityEnabled = context.Enabled;
+            if (ImGui.Checkbox("Enabled", ref entityEnabled))
+                context.Enabled = entityEnabled;
+
             for (int compi = 0; compi < context.Components.Count; compi++)
             {
                 Component component = context.Components[compi];
 
                 Type componentType = component.GetType();
 
+                bool stay = true;
+
                 ImGui.PushID(componentType.Name + compi);
-                if (ImGui.CollapsingHeader(componentType.Name))
+
+                bool valcol = !component.Valid;
+                if (valcol)
                 {
-                    bool enabled = component.Enabled;
-                    if (ImGui.Checkbox("Enabled", ref enabled))
-                        component.Enabled = enabled;
+                    ImGui.PushStyleColor(ImGuiCol.Header, new Vector4(0.412f, 0.118f, 0.118f, 1.0f));
+                    ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.729f, 0.208f, 0.208f, 1.0f));
+                }
+
+                bool collapsingHeader = ImGui.CollapsingHeader(componentType.Name, ref stay);
+                float collapsingHeaderButtonOffset = ((ImGui.GetTextLineHeight() + ImGui.GetStyle().CellPadding.Y * 2) + 3);
+                ImGui.SameLine(ImGui.GetWindowWidth() - (collapsingHeaderButtonOffset * 2 + ImGui.GetStyle().CellPadding.X));
+                bool enabled = component.Enabled;
+                if (ImGui.Checkbox("", ref enabled))
+                    component.Enabled = enabled;
+                ImGui.SameLine(ImGui.GetWindowWidth() - (collapsingHeaderButtonOffset * 3 + ImGui.GetStyle().CellPadding.X));
+                if (ImGui.ArrowButton("up", ImGuiDir.Up))
+                    context.ShiftComponent(component, Math.Max(0, compi - 1));
+                ImGui.SameLine(ImGui.GetWindowWidth() - (collapsingHeaderButtonOffset * 4 + ImGui.GetStyle().CellPadding.X));
+                if (ImGui.ArrowButton("down", ImGuiDir.Down))
+                    context.ShiftComponent(component, Math.Min(context.Components.Count - 1, compi + 1));
+
+                if (collapsingHeader)
+                {
+                    
 
                     // maybe swap this for member info
                     FieldInfo[] fields = componentType.GetFields();
@@ -266,7 +324,15 @@ namespace CrossEngineEditor
                     }
                     ImGui.Separator();
                 }
+
+                if (valcol) ImGui.PopStyleColor(2);
+
                 ImGui.PopID();
+
+                if (!stay)
+                {
+                    EditorLayer.Instance.SelectedEntity.RemoveComponent(component);
+                }
             }
         }
     }

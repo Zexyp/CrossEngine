@@ -11,31 +11,32 @@ using CrossEngine.Events;
 using CrossEngine.Physics;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Utils;
+using CrossEngine.Serialization.Json;
 
 namespace CrossEngine.Entities.Components
 {
     [RequireComponent(typeof(TransformComponent))]
     [RequireComponent(typeof(ColliderComponent))]
-    public class RigidBodyComponent : Component
+    public class RigidBodyComponent : Component, ISerializable
     {
         RigidBody rigidBody;
 
         private TransformComponent _transform;
         private ColliderComponent _collider;
-        TransformComponent Transform
+        public TransformComponent Transform
         {
             get => _transform;
-            set
+            private set
             {
                 if (_transform != null) _transform.OnTransformChanged -= OnTransformChanged;
                 _transform = value;
                 if (_transform != null) _transform.OnTransformChanged += OnTransformChanged;
             }
         }
-        ColliderComponent Collider
+        public ColliderComponent Collider
         {
             get => _collider;
-            set
+            private set
             {
                 if (_collider != null) _collider.OnShapeChanged -= OnColliderShapeChanged;
                 _collider = value;
@@ -44,37 +45,75 @@ namespace CrossEngine.Entities.Components
                     _collider.OnShapeChanged += OnColliderShapeChanged;
                     if (rigidBody != null)
                     {
+                        rigidBody.CollisionShape = _collider.Shape;
 
-                        
+                        rigidBody.UpdateInertiaTensor();
+
+                        if (rigidBody.BroadphaseProxy != null)
+                        {
+                            Entity.Scene.RigidBodyWorld.CleanProxyFromPairs(rigidBody);
+                        }
+
+                        ActivateBody();
                     }
                 }
             }
         }
 
 
+
+        private bool _static;
+        [EditorBooleanValue]
+        public bool Static
+        {
+            get => _static;
+            set
+            {
+                if (_static == value) return;
+                _static = value;
+
+                if (rigidBody != null)
+                {
+                    Entity.Scene.RigidBodyWorld.RemoveRigidBody(rigidBody);
+
+                    // that's it i just recreate it
+                    RecreateRigidBody();
+
+                    if (_static)
+                    {
+                        rigidBody.LinearVelocity = Vector3.Zero;
+                        rigidBody.AngularVelocity = Vector3.Zero;
+                    }
+
+                    Entity.Scene.RigidBodyWorld.AddRigidBody(rigidBody);
+                }
+            }
+        }
         #region RB Fields
         private float _mass = 1.0f;
 
+        private Vector3 _velocity = Vector3.Zero;
+        private Vector3 _angularVelocity = Vector3.Zero;
         private Vector3 _linearFactor = Vector3.One;
         private Vector3 _angularFactor = Vector3.One;
-        private Vector3 _velocity = Vector3.Zero;
         #region Properties
         [EditorSingleValue]
         public float Mass
         {
-            get => _mass;
+            get => _static ? 0.0f : _mass;
             set
             {
-                if (_mass == value) return;
+                //if (_mass == value) return;
+                if (value <= 0.0f) return;
                 _mass = value;
-                if (rigidBody != null)
+                if (rigidBody != null && !_static)
                 {
-                    rigidBody.SetMassProps(_mass, rigidBody.LocalInertia);
-                    Console.WriteLine((int)rigidBody.CollisionFlags);
+                    UpdateMassProps(_mass);
                     ActivateBody();
                 }
             }
         }
+
         [EditorVector3Value]
         public Vector3 Velocity
         {
@@ -91,6 +130,20 @@ namespace CrossEngine.Entities.Components
             }
         }
         [EditorVector3Value]
+        public Vector3 AngularVelocity
+        {
+            get => _angularVelocity = (rigidBody != null) ? rigidBody.AngularVelocity : _angularVelocity;
+            set
+            {
+                if (_angularVelocity == value) return;
+                _angularVelocity = value;
+                if (rigidBody != null && !_static)
+                {
+                    rigidBody.AngularVelocity = _angularVelocity;
+                    ActivateBody();
+                }
+            }
+        }
         public Vector3 LinearFactor
         {
             get => _linearFactor = (rigidBody != null) ? rigidBody.LinearFactor : _linearFactor;
@@ -98,14 +151,13 @@ namespace CrossEngine.Entities.Components
             {
                 if (_linearFactor == value) return;
                 _linearFactor = value;
-                if (rigidBody != null)
+                if (rigidBody != null && !_static)
                 {
                     rigidBody.LinearFactor = _linearFactor;
                     ActivateBody();
                 }
             }
         }
-        [EditorVector3Value]
         public Vector3 AngularFactor
         {
             get => _angularFactor = (rigidBody != null) ? rigidBody.AngularFactor : _angularFactor;
@@ -113,7 +165,7 @@ namespace CrossEngine.Entities.Components
             {
                 if (_angularFactor == value) return;
                 _angularFactor = value;
-                if (rigidBody != null)
+                if (rigidBody != null && !_static)
                 {
                     rigidBody.AngularFactor = _angularFactor;
                     ActivateBody();
@@ -130,6 +182,30 @@ namespace CrossEngine.Entities.Components
 
         }
 
+        private void RecreateRigidBody()
+        {
+            if (rigidBody != null) rigidBody.Dispose();
+            rigidBody = null;
+
+            using (RigidBodyConstructionInfo info = new RigidBodyConstructionInfo(Mass, new DefaultMotionState(_transform.WorldTransformMatrix), (_collider != null) ? _collider.Shape : null))
+            {
+                rigidBody = new RigidBody(info)
+                {
+                    LinearVelocity = _velocity,
+                    AngularVelocity = _angularVelocity,
+                    LinearFactor = _linearFactor,
+                    AngularFactor = _angularFactor,
+                };
+            }
+
+            if (_collider != null)
+            {
+                UpdateMassProps(Mass);
+            }
+
+            rigidBody.CollisionFlags = CollisionFlags.None;
+        }
+
         public override void OnAttach()
         {
             Transform = Entity.GetComponent<TransformComponent>();
@@ -139,29 +215,25 @@ namespace CrossEngine.Entities.Components
                 Collider = cc;
             }
 
-            using (RigidBodyConstructionInfo info = new RigidBodyConstructionInfo(_mass, new DefaultMotionState(_transform.WorldTransformMatrix), (_collider != null) ? _collider.Shape : null))
+            RecreateRigidBody();
+
+            if (_static)
             {
-                rigidBody = new RigidBody(info)
-                {
-                    LinearVelocity = _velocity,
-                    LinearFactor = _linearFactor,
-                    AngularFactor = _angularFactor,
-                };
+                rigidBody.LinearVelocity = Vector3.Zero;
+                rigidBody.AngularVelocity = Vector3.Zero;
             }
 
-            if (_collider != null)
-            {
-                UpdateLocalInertia();
-            }
-
-            rigidBody.CollisionFlags = CollisionFlags.None;
+            //Entity.OnComponentAdded += OnComponentAdded;
+            //Entity.OnComponentRemoved += OnComponentRemoved;
         }
-
 
         public override void OnDetach()
         {
             rigidBody.Dispose();
             rigidBody = null;
+
+            //Entity.OnComponentAdded -= OnComponentAdded;
+            //Entity.OnComponentRemoved -= OnComponentRemoved;
         }
 
         public override void OnEnable()
@@ -176,11 +248,34 @@ namespace CrossEngine.Entities.Components
             rbadded = false;
         }
 
+        public override void OnEvent(Event e)
+        {
+            if (e is RigidBodyWorldUpdateEvent)
+            {
+                _transform.OnTransformChanged -= OnTransformChanged;
+                if (_transform.WorldTransformMatrix != rigidBody.MotionState.WorldTransform)
+                    _transform.SetTranslationRotation(rigidBody.MotionState.WorldTransform);
+                _transform.OnTransformChanged += OnTransformChanged;
+            }
+        }
+
+        #region Events
+        //private void OnComponentAdded(Entity sender, Component component)
+        //{
+        //    
+        //}
+        //
+        //private void OnComponentRemoved(Entity sender, Component component)
+        //{
+        //
+        //}
+
+        #region Component Events
         private void OnTransformChanged(TransformComponent sender)
         {
             if (rigidBody != null)
             {
-                rigidBody.WorldTransform = _transform.WorldTransformMatrix;
+                rigidBody.WorldTransform = Matrix4x4.CreateFromQuaternion(_transform.WorldRotation) * Matrix4x4.CreateTranslation(_transform.WorldPosition);
                 ActivateBody();
             }
             _collider.Shape.LocalScaling = _transform.LocalScale;
@@ -192,22 +287,20 @@ namespace CrossEngine.Entities.Components
             {
                 rigidBody.CollisionShape = _collider.Shape;
 
+                if (_collider.Shape == null) Enabled = false;
+
+                rigidBody.UpdateInertiaTensor();
+
                 if (rigidBody.BroadphaseProxy != null)
                 {
                     Entity.Scene.RigidBodyWorld.CleanProxyFromPairs(rigidBody);
                 }
 
-                //UpdateLocalInertia();
                 ActivateBody();
             }
         }
-
-        private void UpdateLocalInertia()
-        {
-            if (rbadded) Entity.Scene.RigidBodyWorld.AddRigidBody(rigidBody);
-            rigidBody.SetMassProps(_mass, rigidBody.CollisionShape.CalculateLocalInertia(_mass));
-            if (rbadded) Entity.Scene.RigidBodyWorld.RemoveRigidBody(rigidBody);
-        }
+        #endregion
+        #endregion
 
         private void ActivateBody()
         {
@@ -215,15 +308,24 @@ namespace CrossEngine.Entities.Components
                 rigidBody.Activate();
         }
 
-        public override void OnEvent(Event e)
+        private void UpdateMassProps(float mass)
         {
-            if (e is RigidBodyWorldUpdateEvent)
-            {
-                _transform.OnTransformChanged -= OnTransformChanged;
-                if (_transform.WorldTransformMatrix != rigidBody.MotionState.WorldTransform)
-                    _transform.SetTranslationRotation(rigidBody.MotionState.WorldTransform);
-                _transform.OnTransformChanged += OnTransformChanged;
-            }
+            rigidBody.SetMassProps(mass, _collider.Shape.CalculateLocalInertia(mass));
+            rigidBody.UpdateInertiaTensor();
         }
+
+        #region ISerializable
+        public void GetObjectData(SerializationInfo info)
+        {
+            info.AddValue("Static", Static);
+            info.AddValue("Mass", Mass);
+        }
+
+        public RigidBodyComponent(DeserializationInfo info)
+        {
+            Static = (bool)info.GetValue("Static", typeof(bool));
+            Mass = (float)info.GetValue("Mass", typeof(float));
+        }
+        #endregion
     }
 }

@@ -22,7 +22,7 @@ namespace CrossEngine.Assets.GC
         Renderbuffer
     }
 
-    static unsafe class GPUGarbageCollector
+    public static unsafe class GPUGarbageCollector
     {
         static readonly Dictionary<GPUObjectType, List<uint>> Marked;
         static readonly Dictionary<GPUObjectType, Action<List<uint>>> Handlers = new Dictionary<GPUObjectType, Action<List<uint>>>
@@ -70,15 +70,15 @@ namespace CrossEngine.Assets.GC
             }
         }
 
-        public static void MarkObject(GPUObjectType objectType, uint id)
+        internal static void MarkObject(GPUObjectType objectType, uint id)
         {
             if (!Marked[objectType].Contains(id))
             {
                 Marked[objectType].Add(id);
-                Log.Core.Trace($"[GPUGarbageCollector]: {objectType} id {id} marked");
+                Log.Core.Trace($"[GPUGarbageCollector] {objectType} id {id} marked");
             }
             else
-                Log.Core.Error($"[GPUGarbageCollector]: {objectType} id {id} already marked!");
+                Log.Core.Error($"[GPUGarbageCollector] {objectType} id {id} already marked!");
         }
 
         public static void Collect()
@@ -94,7 +94,7 @@ namespace CrossEngine.Assets.GC
                 count += pair.Value.Count;
             }
 
-            Log.Core.Trace($"[GPUGarbageCollector]: cleared {count} objects in {sw.ElapsedMilliseconds} ms");
+            Log.Core.Trace($"[GPUGarbageCollector] cleared {count} objects in {sw.ElapsedMilliseconds} ms");
         }
     }
 }

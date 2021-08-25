@@ -16,6 +16,8 @@ namespace CrossEngineEditor
 
         public OrthographicEditorCameraController EditorCameraController;
 
+        public bool EnableSelect = true;
+
         public ViewportPanel() : base("Viewport")
         {
 
@@ -29,7 +31,8 @@ namespace CrossEngineEditor
             var spec = new FramebufferSpecification();
             spec.Attachments = new FramebufferAttachmentSpecification(
                 new FramebufferTextureSpecification(FramebufferTextureFormat.ColorRGBA8),
-                new FramebufferTextureSpecification(FramebufferTextureFormat.Depth24Stencil8)
+                new FramebufferTextureSpecification(FramebufferTextureFormat.Depth24Stencil8),
+                new FramebufferTextureSpecification(FramebufferTextureFormat.ColorRedInteger)
                 );
             spec.Width = 1;
             spec.Height = 1;
@@ -64,8 +67,23 @@ namespace CrossEngineEditor
             ImGui.Image(new IntPtr(framebuffer.ColorAttachments[0]), viewportSize, new Vector2(0, 1), new Vector2(1, 0));
 
             framebuffer.Bind();
+
             Renderer.Clear();
+            framebuffer.ClearAttachment(1, 0);
+
             EditorLayer.Instance.Scene.OnRenderEditor(EditorLayer.Instance.EditorCamera);
+            
+            if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && EnableSelect)
+            {
+                Vector2 texpos = ImGui.GetMousePos() - new Vector2(ContentMin.X, ContentMax.Y);
+                texpos.Y = -texpos.Y;
+                int result = framebuffer.ReadPixel(1, (int)texpos.X, (int)texpos.Y);
+                Console.WriteLine(texpos);
+                Console.WriteLine(result);
+
+                EditorLayer.Instance.SelectedEntity = EditorLayer.Instance.Scene.GetEntity(result);
+            }
+
             Framebuffer.Unbind();
         }
 

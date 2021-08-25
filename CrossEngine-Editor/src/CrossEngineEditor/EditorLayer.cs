@@ -14,6 +14,9 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
+using CrossEngine.Assets;
+
+using CrossEngineEditor.Utils;
 
 namespace CrossEngineEditor
 {
@@ -52,24 +55,42 @@ namespace CrossEngineEditor
 
 
             // --- test code
-            Entity ent = Scene.CreateEntity();
-            ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
-            ent.AddComponent(new TagComponent("asd"));
-            ent.AddComponent(new RigidBodyComponent() { /*LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1)*/ });
-            ent.AddComponent(new BoxColliderComponent());
+            for (int i = -5; i < 6; i++)
+            {
+                Entity ent = Scene.CreateEntity();
+                ent.Transform.WorldPosition = new Vector3(i, 0, 0);
+                ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
+                ent.AddComponent(new TagComponent("asd"));
+                ent.AddComponent(new RigidBodyComponent() { LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
+                ent.AddComponent(new Box2DColliderComponent());
+            }
 
             Entity ground = Scene.CreateEntity();
             ground.Transform.LocalScale = new Vector3(10, 1, 1);
             ground.Transform.LocalPosition = new Vector3(0, -5, 0);
             ground.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
-            ground.AddComponent(new RigidBodyComponent() { Mass = 0, /*LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1)*/ });
+            ground.AddComponent(new RigidBodyComponent() { Mass = 0, Static = true, /*LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1)*/ });
             ground.AddComponent(new Box2DColliderComponent());
 
-            Scene.Start();
+            //CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
+            //string json = serializer.Serialize(Scene);
+            //Log.App.Debug(json);
+            //CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
+            //Scene = (Scene)deserializer.Deserialize(json, typeof(Scene));
+
+            //Scene.Start();
             // ---
         }
 
-        private List<EditorModal> _modals = new List<EditorModal>();
+        public override void OnDetach()
+        {
+            //Scene = null;
+            //AssetManager.Textures.Purge();
+            //GC.Collect();
+            //CrossEngine.Assets.GC.GPUGarbageCollector.Collect();
+        }
+
+        private EditorModal _modal;
 
         bool ph = false;
 
@@ -82,10 +103,10 @@ namespace CrossEngineEditor
             SetupDockspace();
 
             // draw modals
-            for (int i = 0; i < _modals.Count; i++)
+            if (_modal != null)
             {
-                if (!_modals[i].Draw())
-                    _modals.Remove(_modals[i]);
+                if (!_modal.Draw())
+                    _modal = null;
             }
 
             if (ImGui.BeginMenuBar())
@@ -94,25 +115,28 @@ namespace CrossEngineEditor
                 {
                     if (ImGui.MenuItem("New"))
                     {
-                        _modals.Add(new NewSceneModal());
+                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
+                        {
+                            if ((flags & ActionModal.ModalButtonFlags.OK) > 0)
+                                EditorLayer.Instance.Scene = new CrossEngine.Scenes.Scene();
+                        }));
                     }
                     if (ImGui.MenuItem("Open..."))
                     {
-                        //modals.Add(new OpenSceneModal());
+                        PushModal(new OpenSceneModal());
                     }
 
                     ImGui.Separator();
 
                     if (ImGui.MenuItem("Save as..."))
                     {
-                        if (Scene == null)
+                        if (FileDialog.Save(out string path, initialDir: Environment.CurrentDirectory))
                         {
+                            CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
+                            string json = serializer.Serialize(Scene);
+                            //Log.App.Debug(json);
+                            //System.IO.File.WriteAllText(path, json);
                         }
-                        CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
-                        string json = serializer.Serialize(Scene);
-                        Log.App.Debug(json);
-                        CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
-                        Scene = (Scene)deserializer.Deserialize(json, typeof(Scene));
                     }
 
                     ImGui.EndMenu();
@@ -149,6 +173,8 @@ namespace CrossEngineEditor
             ImGui.Begin("Debug");
             ImGui.Checkbox("Update physics", ref ph);
             if (ph) Scene.OnFixedUpdateRuntime();
+            //Vector3 gr = Scene.RigidBodyWorld.Gravity;
+            //if (ImGui.DragFloat3("gravity", ref gr)) Scene.RigidBodyWorld.Gravity = gr;
             ImGui.Text("editor camera:");
             ImGui.Text(EditorCamera.Position.ToString("0.00"));
             ImGui.End();
@@ -237,6 +263,17 @@ namespace CrossEngineEditor
                     return (T)_panels[i];
             }
             return null;
+        }
+
+        public void PushModal(EditorModal modal)
+        {
+            if (_modal != null) throw new Exception("Modal already opened!");
+            _modal = modal;
+        }
+
+        public void PopModal(EditorModal modal)
+        {
+            _modal = null;
         }
     }
 }

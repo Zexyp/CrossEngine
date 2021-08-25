@@ -50,7 +50,7 @@ namespace CrossEngineEditor
             ImGuiTreeNodeFlags flags = ((node.Value == EditorLayer.Instance.SelectedEntity) ? ImGuiTreeNodeFlags.Selected : ImGuiTreeNodeFlags.None) | ImGuiTreeNodeFlags.OpenOnArrow;
 
             if (node.Value == EditorLayer.Instance.SelectedEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
-            bool opened = ImGui.TreeNodeEx(id + i++.ToString(), flags, (node.Value != null) ? node.Value.debugName : "");
+            bool opened = ImGui.TreeNodeEx(id + i++.ToString(), flags, (node.Value != null) ? node.Value.UID.ToString() : "");
             if (node.Value == EditorLayer.Instance.SelectedEntity) ImGui.PopStyleColor();
 
             if (ImGui.IsItemClicked())

@@ -17,7 +17,7 @@ using CrossEngine.Utils;
 //using CrossEngine.Rendering.Geometry;
 using CrossEngine.Logging;
 
-namespace CrossEngine
+namespace CrossEngine.Assets
 {
     public static class AssetManager
     {
@@ -131,6 +131,9 @@ namespace CrossEngine
 
             public static Texture GetTexture(string path)
             {
+                if (path == null)
+                    return DefaultTexture;
+
                 if (textures.ContainsKey(path))
                 {
                     return textures[path];
@@ -163,6 +166,15 @@ namespace CrossEngine
                         return pair.Key;
                 }
                 return null;
+            }
+
+            public static void Purge()
+            {
+                foreach (Texture texture in textures.Values)
+                {
+                    texture.Dispose();
+                }
+                textures.Clear();
             }
 
             //public static Texture GetCubeMap(string path, bool secondary = false)

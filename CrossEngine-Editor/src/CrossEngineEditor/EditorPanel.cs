@@ -1,4 +1,5 @@
 ﻿using ImGuiNET;
+using System;
 
 using System.Numerics;
 
@@ -17,6 +18,8 @@ namespace CrossEngineEditor
         public Vector2 ContentMin;
         public Vector2 ContentMax;
         public bool Focused;
+
+        public event Action<EditorPanel> InnerAfterDrawCallback;
 
         public EditorPanel(string name)
         {
@@ -60,7 +63,8 @@ namespace CrossEngineEditor
                 Focused = ImGui.IsWindowFocused();
 
                 DrawWindowContent();
-                
+                InnerAfterDrawCallback?.Invoke(this);
+
                 ImGui.End();
             }
 

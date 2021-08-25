@@ -274,6 +274,7 @@ namespace CrossEngine.Rendering.Buffers
             Invalidate();
         }
 
+        // don't forget it's flipped y ...
         public unsafe int ReadPixel(uint attachmentIndex, int x, int y)
         {
             if (attachmentIndex >= _colorAttachments.Count)
@@ -288,18 +289,19 @@ namespace CrossEngine.Rendering.Buffers
             return pixelData;
         }
 
-        //void ClearAttachment(uint attachmentIndex, int value)
-        //{
-        //    if (attachmentIndex >= colorAttachments.Count)
-        //    {
-        //        Log.Core.Error("index out of range of color attachments");
-        //        return;
-        //    }
-        //
-        //    var spec = colorAttachmentSpecifications[(int)attachmentIndex];
-        //    
-        //    glClearTexImage(colorAttachments[(int)attachmentIndex], 0, (int)spec.TextureFormat, GL_INT, &value);
-        //}
+        public unsafe void ClearAttachment(uint attachmentIndex, int value)
+        {
+            if (attachmentIndex >= _colorAttachments.Count)
+            {
+                Log.Core.Error("index out of range of color attachments");
+                return;
+            }
+        
+            var spec = colorAttachmentSpecifications[(int)attachmentIndex];
+
+            //(int)_colorAttachments[(int)attachmentIndex]
+            glClearBufferiv(GL_COLOR, (int)fboid, &value);
+        }
 
         //---
 

@@ -164,7 +164,9 @@ namespace CrossEngine.Layers
             colors[(int)ImGuiCol.TabActive] = new Vector4(0.0f, 0.424f, 0.71f, 1.0f);
             colors[(int)ImGuiCol.TabHovered] = new Vector4(0.0f, 0.298f, 0.498f, 1.0f);
             style.TabRounding = 0f;
+            style.FrameRounding = 2f;
             style.GrabRounding = 4f;
+            style.WindowMenuButtonPosition = ImGuiDir.Right;
         }
     }
 }

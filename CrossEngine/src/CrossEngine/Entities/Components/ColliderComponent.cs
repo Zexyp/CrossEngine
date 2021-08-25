@@ -12,7 +12,14 @@ namespace CrossEngine.Entities.Components
         private CollisionShape _shape;
         internal CollisionShape Shape
         {
-            get => _shape;
+            get
+            {
+                if (_shape == null && Enabled)
+                {
+                    Shape = CreateShape();
+                }
+                return _shape;
+            }
             set
             {
                 _shape = value;
@@ -22,6 +29,6 @@ namespace CrossEngine.Entities.Components
 
         public event Action<ColliderComponent> OnShapeChanged;
 
-        protected void ShapeChanged() => OnShapeChanged?.Invoke(this);
+        protected abstract CollisionShape CreateShape(); 
     }
 }

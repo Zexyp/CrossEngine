@@ -38,7 +38,7 @@ namespace CrossEngine.Scenes
 
         public Scene()
         {
-            RigidBodyWorld = new RigidBodyWorld();
+
         }
 
         public Entity CreateEntity()
@@ -104,6 +104,8 @@ namespace CrossEngine.Scenes
 
         public void Start()
         {
+            RigidBodyWorld = new RigidBodyWorld();
+
             for (int i = 0; i < _entities.Count; i++)
             {
                 _entities[i].Activate();
@@ -120,6 +122,9 @@ namespace CrossEngine.Scenes
             {
                 _entities[i].Deactivate();
             }
+
+            // TODO: add dispose for RigidBodyWorld
+            //RigidBodyWorld = null
         }
 
         public void OnEvent(Event e)
@@ -195,6 +200,12 @@ namespace CrossEngine.Scenes
             if (Registry.ContainsType<CameraComponent>())
                 return Registry.GetComponents<CameraComponent>()[0].Entity;
             return null;
+        }
+
+        public Entity GetEntity(int id)
+        {
+            if (!_uids.ContainsKey(id)) return null;
+            return _uids[id];
         }
     }
 }

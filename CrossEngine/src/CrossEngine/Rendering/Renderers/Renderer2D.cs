@@ -22,60 +22,73 @@ namespace CrossEngine.Rendering
             "layout(location = 1) in vec4 aColor;\n" +
             "layout(location = 2) in vec2 aTexCoord;\n" +
             "layout(location = 3) in float aTexIndex;\n" +
-            "//layout(location = 4) in float aTilingFactor;\n" +
+            "layout(location = 4) in int aEntityID;\n" +
             "\n" +
             "uniform mat4 uViewProjection;\n" +
             "\n" +
             "out vec4 vColor;\n" +
             "out vec2 vTexCoord;\n" +
             "out float vTexIndex;\n" +
-            "//out float vTilingFactor;\n" +
+            "flat out int vEntityID;\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
             "	vColor = aColor;\n" +
             "	vTexCoord = aTexCoord;\n" +
             "	vTexIndex = aTexIndex;\n" +
-            "	//vTilingFactor = aTilingFactor;\n" +
+            "   vEntityID = aEntityID;\n" +
             "	gl_Position = uViewProjection * vec4(aPosition, 1.0);\n" +
             "}\n";
         const string FragmentShaderSource =
             "#version 330 core\n" +
             "\n" +
             "layout(location = 0) out vec4 oColor;\n" +
+            "layout(location = 1) out int oEntityIDColor;\n" +
             "\n" +
             "in vec4 vColor;\n" +
             "in vec2 vTexCoord;\n" +
             "in float vTexIndex;\n" +
-            "//in float vTilingFactor;\n" +
+            "flat in int vEntityID;\n" +
             "\n" +
             "uniform sampler2D uTextures[32];\n" +
+            "\n" +
+            "float random(vec2 st);\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
             "	vec4 texColor = vColor;\n" +
             "	texColor *= texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
             "	oColor = texColor;\n" +
+            "   oColor.x = random(vec2(vEntityID, vEntityID));\n" +
+            "   oEntityIDColor = vEntityID;\n" +
+            "}\n" +
+            "float random(vec2 st)\n" +
+            "{\n" +
+            "    return fract(sin(dot(st.xy,\n" +
+            "                         vec2(12.9898, 78.233))) *\n" +
+            "        43758.5453123);\n" +
             "}\n";
         const string DiscardingFragmentShaderSource =
             "#version 330 core\n" +
             "\n" +
             "layout(location = 0) out vec4 oColor;\n" +
+            "layout(location = 1) out int oEntityIDColor;\n" +
             "\n" +
             "in vec4 vColor;\n" +
             "in vec2 vTexCoord;\n" +
             "in float vTexIndex;\n" +
-            "//in float vTilingFactor;\n" +
+            "flat in int vEntityID;\n" +
             "\n" +
             "uniform sampler2D uTextures[32];\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
             "	vec4 texColor = vColor;\n" +
-            "	texColor *= texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
+            "	texColor *= vec4(texture(uTextures[int(vTexIndex + 0.5)], vTexCoord).xyz, 1);\n" +
             "   if (texColor.w < 1 - vColor.w)\n" +
             "       discard;\n" +
             "	oColor = texColor;\n" +
+            "   oEntityIDColor = vEntityID;\n" +
             "}\n";
         #endregion
 
@@ -85,7 +98,6 @@ namespace CrossEngine.Rendering
             public Vector4 color;
             public Vector2 texCoord;
             public float texIndex;
-            //public float tilingFactor;
 
             // editor-only
             public int entityId;
@@ -272,11 +284,11 @@ namespace CrossEngine.Rendering
         }
 
         // textured
-        public static void DrawQuad(Vector2 position, Vector2 size, Texture texture, Vector4 tintColor, float tilingFactor = 1.0f) => DrawQuad(new Vector3(position, 0.0f), size, texture, tintColor, tilingFactor);
-        public static void DrawQuad(Vector3 position, Vector2 size, Texture texture, Vector4 tintColor, float tilingFactor = 1.0f)
+        public static void DrawQuad(Vector2 position, Vector2 size, Texture texture, Vector4 tintColor) => DrawQuad(new Vector3(position, 0.0f), size, texture, tintColor);
+        public static void DrawQuad(Vector3 position, Vector2 size, Texture texture, Vector4 tintColor)
         {
             Matrix4x4 transform = Matrix4x4.CreateScale(new Vector3(size, 0.0f)) * Matrix4x4.CreateTranslation(position);
-            DrawQuad(transform, texture, tintColor, tilingFactor);
+            DrawQuad(transform, texture, tintColor);
         }
 
 
@@ -305,8 +317,10 @@ namespace CrossEngine.Rendering
             data.stats.itemCount++;
         }
 
-        public static unsafe void DrawQuad(Matrix4x4 transform, Texture texture, Vector4 tintColor, float tilingFactor = 1.0f, int entityId = 0)
+        public static unsafe void DrawQuad(Matrix4x4 transform, Texture texture, Vector4 tintColor, int entityId = 0)
         {
+            float tilingFactor = 1.0f;
+
             if (data.quadIndexCount >= Renderer2DData.MaxIndices)
                 NextBatch();
 
@@ -361,22 +375,24 @@ namespace CrossEngine.Rendering
         }
 
         // textured rotated
-        public static void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, Texture texture, Vector4 tintColor, float tilingFactor = 1.0f) => DrawRotatedQuad(new Vector3(position, 0.0f), size, rotation, texture, tintColor, tilingFactor);
-        public static void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, Texture texture, Vector4 tintColor, float tilingFactor = 1.0f)
+        public static void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, Texture texture, Vector4 tintColor) => DrawRotatedQuad(new Vector3(position, 0.0f), size, rotation, texture, tintColor);
+        public static void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, Texture texture, Vector4 tintColor)
         {
             Matrix4x4 transform = Matrix4x4.CreateScale(new Vector3(size, 0.0f)) * Matrix4x4.CreateRotationZ(rotation) * Matrix4x4.CreateTranslation(position);
-            DrawQuad(transform, texture, tintColor, tilingFactor);
+            DrawQuad(transform, texture, tintColor);
         }
 
-        public static void DrawRotatedQuad(Vector3 position, Vector2 size, Quaternion rotation, Texture texture, Vector4 tintColor, float tilingFactor = 1.0f)
+        public static void DrawRotatedQuad(Vector3 position, Vector2 size, Quaternion rotation, Texture texture, Vector4 tintColor)
         {
             Matrix4x4 transform = Matrix4x4.CreateScale(new Vector3(size, 0.0f)) * Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position);
-            DrawQuad(transform, texture, tintColor, tilingFactor);
+            DrawQuad(transform, texture, tintColor);
         }
 
         // sprites
-        public static unsafe void DrawSprite(Matrix4x4 transform, Sprite sprite, Vector4 tintColor, float tilingFactor = 1.0f, int entityId = 0)
+        public static unsafe void DrawSprite(Matrix4x4 transform, Sprite sprite, Vector4 tintColor, int entityId = 0)
         {
+            float tilingFactor = 1.0f;
+
             if (data.quadIndexCount >= Renderer2DData.MaxIndices)
                 NextBatch();
 
@@ -416,10 +432,10 @@ namespace CrossEngine.Rendering
             data.stats.itemCount++;
         }
 
-        public static void DrawRotatedSprite(Vector3 position, Vector2 size, Quaternion rotation, Sprite sprite, Vector4 tintColor, float tilingFactor = 1.0f)
+        public static void DrawRotatedSprite(Vector3 position, Vector2 size, Quaternion rotation, Sprite sprite, Vector4 tintColor, int entityId = 0)
         {
             Matrix4x4 transform = Matrix4x4.CreateScale(new Vector3(size, 0.0f)) * Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position);
-            DrawSprite(transform, sprite, tintColor, tilingFactor);
+            DrawSprite(transform, sprite, tintColor, entityId);
         }
 
         public static void ResetStats() => data.stats.Reset();

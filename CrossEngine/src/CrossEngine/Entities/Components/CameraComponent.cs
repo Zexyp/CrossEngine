@@ -11,9 +11,14 @@ namespace CrossEngine.Entities.Components
 {
     public class CameraComponent : Component, ISerializable
     {
-        public Camera Camera = new Camera();
+        public Camera Camera;
 
         //public bool FixedAspectRatio = false;
+
+        public CameraComponent()
+        {
+            
+        }
 
         public CameraComponent(Camera camera)
         {

@@ -57,14 +57,14 @@ namespace CrossEngine.Entities.Components
                 if (Sprite == null || Sprite.Texture == null)
                 {
                     //if (!ForceZIndex)
-                    Renderer2D.DrawQuad(Matrix4x4.CreateScale(new Vector3(Size, 1.0f)) * Entity.GetComponent<TransformComponent>().WorldTransformMatrix, Color);
+                    Renderer2D.DrawQuad(Matrix4x4.CreateScale(new Vector3(Size, 1.0f)) * Entity.Transform.WorldTransformMatrix, Color, Entity.UID);
                     //else
                     //    Renderer2D.DrawRotatedQuad(new Vector3(Entity.Transform.Position.XY(), ZIndex),  Size * Entity.Transform.Scale.XY(), Entity.Transform.Rotation, Color);
                 }
                 else
                 {
                     //if (!ForceZIndex)
-                    Renderer2D.DrawSprite(Matrix4x4.CreateScale(new Vector3(Size, 1.0f)) * Entity.GetComponent<TransformComponent>().WorldTransformMatrix, Sprite, Color);
+                    Renderer2D.DrawSprite(Matrix4x4.CreateScale(new Vector3(Size, 1.0f)) * Entity.Transform.WorldTransformMatrix, Sprite, Color, Entity.UID);
                     //else
                     //    Renderer2D.DrawRotatedSprite(new Vector3(Entity.Transform.Position.XY(), ZIndex), Size * Entity.Transform.Scale.XY(), Entity.Transform.Rotation, Sprite, Color);
                 }

@@ -8,6 +8,8 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Lines;
 using CrossEngine.Rendering.Passes;
 
+using CrossEngineEditor.Utils;
+
 namespace CrossEngineEditor
 {
     class Program

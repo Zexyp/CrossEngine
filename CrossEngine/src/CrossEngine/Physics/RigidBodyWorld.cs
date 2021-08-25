@@ -32,10 +32,15 @@ namespace CrossEngine.Physics
         private readonly Convex2DConvex2DAlgorithm.CreateFunc _convexAlgo2D;
         private readonly Box2DBox2DCollisionAlgorithm.CreateFunc _boxAlgo2D;
 
+        public Vector3 Gravity
+        {
+            get => dynamicsWorld.Gravity;
+            set => dynamicsWorld.Gravity = value;
+        }
+
         public RigidBodyWorld()
         {
             // 2D rn
-
             collisionConfiguration = new DefaultCollisionConfiguration();
 
             // Use the default collision dispatcher. For parallel processing you can use a diffent dispatcher.

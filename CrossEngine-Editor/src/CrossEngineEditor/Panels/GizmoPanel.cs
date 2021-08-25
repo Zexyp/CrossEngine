@@ -8,6 +8,19 @@ namespace CrossEngineEditor
 {
     class GizmoPanel : EditorPanel
     {
+        ViewportPanel _viewportPanel;
+        public ViewportPanel ViewportPanel
+        {
+            set
+            {
+                if (value == _viewportPanel) return;
+
+                if (_viewportPanel != null) _viewportPanel.InnerAfterDrawCallback -= DrawGizmo;
+                _viewportPanel = value;
+                if (_viewportPanel != null) _viewportPanel.InnerAfterDrawCallback += DrawGizmo;
+            }
+        }
+
         public GizmoPanel() : base("Gizmo")
         {
 
@@ -16,13 +29,20 @@ namespace CrossEngineEditor
         OPERATION currentGizmoOperation = OPERATION.TRANSLATE;
         MODE currentGizmoMode = MODE.WORLD;
 
+        Matrix4x4 cameraView;
+        Matrix4x4 cameraProjection;
+
+        Matrix4x4 transformMat;
+
+        bool ready;
+
         protected override void DrawWindowContent()
         {
-            ViewportPanel viewportPanel = EditorLayer.Instance.GetPanel<ViewportPanel>();
+            ViewportPanel = EditorLayer.Instance.GetPanel<ViewportPanel>();
 
-            if (viewportPanel == null || !viewportPanel.IsOpen()) return;
+            if (_viewportPanel == null || !_viewportPanel.IsOpen()) return;
 
-            if (EditorLayer.Instance.SelectedEntity != null && EditorLayer.Instance.SelectedEntity.HasComponent<TransformComponent>())
+            if (ready = (EditorLayer.Instance.SelectedEntity != null && EditorLayer.Instance.SelectedEntity.HasComponent<TransformComponent>()))
             {
                 ImGuiIOPtr io = ImGui.GetIO();
                 
@@ -30,11 +50,11 @@ namespace CrossEngineEditor
 
                 if (EditorLayer.Instance.EditorCamera != null)
                 {
-                    Matrix4x4 cameraView = EditorLayer.Instance.EditorCamera.ViewMatrix;
-                    Matrix4x4 cameraProjection = EditorLayer.Instance.EditorCamera.ProjectionMatrix;
+                    cameraView = EditorLayer.Instance.EditorCamera.ViewMatrix;
+                    cameraProjection = EditorLayer.Instance.EditorCamera.ProjectionMatrix;
 
                     var tc = EditorLayer.Instance.SelectedEntity.GetComponent<TransformComponent>();
-                    Matrix4x4 transformMat = tc.WorldTransformMatrix;
+                    transformMat = tc.WorldTransformMatrix;
 
                     ImGui.Text("Operation");
                     {
@@ -94,19 +114,33 @@ namespace CrossEngineEditor
                         }
                     }
 
-                    // fuck it... it will overdraw everything
-                    //ImGuizmo.SetDrawlist(ImGui.GetBackgroundDrawList());
-
-                    ImGuizmo.SetRect(viewportPanel.ContentMin.X, viewportPanel.ContentMin.Y, viewportPanel.ContentMax.X - viewportPanel.ContentMin.X, viewportPanel.ContentMax.Y - viewportPanel.ContentMin.Y);
-                    //ref *(float*)(void*)null
-                    if (ImGuizmo.Manipulate(ref cameraView.M11, ref cameraProjection.M11, currentGizmoOperation, (currentGizmoOperation != OPERATION.SCALE) ? currentGizmoMode : MODE.LOCAL, ref transformMat.M11))
-                    {
-                        // safety feature
-                        if (!Matrix4x4Extension.HasNaNElement(transformMat))
-                            EditorLayer.Instance.SelectedEntity.GetComponent<TransformComponent>().SetTransform(transformMat);
-                    }
+                    // drawing of the gizmo is when the viewport draws
                 }
             }
+        }
+
+        private void DrawGizmo(EditorPanel sender)
+        {
+            if (ready)
+            {
+                _viewportPanel.EnableSelect = !ImGuizmo.IsOver();
+
+                ImGuizmo.SetRect(_viewportPanel.ContentMin.X, _viewportPanel.ContentMin.Y, _viewportPanel.ContentMax.X - _viewportPanel.ContentMin.X, _viewportPanel.ContentMax.Y - _viewportPanel.ContentMin.Y);
+                //ref *(float*)(void*)null
+
+                ImGuizmo.SetDrawlist();
+                if (ImGuizmo.Manipulate(ref cameraView.M11, ref cameraProjection.M11, currentGizmoOperation, (currentGizmoOperation != OPERATION.SCALE) ? currentGizmoMode : MODE.LOCAL, ref transformMat.M11))
+                {
+                    // safety feature
+                    if (!Matrix4x4Extension.HasNaNElement(transformMat))
+                        EditorLayer.Instance.SelectedEntity.GetComponent<TransformComponent>().SetTransform(transformMat);
+                }
+            }
+        }
+
+        public override void OnDetach()
+        {
+            ViewportPanel = null;
         }
     }
 }

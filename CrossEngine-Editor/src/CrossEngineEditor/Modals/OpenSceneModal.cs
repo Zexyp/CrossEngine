@@ -1,8 +1,12 @@
-﻿using ImGuiNET;
+﻿using System;
+using ImGuiNET;
 
+using System.IO;
 using System.Numerics;
 
 using CrossEngine.Utils;
+
+using CrossEngineEditor.Utils;
 
 namespace CrossEngineEditor
 {
@@ -20,7 +24,11 @@ namespace CrossEngineEditor
 
                 if (ImGui.Button("OK", new Vector2(120, 0)))
                 {
-                    //OpenFileDialog dialog
+                    if (FileDialog.Open(out string path, initialDir: Environment.CurrentDirectory))
+                    {
+                        CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
+                        EditorLayer.Instance.Scene = (CrossEngine.Scenes.Scene)deserializer.Deserialize(File.ReadAllText(path), typeof(CrossEngine.Scenes.Scene));
+                    }
 
                     ImGui.CloseCurrentPopup();
                 }
