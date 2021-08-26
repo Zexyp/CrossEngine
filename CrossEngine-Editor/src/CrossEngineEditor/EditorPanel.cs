@@ -60,6 +60,7 @@ namespace CrossEngineEditor
                 WindowSize = ImGui.GetWindowSize();
                 WindowPos = ImGui.GetWindowPos();
 
+                if (ImGui.IsWindowHovered()) ImGui.SetWindowFocus();
                 Focused = ImGui.IsWindowFocused();
 
                 DrawWindowContent();

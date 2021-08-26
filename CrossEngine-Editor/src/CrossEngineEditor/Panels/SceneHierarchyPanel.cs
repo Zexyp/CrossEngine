@@ -5,7 +5,7 @@ using CrossEngine.Logging;
 using CrossEngine.Entities;
 using CrossEngine.Utils;
 
-namespace CrossEngineEditor
+namespace CrossEngineEditor.Panels
 {
     class SceneHierarchyPanel : EditorPanel
     {

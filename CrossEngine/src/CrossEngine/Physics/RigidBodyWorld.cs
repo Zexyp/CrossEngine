@@ -22,9 +22,9 @@ namespace CrossEngine.Physics
     public class RigidBodyWorld
     {
         CollisionConfiguration collisionConfiguration;
-        internal CollisionDispatcher Dispatcher { get; private set; }
-        internal BroadphaseInterface Broadphase { get; private set; }
-        DiscreteDynamicsWorld dynamicsWorld;
+        CollisionDispatcher Dispatcher;
+        BroadphaseInterface Broadphase;
+        public DiscreteDynamicsWorld dynamicsWorld; // TODO: fix access
 
         private readonly VoronoiSimplexSolver _simplexSolver;
         private readonly MinkowskiPenetrationDepthSolver _penetrationDepthSolver;
@@ -32,10 +32,20 @@ namespace CrossEngine.Physics
         private readonly Convex2DConvex2DAlgorithm.CreateFunc _convexAlgo2D;
         private readonly Box2DBox2DCollisionAlgorithm.CreateFunc _boxAlgo2D;
 
+        List<RigidBody> rigidBodies = new List<RigidBody>();
+
         public Vector3 Gravity
         {
             get => dynamicsWorld.Gravity;
-            set => dynamicsWorld.Gravity = value;
+            set
+            {
+                if (dynamicsWorld.Gravity == value) return;
+                dynamicsWorld.Gravity = value;
+                for (int i = 0; i < rigidBodies.Count; i++)
+                {
+                    if (!rigidBodies[i].IsActive) rigidBodies[i].Activate();
+                }
+            }
         }
 
         public RigidBodyWorld()
@@ -73,11 +83,13 @@ namespace CrossEngine.Physics
         internal void AddRigidBody(RigidBody body)
         {
             dynamicsWorld.AddRigidBody(body);
+            rigidBodies.Add(body);
         }
 
         internal void RemoveRigidBody(RigidBody body)
         {
             dynamicsWorld.RemoveRigidBody(body);
+            rigidBodies.Remove(body);
         }
 
         internal void CleanProxyFromPairs(RigidBody body)

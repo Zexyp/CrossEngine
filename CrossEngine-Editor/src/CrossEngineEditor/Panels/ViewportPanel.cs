@@ -1,13 +1,16 @@
 ﻿using System;
 using ImGuiNET;
+
 using System.Numerics;
+
+using CrossEngine;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering;
 using CrossEngine.Layers;
 using CrossEngine.Events;
-using CrossEngine;
+using CrossEngine.Logging;
 
-namespace CrossEngineEditor
+namespace CrossEngineEditor.Panels
 {
     class ViewportPanel : EditorPanel
     {
@@ -73,13 +76,12 @@ namespace CrossEngineEditor
 
             EditorLayer.Instance.Scene.OnRenderEditor(EditorLayer.Instance.EditorCamera);
             
-            if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && EnableSelect)
+            if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Focused && EnableSelect)
             {
                 Vector2 texpos = ImGui.GetMousePos() - new Vector2(ContentMin.X, ContentMax.Y);
                 texpos.Y = -texpos.Y;
                 int result = framebuffer.ReadPixel(1, (int)texpos.X, (int)texpos.Y);
-                Console.WriteLine(texpos);
-                Console.WriteLine(result);
+                Log.App.Trace($"selected entity id {result}");
 
                 EditorLayer.Instance.SelectedEntity = EditorLayer.Instance.Scene.GetEntity(result);
             }

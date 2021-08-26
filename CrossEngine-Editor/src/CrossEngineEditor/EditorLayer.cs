@@ -3,6 +3,7 @@ using System;
 
 using System.Collections.Generic;
 using System.Numerics;
+using System.IO;
 
 using CrossEngine;
 using CrossEngine.Entities;
@@ -15,8 +16,10 @@ using CrossEngine.Rendering.Cameras;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Assets;
+using CrossEngine.Physics;
 
 using CrossEngineEditor.Utils;
+using CrossEngineEditor.Panels;
 
 namespace CrossEngineEditor
 {
@@ -43,6 +46,7 @@ namespace CrossEngineEditor
             AddPanel(new SceneHierarchyPanel());
             AddPanel(new ViewportPanel());
             AddPanel(new GizmoPanel());
+            AddPanel(new LagometerPanel());
         }
 
         public override void OnAttach()
@@ -63,6 +67,7 @@ namespace CrossEngineEditor
                 ent.AddComponent(new TagComponent("asd"));
                 ent.AddComponent(new RigidBodyComponent() { LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
                 ent.AddComponent(new Box2DColliderComponent());
+                ent.AddComponent(new TestCompo());
             }
 
             Entity ground = Scene.CreateEntity();
@@ -78,8 +83,9 @@ namespace CrossEngineEditor
             //CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
             //Scene = (Scene)deserializer.Deserialize(json, typeof(Scene));
 
-            //Scene.Start();
+            Scene.Start();
             // ---
+            Physics.context = Scene.RigidBodyWorld.dynamicsWorld;
         }
 
         public override void OnDetach()
@@ -118,12 +124,28 @@ namespace CrossEngineEditor
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
                         {
                             if ((flags & ActionModal.ModalButtonFlags.OK) > 0)
+                            {
+                                throw new NotImplementedException();
+
                                 EditorLayer.Instance.Scene = new CrossEngine.Scenes.Scene();
+                            }
                         }));
                     }
                     if (ImGui.MenuItem("Open..."))
                     {
-                        PushModal(new OpenSceneModal());
+                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
+                        {
+                            if ((flags & ActionModal.ModalButtonFlags.OK) > 0)
+                            {
+                                if (FileDialog.Open(out string path, initialDir: Environment.CurrentDirectory))
+                                {
+                                    throw new NotImplementedException();
+
+                                    CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
+                                    EditorLayer.Instance.Scene = (CrossEngine.Scenes.Scene)deserializer.Deserialize(File.ReadAllText(path), typeof(CrossEngine.Scenes.Scene));
+                                }
+                            }
+                        }));
                     }
 
                     ImGui.Separator();
@@ -171,10 +193,11 @@ namespace CrossEngineEditor
 
             // debug
             ImGui.Begin("Debug");
+
             ImGui.Checkbox("Update physics", ref ph);
             if (ph) Scene.OnFixedUpdateRuntime();
-            //Vector3 gr = Scene.RigidBodyWorld.Gravity;
-            //if (ImGui.DragFloat3("gravity", ref gr)) Scene.RigidBodyWorld.Gravity = gr;
+            Vector3 gr = Scene.RigidBodyWorld.Gravity;
+            if (ImGui.DragFloat3("gravity", ref gr)) Scene.RigidBodyWorld.Gravity = gr;
             ImGui.Text("editor camera:");
             ImGui.Text(EditorCamera.Position.ToString("0.00"));
             ImGui.End();
@@ -274,6 +297,49 @@ namespace CrossEngineEditor
         public void PopModal(EditorModal modal)
         {
             _modal = null;
+        }
+    }
+
+    class TestCompo : Component
+    {
+        const int NumRays = 360;
+        Ray[] _rays = new Ray[NumRays];
+
+        struct Ray
+        {
+            public Vector3 Source;
+            public Vector3 Destination;
+            public Vector3 HitPoint;
+            public Vector3 Normal;
+
+            public void MoveX(float move)
+            {
+                Source.X += move;
+                Destination.X += move;
+            }
+        }
+
+        public override void OnAttach()
+        {
+            for (int i = 0; i < _rays.Length; i++)
+            {
+                Ray ray = new Ray();
+                ray.Destination = Vector3.Transform(Vector3.UnitY, Quaternion.CreateFromAxisAngle(Vector3.UnitZ, ((float)i / NumRays) * MathF.PI * 2)) * 10;
+                _rays[i] = ray;
+            }
+        }
+
+        public override void OnRender(RenderEvent re)
+        {
+            if (re is CrossEngine.Rendering.Passes.LineRenderPassEvent)
+            {
+                for (int i = 0; i < _rays.Length; i++)
+                {
+                    Physics.Raycast(_rays[i].Source, _rays[i].Destination, out RaycastHitInfo info);
+                    //Console.WriteLine(_rays[i].Source + "   " + _rays[i].Destination);
+                    CrossEngine.Rendering.Lines.LineRenderer.DrawLine(_rays[i].Source, info.point, new Vector4(1, 0, 0, 1));
+                }
+            }
         }
     }
 }

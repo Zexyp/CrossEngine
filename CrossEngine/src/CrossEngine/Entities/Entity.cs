@@ -307,11 +307,17 @@ namespace CrossEngine.Entities
             ValidateAllComponents();
             isAttaching = false;
 
+            for (int i = 0; i < _components.Count; i++)
+                if (_components[i].Valid) _components[i].OnAttach();
+
             if (Enabled) OnEnable();
         }
         internal void Deactivate()
         {
             Active = false;
+
+            for (int i = 0; i < _components.Count; i++)
+                if (_components[i].Valid) _components[i].OnDetach();
 
             if (Enabled) OnDisable();
         }

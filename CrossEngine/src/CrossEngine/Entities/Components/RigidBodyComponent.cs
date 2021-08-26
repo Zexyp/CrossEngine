@@ -12,6 +12,8 @@ using CrossEngine.Physics;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Utils;
 using CrossEngine.Serialization.Json;
+using CrossEngine.Rendering.Passes;
+using CrossEngine.Rendering.Lines;
 
 namespace CrossEngine.Entities.Components
 {
@@ -204,6 +206,9 @@ namespace CrossEngine.Entities.Components
             }
 
             rigidBody.CollisionFlags = CollisionFlags.None;
+
+            rigidBody.UserObject = this;
+            rigidBody.UserIndex = Entity.UID;
         }
 
         public override void OnAttach()
@@ -276,6 +281,12 @@ namespace CrossEngine.Entities.Components
             if (rigidBody != null)
             {
                 rigidBody.WorldTransform = Matrix4x4.CreateFromQuaternion(_transform.WorldRotation) * Matrix4x4.CreateTranslation(_transform.WorldPosition);
+                
+                if (rigidBody.BroadphaseProxy != null)
+                {
+                    Entity.Scene.RigidBodyWorld.CleanProxyFromPairs(rigidBody);
+                }
+
                 ActivateBody();
             }
             _collider.Shape.LocalScaling = _transform.LocalScale;

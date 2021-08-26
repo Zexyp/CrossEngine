@@ -11,7 +11,7 @@ using CrossEngine.Entities;
 using CrossEngine.Entities.Components;
 using CrossEngine.Utils.Editor;
 
-namespace CrossEngineEditor
+namespace CrossEngineEditor.Panels
 {
     class InspectorPanel : EditorPanel
     {
@@ -286,8 +286,6 @@ namespace CrossEngineEditor
 
                 if (collapsingHeader)
                 {
-                    
-
                     // maybe swap this for member info
                     FieldInfo[] fields = componentType.GetFields();
                     PropertyInfo[] props = componentType.GetProperties();

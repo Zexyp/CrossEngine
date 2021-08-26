@@ -52,22 +52,19 @@ namespace CrossEngine.Rendering
             "\n" +
             "uniform sampler2D uTextures[32];\n" +
             "\n" +
-            "float random(vec2 st);\n" +
-            "\n" +
             "void main()\n" +
             "{\n" +
             "	vec4 texColor = vColor;\n" +
             "	texColor *= texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
             "	oColor = texColor;\n" +
-            "   oColor.x = random(vec2(vEntityID, vEntityID));\n" +
             "   oEntityIDColor = vEntityID;\n" +
-            "}\n" +
-            "float random(vec2 st)\n" +
-            "{\n" +
-            "    return fract(sin(dot(st.xy,\n" +
-            "                         vec2(12.9898, 78.233))) *\n" +
-            "        43758.5453123);\n" +
             "}\n";
+            //"float random(vec2 st)\n" +
+            //"{\n" +
+            //"    return fract(sin(dot(st.xy,\n" +
+            //"                         vec2(12.9898, 78.233))) *\n" +
+            //"        43758.5453123);\n" +
+            //"}\n";
         const string DiscardingFragmentShaderSource =
             "#version 330 core\n" +
             "\n" +

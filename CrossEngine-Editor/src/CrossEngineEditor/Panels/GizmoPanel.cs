@@ -4,7 +4,7 @@ using System.Numerics;
 using CrossEngine.Entities.Components;
 using CrossEngine.Utils;
 
-namespace CrossEngineEditor
+namespace CrossEngineEditor.Panels
 {
     class GizmoPanel : EditorPanel
     {

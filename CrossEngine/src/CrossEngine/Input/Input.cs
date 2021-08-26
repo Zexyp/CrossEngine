@@ -179,24 +179,22 @@ namespace CrossEngine.Inputs
             return mousePosition.Y;
         }
 
-        /*
-        public static float GetProjectedMouseX(Rendering.Cameras.Camera camera)
+        //public static float GetProjectedMouseX(Rendering.Cameras.Camera camera)
+        //{
+        //    float currentX = (mousePosition.X / (float)Application.Instance.Window.Width) * 2.0f - 1.0f;
+        //    return Vector3.Transform(new Vector3(currentX, 0, 0), Matrix4x4Extension.Invert(camera.ViewProjectionMatrix)).X;
+        //}
+        //public static float GetProjectedMouseY(Rendering.Cameras.Camera camera)
+        //{
+        //    float currentY = (mousePosition.Y / (float)Application.Instance.Window.Height) * 2.0f - 1.0f;
+        //    return Vector3.Transform(new Vector3(0, -currentY, 0), Matrix4x4Extension.Invert(camera.ViewProjectionMatrix)).Y;
+        //}
+        public static Vector2 GetProjectedMouse(Rendering.Cameras.Camera camera, Vector2 mouse, Vector2 window, Vector3 position, Quaternion rotation)
         {
-            float currentX = (mousePosition.X / (float)Application.Instance.Window.Width) * 2.0f - 1.0f;
-            return Vector3.Transform(new Vector3(currentX, 0, 0), Matrix4x4Extension.Invert(camera.ViewProjectionMatrix)).X;
-        }
-        public static float GetProjectedMouseY(Rendering.Cameras.Camera camera)
-        {
-            float currentY = (mousePosition.Y / (float)Application.Instance.Window.Height) * 2.0f - 1.0f;
-            return Vector3.Transform(new Vector3(0, -currentY, 0), Matrix4x4Extension.Invert(camera.ViewProjectionMatrix)).Y;
-        }
-        public static Vector2 GetProjectedMouse(Rendering.Cameras.Camera camera)
-        {
-            float currentX = (mousePosition.X / (float)Application.Instance.Window.Width) * 2.0f - 1.0f;
-            float currentY = (mousePosition.Y / (float)Application.Instance.Window.Height) * 2.0f - 1.0f;
-            Vector3 projected = Vector3.Transform(new Vector3(currentX, -currentY, 0), Matrix4x4Extension.Invert(camera.ViewProjectionMatrix));
+            float currentX = (mouse.X / window.X) * 2.0f - 1.0f;
+            float currentY = (mouse.Y / window.Y) * 2.0f - 1.0f;
+            Vector3 projected = Vector3.Transform(new Vector3(currentX, -currentY, 0), Matrix4x4Extension.Invert(Matrix4x4.CreateTranslation(-position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(rotation)) * camera.ProjectionMatrix));
             return new Vector2(projected.X, projected.Y);
         }
-        */
     }
 }
