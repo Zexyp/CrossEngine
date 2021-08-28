@@ -116,7 +116,7 @@ namespace CrossEngine.Rendering.Display
             Glfw.MakeContextCurrent(Handle); // TODO: fix this (active context)
             Import(Glfw.GetProcAddress);
 
-            Log.Core.Trace("\n    vendor: {0}\n    renderer: {1}\n    version: {2}", glGetString(GL_VENDOR), glGetString(GL_RENDERER), glGetString(GL_VERSION));
+            Log.Core.Info("\n    vendor: {0}\n    renderer: {1}\n    version: {2}", glGetString(GL_VENDOR), glGetString(GL_RENDERER), glGetString(GL_VERSION));
 
             SetVSync(true);
 

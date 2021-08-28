@@ -14,12 +14,12 @@ namespace CrossEngine.Rendering.Textures
     public class Texture : IDisposable
     {
         private uint _id = 0;
-        private TextureTarget _type;
+        private TextureTarget _target;
         private int _width;
         private int _height;
 
         public uint ID { get => _id; }
-        public TextureTarget Type { get => _type; }
+        public TextureTarget Target { get => _target; }
         public int Width { get => _width; }
         public int Height { get => _height; }
 
@@ -36,7 +36,7 @@ namespace CrossEngine.Rendering.Textures
             //fixed (uint* p = &_id)
             //    glGenTextures(1, p);
 
-            SetData(image);
+            SetImage2DData(image);
         }
 
         public unsafe Texture(int width, int height, ColorChannelFormat format) : this()
@@ -44,7 +44,7 @@ namespace CrossEngine.Rendering.Textures
             //fixed (uint* p = &_id)
             //    glGenTextures(1, p);
 
-            SetData(null, width, height, ColorChannelFormat.TripleBGR, format, false);
+            SetImage2DData(null, width, height, ColorChannelFormat.TripleBGR, format, false);
         }
 
         public unsafe Texture(uint color) : this()
@@ -52,7 +52,7 @@ namespace CrossEngine.Rendering.Textures
             //fixed (uint* p = &_id)
             //    glGenTextures(1, p);
 
-            SetData(&color, 1, 1, ColorChannelFormat.QuadrupleRGBA, ColorChannelFormat.QuadrupleRGBA, false);
+            SetImage2DData(&color, 1, 1, ColorChannelFormat.QuadrupleRGBA, ColorChannelFormat.QuadrupleRGBA, false);
         }
         #endregion
 
@@ -140,25 +140,25 @@ namespace CrossEngine.Rendering.Textures
 
         public void SetFilterParameter(FilterParameter param, bool min = true, bool mag = true)
         {
-            glBindTexture((int)_type, _id);
+            glBindTexture((int)_target, _id);
 
-            if (min) glTexParameteri((int)_type, GL_TEXTURE_MIN_FILTER, (int)param);
-            if (mag) glTexParameteri((int)_type, GL_TEXTURE_MAG_FILTER, (int)param);
+            if (min) glTexParameteri((int)_target, GL_TEXTURE_MIN_FILTER, (int)param);
+            if (mag) glTexParameteri((int)_target, GL_TEXTURE_MAG_FILTER, (int)param);
         }
 
         public void SetWrapParameter(WrapParameter param, bool x = true, bool y = true)
         {
-            glBindTexture((int)_type, _id);
+            glBindTexture((int)_target, _id);
 
-            if (x) glTexParameteri((int)_type, GL_TEXTURE_WRAP_S, (int)param);
-            if (y) glTexParameteri((int)_type, GL_TEXTURE_WRAP_T, (int)param);
+            if (x) glTexParameteri((int)_target, GL_TEXTURE_WRAP_S, (int)param);
+            if (y) glTexParameteri((int)_target, GL_TEXTURE_WRAP_T, (int)param);
         }
 
         public void Bind(int? slot = null)
         {
             if (slot != null)
                 glActiveTexture(GL_TEXTURE0 + (int)slot);
-            glBindTexture((int)_type, _id);
+            glBindTexture((int)_target, _id);
         }
 
         public static void Unbind(TextureTarget type = TextureTarget.Texture2D, int? slot = null)
@@ -177,9 +177,9 @@ namespace CrossEngine.Rendering.Textures
             }
         }
 
-        public unsafe void SetData(void* data, int width, int height, ColorChannelFormat suppliedFormat, ColorChannelFormat desiredFormat, bool generateMipmaps = true)
+        public unsafe void SetImage2DData(void* data, int width, int height, ColorChannelFormat suppliedFormat, ColorChannelFormat desiredFormat, bool generateMipmaps = true)
         {
-            _type = TextureTarget.Texture2D;
+            _target = TextureTarget.Texture2D;
 
             if (width <= 0 && height <= 0)
             {
@@ -188,12 +188,12 @@ namespace CrossEngine.Rendering.Textures
                 return;
 #pragma warning restore CS0162
             }
-            glBindTexture((int)_type, _id);
+            glBindTexture((int)_target, _id);
 
             // TODO: add data type
-            glTexImage2D((int)_type, 0, (int)desiredFormat, width, height, 0, (int)suppliedFormat, GL_UNSIGNED_BYTE, data);
+            glTexImage2D((int)_target, 0, (int)desiredFormat, width, height, 0, (int)suppliedFormat, GL_UNSIGNED_BYTE, data);
 
-            if (generateMipmaps) glGenerateMipmap((int)_type);
+            if (generateMipmaps) glGenerateMipmap((int)_target);
 
             // parameters need to be set
             SetFilterParameter(FilterParameter.Linear);
@@ -203,9 +203,9 @@ namespace CrossEngine.Rendering.Textures
             this._height = height;
         }
 
-        public unsafe void SetData(Image image)
+        public unsafe void SetImage2DData(Image image)
         {
-            _type = TextureTarget.Texture2D;
+            _target = TextureTarget.Texture2D;
 
             ColorChannelFormat format = 0;
             ColorChannelFormat desired = 0;
@@ -256,7 +256,7 @@ namespace CrossEngine.Rendering.Textures
             }
 
             BitmapData data = ((Bitmap)image).LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, image.PixelFormat);
-            SetData(data.Scan0.ToPointer(), data.Width, data.Height, format, desired);
+            SetImage2DData(data.Scan0.ToPointer(), data.Width, data.Height, format, desired);
             ((Bitmap)image).UnlockBits(data);
             if (converted) image.Dispose();
         }

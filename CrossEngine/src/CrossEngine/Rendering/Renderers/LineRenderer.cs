@@ -30,7 +30,7 @@ namespace CrossEngine.Rendering.Lines
             "   gl_Position = uViewProjection * vec4(aPosition, 1.0);\n" +
             "}\n";
         const string FragmentShaderSource =
-            "#version 450 core\n" +
+            "#version 330 core\n" +
             "\n" +
             "layout(location = 0) out vec4 oColor;\n" +
             "\n" +

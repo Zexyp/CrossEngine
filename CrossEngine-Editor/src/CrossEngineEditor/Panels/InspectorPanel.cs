@@ -13,6 +13,7 @@ using CrossEngine.Utils.Editor;
 
 namespace CrossEngineEditor.Panels
 {
+    // TODO: second rework (attributes)
     class InspectorPanel : EditorPanel
     {
         delegate bool EditorValueRepresentationFunction(EditorValueAttribute attribute, string name, ref object value);
@@ -251,7 +252,7 @@ namespace CrossEngineEditor.Panels
         {
             // TODO: fix
             bool entityEnabled = context.Enabled;
-            if (ImGui.Checkbox("Enabled", ref entityEnabled))
+            if (ImGui.Checkbox("Enabled", ref entityEnabled)) 
                 context.Enabled = entityEnabled;
 
             for (int compi = 0; compi < context.Components.Count; compi++)
@@ -271,16 +272,17 @@ namespace CrossEngineEditor.Panels
                     ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.729f, 0.208f, 0.208f, 1.0f));
                 }
 
+                var style = ImGui.GetStyle();
                 bool collapsingHeader = ImGui.CollapsingHeader(componentType.Name, ref stay);
-                float collapsingHeaderButtonOffset = ((ImGui.GetTextLineHeight() + ImGui.GetStyle().CellPadding.Y * 2) + 3);
-                ImGui.SameLine(ImGui.GetWindowWidth() - (collapsingHeaderButtonOffset * 2 + ImGui.GetStyle().CellPadding.X));
+                float collapsingHeaderButtonOffset = ((ImGui.GetTextLineHeight() + style.FramePadding.Y * 2) + 1);
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - (collapsingHeaderButtonOffset * 1 + style.FramePadding.X + style.FramePadding.Y));
                 bool enabled = component.Enabled;
                 if (ImGui.Checkbox("", ref enabled))
                     component.Enabled = enabled;
-                ImGui.SameLine(ImGui.GetWindowWidth() - (collapsingHeaderButtonOffset * 3 + ImGui.GetStyle().CellPadding.X));
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - (collapsingHeaderButtonOffset * 2 + style.FramePadding.X + style.FramePadding.Y));
                 if (ImGui.ArrowButton("up", ImGuiDir.Up))
                     context.ShiftComponent(component, Math.Max(0, compi - 1));
-                ImGui.SameLine(ImGui.GetWindowWidth() - (collapsingHeaderButtonOffset * 4 + ImGui.GetStyle().CellPadding.X));
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - (collapsingHeaderButtonOffset * 3 + style.FramePadding.X + style.FramePadding.Y));
                 if (ImGui.ArrowButton("down", ImGuiDir.Down))
                     context.ShiftComponent(component, Math.Min(context.Components.Count - 1, compi + 1));
 

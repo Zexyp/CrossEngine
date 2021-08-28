@@ -25,6 +25,7 @@ namespace CrossEngineEditor.Panels
         const int FrameTimePlotLength = 256;
         float[] frameTimePlot = new float[FrameTimePlotLength];
         int frameTimePlotOffset = 0;
+        bool updateFrameTimePlot = true;
 
         protected override void DrawWindowContent()
         {
@@ -41,8 +42,11 @@ namespace CrossEngineEditor.Panels
             ImGui.PopStyleColor();
 
             {
-                frameTimePlot[frameTimePlotOffset] = Time.DeltaTimeF * 1000;
-                frameTimePlotOffset = (frameTimePlotOffset + 1) % frameTimePlot.Length;
+                if (updateFrameTimePlot)
+                {
+                    frameTimePlot[frameTimePlotOffset] = Time.DeltaTimeF * 1000;
+                    frameTimePlotOffset = (frameTimePlotOffset + 1) % frameTimePlot.Length;
+                }
 
                 float average = 0.0f;
                 float max = 0.0f;
@@ -54,6 +58,7 @@ namespace CrossEngineEditor.Panels
                 average /= (float)frameTimePlot.Length;
 
                 ImGui.PlotHistogram("Frame times", ref frameTimePlot[0], frameTimePlot.Length, frameTimePlotOffset, String.Format("avg {0:F2} ms", average), 0, max, new Vector2(0, 80.0f));
+                updateFrameTimePlot = !(ImGui.IsItemHovered() && ImGui.IsMouseDown(ImGuiMouseButton.Left));
             }
         }
     }

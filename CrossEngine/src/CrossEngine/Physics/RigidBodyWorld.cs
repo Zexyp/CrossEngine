@@ -43,14 +43,15 @@ namespace CrossEngine.Physics
                 dynamicsWorld.Gravity = value;
                 for (int i = 0; i < rigidBodies.Count; i++)
                 {
-                    if (!rigidBodies[i].IsActive) rigidBodies[i].Activate();
+                    if (rigidBodies[i].InvMass > 0 && !rigidBodies[i].IsActive) rigidBodies[i].Activate();
                 }
             }
         }
 
         public RigidBodyWorld()
         {
-            // 2D rn
+            // 2D rn!
+
             collisionConfiguration = new DefaultCollisionConfiguration();
 
             // Use the default collision dispatcher. For parallel processing you can use a diffent dispatcher.

@@ -1,12 +1,13 @@
-﻿using CrossEngine.Events;
+﻿using System;
+using System.Collections.Generic;
+using System.Numerics;
+
+using CrossEngine.Events;
 using CrossEngine.Rendering.Lines;
-using CrossEngine.Rendering.Passes;
 using CrossEngine.Serialization.Json;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
+using CrossEngine.Rendering;
 
 namespace CrossEngine.Entities.Components
 {
@@ -338,7 +339,7 @@ namespace CrossEngine.Entities.Components
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is LineRenderPassEvent)
+            if (re is LineRenderEvent)
             {
                 LineRenderer.DrawAxes(WorldTransformMatrix);
             }

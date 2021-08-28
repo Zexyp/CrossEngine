@@ -166,6 +166,8 @@ namespace CrossEngine.Layers
             style.FrameRounding = 4f;
             style.GrabRounding = 4f;
             style.WindowMenuButtonPosition = ImGuiDir.Right;
+
+            ImGui.SetColorEditOptions(ImGuiColorEditFlags.Float | ImGuiColorEditFlags.HDR);
         }
     }
 }

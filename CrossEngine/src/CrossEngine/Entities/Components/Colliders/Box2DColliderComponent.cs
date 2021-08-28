@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using CrossEngine.Events;
-using CrossEngine.Rendering.Passes;
+using CrossEngine.Rendering;
 using CrossEngine.Rendering.Lines;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
@@ -86,7 +86,7 @@ namespace CrossEngine.Entities.Components
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is LineRenderPassEvent)
+            if (re is LineRenderEvent)
             {
                 LineRenderer.DrawSquare(Matrix4x4.CreateScale(new Vector3(Size, 0)) * Entity.Transform.WorldTransformMatrix, ColliderRepresentationColor);
             }

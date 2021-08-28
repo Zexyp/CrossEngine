@@ -33,9 +33,10 @@ namespace CrossEngineEditor.Panels
 
             var spec = new FramebufferSpecification();
             spec.Attachments = new FramebufferAttachmentSpecification(
-                new FramebufferTextureSpecification(FramebufferTextureFormat.ColorRGBA8),
-                new FramebufferTextureSpecification(FramebufferTextureFormat.Depth24Stencil8),
-                new FramebufferTextureSpecification(FramebufferTextureFormat.ColorRedInteger)
+                // using floating point colors
+                new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F),
+                new FramebufferTextureSpecification(TextureFormat.ColorR32I),
+                new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
                 );
             spec.Width = 1;
             spec.Height = 1;
@@ -74,8 +75,8 @@ namespace CrossEngineEditor.Panels
             Renderer.Clear();
             framebuffer.ClearAttachment(1, 0);
 
-            EditorLayer.Instance.Scene.OnRenderEditor(EditorLayer.Instance.EditorCamera);
-            
+            EditorLayer.Instance.Scene.OnRenderEditor(EditorLayer.Instance.EditorCamera, framebuffer);
+
             if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Focused && EnableSelect)
             {
                 Vector2 texpos = ImGui.GetMousePos() - new Vector2(ContentMin.X, ContentMax.Y);

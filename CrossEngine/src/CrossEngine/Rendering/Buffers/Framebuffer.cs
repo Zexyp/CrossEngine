@@ -10,17 +10,18 @@ using CrossEngine.Assets.GC;
 
 namespace CrossEngine.Rendering.Buffers
 {
-    public enum FramebufferTextureFormat : int
+    public enum TextureFormat : int
     {
         // check utils when modifing this!!
+        None = GL_NONE,
 
-        None = 0,
         // defaults
         DefaultDepth = Depth24Stencil8,
     
         // color
         ColorRGBA8 = GL_RGB8,
-        ColorRedInteger = GL_RED_INTEGER,
+        ColorR32I = GL_R32I,
+        ColorRGBA32F = GL_RGBA32F,
     
         // depth and stencil
         Depth24Stencil8 = GL_DEPTH24_STENCIL8,
@@ -34,12 +35,17 @@ namespace CrossEngine.Rendering.Buffers
     
     public struct FramebufferTextureSpecification
     {
-        public FramebufferTextureFormat TextureFormat;
-        // TODO: filtering/wrap
-    
-		public FramebufferTextureSpecification(FramebufferTextureFormat format)
+        public TextureFormat Format;
+        public FilterParameter Filter;
+        // TODO: wrap
+        internal bool dontDraw;
+
+		public FramebufferTextureSpecification(TextureFormat format, FilterParameter filter = FilterParameter.Linear)
         {
-            TextureFormat = format;
+            Format = format;
+            Filter = filter;
+
+            dontDraw = false;
         }
     }
     
@@ -57,8 +63,6 @@ namespace CrossEngine.Rendering.Buffers
     {
         public uint Width, Height;
         public FramebufferAttachmentSpecification Attachments;
-        
-        public bool SwapChainTarget;
     }
 
     public class Framebuffer : IDisposable
@@ -67,41 +71,29 @@ namespace CrossEngine.Rendering.Buffers
 
         private static class Utils
         {
-            public static bool IsDepthFormat(FramebufferTextureFormat format)
+            public static bool IsDepthFormat(TextureFormat format)
             {
                 switch (format)
                 {
-                    case FramebufferTextureFormat.Depth24Stencil8: return true;
-                        //case FramebufferTextureFormat.Depth32FStencil8: return true;
-                        //case FramebufferTextureFormat.DepthComponent16: return true;
-                        //case FramebufferTextureFormat.DepthComponent24: return true;
-                        //case FramebufferTextureFormat.DepthComponent32: return true;
+                    case TextureFormat.Depth24Stencil8: return true;
+                    //case FramebufferTextureFormat.Depth32FStencil8: return true;
+                    //case FramebufferTextureFormat.DepthComponent16: return true;
+                    //case FramebufferTextureFormat.DepthComponent24: return true;
+                    //case FramebufferTextureFormat.DepthComponent32: return true;
                 }
                 return false;
             }
-            public static unsafe void AttachColorTexture(uint id, int internalFormat, int format, int width, int height, int index)
+
+            public static int GetColorFormat(TextureFormat format)
             {
-                glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, null);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, id, 0);
-            }
-            public static unsafe void AttachDepthTexture(uint id, int internalFormat, int format, int attachmentType, int type, int width, int height)
-            {
-                glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-                glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, GL_TEXTURE_2D, id, 0);
+                switch (format)
+                {
+                    case TextureFormat.ColorRGBA8: return GL_RGBA;
+                    case TextureFormat.ColorRGBA32F: return GL_RGBA;
+                    case TextureFormat.ColorR32I: return GL_RED_INTEGER;
+                }
+                Log.Core.Error("unknown attachment type!");
+                throw new NotImplementedException();
             }
         }
 
@@ -117,7 +109,7 @@ namespace CrossEngine.Rendering.Buffers
 
         FramebufferSpecification specification;
         List<FramebufferTextureSpecification> colorAttachmentSpecifications = new List<FramebufferTextureSpecification>();
-        FramebufferTextureSpecification depthAttachmentSpecification = new FramebufferTextureSpecification(FramebufferTextureFormat.None);
+        FramebufferTextureSpecification depthAttachmentSpecification = new FramebufferTextureSpecification(TextureFormat.None);
         List<uint> _colorAttachments = new List<uint>();
         public ReadOnlyCollection<uint> ColorAttachments { get => _colorAttachments.AsReadOnly(); }
         uint _depthAttachment;
@@ -129,7 +121,7 @@ namespace CrossEngine.Rendering.Buffers
             specification = spec;
             foreach (FramebufferTextureSpecification att in spec.Attachments.Attachments)
             {
-                if (!Utils.IsDepthFormat(att.TextureFormat))
+                if (!Utils.IsDepthFormat(att.Format))
                     colorAttachmentSpecifications.Add(att);
                 else
                     depthAttachmentSpecification = att;
@@ -142,37 +134,6 @@ namespace CrossEngine.Rendering.Buffers
         
         unsafe void Invalidate()
         {
-            //fixed (uint* p = &fboid)
-            //    glGenFramebuffers(1, p);
-            //glBindFramebuffer(GL_FRAMEBUFFER, fboid);
-            //
-            //fixed (uint* p = &colorAttachment)
-            //    glGenTextures(1, p);
-            //glBindTexture(GL_TEXTURE_2D, colorAttachment);
-            //
-            //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (int)specification.Width, (int)specification.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
-            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            //
-            //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachment, 0);
-            //
-            //fixed (uint* p = &depthAttachment)
-            //    glGenTextures(1, p);
-            //glBindTexture(GL_TEXTURE_2D, depthAttachment);
-            //
-            //glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, (int)specification.Width, (int)specification.Height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, null);
-            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            //
-            //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthAttachment, 0);
-            //
-            //if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            //{
-            //    Log.Core.Error("framebuffer is incomplete!");
-            //}
-            //
-            //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            
             if (fboid != 0)
             {
                 fixed (uint* p = &fboid)
@@ -203,47 +164,26 @@ namespace CrossEngine.Rendering.Buffers
                 for (int i = 0; i < _colorAttachments.Count; i++)
                 {
                     glBindTexture(GL_TEXTURE_2D, _colorAttachments[i]);
-                    switch (colorAttachmentSpecifications[i].TextureFormat)
-                    {
-                        case FramebufferTextureFormat.ColorRGBA8:
-                            Utils.AttachColorTexture(_colorAttachments[i], GL_RGBA8, GL_RGBA, (int)specification.Width, (int)specification.Height, i);
-                            break;
-                        case FramebufferTextureFormat.ColorRedInteger:
-                            Utils.AttachColorTexture(_colorAttachments[i], GL_R32I, GL_RED_INTEGER, (int)specification.Width, (int)specification.Height, i);
-                            break;
-                        default: Log.Core.Warn("color attachment type not implemented!"); break;
-                    }
+                    AttachColorTexture(_colorAttachments[i], colorAttachmentSpecifications[i], (int)specification.Width, (int)specification.Height, i);
                 }
             }
 
             // handle depth
-            if (depthAttachmentSpecification.TextureFormat != FramebufferTextureFormat.None)
+            if (depthAttachmentSpecification.Format != TextureFormat.None)
             {
                 fixed (uint* p = &_depthAttachment)
                     glGenTextures(1, p);
                 glBindTexture(GL_TEXTURE_2D, _depthAttachment);
-                switch (depthAttachmentSpecification.TextureFormat)
+                switch (depthAttachmentSpecification.Format)
                 {
-                    case FramebufferTextureFormat.Depth24Stencil8:
-                        Utils.AttachDepthTexture(_depthAttachment, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_DEPTH_STENCIL_ATTACHMENT, GL_UNSIGNED_INT_24_8, (int)specification.Width, (int)specification.Height);
+                    case TextureFormat.Depth24Stencil8:
+                        AttachDepthTexture(_depthAttachment, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_DEPTH_STENCIL_ATTACHMENT, GL_UNSIGNED_INT_24_8, (int)specification.Width, (int)specification.Height, (int)depthAttachmentSpecification.Filter);
                         break;
                     default: Log.Core.Warn("depth attachment type not implemented!"); break;
                 }
             }
 
-            if (_colorAttachments.Count > 1)
-            {
-                if (_colorAttachments.Count > 4)
-                    Log.Core.Error("wtf this is still not implemented");
-                int[] buffers = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-                fixed (int* p = &buffers[0])
-                    glDrawBuffers(_colorAttachments.Count, p);
-            }
-            else if (_colorAttachments.Count == 0)
-            {
-                // Only depth-pass
-                glDrawBuffer(GL_NONE);
-            }
+            SetDrawBuffers();
 
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             {
@@ -253,6 +193,51 @@ namespace CrossEngine.Rendering.Buffers
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             //Log.Core.Trace("invalidated framebuffer (id: {0})", fboid);
+        }
+
+        private unsafe void SetDrawBuffers()
+        {
+            if (_colorAttachments.Count > 1)
+            {
+                int[] buffers = new int[_colorAttachments.Count];
+                for (int i = 0; i < buffers.Length; i++)
+                {
+                    buffers[i] = (colorAttachmentSpecifications[i].dontDraw) ? GL_NONE : GL_COLOR_ATTACHMENT0 + i;
+                }
+                fixed (int* p = &buffers[0])
+                    glDrawBuffers(buffers.Length, p);
+            }
+            else if (_colorAttachments.Count == 0)
+            {
+                // Only depth-pass
+                glDrawBuffer(GL_NONE);
+            }
+        }
+
+        private static unsafe void AttachColorTexture(uint id, FramebufferTextureSpecification spec, int width, int height, int index)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, (int)spec.Format, width, height, 0, Utils.GetColorFormat(spec.Format), GL_UNSIGNED_BYTE, null);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (int)spec.Filter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (int)spec.Filter);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, id, 0);
+        }
+
+        private static unsafe void AttachDepthTexture(uint id, int internalFormat, int format, int attachmentType, int type, int width, int height, int filter = GL_LINEAR)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, GL_TEXTURE_2D, id, 0);
         }
 
         public void Bind()
@@ -285,7 +270,8 @@ namespace CrossEngine.Rendering.Buffers
 
             glReadBuffer(GL_COLOR_ATTACHMENT0 + (int)attachmentIndex);
             int pixelData;
-            glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_INT, &pixelData);
+
+            glReadPixels(x, y, 1, 1, Utils.GetColorFormat(colorAttachmentSpecifications[(int)attachmentIndex].Format), GL_INT, &pixelData);
             return pixelData;
         }
 
@@ -301,6 +287,33 @@ namespace CrossEngine.Rendering.Buffers
 
             //(int)_colorAttachments[(int)attachmentIndex]
             glClearBufferiv(GL_COLOR, (int)fboid, &value);
+        }
+
+        public void EnableColorDrawBuffer(int index, bool enable)
+        {
+            if (index >= colorAttachmentSpecifications.Count)
+            {
+                Log.Core.Error("index out of range of color attachments");
+                return;
+            }
+
+            FramebufferTextureSpecification s = colorAttachmentSpecifications[index];
+            s.dontDraw = !enable;
+            colorAttachmentSpecifications[index] = s;
+
+            SetDrawBuffers();
+        }
+
+        public void EnableAllColorDrawBuffers(bool enable)
+        {
+            for (int i = 0; i < colorAttachmentSpecifications.Count; i++)
+            {
+                FramebufferTextureSpecification s = colorAttachmentSpecifications[i];
+                s.dontDraw = !enable;
+                colorAttachmentSpecifications[i] = s;
+            }
+
+            SetDrawBuffers();
         }
 
         //---

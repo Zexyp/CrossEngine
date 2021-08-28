@@ -8,11 +8,12 @@ namespace CrossEngine.Layers
     {
 #if DEBUG
         string debugName = null;
-#endif
+      
         public Layer(string debugName = null)
         {
             this.debugName = debugName;
         }
+#endif
 
         public virtual void OnAttach() { }
         public virtual void OnDetach() { }

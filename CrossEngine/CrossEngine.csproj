@@ -15,6 +15,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -88,5 +89,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>libbulletc.dll</TargetPath>
     </ContentWithTargetPath>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="src\CrossEngine\Rendering\FX\" />
   </ItemGroup>
 </Project>

@@ -14,6 +14,8 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Physics;
 using CrossEngine.Logging;
+using CrossEngine.Rendering.Buffers;
+using CrossEngine.Rendering.Lines;
 
 namespace CrossEngine.Scenes
 {
@@ -158,7 +160,7 @@ namespace CrossEngine.Scenes
             if (fixedUpdateQueue > maxFixedUpdateQueue)
             {
                 fixedUpdateQueue = 0.0f;
-                Log.Core.Info("droped scene fixed update queue");
+                Log.Core.Trace("droped scene fixed update queue");
             }
             while (fixedUpdateQueue > 1.0f)
             {
@@ -174,24 +176,77 @@ namespace CrossEngine.Scenes
             OnEvent(new RigidBodyWorldUpdateEvent());
         }
 
-        public void OnRednerRuntime()
+        public void OnRenderRuntime()
         {
             // TODO: fix no camera state
+
+            throw new NotImplementedException();
 
             var camEnt = GetPrimaryCameraEntity();
             if (camEnt != null)
             {
                 Matrix4x4 projectionMatrix = camEnt.GetComponent<CameraComponent>().Camera.ProjectionMatrix;
                 TransformComponent trans = camEnt.GetComponent<TransformComponent>();
-                Renderer.Render(this, projectionMatrix * Matrix4x4.CreateTranslation(-trans.WorldPosition) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(trans.WorldRotation)));
+                //Renderer.Render(this, projectionMatrix * Matrix4x4.CreateTranslation(-trans.WorldPosition) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(trans.WorldRotation)));
             }
         }
 
-        public void OnRenderEditor(EditorCamera camera)
+        public void OnRenderEditor(EditorCamera camera, Framebuffer framebuffer = null)
         {
-            Renderer.Render(this, camera.ViewProjectionMatrix);
-            //Matrix4x4.Lerp(Matrix4x4.Identity, camera.GetViewProjection(), (MathF.Sin((float)Time.TotalElapsedSeconds) + 1) / 2));
-            //projectionMatrix* Matrix4x4.CreateTranslation(-trans.WorldPosition) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(trans.WorldRotation))
+            RenderPipeline(camera.ViewProjectionMatrix, framebuffer);
+        }
+
+        private void RenderPipeline(Matrix4x4 viewProjectionMatrix, Framebuffer framebuffer = null)
+        {
+            if (framebuffer != null) framebuffer.Bind();
+
+            #region Sprites
+            Renderer2D.BeginScene(viewProjectionMatrix);
+            {
+                SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.None);
+                OnRender(re);
+            }
+            Renderer2D.EndScene();
+
+            Renderer2D.EnableDiscardingTransparency(true);
+
+            Renderer2D.BeginScene(viewProjectionMatrix);
+            {
+                SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.Discarding);
+                OnRender(re);
+            }
+            Renderer2D.EndScene();
+
+            Renderer2D.EnableDiscardingTransparency(false);
+
+            Renderer.EnableBlending(true, BlendFunc.OneMinusSrcAlpha);
+
+            Renderer2D.BeginScene(viewProjectionMatrix);
+            {
+                SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.Blending);
+                OnRender(re);
+            }
+            Renderer2D.EndScene();
+
+            Renderer.EnableBlending(false);
+            #endregion
+
+            if (framebuffer != null) framebuffer.EnableColorDrawBuffer(1, false);
+
+            #region Lines
+            Renderer.SetDepthFunc(DepthFunc.LessEqual);
+
+            LineRenderer.BeginScene(viewProjectionMatrix);
+            {
+                LineRenderEvent re = new LineRenderEvent();
+                OnRender(re);
+            }
+            LineRenderer.EndScene();
+
+            Renderer.SetDepthFunc(DepthFunc.Default);
+            #endregion
+
+            if (framebuffer != null) framebuffer.EnableAllColorDrawBuffers(true);
         }
 
         public Entity GetPrimaryCameraEntity()

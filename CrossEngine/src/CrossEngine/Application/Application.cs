@@ -5,6 +5,7 @@ using CrossEngine.Layers;
 using CrossEngine.Events;
 using CrossEngine.Inputs;
 using CrossEngine.Logging;
+using CrossEngine.Profiling;
 
 namespace CrossEngine
 {
@@ -43,7 +44,9 @@ namespace CrossEngine
 
         public void Run()
         {
+            Profiler.BeginScope(nameof(Init));
             Init();
+            Profiler.EndScope();
 
             LoadContent();
 
@@ -51,15 +54,21 @@ namespace CrossEngine
 
             while (!Window.ShouldClose)
             {
+                Profiler.BeginScope("Main loop");
                 Time.Update(Window.Time);
 
+                Profiler.BeginScope(nameof(Update));
                 Update(Math.Min((float)Time.DeltaTime, MaxTimestep));
+                Profiler.EndScope();
 
+                Profiler.BeginScope(nameof(Render));
                 Render();
+                Profiler.EndScope();
 
                 Input.Update();
 
                 Window.Update();
+                Profiler.EndScope();
             }
 
             UnloadContent();

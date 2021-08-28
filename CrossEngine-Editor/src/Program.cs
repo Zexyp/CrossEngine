@@ -6,7 +6,7 @@ using CrossEngine.Layers;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Lines;
-using CrossEngine.Rendering.Passes;
+using CrossEngine.Profiling;
 
 using CrossEngineEditor.Utils;
 
@@ -16,8 +16,10 @@ namespace CrossEngineEditor
     {
         static void Main(string[] args)
         {
+            Profiler.BeginSession("Main", "profiling.json");
             var app = new EditorApplication();
             app.Run();
+            Profiler.EndSession();
         }
     }
 
@@ -36,9 +38,6 @@ namespace CrossEngineEditor
         {
             LineRenderer.Init();
             Renderer2D.Init();
-            Renderer.RegisterPass(new SpriteRenderPass());
-            Renderer.RegisterPass(new LineRenderPass());
-            Renderer.EnableDepthTest(true);
             Log.EnableGLDebugging(Logger.Level.Warn);
             //Renderer.SetClearColor(0.05f, 0.05f, 0.05f);
             Renderer.SetClearColor(0.75f, 0.75f, 0.75f);

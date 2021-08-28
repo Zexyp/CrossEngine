@@ -38,8 +38,6 @@ namespace CrossEngineEditor.Panels
 
         protected override void DrawWindowContent()
         {
-            ViewportPanel = EditorLayer.Instance.GetPanel<ViewportPanel>();
-
             if (_viewportPanel == null || !_viewportPanel.IsOpen()) return;
 
             if (ready = (EditorLayer.Instance.SelectedEntity != null && EditorLayer.Instance.SelectedEntity.HasComponent<TransformComponent>()))
@@ -136,6 +134,11 @@ namespace CrossEngineEditor.Panels
                         EditorLayer.Instance.SelectedEntity.GetComponent<TransformComponent>().SetTransform(transformMat);
                 }
             }
+        }
+
+        public override void OnAttach()
+        {
+            ViewportPanel = EditorLayer.Instance.GetPanel<ViewportPanel>();
         }
 
         public override void OnDetach()

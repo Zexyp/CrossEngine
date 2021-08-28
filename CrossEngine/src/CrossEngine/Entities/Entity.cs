@@ -169,7 +169,7 @@ namespace CrossEngine.Entities
 
             if (Scene != null) Scene.Registry.AddComponent(component);
 
-            ValidateAllComponents();
+            ValidateAllComponents(component);
 
             if (Active)
             {
@@ -206,7 +206,7 @@ namespace CrossEngine.Entities
 
             _components.Remove(component);
 
-            if (Active) ValidateAllComponents();
+            if (Active) ValidateAllComponents(component);
             component.Entity = null;
 
             OnComponentRemoved?.Invoke(this, component);
@@ -360,7 +360,7 @@ namespace CrossEngine.Entities
             }
         }
 
-        private void ValidateAllComponents()
+        private void ValidateAllComponents(Component attachExcept = null)
         {
             for (int i = 0; i < _components.Count; i++)
             {
@@ -383,6 +383,19 @@ namespace CrossEngine.Entities
                 if (component.Valid != valid)
                 {
                     component.Valid = valid;
+                    if (Active)
+                    {
+                        if (valid && component != attachExcept)
+                        {
+                            component.OnAttach();
+                            component.Activate();
+                        }
+                        else
+                        {
+                            component.Deactivate();
+                            component.OnDetach();
+                        }
+                    }
                 }
             }
         }

@@ -12,7 +12,7 @@ using CrossEngine.Physics;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Utils;
 using CrossEngine.Serialization.Json;
-using CrossEngine.Rendering.Passes;
+using CrossEngine.Rendering;
 using CrossEngine.Rendering.Lines;
 
 namespace CrossEngine.Entities.Components

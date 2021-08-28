@@ -216,8 +216,10 @@ namespace CrossEngine.Serialization.Json.CustomConverters
             foreach (JsonElement entityEl in valueEl.GetProperty("Entities").GetProperty("$values").EnumerateArray())
             {
                 Entity entity = scene.CreateEmptyEntity();
+#if DEBUG
                 if (entityEl.TryGetProperty("debugName", out JsonElement debugNameEl))
                     entity.debugName = debugNameEl.GetString();
+#endif
                 entity.Enabled = entityEl.GetProperty("Enabled").GetBoolean();
                 foreach (Component item in (IEnumerable)context.DeserializationPass(entityEl.GetProperty("Components"), typeof(IEnumerable)))
                 {
@@ -235,8 +237,10 @@ namespace CrossEngine.Serialization.Json.CustomConverters
     {
         public override void Write(Utf8JsonWriter writer, Entity value, JsonSerializer context)
         {
+#if DEBUG
             if (!string.IsNullOrEmpty(value.debugName))
                 writer.WriteString("debugName", value.debugName);
+#endif
             writer.WriteBoolean("Enabled", value.Enabled);
             if (value.Parent != null)
             {

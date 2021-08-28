@@ -15,7 +15,6 @@ using CrossEngine.Utils;
 using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Scenes;
-using CrossEngine.Rendering.Passes;
 
 //using CrossEngine.FX.Particles;
 
@@ -96,22 +95,6 @@ namespace CrossEngine.Rendering
         {
             va.Bind();
             glDrawArrays((int)mode, 0, verticesCount);
-        }
-
-        static List<RenderPass> passes = new List<RenderPass>();
-
-        public static void RegisterPass(RenderPass pass)
-        {
-            passes.Add(pass);
-        }
-
-        public static void Render(Scene scene, Matrix4x4 viewProjectionMatrix)
-        {
-            SceneData data = new SceneData(scene, viewProjectionMatrix);
-            for (int i = 0; i < passes.Count; i++)
-            {
-                passes[i].Render(data);
-            }
         }
 
         public static void EnableBlending(bool enable, BlendFunc? func = null)

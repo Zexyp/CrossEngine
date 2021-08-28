@@ -23,15 +23,24 @@ using CrossEngineEditor.Panels;
 
 namespace CrossEngineEditor
 {
+    public class EditorContext
+    {
+        public Scene Scene = null;
+        public Entity ActiveEntity = null;
+        public List<Entity> SelectedEntities = null;
+    }
+
     public class EditorLayer : Layer
     {
         static public EditorLayer Instance;
 
-        public Entity SelectedEntity = null;
-        public Scene Scene;
         private List<EditorPanel> _panels = new List<EditorPanel>();
 
         public EditorCamera EditorCamera = new EditorCamera();
+
+        // context
+        public Entity SelectedEntity = null;
+        public Scene Scene;
 
         //Texture dockspaceIconTexture;
 
@@ -67,7 +76,6 @@ namespace CrossEngineEditor
                 ent.AddComponent(new TagComponent("asd"));
                 ent.AddComponent(new RigidBodyComponent() { LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
                 ent.AddComponent(new Box2DColliderComponent());
-                ent.AddComponent(new TestCompo());
             }
 
             Entity ground = Scene.CreateEntity();
@@ -76,6 +84,7 @@ namespace CrossEngineEditor
             ground.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
             ground.AddComponent(new RigidBodyComponent() { Mass = 0, Static = true, /*LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1)*/ });
             ground.AddComponent(new Box2DColliderComponent());
+            ground.AddComponent(new TestCompo());
 
             //CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
             //string json = serializer.Serialize(Scene);
@@ -195,7 +204,7 @@ namespace CrossEngineEditor
             ImGui.Begin("Debug");
 
             ImGui.Checkbox("Update physics", ref ph);
-            if (ph) Scene.OnFixedUpdateRuntime();
+            if (ph) Scene.OnUpdateRuntime(Time.DeltaTimeF);
             Vector3 gr = Scene.RigidBodyWorld.Gravity;
             if (ImGui.DragFloat3("gravity", ref gr)) Scene.RigidBodyWorld.Gravity = gr;
             ImGui.Text("editor camera:");
@@ -331,7 +340,7 @@ namespace CrossEngineEditor
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is CrossEngine.Rendering.Passes.LineRenderPassEvent)
+            if (re is CrossEngine.Rendering.LineRenderEvent)
             {
                 for (int i = 0; i < _rays.Length; i++)
                 {

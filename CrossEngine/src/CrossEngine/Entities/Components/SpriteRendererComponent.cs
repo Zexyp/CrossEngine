@@ -8,28 +8,28 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Rendering.Sprites;
 using CrossEngine.Serialization.Json;
 using CrossEngine.Events;
-using CrossEngine.Rendering.Passes;
+using CrossEngine.Rendering;
 using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Entities.Components
 {
-    public enum TransparencyMode
-    {
-        None = 0,
-        Discarding = 1,
-        Blending = 2
-    }
-
     [RequireComponent(typeof(TransformComponent))]
     public class SpriteRendererComponent : Component, ISerializable
     {
+        public enum TransparencyMode
+        {
+            None = 0,
+            Discarding = 1,
+            Blending = 2
+        }
+
         public Sprite Sprite;
         [EditorVector2Value("Size")]
         public Vector2 Size = Vector2.One;
         [EditorColor4Value("Color")]
         public Vector4 Color = Vector4.One; // also used for tinting
         [EditorEnumValue]
-        public TransparencyMode TransparencyMode;
+        public TransparencyMode TranspMode;
 
         //[EditorBooleanValue]
         //public bool ForceZIndex;
@@ -46,13 +46,13 @@ namespace CrossEngine.Entities.Components
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is SpriteRenderPassEvent)
-                OnSpriteRenderPassEvent((SpriteRenderPassEvent)re);
+            if (re is SpriteRenderEvent)
+                OnSpriteRenderPassEvent((SpriteRenderEvent)re);
         }
 
-        void OnSpriteRenderPassEvent(SpriteRenderPassEvent e)
+        void OnSpriteRenderPassEvent(SpriteRenderEvent e)
         {
-            if (e.TransparencyMode == TransparencyMode)
+            if (e.TransparencyMode == TranspMode)
             {
                 if (Sprite == null || Sprite.Texture == null)
                 {
@@ -77,7 +77,7 @@ namespace CrossEngine.Entities.Components
             info.AddValue("Size", Size);
             info.AddValue("Color", Color);
             info.AddValue("Sprite", Sprite);
-            info.AddValue("TransparencyMode", TransparencyMode);
+            info.AddValue("TransparencyMode", TranspMode);
         }
 
         public SpriteRendererComponent(DeserializationInfo info)
@@ -85,7 +85,7 @@ namespace CrossEngine.Entities.Components
             Size = (Vector2)info.GetValue("Size", typeof(Vector2));
             Color = (Vector4)info.GetValue("Color", typeof(Vector4));
             Sprite = (Sprite)info.GetRefValue("Sprite", typeof(Sprite), typeof(SpriteRendererComponent).GetMember(nameof(SpriteRendererComponent.Sprite))[0], this);
-            TransparencyMode = (TransparencyMode)info.GetValue("TransparencyMode", typeof(TransparencyMode));
+            TranspMode = (TransparencyMode)info.GetValue("TransparencyMode", typeof(TransparencyMode));
         }
         #endregion
     }
