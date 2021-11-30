@@ -88,4 +88,36 @@ namespace CrossEngine.Utils
             return this == (IntVec3)obj;
         }
     }
+
+    public struct BoolVec3
+    {
+        public bool X;
+        public bool Y;
+        public bool Z;
+
+        public BoolVec3(bool x, bool y, bool z)
+        {
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
+        }
+        public BoolVec3(bool value)
+        {
+            this.X = value;
+            this.Y = value;
+            this.Z = value;
+        }
+
+        public static bool operator ==(BoolVec3 left, BoolVec3 right) => left.X == right.X && left.Y == right.Y && left.Z == right.Z;
+        public static bool operator !=(BoolVec3 left, BoolVec3 right) => !(left.X == right.X && left.Y == right.Y && left.Z == right.Z);
+
+        public static implicit operator IntVec3(BoolVec3 v) => new IntVec3(v.X ? 1 : 0, v.Y ? 1 : 0, v.Z ? 1 : 0);
+        public static explicit operator BoolVec3(IntVec3 v) => new BoolVec3(v.X != 0, v.Y != 0, v.Z != 0);
+        public static explicit operator BoolVec3(Vector3 v) => new BoolVec3(v.X != 0, v.Y != 0, v.Z != 0);
+
+        public override bool Equals(object obj)
+        {
+            return this == (IntVec3)obj;
+        }
+    }
 }

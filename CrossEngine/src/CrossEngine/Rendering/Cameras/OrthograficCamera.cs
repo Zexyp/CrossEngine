@@ -17,12 +17,5 @@ namespace CrossEngine.Rendering.Cameras
         {
             ProjectionMatrix = Matrix4x4Extension.Ortho(left, right, bottom, top, near, far);
         }
-
-        #region ISerializable
-        public OrthographicCamera(CrossEngine.Serialization.Json.DeserializationInfo info) : base(info)
-        {
-
-        }
-        #endregion
     }
 }

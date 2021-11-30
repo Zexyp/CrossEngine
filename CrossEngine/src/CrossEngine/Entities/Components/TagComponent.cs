@@ -1,10 +1,10 @@
-﻿using CrossEngine.Serialization.Json;
+﻿using CrossEngine.Serialization;
 
 using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Entities.Components
 {
-    public class TagComponent : Component, ISerializable
+    public class TagComponent : Component
     {
         [EditorStringValue("Tag")]
         public string Tag = "";
@@ -19,17 +19,14 @@ namespace CrossEngine.Entities.Components
 
         }
 
-        #region ISerializable
-        public void GetObjectData(SerializationInfo info)
+        public override void OnSerialize(SerializationInfo info)
         {
-            // TODO: add resource serialization managment
             info.AddValue("Tag", Tag);
         }
 
-        public TagComponent(DeserializationInfo info)
+        public override void OnDeserialize(SerializationInfo info)
         {
             Tag = (string)info.GetValue("Tag", typeof(string));
         }
-        #endregion
     }
 }

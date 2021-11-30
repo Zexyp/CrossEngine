@@ -5,13 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Events;
 using CrossEngine.Rendering.Cameras;
-using CrossEngine.Serialization.Json;
+using CrossEngine.Serialization;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Entities.Components
 {
-    public class CameraComponent : Component, ISerializable
+    public class CameraComponent : Component
     {
         public Camera Camera;
+        [EditorBooleanValue]
+        public bool Primary;
 
         //public bool FixedAspectRatio = false;
 
@@ -39,16 +42,14 @@ namespace CrossEngine.Entities.Components
         //    });
         //}
 
-        #region ISerializable
-        public void GetObjectData(SerializationInfo info)
+        public override void OnSerialize(SerializationInfo info)
         {
             info.AddValue("Camera", Camera);
         }
 
-        public CameraComponent(DeserializationInfo info)
+        public override void OnDeserialize(SerializationInfo info)
         {
             Camera = (Camera)info.GetValue("Camera", typeof(Camera));
         }
-        #endregion
     }
 }

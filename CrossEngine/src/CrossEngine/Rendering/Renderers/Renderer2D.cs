@@ -293,7 +293,6 @@ namespace CrossEngine.Rendering
         public static unsafe void DrawQuad(Matrix4x4 transform, Vector4 color, int entityID = 0)
         {
             const float textureIndex = 0.0f; // white texture index
-            const float tilingFactor = 1.0f;
 
             if (data.quadIndexCount >= Renderer2DData.MaxIndices)
                 NextBatch();
@@ -302,7 +301,7 @@ namespace CrossEngine.Rendering
             {
                 data.quadVertexBufferPtr->position = Vector3.Transform(quadVertexPositions[i], transform);
                 data.quadVertexBufferPtr->color = color;
-                data.quadVertexBufferPtr->texCoord = quadTextureCoords[i] * tilingFactor;
+                data.quadVertexBufferPtr->texCoord = quadTextureCoords[i];
                 data.quadVertexBufferPtr->texIndex = textureIndex;
                 //data.quadVertexBufferPtr->tilingFactor = tilingFactor;
                 data.quadVertexBufferPtr->entityId = entityID;
@@ -316,8 +315,6 @@ namespace CrossEngine.Rendering
 
         public static unsafe void DrawQuad(Matrix4x4 transform, Texture texture, Vector4 tintColor, int entityId = 0)
         {
-            float tilingFactor = 1.0f;
-
             if (data.quadIndexCount >= Renderer2DData.MaxIndices)
                 NextBatch();
 
@@ -345,7 +342,50 @@ namespace CrossEngine.Rendering
             {
                 data.quadVertexBufferPtr->position = Vector3.Transform(quadVertexPositions[i], transform);
                 data.quadVertexBufferPtr->color = tintColor;
-                data.quadVertexBufferPtr->texCoord = quadTextureCoords[i] * tilingFactor;
+                data.quadVertexBufferPtr->texCoord = quadTextureCoords[i];
+                data.quadVertexBufferPtr->texIndex = textureIndex;
+                //data.quadVertexBufferPtr->tilingFactor = tilingFactor;
+                data.quadVertexBufferPtr->entityId = entityId;
+                data.quadVertexBufferPtr++;
+            }
+
+            data.quadIndexCount += 6;
+
+            data.stats.itemCount++;
+        }
+
+        public static unsafe void DrawQuad(Matrix4x4 transform, Texture texture, Vector4 tintColor, Vector4 texOffsets, int entityId = 0)
+        {
+            if (data.quadIndexCount >= Renderer2DData.MaxIndices)
+                NextBatch();
+
+            float textureIndex = 0.0f;
+            for (uint i = 0; i < data.textureSlotIndex; i++)
+            {
+                if (data.textureSlots[i] == texture)
+                {
+                    textureIndex = i;
+                    break;
+                }
+            }
+
+            if (textureIndex == 0.0f)
+            {
+                if (data.textureSlotIndex >= Renderer2DData.MaxTextureSlots)
+                    NextBatch();
+
+                textureIndex = data.textureSlotIndex;
+                data.textureSlots[data.textureSlotIndex] = texture;
+                data.textureSlotIndex++;
+            }
+
+            Vector2 texOff = new Vector2(texOffsets.X, texOffsets.Y);
+            Vector2 texMult = new Vector2(texOffsets.Z, texOffsets.W);
+            for (uint i = 0; i < quadVertexPositions.Length; i++)
+            {
+                data.quadVertexBufferPtr->position = Vector3.Transform(quadVertexPositions[i], transform);
+                data.quadVertexBufferPtr->color = tintColor;
+                data.quadVertexBufferPtr->texCoord = quadTextureCoords[i] * texMult + texOff;
                 data.quadVertexBufferPtr->texIndex = textureIndex;
                 //data.quadVertexBufferPtr->tilingFactor = tilingFactor;
                 data.quadVertexBufferPtr->entityId = entityId;

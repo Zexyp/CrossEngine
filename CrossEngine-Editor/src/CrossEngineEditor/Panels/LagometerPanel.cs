@@ -60,6 +60,9 @@ namespace CrossEngineEditor.Panels
                 ImGui.PlotHistogram("Frame times", ref frameTimePlot[0], frameTimePlot.Length, frameTimePlotOffset, String.Format("avg {0:F2} ms", average), 0, max, new Vector2(0, 80.0f));
                 updateFrameTimePlot = !(ImGui.IsItemHovered() && ImGui.IsMouseDown(ImGuiMouseButton.Left));
             }
+
+            //using (System.Diagnostics.Process proc = System.Diagnostics.Process.GetCurrentProcess())
+            //    ImGui.Text("Memory usage: " + (proc.PrivateMemorySize64 / (1024 * 1024)).ToString() + " MB");
         }
     }
 }

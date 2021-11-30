@@ -9,7 +9,7 @@ namespace CrossEngine.Layers
 {
     public class LayerStack
     {
-        private List<Layer> _layers = new List<Layer> { };
+        private readonly List<Layer> _layers = new List<Layer>();
 
         int lastLayerIndex = 0;
 

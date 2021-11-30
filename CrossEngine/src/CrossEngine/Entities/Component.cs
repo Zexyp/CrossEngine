@@ -1,6 +1,7 @@
 ﻿using System;
 
 using CrossEngine.Events;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Entities.Components
 {
@@ -64,6 +65,13 @@ namespace CrossEngine.Entities.Components
         {
         }
         public virtual void OnDetach()
+        {
+        }
+
+        public virtual void OnSerialize(SerializationInfo info)
+        { 
+        }
+        public virtual void OnDeserialize(SerializationInfo info)
         {
         }
     }

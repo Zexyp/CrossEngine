@@ -24,8 +24,8 @@ namespace CrossEngine.Assets.GC
 
     public static unsafe class GPUGarbageCollector
     {
-        static readonly Dictionary<GPUObjectType, List<uint>> Marked;
-        static readonly Dictionary<GPUObjectType, Action<List<uint>>> Handlers = new Dictionary<GPUObjectType, Action<List<uint>>>
+        static readonly Dictionary<GPUObjectType, List<uint>> _marked;
+        static readonly Dictionary<GPUObjectType, Action<List<uint>>> _handlers = new Dictionary<GPUObjectType, Action<List<uint>>>
         {
             { GPUObjectType.Texture, (list) => {
                 fixed (uint* p = &list.ToArray()[0])
@@ -63,18 +63,18 @@ namespace CrossEngine.Assets.GC
         static GPUGarbageCollector()
         {
             var values = Enum.GetValues(typeof(GPUObjectType));
-            Marked = new Dictionary<GPUObjectType, List<uint>>(values.Length);
+            _marked = new Dictionary<GPUObjectType, List<uint>>(values.Length);
             for (int i = 0; i < values.Length; i++)
             {
-                Marked.Add((GPUObjectType)values.GetValue(i), new List<uint>());
+                _marked.Add((GPUObjectType)values.GetValue(i), new List<uint>());
             }
         }
 
         internal static void MarkObject(GPUObjectType objectType, uint id)
         {
-            if (!Marked[objectType].Contains(id))
+            if (!_marked[objectType].Contains(id))
             {
-                Marked[objectType].Add(id);
+                _marked[objectType].Add(id);
                 Log.Core.Trace($"[GPUGarbageCollector] {objectType} id {id} marked");
             }
             else
@@ -87,10 +87,10 @@ namespace CrossEngine.Assets.GC
 
             int count = 0;
 
-            foreach (KeyValuePair<GPUObjectType, List<uint>> pair in Marked)
+            foreach (KeyValuePair<GPUObjectType, List<uint>> pair in _marked)
             {
                 if (pair.Value.Count > 0)
-                    Handlers[pair.Key](pair.Value);
+                    _handlers[pair.Key](pair.Value);
                 count += pair.Value.Count;
             }
 

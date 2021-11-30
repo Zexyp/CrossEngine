@@ -22,10 +22,6 @@ namespace CrossEngine.Entities
         private bool Active = false;
         private bool _enabled = true;
 
-#if DEBUG
-        public string debugName = "";
-#endif
-
         private bool isAttaching = false;
 
         public bool Enabled
@@ -44,7 +40,8 @@ namespace CrossEngine.Entities
         }
 
         private readonly List<Component> _components = new List<Component>();
-        public ReadOnlyCollection<Component> Components { get => _components.AsReadOnly(); }
+
+        public readonly ReadOnlyCollection<Component> Components;
 
         internal readonly TreeNode<Entity> HierarchyNode;
 
@@ -65,7 +62,12 @@ namespace CrossEngine.Entities
         public event Action<Entity, Entity> OnChildRemoved;
         #endregion
 
-        internal Entity(Scene parentScene, int uid)
+        private Entity()
+        {
+            Components = _components.AsReadOnly();
+        }
+
+        internal Entity(Scene parentScene, int uid) : this()
         {
             this.Scene = parentScene;
             this.UID = uid;
@@ -158,10 +160,11 @@ namespace CrossEngine.Entities
         #endregion
 
         #region Add
-        public void AddComponent(Component component)
+        public void AddComponet(Component component)
         {
 #if USE_TRANSFORM_CACHE
-            if (Transform == null && component.GetType() == typeof(TransformComponent)) Transform = (TransformComponent)component;
+            // only sets Transform cache if it's empty
+            if (Transform == null && component.GetType() == typeof(TransformComponent)) Transform = (TransformComponent)(Component)component;
 #endif
 
             _components.Add(component);
@@ -181,6 +184,12 @@ namespace CrossEngine.Entities
             }
 
             OnComponentAdded?.Invoke(this, component);
+        }
+
+        public T AddComponent<T>(T component) where T : Component
+        {
+            AddComponet(component);
+            return component;
         }
         #endregion
 
@@ -205,6 +214,11 @@ namespace CrossEngine.Entities
             }
 
             _components.Remove(component);
+
+#if USE_TRANSFORM_CACHE
+            if (component.GetType() == typeof(TransformComponent))
+                Transform = GetComponent<TransformComponent>();
+#endif
 
             if (Active) ValidateAllComponents(component);
             component.Entity = null;
@@ -282,7 +296,7 @@ namespace CrossEngine.Entities
                 else
                 {
                     if (Scene != null)
-                        this.HierarchyNode.Parent.Parent = Scene.HierarchyRoot;
+                        this.HierarchyNode.Parent = Scene.HierarchyRoot;
                     else
                         this.HierarchyNode.Parent = null;
                 }
@@ -316,10 +330,10 @@ namespace CrossEngine.Entities
         {
             Active = false;
 
+            if (Enabled) OnDisable();
+
             for (int i = 0; i < _components.Count; i++)
                 if (_components[i].Valid) _components[i].OnDetach();
-
-            if (Enabled) OnDisable();
         }
 
         private void OnEnable()
@@ -346,6 +360,7 @@ namespace CrossEngine.Entities
         {
             for (int i = _components.Count - 1; i >= 0; i--)
             {
+                if (e.Handled) break;
                 if (_components[i].Enabled && _components[i].Valid)
                     _components[i].OnEvent(e);
             }
@@ -383,17 +398,23 @@ namespace CrossEngine.Entities
                 if (component.Valid != valid)
                 {
                     component.Valid = valid;
-                    if (Active)
+                    if (Active && component != attachExcept)
                     {
-                        if (valid && component != attachExcept)
+                        if (valid)
                         {
-                            component.OnAttach();
-                            component.Activate();
+                            if (!component.Active)
+                            {
+                                component.OnAttach();
+                                component.Activate();
+                            }
                         }
                         else
                         {
-                            component.Deactivate();
-                            component.OnDetach();
+                            if (component.Active)
+                            {
+                                component.Deactivate();
+                                component.OnDetach();
+                            }
                         }
                     }
                 }

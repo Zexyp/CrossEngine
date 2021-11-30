@@ -62,7 +62,7 @@ namespace CrossEngine.Rendering.Textures
                         new Vector2(rect.X,     rect.Bottom)
                 };
 
-                Sprite sprite = new Sprite(this.Texture, texCoords, new Vector2(tileWidth, tileHeight));
+                Sprite sprite = new Sprite(this.Texture, texCoords);
                 sprites[i] = sprite;
             }
         }

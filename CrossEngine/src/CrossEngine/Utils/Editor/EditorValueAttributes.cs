@@ -37,50 +37,15 @@ namespace CrossEngine.Utils.Editor
         public float Min = float.MinValue;
         public float Step = 0.1f;
 
-        #region Constructors
-        public EditorNumberValueAttribute()
-        {
+        public EditorNumberValueAttribute() { }
 
-        }
-
-        public EditorNumberValueAttribute(string name) : base(name)
-        {
-
-        }
-
-        public EditorNumberValueAttribute(NumberInputTypeRepresentation numberInputType)
-        {
-            NumberInputType = numberInputType;
-        }
-
-        public EditorNumberValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min)
-        {
-            NumberInputType = numberInputType;
-            Max = max;
-            Min = min;
-        }
-
-        public EditorNumberValueAttribute(float max, float min)
-        {
-            Max = max;
-            Min = min;
-        }
-
-        public EditorNumberValueAttribute(float max, float min, float step)
-        {
-            Max = max;
-            Min = min;
-            Step = step;
-        }
-
-        public EditorNumberValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min, float step)
-        {
-            NumberInputType = numberInputType;
-            Max = max;
-            Min = min;
-            Step = step;
-        }
-        #endregion
+        public EditorNumberValueAttribute(
+            string name = null,
+            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            float max = float.MaxValue,
+            float min = float.MinValue,
+            float step = 0.1f)
+            : base(name) { }
     }
 
     #region Number
@@ -89,11 +54,13 @@ namespace CrossEngine.Utils.Editor
     {
         public EditorInt32ValueAttribute() { }
         public EditorInt32ValueAttribute(string name) : base(name) { }
-        public EditorInt32ValueAttribute(NumberInputTypeRepresentation numberInputType) : base(numberInputType) { }
-        public EditorInt32ValueAttribute(float max, float min) : base(max, min) { }
-        public EditorInt32ValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min) : base(numberInputType, max, min) { }
-        public EditorInt32ValueAttribute(float max, float min, float step) : base(max, min, step) { }
-        public EditorInt32ValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min, float step) : base(numberInputType, max, min, step) { }
+        public EditorInt32ValueAttribute(
+            string name = null,
+            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            float max = float.MaxValue,
+            float min = float.MinValue,
+            float step = 0.1f)
+            : base(name, numberInputType, max, min, step) { }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -101,11 +68,13 @@ namespace CrossEngine.Utils.Editor
     {
         public EditorSingleValueAttribute() { }
         public EditorSingleValueAttribute(string name) : base(name) { }
-        public EditorSingleValueAttribute(NumberInputTypeRepresentation numberInputType) : base(numberInputType) { }
-        public EditorSingleValueAttribute(float max, float min) : base(max, min) { }
-        public EditorSingleValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min) : base(numberInputType, max, min) { }
-        public EditorSingleValueAttribute(float max, float min, float step) : base(max, min, step) { }
-        public EditorSingleValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min, float step) : base(numberInputType, max, min, step) { }
+        public EditorSingleValueAttribute(
+            string name = null,
+            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            float max = float.MaxValue,
+            float min = float.MinValue,
+            float step = 0.1f)
+            : base(name, numberInputType, max, min, step) { }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -113,11 +82,13 @@ namespace CrossEngine.Utils.Editor
     {
         public EditorVector2ValueAttribute() { }
         public EditorVector2ValueAttribute(string name) : base(name) { }
-        public EditorVector2ValueAttribute(NumberInputTypeRepresentation numberInputType) : base(numberInputType) { }
-        public EditorVector2ValueAttribute(float max, float min) : base(max, min) { }
-        public EditorVector2ValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min) : base(numberInputType, max, min) { }
-        public EditorVector2ValueAttribute(float max, float min, float step) : base(max, min, step) { }
-        public EditorVector2ValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min, float step) : base(numberInputType, max, min, step) { }
+        public EditorVector2ValueAttribute(
+            string name = null,
+            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            float max = float.MaxValue,
+            float min = float.MinValue,
+            float step = 0.1f)
+            : base(name, numberInputType, max, min, step) { }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -125,11 +96,13 @@ namespace CrossEngine.Utils.Editor
     {
         public EditorVector3ValueAttribute() { }
         public EditorVector3ValueAttribute(string name) : base(name) { }
-        public EditorVector3ValueAttribute(NumberInputTypeRepresentation numberInputType) : base(numberInputType) { }
-        public EditorVector3ValueAttribute(float max, float min) : base(max, min) { }
-        public EditorVector3ValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min) : base(numberInputType, max, min) { }
-        public EditorVector3ValueAttribute(float max, float min, float step) : base(max, min, step) { }
-        public EditorVector3ValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min, float step) : base(numberInputType, max, min, step) { }
+        public EditorVector3ValueAttribute(
+            string name = null,
+            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            float max = float.MaxValue,
+            float min = float.MinValue,
+            float step = 0.1f)
+            : base(name, numberInputType, max, min, step) { }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -137,11 +110,13 @@ namespace CrossEngine.Utils.Editor
     {
         public EditorVector4ValueAttribute() { }
         public EditorVector4ValueAttribute(string name) : base(name) { }
-        public EditorVector4ValueAttribute(NumberInputTypeRepresentation numberInputType) : base(numberInputType) { }
-        public EditorVector4ValueAttribute(float max, float min) : base(max, min) { }
-        public EditorVector4ValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min) : base(numberInputType, max, min) { }
-        public EditorVector4ValueAttribute(float max, float min, float step) : base(max, min, step) { }
-        public EditorVector4ValueAttribute(NumberInputTypeRepresentation numberInputType, float max, float min, float step) : base(numberInputType, max, min, step) { }
+        public EditorVector4ValueAttribute(
+            string name = null,
+            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            float max = float.MaxValue,
+            float min = float.MinValue,
+            float step = 0.1f)
+            : base(name, numberInputType, max, min, step) { }
     }
     #endregion
 
@@ -191,5 +166,16 @@ namespace CrossEngine.Utils.Editor
     {
         public EditorEnumValueAttribute() { }
         public EditorEnumValueAttribute(string name) : base(name) { }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorAssetValueAttribute : EditorValueAttribute
+    {
+        public Type Type;
+
+        public EditorAssetValueAttribute(Type type)
+        {
+            Type = type;
+        }
     }
 }

@@ -127,26 +127,27 @@ namespace CrossEngine.Assets
             static Dictionary<string, Texture> textures = new Dictionary<string, Texture> { };
             //static Dictionary<string, TextureAtlas> spriteSheets = new Dictionary<string, TextureAtlas> { };
 
-            static readonly Texture DefaultTexture = new Texture(0xff00ff);
+            // wtf, how is this not crashing the whole thing?
+            static readonly Texture defaultTexture = new Texture(0xff00ff);
+            static TextureAsset defaultTextureAsset;
 
             public static Texture GetTexture(string path)
             {
-                if (path == null)
-                    return DefaultTexture;
+                path = Path.GetFullPath(path);
 
                 if (textures.ContainsKey(path))
                 {
                     return textures[path];
                 }
 
-                string fullpath = FileEnvironment.ResourceFolder + path;
-                if (!File.Exists(fullpath))
+                //string fullpath = FileEnvironment.ResourceFolder + path;
+                if (!File.Exists(path))
                 {
-                    Log.Core.Error("texture not found: " + path);
-                    return DefaultTexture;
+                    Log.Core.Error($"texture not found ('{path}')");
+                    return defaultTexture;
                 }
 
-                Bitmap image = new Bitmap(fullpath);
+                Bitmap image = new Bitmap(path);
 
                 image.RotateFlip(RotateFlipType.RotateNoneFlipY);
 
@@ -158,17 +159,53 @@ namespace CrossEngine.Assets
                 return texture;
             }
 
-            public static string GetTexturePath(Texture texture)
+            public static TextureAsset LoadTexture(string fullpath)
             {
-                foreach (KeyValuePair<string, Texture> pair in textures)
+                if (fullpath == null)
+                    return GetDefault();
+
+                if (!File.Exists(fullpath))
                 {
-                    if (pair.Value == texture)
-                        return pair.Key;
+                    Log.Core.Error("texture not found: " + fullpath);
+                    return GetDefault();
                 }
-                return null;
+
+                Bitmap image = new Bitmap(fullpath);
+
+                image.RotateFlip(RotateFlipType.RotateNoneFlipY);
+
+                TextureAsset textureAsset = new TextureAsset();
+                textureAsset.Path = fullpath;
+                textureAsset.Name = Path.GetFileNameWithoutExtension(fullpath);
+                textureAsset.Texture = new Texture(image);
+
+                image.Dispose();
+
+                return textureAsset;
             }
 
-            public static void Purge()
+            private static TextureAsset GetDefault()
+            {
+                if (defaultTextureAsset == null)
+                {
+                    defaultTextureAsset = new TextureAsset();
+                    defaultTextureAsset.Texture = new Texture(0xff00ff);
+                }
+                
+                return defaultTextureAsset;
+            }
+
+            //public static string GetTexturePath(Texture texture)
+            //{
+            //    foreach (KeyValuePair<string, Texture> pair in textures)
+            //    {
+            //        if (pair.Value == texture)
+            //            return pair.Key;
+            //    }
+            //    return null;
+            //}
+
+            public static void Collect()
             {
                 foreach (Texture texture in textures.Values)
                 {

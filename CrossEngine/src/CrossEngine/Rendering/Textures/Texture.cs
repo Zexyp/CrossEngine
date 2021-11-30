@@ -3,6 +3,7 @@ using static OpenGL.GL;
 
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Numerics;
 
 using CrossEngine.Logging;
 using CrossEngine.Assets.GC;
@@ -15,13 +16,13 @@ namespace CrossEngine.Rendering.Textures
     {
         private uint _id = 0;
         private TextureTarget _target;
-        private int _width;
-        private int _height;
+        private IntVec2 _size;
 
         public uint ID { get => _id; }
         public TextureTarget Target { get => _target; }
-        public int Width { get => _width; }
-        public int Height { get => _height; }
+        public IntVec2 Size { get => _size; }
+        public int Width { get => Size.X; }
+        public int Height { get => Size.Y; }
 
         public unsafe Texture()
         {
@@ -199,8 +200,7 @@ namespace CrossEngine.Rendering.Textures
             SetFilterParameter(FilterParameter.Linear);
             //SetWrapParameter(WrapParameter.Repeat);
 
-            this._width = width;
-            this._height = height;
+            this._size = new IntVec2(width, height);
         }
 
         public unsafe void SetImage2DData(Image image)

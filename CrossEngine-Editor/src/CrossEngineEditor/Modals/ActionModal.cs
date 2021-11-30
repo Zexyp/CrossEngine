@@ -9,7 +9,7 @@ using System.Numerics;
 
 using CrossEngine.Utils;
 
-namespace CrossEngineEditor
+namespace CrossEngineEditor.Modals
 {
     public class ActionModal : EditorModal
     {

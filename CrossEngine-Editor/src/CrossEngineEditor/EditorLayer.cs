@@ -17,17 +17,45 @@ using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Assets;
 using CrossEngine.Physics;
+using CrossEngine.Serialization;
 
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Panels;
+using CrossEngineEditor.Modals;
 
 namespace CrossEngineEditor
 {
     public class EditorContext
     {
-        public Scene Scene = null;
-        public Entity ActiveEntity = null;
-        public List<Entity> SelectedEntities = null;
+        private Entity _activeEntity = null;
+        private Scene _scene = null;
+
+        public Scene Scene
+        {
+            get => _scene;
+            set
+            {
+                if (value == _scene) return;
+                _scene = value;
+                OnSceneChanged?.Invoke();
+            }
+        }
+        public Entity ActiveEntity
+        {
+            get => _activeEntity;
+            set
+            {
+                if (value == _activeEntity) return;
+                var before = _activeEntity;
+                _activeEntity = value;
+                OnActiveEntityChanged?.Invoke();
+            }
+        }
+
+        public readonly List<Entity> SelectedEntities = new List<Entity>();
+
+        public event Action OnActiveEntityChanged;
+        public event Action OnSceneChanged;
     }
 
     public class EditorLayer : Layer
@@ -38,9 +66,7 @@ namespace CrossEngineEditor
 
         public EditorCamera EditorCamera = new EditorCamera();
 
-        // context
-        public Entity SelectedEntity = null;
-        public Scene Scene;
+        public readonly EditorContext Context = new EditorContext();
 
         //Texture dockspaceIconTexture;
 
@@ -56,33 +82,33 @@ namespace CrossEngineEditor
             AddPanel(new ViewportPanel());
             AddPanel(new GizmoPanel());
             AddPanel(new LagometerPanel());
+            AddPanel(new ImageViewerPanel());
         }
 
         public override void OnAttach()
         {
-            Scene = new Scene();
-
             //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());
             //dockspaceIconTexture.SetFilterParameter(Rendering.Textures.FilterParameter.Nearest);
 
 
 
             // --- test code
-            for (int i = -5; i < 6; i++)
+            Context.Scene = new Scene();
+            for (int i = -5; i <= 5; i++)
             {
-                Entity ent = Scene.CreateEntity();
+                Entity ent = Context.Scene.CreateEntity();
                 ent.Transform.WorldPosition = new Vector3(i, 0, 0);
-                ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
+                ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
                 ent.AddComponent(new TagComponent("asd"));
                 ent.AddComponent(new RigidBodyComponent() { LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
                 ent.AddComponent(new Box2DColliderComponent());
             }
-
-            Entity ground = Scene.CreateEntity();
-            ground.Transform.LocalScale = new Vector3(10, 1, 1);
-            ground.Transform.LocalPosition = new Vector3(0, -5, 0);
-            ground.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.GetTexture("textures/prototype_512x512_grey1.png")) });
-            ground.AddComponent(new RigidBodyComponent() { Mass = 0, Static = true, /*LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1)*/ });
+            
+            Entity ground = Context.Scene.CreateEntity();
+            ground.Transform.Scale = new Vector3(10, 1, 1);
+            ground.Transform.Position = new Vector3(0, -5, 0);
+            ground.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
+            ground.AddComponent(new RigidBodyComponent() { Mass = 0, Static = true, LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
             ground.AddComponent(new Box2DColliderComponent());
             ground.AddComponent(new TestCompo());
 
@@ -92,9 +118,7 @@ namespace CrossEngineEditor
             //CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
             //Scene = (Scene)deserializer.Deserialize(json, typeof(Scene));
 
-            Scene.Start();
             // ---
-            Physics.context = Scene.RigidBodyWorld.dynamicsWorld;
         }
 
         public override void OnDetach()
@@ -107,7 +131,9 @@ namespace CrossEngineEditor
 
         private EditorModal _modal;
 
-        bool ph = false;
+        // test pcode
+        bool su = false;
+        int sleep = 0;
 
         public unsafe override void OnRender()
         {
@@ -132,26 +158,25 @@ namespace CrossEngineEditor
                     {
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
                         {
-                            if ((flags & ActionModal.ModalButtonFlags.OK) > 0)
+                            if (flags == ActionModal.ModalButtonFlags.OK)
                             {
-                                throw new NotImplementedException();
+                                ClearContext();
 
-                                EditorLayer.Instance.Scene = new CrossEngine.Scenes.Scene();
+                                Context.Scene = new Scene();
                             }
                         }));
                     }
-                    if (ImGui.MenuItem("Open..."))
+                    if (ImGui.MenuItem("Open ..."))
                     {
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
                         {
-                            if ((flags & ActionModal.ModalButtonFlags.OK) > 0)
+                            if (flags == ActionModal.ModalButtonFlags.OK)
                             {
                                 if (FileDialog.Open(out string path, initialDir: Environment.CurrentDirectory))
                                 {
-                                    throw new NotImplementedException();
+                                    ClearContext();
 
-                                    CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
-                                    EditorLayer.Instance.Scene = (CrossEngine.Scenes.Scene)deserializer.Deserialize(File.ReadAllText(path), typeof(CrossEngine.Scenes.Scene));
+                                    Context.Scene = SceneSerializer.DeserializeJson(File.ReadAllText(path));
                                 }
                             }
                         }));
@@ -159,13 +184,18 @@ namespace CrossEngineEditor
 
                     ImGui.Separator();
 
-                    if (ImGui.MenuItem("Save as..."))
+                    if (ImGui.MenuItem("Save as ...", Context.Scene != null))
                     {
                         if (FileDialog.Save(out string path, initialDir: Environment.CurrentDirectory))
                         {
-                            CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
-                            string json = serializer.Serialize(Scene);
-                            //Log.App.Debug(json);
+                            string json;
+                            json = SceneSerializer.SertializeJson(Context.Scene);
+                            Log.App.Debug(json);
+
+                            Context.Scene.AssetPool.Dispose();
+                            ClearContext();
+                            Context.Scene = SceneSerializer.DeserializeJson(json);
+                            Context.Scene.AssetPool.Load();
                             //System.IO.File.WriteAllText(path, json);
                         }
                     }
@@ -202,13 +232,30 @@ namespace CrossEngineEditor
 
             // debug
             ImGui.Begin("Debug");
-
-            ImGui.Checkbox("Update physics", ref ph);
-            if (ph) Scene.OnUpdateRuntime(Time.DeltaTimeF);
-            Vector3 gr = Scene.RigidBodyWorld.Gravity;
-            if (ImGui.DragFloat3("gravity", ref gr)) Scene.RigidBodyWorld.Gravity = gr;
-            ImGui.Text("editor camera:");
-            ImGui.Text(EditorCamera.Position.ToString("0.00"));
+            if (Context.Scene != null)
+            {
+                if (ImGui.ArrowButton("start", Context.Scene.Running ? ImGuiDir.Left : ImGuiDir.Right))
+                {
+                    if (!Context.Scene.Running)
+                    {
+                        Context.Scene.Load();
+                        Context.Scene.Start();
+                    }
+                    else
+                    {
+                        Context.Scene.End();
+                        Context.Scene.Unload();
+                    }
+                }
+                ImGui.Checkbox("Update physics", ref su);
+                if (su) Context.Scene.OnUpdateRuntime(Time.DeltaTimeF);
+                Vector3 gr = (Context.Scene.RigidBodyWorld != null) ? Context.Scene.RigidBodyWorld.Gravity : default;
+                if (ImGui.DragFloat3("gravity", ref gr)) Context.Scene.RigidBodyWorld.Gravity = gr;
+                ImGui.Text("editor camera:");
+                ImGui.Text(EditorCamera.Position.ToString("0.00"));
+                ImGui.SliderInt("sleep", ref sleep, 0, 1000);
+                if (sleep > 0) System.Threading.Thread.Sleep(sleep);
+            }
             ImGui.End();
 
 
@@ -230,6 +277,7 @@ namespace CrossEngineEditor
             }
         }
 
+        #region Dockspace
         private unsafe void SetupDockspace()
         {
             ImGuiIOPtr io = ImGui.GetIO();
@@ -273,16 +321,27 @@ namespace CrossEngineEditor
         {
             ImGui.End();
         }
+        #endregion
 
+        #region Panel Methods
         private void AddPanel(EditorPanel panel)
         {
             _panels.Add(panel);
+            panel.Context = Context;
+
+            panel.Attached = true;
             panel.OnAttach();
+
+            panel.OnOpen();
         }
 
         private void RemovePanel(EditorPanel panel)
         {
+            panel.OnClose();
+
+            panel.Attached = false;
             panel.OnDetach();
+
             _panels.Remove(panel);
         }
 
@@ -296,7 +355,9 @@ namespace CrossEngineEditor
             }
             return null;
         }
+        #endregion
 
+        #region Modal Methods
         public void PushModal(EditorModal modal)
         {
             if (_modal != null) throw new Exception("Modal already opened!");
@@ -307,9 +368,19 @@ namespace CrossEngineEditor
         {
             _modal = null;
         }
+        #endregion
+
+        #region Context
+        public void ClearContext()
+        {
+            Context.SelectedEntities.Clear();
+            Context.ActiveEntity = null;
+            Context.Scene = null;
+        }
+        #endregion
     }
 
-    class TestCompo : Component
+    class TestCompo : ScriptableComponent
     {
         const int NumRays = 360;
         Ray[] _rays = new Ray[NumRays];
@@ -338,15 +409,26 @@ namespace CrossEngineEditor
             }
         }
 
+        public override void OnUpdate(float timestep)
+        {
+            for (int i = 0; i < _rays.Length; i++)
+            {
+                Ray ray = _rays[i];
+
+                Physics.Raycast(_rays[i].Source, _rays[i].Destination, out RaycastHitInfo info);
+                ray.HitPoint = info.point;
+
+                _rays[i] = ray;
+            }
+        }
+
         public override void OnRender(RenderEvent re)
         {
             if (re is CrossEngine.Rendering.LineRenderEvent)
             {
                 for (int i = 0; i < _rays.Length; i++)
                 {
-                    Physics.Raycast(_rays[i].Source, _rays[i].Destination, out RaycastHitInfo info);
-                    //Console.WriteLine(_rays[i].Source + "   " + _rays[i].Destination);
-                    CrossEngine.Rendering.Lines.LineRenderer.DrawLine(_rays[i].Source, info.point, new Vector4(1, 0, 0, 1));
+                    CrossEngine.Rendering.Lines.LineRenderer.DrawLine(_rays[i].Source, _rays[i].HitPoint, new Vector4(1, 0, 0, 1));
                 }
             }
         }

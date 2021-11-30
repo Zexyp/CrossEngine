@@ -44,6 +44,8 @@ namespace CrossEngine
 
         public void Run()
         {
+            Profiler.BeginSession("session", "profiling.json");
+
             Profiler.BeginScope(nameof(Init));
             Init();
             Profiler.EndScope();
@@ -74,6 +76,8 @@ namespace CrossEngine
             UnloadContent();
 
             Window.CloseWindow();
+
+            Profiler.EndSession();
         }
 
         protected virtual void Init()
@@ -113,6 +117,7 @@ namespace CrossEngine
 
         protected virtual void OnEvent(Event e)
         {
+            Profiler.BeginScope($"{nameof(OnEvent)}({ e.GetType().Name})");
             var layers = LayerStack.GetLayers();
             for (int i = layers.Count - 1; i >= 0; i--)
             {
@@ -121,8 +126,9 @@ namespace CrossEngine
             }
 
             if (!e.Handled) Input.OnEvent(e);
+            if (!e.Handled) GlobalEventDispatcher.Dispatch(e);
 
-            GlobalEventDispatcher.Dispatch(e);
+            Profiler.EndScope();
         }
 
         public void PushLayer(Layer layer) => LayerStack.PushLayer(layer);

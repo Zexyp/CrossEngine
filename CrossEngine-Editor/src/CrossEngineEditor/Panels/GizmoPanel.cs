@@ -40,7 +40,7 @@ namespace CrossEngineEditor.Panels
         {
             if (_viewportPanel == null || !_viewportPanel.IsOpen()) return;
 
-            if (ready = (EditorLayer.Instance.SelectedEntity != null && EditorLayer.Instance.SelectedEntity.HasComponent<TransformComponent>()))
+            if (ready = (Context.ActiveEntity != null && Context.ActiveEntity.HasComponent<TransformComponent>()))
             {
                 ImGuiIOPtr io = ImGui.GetIO();
                 
@@ -51,7 +51,7 @@ namespace CrossEngineEditor.Panels
                     cameraView = EditorLayer.Instance.EditorCamera.ViewMatrix;
                     cameraProjection = EditorLayer.Instance.EditorCamera.ProjectionMatrix;
 
-                    var tc = EditorLayer.Instance.SelectedEntity.GetComponent<TransformComponent>();
+                    var tc = Context.ActiveEntity.GetComponent<TransformComponent>();
                     transformMat = tc.WorldTransformMatrix;
 
                     ImGui.Text("Operation");
@@ -123,7 +123,7 @@ namespace CrossEngineEditor.Panels
             {
                 _viewportPanel.EnableSelect = !ImGuizmo.IsOver();
 
-                ImGuizmo.SetRect(_viewportPanel.ContentMin.X, _viewportPanel.ContentMin.Y, _viewportPanel.ContentMax.X - _viewportPanel.ContentMin.X, _viewportPanel.ContentMax.Y - _viewportPanel.ContentMin.Y);
+                ImGuizmo.SetRect(_viewportPanel.WindowContentAreaMin.X, _viewportPanel.WindowContentAreaMin.Y, _viewportPanel.WindowContentAreaMax.X - _viewportPanel.WindowContentAreaMin.X, _viewportPanel.WindowContentAreaMax.Y - _viewportPanel.WindowContentAreaMin.Y);
                 //ref *(float*)(void*)null
 
                 ImGuizmo.SetDrawlist();
@@ -131,7 +131,7 @@ namespace CrossEngineEditor.Panels
                 {
                     // safety feature
                     if (!Matrix4x4Extension.HasNaNElement(transformMat))
-                        EditorLayer.Instance.SelectedEntity.GetComponent<TransformComponent>().SetTransform(transformMat);
+                        Context.ActiveEntity.GetComponent<TransformComponent>().SetTransform(transformMat);
                 }
             }
         }

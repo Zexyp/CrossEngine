@@ -111,7 +111,7 @@ namespace CrossEngineEditor.Utils
 
             ofn.structSize = Marshal.SizeOf(ofn);
 
-            ofn.filter = (filter != null) ? filter : "*.* any file\0*.*\0";
+            ofn.filter = (filter != null) ? filter : "All Files (*.*)\0*.*\0";
 
             ofn.file = new String(new char[256]);
             ofn.maxFile = ofn.file.Length;
@@ -119,8 +119,8 @@ namespace CrossEngineEditor.Utils
             ofn.fileTitle = new String(new char[64]);
             ofn.maxFileTitle = ofn.fileTitle.Length;
 
-            ofn.initialDir = (initialDir != null) ? initialDir : "C:\\";
-            ofn.title = (title != null) ? title : "Open file dialog";
+            ofn.initialDir = (initialDir != null) ? initialDir : "";
+            ofn.title = (title != null) ? title : "Open";
             ofn.defExt = (defExt != null) ? defExt : "";
 
             // !!!
@@ -130,7 +130,8 @@ namespace CrossEngineEditor.Utils
             bool success = LibWrap.GetOpenFileName(ofn);
 
             // sussy info
-            Console.WriteLine("Selected file with full path: {0}", ofn.file);
+            //Console.WriteLine("Selected file with full path: {0}", ofn.file);
+
             //Console.WriteLine("Selected file name: {0}", ofn.fileTitle);
             //Console.WriteLine("Offset from file name: {0}", ofn.fileOffset);
             //Console.WriteLine("Offset from file extension: {0}", ofn.fileExtension);
@@ -150,7 +151,7 @@ namespace CrossEngineEditor.Utils
 
             ofn.structSize = Marshal.SizeOf(ofn);
 
-            ofn.filter = (filter != null) ? filter : "*.* any file\0*.*\0";
+            ofn.filter = (filter != null) ? filter : "All Files (*.*)\0*.*\0";
 
             var pls = new char[256];
             ((name != null) ? name : "file").ToCharArray().CopyTo((Span<char>)pls);
@@ -160,8 +161,8 @@ namespace CrossEngineEditor.Utils
             ofn.fileTitle = new String(new char[64]);
             ofn.maxFileTitle = ofn.fileTitle.Length;
 
-            ofn.initialDir = (initialDir != null) ? initialDir : "C:\\";
-            ofn.title = (title != null) ? title : "Save file dialog";
+            ofn.initialDir = (initialDir != null) ? initialDir : "";
+            ofn.title = (title != null) ? title : "Save";
             ofn.defExt = (defExt != null) ? defExt : "";
 
             ofn.flags |= LibWrap.OFN_OVERWRITEPROMPT;
@@ -169,7 +170,8 @@ namespace CrossEngineEditor.Utils
             bool success = LibWrap.GetSaveFileName(ofn);
 
             // sussy info
-            Console.WriteLine("Selected file with full path: {0}", ofn.file);
+            //Console.WriteLine("Selected file with full path: {0}", ofn.file);
+
             //Console.WriteLine("Selected file name: {0}", ofn.fileTitle);
             //Console.WriteLine("Offset from file name: {0}", ofn.fileOffset);
             //Console.WriteLine("Offset from file extension: {0}", ofn.fileExtension);

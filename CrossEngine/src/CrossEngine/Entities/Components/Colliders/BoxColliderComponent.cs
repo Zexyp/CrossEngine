@@ -12,12 +12,12 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Lines;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
-using CrossEngine.Serialization.Json;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Entities.Components
 {
     [RequireComponent(typeof(TransformComponent))]
-    public class BoxColliderComponent : ColliderComponent, ISerializable
+    public class BoxColliderComponent : ColliderComponent
     {
         private TransformComponent _transform;
         public TransformComponent Transform
@@ -41,10 +41,10 @@ namespace CrossEngine.Entities.Components
             {
                 if (_size == value) return;
                 _size = value;
-                if (Shape != null)
+                if (NativeShape != null)
                 {
-                    Shape.Dispose();
-                    Shape = new Box2DShape(_size / 2 * Vector3.Abs(Entity.Transform.WorldScale));
+                    NativeShape.Dispose();
+                    NativeShape = new Box2DShape((_size / 2 * Vector3.Abs(Entity.Transform.WorldScale)).ToBullet());
                 }
             }
         }
@@ -64,23 +64,12 @@ namespace CrossEngine.Entities.Components
             Transform = null;
         }
 
-        public override void OnEnable()
-        {
-            Shape = CreateShape();
-        }
-
-        public override void OnDisable()
-        {
-            Shape.Dispose();
-            Shape = null;
-        }
-
         private void OnTransformChanged(TransformComponent sender)
         {
-            if (((BoxShape)Shape).HalfExtentsWithMargin != _size / 2 * Vector3.Abs(Entity.Transform.WorldScale))
+            if (((BoxShape)NativeShape).HalfExtentsWithMargin.ToNumerics() != _size / 2 * Vector3.Abs(Entity.Transform.WorldScale))
             {
-                Shape.Dispose();
-                Shape = CreateShape();
+                NativeShape.Dispose();
+                NativeShape = CreateNativeShape();
             }
         }
 
@@ -92,21 +81,19 @@ namespace CrossEngine.Entities.Components
             }
         }
 
-        protected override CollisionShape CreateShape()
+        protected override CollisionShape CreateNativeShape()
         {
-            return new BoxShape(_size / 2 * Vector3.Abs(Entity.Transform.WorldScale));
+            return new BoxShape((_size / 2 * Vector3.Abs(Entity.Transform.WorldScale)).ToBullet());
         }
 
-        #region ISerializable
-        public void GetObjectData(SerializationInfo info)
+        public override void OnSerialize(SerializationInfo info)
         {
             info.AddValue("Size", Size);
         }
 
-        public BoxColliderComponent(DeserializationInfo info)
+        public override void OnDeserialize(SerializationInfo info)
         {
             Size = (Vector3)info.GetValue("Size", typeof(Vector3));
         }
-        #endregion
     }
 }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 using CrossEngine.Utils;
 
-namespace CrossEngineEditor
+namespace CrossEngineEditor.Modals
 {
     public abstract class EditorModal
     {

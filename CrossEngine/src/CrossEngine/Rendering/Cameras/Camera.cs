@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 
 using CrossEngine.Utils;
-using CrossEngine.Serialization.Json;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Rendering.Cameras
 {
@@ -16,12 +16,12 @@ namespace CrossEngine.Rendering.Cameras
         }
 
         #region ISerializable
-        public void GetObjectData(SerializationInfo info)
+        public void OnSerialize(SerializationInfo info)
         {
             info.AddValue("ProjectionMatrix", ProjectionMatrix);
         }
 
-        public Camera(DeserializationInfo info)
+        public void OnDeserialize(SerializationInfo info)
         {
             ProjectionMatrix = (Matrix4x4)info.GetValue("ProjectionMatrix", typeof(Matrix4x4));
         }

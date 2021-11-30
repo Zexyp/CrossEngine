@@ -4,14 +4,14 @@ using System.Numerics;
 
 using CrossEngine.Events;
 using CrossEngine.Rendering.Lines;
-using CrossEngine.Serialization.Json;
+using CrossEngine.Serialization;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Rendering;
 
 namespace CrossEngine.Entities.Components
 {
-    public class TransformComponent : Component, ISerializable
+    public class TransformComponent : Component
     {
         private Vector3 _position = Vector3.Zero;
         private Quaternion _rotation = Quaternion.Identity;
@@ -29,7 +29,7 @@ namespace CrossEngine.Entities.Components
 
         #region Properties
         [EditorVector3Value]
-        public Vector3 LocalPosition
+        public Vector3 Position
         {
             get
             {
@@ -44,7 +44,7 @@ namespace CrossEngine.Entities.Components
                 }
             }
         }
-        public Quaternion LocalRotation
+        public Quaternion Rotation
         {
             get
             {
@@ -61,7 +61,7 @@ namespace CrossEngine.Entities.Components
             }
         }
         [EditorVector3Value]
-        public Vector3 LocalEulerAngles
+        public Vector3 EulerAngles
         {
             get
             {
@@ -78,7 +78,7 @@ namespace CrossEngine.Entities.Components
             }
         }
         [EditorVector3Value]
-        public Vector3 LocalScale
+        public Vector3 Scale
         {
             get
             {
@@ -121,11 +121,11 @@ namespace CrossEngine.Entities.Components
             {
                 if (_parent == null)
                 {
-                    LocalPosition = value;
+                    Position = value;
                 }
                 else
                 {
-                    LocalPosition = Vector3.Transform(value, Matrix4x4Extension.Invert(_parent.WorldTransformMatrix));
+                    Position = Vector3.Transform(value, Matrix4x4Extension.Invert(_parent.WorldTransformMatrix));
                 }
             }
         }
@@ -144,11 +144,11 @@ namespace CrossEngine.Entities.Components
             {
                 if (_parent == null)
                 {
-                    LocalRotation = value;
+                    Rotation = value;
                 }
                 else
                 {
-                    LocalRotation = Quaternion.Inverse(_parent.WorldRotation) * value;
+                    Rotation = Quaternion.Inverse(_parent.WorldRotation) * value;
                 }
             }
         }
@@ -167,11 +167,11 @@ namespace CrossEngine.Entities.Components
             {
                 if (_parent == null)
                 {
-                    LocalScale = value;
+                    Scale = value;
                 }
                 else
                 {
-                    LocalScale = value / _parent.WorldScale;
+                    Scale = value / _parent.WorldScale;
                 }
             }
         }
@@ -231,7 +231,7 @@ namespace CrossEngine.Entities.Components
             Matrix4x4Extension.SimpleDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, matrix);
 
             _position = translation;
-            LocalEulerAngles = rotation;
+            EulerAngles = rotation;
             _scale = scale;
 
             //Log.Core.Debug("tr: {0}; rt: {1}; sc: {2}", _position, _eulerAngles, _scale);
@@ -243,7 +243,7 @@ namespace CrossEngine.Entities.Components
             Matrix4x4.Decompose(matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation);
 
             _scale = scale;
-            LocalRotation = rotation;
+            Rotation = rotation;
             _position = translation;
 
             MarkForUpdate();
@@ -253,7 +253,7 @@ namespace CrossEngine.Entities.Components
         {
             Matrix4x4.Decompose(matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation);
 
-            LocalRotation = rotation;
+            Rotation = rotation;
             _position = translation;
 
             MarkForUpdate();
@@ -293,20 +293,21 @@ namespace CrossEngine.Entities.Components
         {
             if (Entity.Parent != null)
             {
-                if (Entity.Parent.TryGetComponent(out TransformComponent tc))
-                    this.Parent = tc;
+                this.Parent = Entity.Parent.Transform;
+                //if(Entity.Parent.TryGetComponent(out TransformComponent tc))
+                //    this.Parent = tc;
             }
 
-            var children = Entity.GetChildren();
-            for (int i = 0; i < children.Length; i++)
-            {
-                if (children[i].TryGetComponent(out TransformComponent tc))
-                    tc.Parent = this;
-            }
+            //var children = Entity.GetChildren();
+            //for (int i = 0; i < children.Length; i++)
+            //{
+            //    if (children[i].TryGetComponent(out TransformComponent tc))
+            //        tc.Parent = this;
+            //}
 
             Entity.OnParentSet += Entity_OnParentSet;
-            Entity.OnChildAdded += Entity_OnChildAdded;
-            Entity.OnChildRemoved += Entity_OnChildRemoved;
+            //Entity.OnChildAdded += Entity_OnChildAdded;
+            //Entity.OnChildRemoved += Entity_OnChildRemoved;
         }
 
         public override void OnDetach()
@@ -316,24 +317,24 @@ namespace CrossEngine.Entities.Components
             this._children.Clear();
 
             Entity.OnParentSet -= Entity_OnParentSet;
-            Entity.OnChildAdded -= Entity_OnChildAdded;
-            Entity.OnChildRemoved -= Entity_OnChildRemoved;
+            //Entity.OnChildAdded -= Entity_OnChildAdded;
+            //Entity.OnChildRemoved -= Entity_OnChildRemoved;
         }
 
         private void Entity_OnParentSet(Entity sender)
         {
-            throw new System.NotImplementedException();
+            this.Parent = sender.Parent.Transform;
         }
 
-        private void Entity_OnChildAdded(Entity sender, Entity child)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        private void Entity_OnChildRemoved(Entity arg1, Entity arg2)
-        {
-            throw new System.NotImplementedException();
-        }
+        //private void Entity_OnChildAdded(Entity sender, Entity child)
+        //{
+        //    throw new System.NotImplementedException();
+        //}
+        //
+        //private void Entity_OnChildRemoved(Entity arg1, Entity arg2)
+        //{
+        //    throw new System.NotImplementedException();
+        //}
         #endregion
 
 
@@ -345,22 +346,22 @@ namespace CrossEngine.Entities.Components
             }
         }
 
-        #region ISerializable
-        public void GetObjectData(SerializationInfo info)
+        public override void OnSerialize(SerializationInfo info)
         {
-            info.AddValue("LocalPosition", LocalPosition);
-            info.AddValue("LocalRotation", LocalRotation);
-            info.AddValue("LocalScale", LocalScale);
+            info.AddValue("Position", Position);
+            info.AddValue("Rotation", Rotation);
+            info.AddValue("Scale", Scale);
+            //info.AddRefValue("Parent", Parent);
         }
 
-        public TransformComponent(DeserializationInfo info)
+        public override void OnDeserialize(SerializationInfo info)
         {
+            Position = (Vector3)info.GetValue("Position", typeof(Vector3));
+            Rotation = (Quaternion)info.GetValue("Rotation", typeof(Quaternion));
+            Scale = (Vector3)info.GetValue("Scale", typeof(Vector3));
             // this will break things!
             // TODO: fix it
-            LocalPosition = (Vector3)info.GetValue("LocalPosition", typeof(Vector3));
-            LocalRotation = (Quaternion)info.GetValue("LocalRotation", typeof(Quaternion));
-            LocalScale = (Vector3)info.GetValue("LocalScale", typeof(Vector3));
+            //Parent = (TransformComponent)info.GetRefValue("Parent", typeof(TransformComponent), typeof(TransformComponent).GetMember(nameof(Parent))[0], this);
         }
-        #endregion
     }
 }

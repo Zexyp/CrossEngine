@@ -31,14 +31,15 @@ namespace CrossEngine.Utils
                 }
             }
         }
-        public ReadOnlyCollection<TreeNode<T>> Children { get => _children.AsReadOnly(); }
+
+        public readonly ReadOnlyCollection<TreeNode<T>> Children;
 
         public TreeNode()
         {
-
+            Children = _children.AsReadOnly();
         }
 
-        public TreeNode(T value)
+        public TreeNode(T value) : this()
         {
             this.Value = value;
         }
@@ -55,6 +56,13 @@ namespace CrossEngine.Utils
         {
             _children.Remove(child);
             child._parent = null;
+        }
+
+        public bool IsParentedBy(TreeNode<T> potpar)
+        {
+            if (this.Parent == null) return false;
+            if (this.Parent == potpar) return true;
+            return this.Parent.IsParentedBy(potpar);
         }
 
         //public bool HasRoot(TreeNode<T> node)

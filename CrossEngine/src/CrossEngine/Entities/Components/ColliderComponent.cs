@@ -9,14 +9,16 @@ namespace CrossEngine.Entities.Components
     {
         public static Vector4 ColliderRepresentationColor = new Vector4(1.0f, 0.4f, 0.0f, 1.0f);
 
+        public event Action<ColliderComponent> OnShapeChanged;
+
         private CollisionShape _shape;
-        internal CollisionShape Shape
+        internal CollisionShape NativeShape
         {
             get
             {
                 if (_shape == null && Enabled)
                 {
-                    Shape = CreateShape();
+                   SetupShape();
                 }
                 return _shape;
             }
@@ -27,8 +29,23 @@ namespace CrossEngine.Entities.Components
             }
         }
 
-        public event Action<ColliderComponent> OnShapeChanged;
+        public override void OnAttach()
+        {
+            SetupShape();
+        }
 
-        protected abstract CollisionShape CreateShape(); 
+        public override void OnDetach()
+        {
+            _shape?.Dispose();
+            _shape = null;
+        }
+
+        private void SetupShape()
+        {
+            _shape = CreateNativeShape();
+            _shape.UserObject = this;
+        }
+
+        protected abstract CollisionShape CreateNativeShape(); 
     }
 }

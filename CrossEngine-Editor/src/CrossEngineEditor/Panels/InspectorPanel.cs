@@ -7,193 +7,20 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Numerics;
+
 using CrossEngine.Entities;
 using CrossEngine.Entities.Components;
 using CrossEngine.Utils.Editor;
+using CrossEngine.Assets;
+
+using CrossEngineEditor.Utils;
 
 namespace CrossEngineEditor.Panels
 {
     // TODO: second rework (attributes)
     class InspectorPanel : EditorPanel
     {
-        delegate bool EditorValueRepresentationFunction(EditorValueAttribute attribute, string name, ref object value);
-        static readonly Dictionary<Type, EditorValueRepresentationFunction> AttributeHandlers = new Dictionary<Type, EditorValueRepresentationFunction>
-        {
-            #region Number
-            { typeof(EditorInt32ValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorInt32ValueAttribute)attribute;
-                int v = (int)value;
-                bool success;
-                switch (cattribt.NumberInputType)
-                {
-                    case NumberInputTypeRepresentation.Drag:
-                        {
-                            success = ImGui.DragInt(name, ref v, cattribt.Step, (int)cattribt.Min, (int)cattribt.Max);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Input:
-                        {
-                            success = ImGui.InputInt(cattribt.Name, ref v);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Slider:
-                        {
-                            success = ImGui.SliderInt(cattribt.Name, ref v, (int)cattribt.Min, (int)cattribt.Max);
-                        }
-                        break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
-                }
-                if (success) value = v;
-                return success;
-            } },
-            { typeof(EditorSingleValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorSingleValueAttribute)attribute;
-                float v = (float)value;
-                bool success;
-                switch (cattribt.NumberInputType)
-                {
-                    case NumberInputTypeRepresentation.Drag:
-                        {
-                            success = ImGui.DragFloat(name, ref v, cattribt.Step, cattribt.Min, cattribt.Max);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Input:
-                        {
-                            success = ImGui.InputFloat(cattribt.Name, ref v);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Slider:
-                        {
-                            success = ImGui.SliderFloat(cattribt.Name, ref v, cattribt.Min, cattribt.Max);
-                        }
-                        break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
-                }
-                if (success) value = v;
-                return success;
-            } },
-            { typeof(EditorVector2ValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorVector2ValueAttribute)attribute;
-                Vector2 v = (Vector2)value;
-                bool success;
-                switch (cattribt.NumberInputType)
-                {
-                    case NumberInputTypeRepresentation.Drag:
-                        {
-                            success = ImGui.DragFloat2(name, ref v, cattribt.Step, cattribt.Min, cattribt.Max);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Input:
-                        {
-                            success = ImGui.InputFloat2(cattribt.Name, ref v);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Slider:
-                        {
-                            success = ImGui.SliderFloat2(cattribt.Name, ref v, cattribt.Min, cattribt.Max);
-                        }
-                        break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
-                }
-                if (success) value = v;
-                return success;
-            } },
-            { typeof(EditorVector3ValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorVector3ValueAttribute)attribute;
-                Vector3 v = (Vector3)value;
-                bool success;
-                switch (cattribt.NumberInputType)
-                {
-                    case NumberInputTypeRepresentation.Drag:
-                        {
-                            success = ImGui.DragFloat3(name, ref v, cattribt.Step, cattribt.Min, cattribt.Max);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Input:
-                        {
-                            success = ImGui.InputFloat3(cattribt.Name, ref v);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Slider:
-                        {
-                            success = ImGui.SliderFloat3(cattribt.Name, ref v, cattribt.Min, cattribt.Max);
-                        }
-                        break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
-                }
-                if (success) value = v;
-                return success;
-            } },
-            { typeof(EditorVector4ValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorVector4ValueAttribute)attribute;
-                Vector4 v = (Vector4)value;
-                bool success;
-                switch (cattribt.NumberInputType)
-                {
-                    case NumberInputTypeRepresentation.Drag:
-                        {
-                            success = ImGui.DragFloat4(name, ref v, cattribt.Step, cattribt.Min, cattribt.Max);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Input:
-                        {
-                            success = ImGui.InputFloat4(cattribt.Name, ref v);
-                        }
-                        break;
-                    case NumberInputTypeRepresentation.Slider:
-                        {
-                            success = ImGui.SliderFloat4(cattribt.Name, ref v, cattribt.Min, cattribt.Max);
-                        }
-                        break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
-                }
-                if (success) value = v;
-                return success;
-            } },
-            #endregion
-            #region Color
-            { typeof(EditorColor3ValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorColor3ValueAttribute)attribute;
-                Vector3 v = (Vector3)value;
-                bool success = ImGui.ColorEdit3(name, ref v);
-                if (success) value = v;
-                return success;
-            } },
-            { typeof(EditorColor4ValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorColor4ValueAttribute)attribute;
-                Vector4 v = (Vector4)value;
-                bool success = ImGui.ColorEdit4(name, ref v);
-                if (success) value = v;
-                return success;
-            } },
-            #endregion
-            { typeof(EditorBooleanValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorBooleanValueAttribute)attribute;
-                bool v = (bool)value;
-                bool success = ImGui.Checkbox(name, ref v);
-                if (success) value = v;
-                return success;
-            } },
-            { typeof(EditorStringValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorStringValueAttribute)attribute;
-                byte[] v = new byte[cattribt.MaxLength];
-                Encoding.UTF8.GetBytes((string)value).CopyTo(v, 0);
-                bool success = ImGui.InputText(name, v, cattribt.MaxLength);
-                if (success) value = Encoding.UTF8.GetString(v);
-                return success;
-            } },
-            { typeof(EditorEnumValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorEnumValueAttribute)attribute;
-                bool success;
-                int v = (int)value;
-                string[] items = Enum.GetValues(value.GetType()).OfType<object>().Select(o => o.ToString()).ToArray();
-                success = ImGui.Combo(name, ref v, items, items.Length);
-                if (success) value = v;
-                return success;
-            } },
-        };
-
-        List<Type> componentTypes = new List<Type>()
+        readonly List<Type> ComponentTypes = new List<Type>()
         {
             typeof(TransformComponent),
             typeof(TagComponent),
@@ -212,32 +39,30 @@ namespace CrossEngineEditor.Panels
         {
             if (ImGui.BeginMenuBar())
             {
-                if (ImGui.BeginMenu("Edit"))
+                if (ImGui.BeginMenu("Edit", Context.ActiveEntity != null))
                 {
-                    if (EditorLayer.Instance.SelectedEntity != null)
+                    if (ImGui.BeginMenu("Add Component"))
                     {
-                        if (ImGui.BeginMenu("Add Component"))
+                        for (int i = 0; i < ComponentTypes.Count; i++)
                         {
-                            for (int i = 0; i < componentTypes.Count; i++)
+                            if (ImGui.MenuItem(ComponentTypes[i].Name))
                             {
-                                if (ImGui.MenuItem(componentTypes[i].Name))
-                                {
-                                    EditorLayer.Instance.SelectedEntity.AddComponent((Component)componentTypes[i].GetConstructor(System.Type.EmptyTypes).Invoke(null));
-                                }
+                                Context.ActiveEntity.AddComponent((Component)ComponentTypes[i].GetConstructor(System.Type.EmptyTypes).Invoke(null));
                             }
-                            ImGui.EndMenu();
                         }
-                        if (ImGui.BeginMenu("Remove Component"))
+                        ImGui.EndMenu();
+                    }
+                    if (ImGui.BeginMenu("Remove Component"))
+                    {
+                        var components = Context.ActiveEntity.Components;
+                        for (int i = 0; i < components.Count; i++)
                         {
-                            for (int i = 0; i < EditorLayer.Instance.SelectedEntity.Components.Count; i++)
+                            if (ImGui.MenuItem(components[i].GetType().Name))
                             {
-                                if (ImGui.MenuItem(EditorLayer.Instance.SelectedEntity.Components[i].GetType().Name))
-                                {
-                                    EditorLayer.Instance.SelectedEntity.RemoveComponent(EditorLayer.Instance.SelectedEntity.Components[i]);
-                                }
+                                Context.ActiveEntity.RemoveComponent(components[i]);
                             }
-                            ImGui.EndMenu();
                         }
+                        ImGui.EndMenu();
                     }
 
                     ImGui.EndMenu();
@@ -245,7 +70,7 @@ namespace CrossEngineEditor.Panels
                 ImGui.EndMenuBar();
             }
 
-            if (EditorLayer.Instance.SelectedEntity != null) DrawComponents(EditorLayer.Instance.SelectedEntity);
+            if (Context.ActiveEntity != null) DrawComponents(Context.ActiveEntity);
         }
 
         void DrawComponents(Entity context)
@@ -255,9 +80,11 @@ namespace CrossEngineEditor.Panels
             if (ImGui.Checkbox("Enabled", ref entityEnabled)) 
                 context.Enabled = entityEnabled;
 
-            for (int compi = 0; compi < context.Components.Count; compi++)
+            var components = context.Components;
+
+            for (int compi = 0; compi < components.Count; compi++)
             {
-                Component component = context.Components[compi];
+                Component component = components[compi];
 
                 Type componentType = component.GetType();
 
@@ -284,42 +111,19 @@ namespace CrossEngineEditor.Panels
                     context.ShiftComponent(component, Math.Max(0, compi - 1));
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - (collapsingHeaderButtonOffset * 3 + style.FramePadding.X + style.FramePadding.Y));
                 if (ImGui.ArrowButton("down", ImGuiDir.Down))
-                    context.ShiftComponent(component, Math.Min(context.Components.Count - 1, compi + 1));
+                    context.ShiftComponent(component, Math.Min(components.Count - 1, compi + 1));
 
                 if (collapsingHeader)
                 {
-                    // maybe swap this for member info
-                    FieldInfo[] fields = componentType.GetFields();
-                    PropertyInfo[] props = componentType.GetProperties();
+                    MemberInfo[] membs = componentType.GetMembers();
 
-                    for (int fi = 0; fi < fields.Length; fi++)
+                    for (int mi = 0; mi < membs.Length; mi++)
                     {
-                        EditorValueAttribute attrib = fields[fi].GetCustomAttribute<EditorValueAttribute>(true);
-                        if (attrib != null)
+                        var mem = membs[mi];
+                        switch (mem.MemberType)
                         {
-                            Type attribType = attrib.GetType();
-                            if (AttributeHandlers.ContainsKey(attribType))
-                            {
-                                object value = fields[fi].GetValue(component);
-                                if (AttributeHandlers[attribType](attrib, (attrib.Name != null) ? attrib.Name : fields[fi].Name, ref value))
-                                    fields[fi].SetValue(component, value);
-                            }
-                            else ImGui.Text(fields[fi].Name);
-                        }
-                    }
-                    for (int pi = 0; pi < props.Length; pi++)
-                    {
-                        EditorValueAttribute attrib = props[pi].GetCustomAttribute<EditorValueAttribute>(true);
-                        if (attrib != null)
-                        {
-                            Type attribType = attrib.GetType();
-                            if (AttributeHandlers.ContainsKey(attribType))
-                            {
-                                object value = props[pi].GetValue(component);
-                                if (AttributeHandlers[attribType](attrib, (attrib.Name != null) ? attrib.Name : props[pi].Name, ref value))
-                                    props[pi].SetValue(component, value);
-                            }
-                            else ImGui.Text(props[0].Name);
+                            case MemberTypes.Field:    PropertyDrawer.DrawEditorValue((FieldInfo)mem, component); break;
+                            case MemberTypes.Property: PropertyDrawer.DrawEditorValue((PropertyInfo)mem, component); break;
                         }
                     }
                     ImGui.Separator();
@@ -331,7 +135,7 @@ namespace CrossEngineEditor.Panels
 
                 if (!stay)
                 {
-                    EditorLayer.Instance.SelectedEntity.RemoveComponent(component);
+                    Context.ActiveEntity.RemoveComponent(component);
                 }
             }
         }

@@ -12,7 +12,7 @@ namespace CrossEngine.Rendering.Buffers
 {
     public enum TextureFormat : int
     {
-        // check utils when modifing this!!
+        // !check utils when modifing this!!
         None = GL_NONE,
 
         // defaults
@@ -38,12 +38,17 @@ namespace CrossEngine.Rendering.Buffers
         public TextureFormat Format;
         public FilterParameter Filter;
         // TODO: wrap
+
+        public int? Index;
+
         internal bool dontDraw;
 
 		public FramebufferTextureSpecification(TextureFormat format, FilterParameter filter = FilterParameter.Linear)
         {
             Format = format;
             Filter = filter;
+
+            Index = null;
 
             dontDraw = false;
         }
@@ -161,10 +166,16 @@ namespace CrossEngine.Rendering.Buffers
                 _colorAttachments.Clear();
                 _colorAttachments.AddRange(arr);
 
+                // index begins at 0
                 for (int i = 0; i < _colorAttachments.Count; i++)
                 {
                     glBindTexture(GL_TEXTURE_2D, _colorAttachments[i]);
-                    AttachColorTexture(_colorAttachments[i], colorAttachmentSpecifications[i], (int)specification.Width, (int)specification.Height, i);
+                    AttachColorTexture(
+                        _colorAttachments[i],
+                        colorAttachmentSpecifications[i],
+                        (int)specification.Width,
+                        (int)specification.Height,
+                        colorAttachmentSpecifications[i].Index.HasValue ? colorAttachmentSpecifications[i].Index.Value : i);
                 }
             }
 
@@ -177,7 +188,15 @@ namespace CrossEngine.Rendering.Buffers
                 switch (depthAttachmentSpecification.Format)
                 {
                     case TextureFormat.Depth24Stencil8:
-                        AttachDepthTexture(_depthAttachment, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_DEPTH_STENCIL_ATTACHMENT, GL_UNSIGNED_INT_24_8, (int)specification.Width, (int)specification.Height, (int)depthAttachmentSpecification.Filter);
+                        AttachDepthTexture(
+                            _depthAttachment,
+                            GL_DEPTH24_STENCIL8,
+                            GL_DEPTH_STENCIL,
+                            GL_DEPTH_STENCIL_ATTACHMENT,
+                            GL_UNSIGNED_INT_24_8,
+                            (int)specification.Width,
+                            (int)specification.Height,
+                            (int)depthAttachmentSpecification.Filter);
                         break;
                     default: Log.Core.Warn("depth attachment type not implemented!"); break;
                 }

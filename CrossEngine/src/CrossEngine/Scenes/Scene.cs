@@ -16,40 +16,46 @@ using CrossEngine.Physics;
 using CrossEngine.Logging;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Lines;
+using CrossEngine.Assets;
+using CrossEngine.Rendering.Passes;
 
 namespace CrossEngine.Scenes
 {
     public class Scene
     {
+        // serialized
+        public AssetPool AssetPool { get; internal set; } = new AssetPool();
+        
+        public readonly ReadOnlyCollection<Entity> Entities;
+
+
         public bool Running { get; private set; } = false;
 
         internal readonly ComponentRegistry Registry = new ComponentRegistry();
 
         private readonly List<Entity> _entities = new List<Entity>();
-        public ReadOnlyCollection<Entity> Entities { get => _entities.AsReadOnly(); }
-
-        Dictionary<int, Entity> _uids = new Dictionary<int, Entity>();
+        private Dictionary<int, Entity> _uids = new Dictionary<int, Entity>();
 
         public readonly TreeNode<Entity> HierarchyRoot = new TreeNode<Entity>();
 
+        public readonly RenderPipeline Pipeline;
+
         public RigidBodyWorld RigidBodyWorld;
 
-        float fixedUpdateQueue = 0.0f;
-        int maxFixedUpdateQueue = 3;
-        float fixedUpdateRate = 60.0f;
+        //float fixedUpdateQueue = 0.0f;
+        //int maxFixedUpdateQueue = 3;
+        //float fixedUpdateRate = 60.0f;
 
         public Scene()
         {
+            Entities = _entities.AsReadOnly();
 
+            Pipeline = new RenderPipeline();
+            Pipeline.RegisterPass(new Renderer2DPass());
+            Pipeline.RegisterPass(new LineRenderPass());
         }
 
-        public Entity CreateEntity()
-        {
-            Entity entity = CreateEmptyEntity();
-            entity.AddComponent(new TransformComponent());
-            return entity;
-        }
-
+        #region Entity Manage
         public Entity CreateEmptyEntity()
         {
             int why;
@@ -66,47 +72,73 @@ namespace CrossEngine.Scenes
 
             entity.HierarchyNode.Parent = HierarchyRoot;
 
-            //entity.OnComonentAdded += Entity_OnComonentAdded;
-            //entity.OnComonentRemoved += Entity_OnComonentRemoved;
-
             if (Running)
             {
                 entity.Activate();
             }
 
+            Log.Core.Trace($"created entity with uid {entity.UID}");
+
             return entity;
         }
 
-        //private void Entity_OnComonentRemoved(Entity sender, Component component)
-        //{
-        //    Registry.RemoveComponent(component);
-        //}
-        //
-        //private void Entity_OnComonentAdded(Entity sender, Component component)
-        //{
-        //    Registry.AddComponent(component);
-        //}
+        public Entity CreateEntity()
+        {
+            Entity entity = CreateEmptyEntity();
+            entity.AddComponent(new TransformComponent());
+
+            return entity;
+        }
 
         public void RemoveEntity(Entity entity)
         {
+            var comps = entity.Components;
+            while (comps.Count > 0) entity.RemoveComponent(comps[0]);
+
             if (Running)
             {
                 entity.Deactivate();
             }
 
-            //entity.OnComonentAdded -= Entity_OnComonentAdded;
-            //entity.OnComonentRemoved -= Entity_OnComonentRemoved;
-
+            for (int i = 0; i < entity.HierarchyNode.Children.Count; i++)
+            {
+                entity.HierarchyNode.Children[i].Value.Parent = null;
+            }
             entity.Parent = null;
             entity.HierarchyNode.Parent = null;
 
             _entities.Remove(entity);
             _uids.Remove(entity.UID);
+
+            Log.Core.Trace($"removed entity with uid {entity.UID}");
+        }
+        #endregion
+
+        public Entity GetPrimaryCameraEntity()
+        {
+            // TODO: fix
+            if (Registry.ContainsType<CameraComponent>())
+            {
+                foreach (var cameraComp in Registry.GetComponentsCollection<CameraComponent>())
+                {
+                    if (cameraComp.Primary) return cameraComp.Entity;
+                }
+            }
+            return null;
         }
 
+        public Entity GetEntity(int uid)
+        {
+            if (!_uids.ContainsKey(uid)) return null;
+            return _uids[uid];
+        }
+
+        #region Start/End
         public void Start()
         {
             RigidBodyWorld = new RigidBodyWorld();
+
+            Physics.Physics.SetContext(RigidBodyWorld.GetWorld());
 
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -125,14 +157,30 @@ namespace CrossEngine.Scenes
                 _entities[i].Deactivate();
             }
 
-            // TODO: add dispose for RigidBodyWorld
-            //RigidBodyWorld = null
+            RigidBodyWorld.Cleanup();
+            RigidBodyWorld = null;
         }
+        #endregion
+
+        #region Resource Manage
+        public void Load()
+        {
+            if (Running == false) AssetPool.Load();
+            else throw new InvalidOperationException();
+        }
+
+        public void Unload()
+        {
+            if (Running == true) AssetPool.Dispose();
+            else throw new InvalidOperationException();
+        }
+        #endregion
 
         public void OnEvent(Event e)
         {
             for (int i = _entities.Count - 1; i >= 0; i--)
             {
+                if (e.Handled) break;
                 if (_entities[i].Enabled)
                     _entities[i].OnEvent(e);
             }
@@ -155,39 +203,38 @@ namespace CrossEngine.Scenes
                     _entities[i].OnUpdate(timestep);
             }
 
-            // fixed update mechanism
-            fixedUpdateQueue += timestep * fixedUpdateRate;
-            if (fixedUpdateQueue > maxFixedUpdateQueue)
-            {
-                fixedUpdateQueue = 0.0f;
-                Log.Core.Trace("droped scene fixed update queue");
-            }
-            while (fixedUpdateQueue > 1.0f)
-            {
-                OnFixedUpdateRuntime();
-                fixedUpdateQueue--;
-            }
-        }
-
-        public void OnFixedUpdateRuntime()
-        {
-            RigidBodyWorld.Update(1.0f / 60);
-
+            RigidBodyWorld.Update(timestep);
             OnEvent(new RigidBodyWorldUpdateEvent());
+
+            //// fixed update mechanism
+            //fixedUpdateQueue += timestep * fixedUpdateRate;
+            //if (fixedUpdateQueue > maxFixedUpdateQueue)
+            //{
+            //    fixedUpdateQueue = 0.0f;
+            //    Log.Core.Trace("droped scene fixed update queue");
+            //}
+            //while (fixedUpdateQueue > 1.0f)
+            //{
+            //    fixedUpdateQueue--;
+            //}
+            //OnFixedUpdateRuntime();
         }
+
+        //public void OnFixedUpdateRuntime()
+        //{
+        //
+        //}
 
         public void OnRenderRuntime()
         {
             // TODO: fix no camera state
-
-            throw new NotImplementedException();
 
             var camEnt = GetPrimaryCameraEntity();
             if (camEnt != null)
             {
                 Matrix4x4 projectionMatrix = camEnt.GetComponent<CameraComponent>().Camera.ProjectionMatrix;
                 TransformComponent trans = camEnt.GetComponent<TransformComponent>();
-                //Renderer.Render(this, projectionMatrix * Matrix4x4.CreateTranslation(-trans.WorldPosition) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(trans.WorldRotation)));
+                RenderPipeline(Matrix4x4.CreateTranslation(-trans.WorldPosition) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(trans.WorldRotation)) * projectionMatrix);
             }
         }
 
@@ -198,69 +245,71 @@ namespace CrossEngine.Scenes
 
         private void RenderPipeline(Matrix4x4 viewProjectionMatrix, Framebuffer framebuffer = null)
         {
-            if (framebuffer != null) framebuffer.Bind();
+            Pipeline.Render(new SceneData(this, viewProjectionMatrix), framebuffer);
 
-            #region Sprites
-            Renderer2D.BeginScene(viewProjectionMatrix);
-            {
-                SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.None);
-                OnRender(re);
-            }
-            Renderer2D.EndScene();
-
-            Renderer2D.EnableDiscardingTransparency(true);
-
-            Renderer2D.BeginScene(viewProjectionMatrix);
-            {
-                SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.Discarding);
-                OnRender(re);
-            }
-            Renderer2D.EndScene();
-
-            Renderer2D.EnableDiscardingTransparency(false);
-
-            Renderer.EnableBlending(true, BlendFunc.OneMinusSrcAlpha);
-
-            Renderer2D.BeginScene(viewProjectionMatrix);
-            {
-                SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.Blending);
-                OnRender(re);
-            }
-            Renderer2D.EndScene();
-
-            Renderer.EnableBlending(false);
-            #endregion
-
-            if (framebuffer != null) framebuffer.EnableColorDrawBuffer(1, false);
-
-            #region Lines
-            Renderer.SetDepthFunc(DepthFunc.LessEqual);
-
-            LineRenderer.BeginScene(viewProjectionMatrix);
-            {
-                LineRenderEvent re = new LineRenderEvent();
-                OnRender(re);
-            }
-            LineRenderer.EndScene();
-
-            Renderer.SetDepthFunc(DepthFunc.Default);
-            #endregion
-
-            if (framebuffer != null) framebuffer.EnableAllColorDrawBuffers(true);
-        }
-
-        public Entity GetPrimaryCameraEntity()
-        {
-            // TODO: fix
-            if (Registry.ContainsType<CameraComponent>())
-                return Registry.GetComponents<CameraComponent>()[0].Entity;
-            return null;
-        }
-
-        public Entity GetEntity(int id)
-        {
-            if (!_uids.ContainsKey(id)) return null;
-            return _uids[id];
+            //if (framebuffer != null) framebuffer.Bind();
+            //
+            //// sprite render pass
+            //Renderer2D.BeginScene(viewProjectionMatrix);
+            //{
+            //    var spriteEnts = Registry.GetComponentsGroup<TransformComponent, SpriteRendererComponent>(Registry.GetComponentsCollection<SpriteRendererComponent>());
+            //    foreach (var spEnt in spriteEnts)
+            //    {
+            //        SpriteRendererComponent src = spEnt.Item2;
+            //        // check if enabled
+            //        if (!src.Enabled) continue;
+            //        TransformComponent trans = spEnt.Item1;
+            //
+            //        // forced z index
+            //        //if (!ForceZIndex)
+            //        //else
+            //
+            //        Matrix4x4 matrix = Matrix4x4.CreateScale(new Vector3(src.Size, 1.0f)) * Matrix4x4.CreateTranslation(new Vector3(src.DrawOffset, 1.0f)) * trans.WorldTransformMatrix;
+            //
+            //        //                          small check can be implemented later
+            //        if (src.TextureAsset == null/* || !src.TextureAsset.IsLoaded*/) Renderer2D.DrawQuad(matrix, src.Color, spEnt.CommonEntity.UID);
+            //        else Renderer2D.DrawQuad(matrix, src.TextureAsset.Texture, src.Color, src.TextureOffsets, spEnt.CommonEntity.UID);
+            //    }
+            //    OnRender(new SpriteRenderEvent());
+            //}
+            //Renderer2D.EndScene();
+            //
+            ////Renderer2D.EnableDiscardingTransparency(true);
+            ////
+            ////Renderer2D.BeginScene(viewProjectionMatrix);
+            ////{
+            ////    SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.Discarding);
+            ////    OnRender(re);
+            ////}
+            ////Renderer2D.EndScene();
+            ////
+            ////Renderer2D.EnableDiscardingTransparency(false);
+            ////
+            ////Renderer.EnableBlending(true, BlendFunc.OneMinusSrcAlpha);
+            ////
+            ////Renderer2D.BeginScene(viewProjectionMatrix);
+            ////{
+            ////    SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.Blending);
+            ////    OnRender(re);
+            ////}
+            ////Renderer2D.EndScene();
+            ////
+            ////Renderer.EnableBlending(false);
+            //
+            //if (framebuffer != null) framebuffer.EnableColorDrawBuffer(1, false);
+            //
+            //// line render pass
+            //Renderer.SetDepthFunc(DepthFunc.LessEqual);
+            //
+            //LineRenderer.BeginScene(viewProjectionMatrix);
+            //{
+            //    OnRender(new LineRenderEvent());
+            //}
+            //LineRenderer.EndScene();
+            //
+            //Renderer.SetDepthFunc(DepthFunc.Default);
+            //
+            //if (framebuffer != null) framebuffer.EnableAllColorDrawBuffers(true);
         }
     }
 }

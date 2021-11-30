@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,57 +11,129 @@ namespace CrossEngine.Entities.Components
 {
     class ComponentRegistry
     {
-        Dictionary<Type, List<Component>> components = new Dictionary<Type, List<Component>>();
+        Dictionary<Type, IList> _registryDict = new Dictionary<Type, IList>();
 
         //public class ComponentAddedEvent<T> : CrossEngine.Events.Event where T : Component
         //{
         //
         //}
 
-        public void AddComponent(Component component)
+        public void AddComponent<T>(T component) where T : Component
         {
-            Type type = component.GetType();
-            if (components.ContainsKey(type))
+            Type type = typeof(T);
+            if (type == typeof(Component)) type = component.GetType();
+            if (_registryDict.ContainsKey(type))
             {
-                if (!components[type].Contains(component))
-                    components[type].Add(component);
+                var list = _registryDict[type];
+                if (!list.Contains(component))
+                    list.Add(component);
                 else
                     throw new InvalidOperationException("Component already added!");
             }
             else
-                components.Add(type, new List<Component> { component });
+            {
+                if (!typeof(T).Equals(typeof(Component)))
+                    _registryDict.Add(type, new List<T> { component });
+                else
+                {
+                    var createdList = (IList)typeof(List<>)
+                        .MakeGenericType(type)
+                        .GetConstructor(new Type[0])
+                        .Invoke(null);
+                    createdList.Add(component);
+
+                    _registryDict.Add(type, createdList);
+                }
+            }
         }
 
         public void RemoveComponent(Component component)
         {
             Type type = component.GetType();
-            if (components.ContainsKey(type))
+            if (type == typeof(Component)) type = component.GetType();
+            if (_registryDict.ContainsKey(type))
             {
-                if (components[type].Contains(component))
+                var list = _registryDict[type];
+                if (list.Contains(component))
                 {
-                    components[type].Remove(component);
+                    list.Remove(component);
+
                     // cleanup
-                    if (components[type].Count <= 0)
-                        components.Remove(type);
+                    if (list.Count <= 0)
+                        _registryDict.Remove(type);
+
                     return;
                 }
             }
+
             throw new InvalidOperationException("Component was not added!");
         }
 
-        public ReadOnlyCollection<Component> GetComponents<T>() where T : Component
+        public ReadOnlyCollection<T> GetComponentsCollection<T>(/*, bool inherit = false*/) where T : Component
         {
             Type type = typeof(T);
-            if (components.ContainsKey(type))
-                return components[type].AsReadOnly();
+            if (type == typeof(Component)) throw new InvalidOperationException();
+            if (_registryDict.ContainsKey(type))
+                return ((List<T>)_registryDict[type]).AsReadOnly();
+
             return null;
-            // idk i'm getting lazy
-            //throw new Exception("There is no component of given type");
         }
 
-        public bool ContainsType<T>() where T : Component
+        public ReadOnlyCollection<ComponentGroup<Tmatch, Twith>> GetComponentsGroup<Tmatch, Twith>(ICollection<Twith> collection/*, bool inherit = false*/) where Tmatch : Component where Twith : Component
         {
-            return components.ContainsKey(typeof(T));
+            if (collection == null) return null;
+            Type searchedType = typeof(Tmatch);
+            if (!_registryDict.ContainsKey(searchedType)) return null;
+
+            List<ComponentGroup<Tmatch, Twith>> list = new List<ComponentGroup<Tmatch, Twith>>();
+            var matchCol = GetComponentsCollection<Tmatch>();
+            if (matchCol == null) return null;
+
+            foreach (var with in collection)
+            {
+                if (with.Entity.TryGetComponent(out Tmatch match)) list.Add(new ComponentGroup<Tmatch, Twith>(match, with));
+            }
+
+            return list.AsReadOnly();
         }
+
+        public bool ContainsType(Type type, bool inherit = false)
+        {
+            if (_registryDict.ContainsKey(type))
+                return true;
+
+            if (!inherit) return false;
+
+            // inherit check
+            foreach (var key in _registryDict.Keys)
+            {
+                if (key.IsSubclassOf(type)) return true;
+            }
+
+            return false;
+        }
+
+        public bool ContainsType<T>(bool inherit = false) where T : Component
+        {
+            Type type = typeof(T);
+            if (type == typeof(Component)) throw new InvalidOperationException();
+            return ContainsType(type, inherit);
+        }
+    }
+
+    class ComponentGroup<T1, T2> : Tuple<T1, T2>, IComponentGroup where T1 : Component where T2 : Component
+    {
+        public Entity CommonEntity { get; private init; }
+
+        public ComponentGroup(T1 item1, T2 item2) : base(item1, item2)
+        {
+            if (item1.Entity == item2.Entity) CommonEntity = item1.Entity;
+            else throw new InvalidOperationException($"Can't create '{nameof(ComponentGroup<T1, T2>)}' with componets of different entities.");
+        }
+    }
+
+    interface IComponentGroup
+    {
+        public Entity CommonEntity { get; }
     }
 }
