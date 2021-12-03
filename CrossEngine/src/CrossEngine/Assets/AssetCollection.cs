@@ -139,7 +139,7 @@ namespace CrossEngine.Assets
             {
                 ass.Load();
             }
-            Log.Core.Trace($"loaded asset collection of type '{this.GetType().Name}'");
+            Log.Core.Trace($"loaded asset collection of type '{this.GetType().GetGenericArguments()[0].Name}'");
         }
 
         public void Dispose()
@@ -148,7 +148,7 @@ namespace CrossEngine.Assets
             {
                 ass.Dispose();
             }
-            Log.Core.Trace($"unloaded asset collection of type '{this.GetType().Name}'");
+            Log.Core.Trace($"unloaded asset collection of type '{this.GetType().GetGenericArguments()[0].Name}'");
         }
     }
 

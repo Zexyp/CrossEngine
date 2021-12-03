@@ -43,34 +43,64 @@ namespace CrossEngineEditor.Panels
                 DrawEntityNode(Context.Scene.HierarchyRoot, "");
         }
 
-        static TreeNode<Entity> selectedDragNDropNode = null;
+        TreeNode<Entity> selectedDragNDropNode = null;
+        TreeNode<Entity> targetedNode = null;
 
-        void DrawEntityNode(TreeNode<Entity> node, string id)
+        void DrawEntityNode(TreeNode<Entity> node, string id, int i = 0)
         {
-            int i = 0;
+            Entity nodeEntity = node.Value;
 
-            Entity entity = node.Value;
+            if (targetedNode == node && targetedNode.Value != null) ImGui.Button("", new Vector2(ImGui.GetColumnWidth(), 2.5f));
 
-            ImGuiTreeNodeFlags flags = ((entity == Context.ActiveEntity) ? ImGuiTreeNodeFlags.Selected : ImGuiTreeNodeFlags.None) |
+            unsafe
+            {
+                if (ImGui.BeginDragDropTarget())
+                {
+                    var payload = ImGui.AcceptDragDropPayload("_TREENODE<ENTITY>");
+                    if (payload.NativePtr != null && selectedDragNDropNode != null)
+                    {
+                        EditorApplication.Log.Trace("dropped " +
+                            $"{((selectedDragNDropNode != null && selectedDragNDropNode.Value != null) ? selectedDragNDropNode.Value.UID : "null")} before " +
+                            $"{((targetedNode != null && nodeEntity != null) ? nodeEntity.UID : "null")}");
+
+                        if (!targetedNode.IsParentedBy(selectedDragNDropNode))
+                        {
+                            if (selectedDragNDropNode.Parent != targetedNode.Parent)
+                                selectedDragNDropNode.Value.Parent = targetedNode.Value.Parent;
+
+                            Context.Scene.SwapEntity(targetedNode.Value, selectedDragNDropNode.Value);
+
+                            targetedNode.Parent.SwapChildren(targetedNode, selectedDragNDropNode);
+                        }
+                        else EditorApplication.Log.Trace($"drop failed (cyclic tree prevented)");
+
+                        selectedDragNDropNode = null;
+                        targetedNode = null;
+                    }
+                    ImGui.EndDragDropTarget();
+                }
+            }
+
+            ImGuiTreeNodeFlags flags = ((nodeEntity == Context.ActiveEntity) ? ImGuiTreeNodeFlags.Selected : ImGuiTreeNodeFlags.None) |
                                        ImGuiTreeNodeFlags.OpenOnArrow |
                                        ImGuiTreeNodeFlags.OpenOnDoubleClick |
                                        ImGuiTreeNodeFlags.DefaultOpen |
                                        ((node.Children.Count <= 0) ? ImGuiTreeNodeFlags.Leaf : ImGuiTreeNodeFlags.None);
-
-            if (entity == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
             
-            string label = (Context.Scene.HierarchyRoot == node) ? "Scene" : (entity != null) ? (
-                entity.TryGetComponent(out TagComponent tagcomp) ?
+            if (nodeEntity == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
+            
+            string label = (Context.Scene.HierarchyRoot == node) ? "Scene" : (nodeEntity != null) ? (
+                nodeEntity.TryGetComponent(out TagComponent tagcomp) ?
                     tagcomp.Tag :
-                    "uid: " + entity.UID.ToString())
+                    "uid: " + nodeEntity.UID.ToString())
                 : "";
             
-            bool opened = ImGui.TreeNodeEx(id + i++.ToString(), flags, label);
+            bool opened = ImGui.TreeNodeEx(id + i.ToString(), flags, label);
             
-            if (entity == Context.ActiveEntity) ImGui.PopStyleColor();
+            if (nodeEntity == Context.ActiveEntity) ImGui.PopStyleColor();
 
             if (ImGui.IsItemClicked())
-                Context.ActiveEntity = entity;
+                Context.ActiveEntity = nodeEntity;
 
             unsafe
             {
@@ -78,23 +108,26 @@ namespace CrossEngineEditor.Panels
                 {
                     ImGui.Text("Entity: " + label);
                     selectedDragNDropNode = node;
-                    ImGui.SetDragDropPayload("_ENTITY_UID", IntPtr.Zero, 0);
+                    ImGui.SetDragDropPayload("_TREENODE<ENTITY>", IntPtr.Zero, 0);
                     ImGui.EndDragDropSource();
                 }
 
                 if (ImGui.BeginDragDropTarget())
                 {
-                    var payload = ImGui.AcceptDragDropPayload("_ENTITY_UID");
+                    targetedNode = node;
+
+                    var payload = ImGui.AcceptDragDropPayload("_TREENODE<ENTITY>");
                     if (payload.NativePtr != null)
                     {
                         EditorApplication.Log.Trace("dropped " +
                             $"{((selectedDragNDropNode != null && selectedDragNDropNode.Value != null) ? selectedDragNDropNode.Value.UID : "null")} onto " +
-                            $"{((node != null && node.Value != null) ? node.Value.UID : "null")}");
+                            $"{((node != null && nodeEntity != null) ? nodeEntity.UID : "null")}");
 
-                        if (!node.IsParentedBy(node)) selectedDragNDropNode.Value.Parent = node.Value;
+                        if (!node.IsParentedBy(selectedDragNDropNode)) selectedDragNDropNode.Value.Parent = nodeEntity;
                         else EditorApplication.Log.Trace($"drop failed (cyclic tree prevented)");
 
                         selectedDragNDropNode = null;
+                        targetedNode = null;
                     }
                     ImGui.EndDragDropTarget();
                 }
@@ -106,17 +139,17 @@ namespace CrossEngineEditor.Panels
                     if (ImGui.MenuItem("Add child"))
                     {
                         var newboi = Context.Scene.CreateEntity();
-                        newboi.Parent = node.Value;
+                        newboi.Parent = nodeEntity;
                     }
                     if (ImGui.MenuItem("Add empty child"))
                     {
                         var newboi = Context.Scene.CreateEmptyEntity();
-                        newboi.Parent = node.Value;
+                        newboi.Parent = nodeEntity;
                     }
                     ImGui.Separator();
-                    if (ImGui.MenuItem("Remove entity", node.Value != null))
+                    if (ImGui.MenuItem("Remove entity", nodeEntity != null))
                     {
-                        Context.Scene.RemoveEntity(node.Value);
+                        Context.Scene.RemoveEntity(nodeEntity);
                         Context.ActiveEntity = null;
                     }
 
@@ -128,7 +161,7 @@ namespace CrossEngineEditor.Panels
             {
                 for (int cni = 0; cni < node.Children.Count; cni++)
                 {
-                    DrawEntityNode(node.Children[cni], id + i++.ToString());
+                    DrawEntityNode(node.Children[cni], id + "|" + i++.ToString());
                 }
                 ImGui.TreePop();
             }

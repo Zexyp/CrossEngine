@@ -29,12 +29,12 @@ namespace CrossEngine.Entities.Components
             }
         }
 
-        public override void OnAttach()
+        public override void OnStart()
         {
             SetupShape();
         }
 
-        public override void OnDetach()
+        public override void OnEnd()
         {
             _shape?.Dispose();
             _shape = null;

@@ -71,6 +71,16 @@ namespace CrossEngineEditor.Panels
         protected override void EndPrepareWindow()
         {
             ImGui.PopStyleVar();
+
+            if (ImGui.BeginMenuBar())
+            {
+                Vector2 cp = ImGui.GetCursorPos();
+                cp.X += ImGui.GetColumnWidth() / 2;
+                ImGui.SetCursorPos(cp);
+                ImGui.Button(Context.Scene.Running ? "[]" : ">");
+
+                ImGui.EndMenuBar();
+            }
         }
 
         protected override void DrawWindowContent()
@@ -81,28 +91,38 @@ namespace CrossEngineEditor.Panels
 
             if (Context.Scene != null)
             {
-                Vector2 viewportPanelSize = ImGui.GetContentRegionAvail();
-                if (viewportPanelSize != viewportSize && viewportPanelSize.X > 0 && viewportPanelSize.Y > 0)
+                // resize check
                 {
-                    viewportSize = viewportPanelSize;
+                    Vector2 viewportPanelSize = ImGui.GetContentRegionAvail();
+                    if (viewportPanelSize != viewportSize && viewportPanelSize.X > 0 && viewportPanelSize.Y > 0)
+                    {
+                        viewportSize = viewportPanelSize;
 
-                    framebuffer.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
+                        framebuffer.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
 
-                    EditorCameraController.SetViewportSize(viewportSize.X, viewportSize.Y);
+                        EditorCameraController.SetViewportSize(viewportSize.X, viewportSize.Y);
+
+                        if (Context.Scene.Running) Context.Scene.OnEvent(new WindowResizeEvent((uint)viewportSize.X, (uint)viewportSize.Y));
+                    }
                 }
+
+                // draw the framebuffer as 
                 ImGui.Image(new IntPtr(framebuffer.ColorAttachments[Context.Scene.Pipeline.FBStructureIndex.Color]),
                     viewportSize,
                     new Vector2(0, 1),
                     new Vector2(1, 0));
 
                 framebuffer.Bind();
-
                 Renderer.Clear();
-                framebuffer.ClearAttachment(1, Context.Scene.Pipeline.FBStructureIndex.Color);
+                framebuffer.ClearAttachment((uint)Context.Scene.Pipeline.FBStructureIndex.ID, 0);
 
-                if (Context.Scene != null) Context.Scene.OnRenderEditor(EditorLayer.Instance.EditorCamera, framebuffer);
+                if (Context.Scene != null)
+                {
+                    if (Context.Scene.Running) Context.Scene.OnRenderRuntime(framebuffer);
+                    else Context.Scene.OnRenderEditor(EditorLayer.Instance.EditorCamera, framebuffer);
+                }
 
-                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Focused && EnableSelect)
+                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsItemHovered() && Focused && EnableSelect)
                 {
                     Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
                     texpos.Y = -texpos.Y;

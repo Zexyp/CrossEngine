@@ -249,12 +249,33 @@ namespace CrossEngine.Entities.Components
             MarkForUpdate();
         }
 
-        public void SetTranslationRotation(Matrix4x4 matrix)
+        public void SetWorldTransform(Matrix4x4 matrix)
         {
             Matrix4x4.Decompose(matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation);
 
+            WorldScale = scale;
+            WorldRotation = rotation;
+            WorldPosition = translation;
+
+            MarkForUpdate();
+        }
+
+        public void SetTranslationRotation(Matrix4x4 matrix)
+        {
+            Matrix4x4.Decompose(matrix, out _, out Quaternion rotation, out Vector3 translation);
+
             Rotation = rotation;
             _position = translation;
+
+            MarkForUpdate();
+        }
+
+        public void SetWorldTranslationRotation(Matrix4x4 matrix)
+        {
+            Matrix4x4.Decompose(matrix, out _, out Quaternion rotation, out Vector3 translation);
+
+            WorldRotation = rotation;
+            WorldPosition = translation;
 
             MarkForUpdate();
         }
@@ -305,7 +326,7 @@ namespace CrossEngine.Entities.Components
             //        tc.Parent = this;
             //}
 
-            Entity.OnParentSet += Entity_OnParentSet;
+            Entity.OnParentChanged += OnParentEntitySet;
             //Entity.OnChildAdded += Entity_OnChildAdded;
             //Entity.OnChildRemoved += Entity_OnChildRemoved;
         }
@@ -316,14 +337,27 @@ namespace CrossEngine.Entities.Components
 
             this._children.Clear();
 
-            Entity.OnParentSet -= Entity_OnParentSet;
+            Entity.OnParentChanged -= OnParentEntitySet;
             //Entity.OnChildAdded -= Entity_OnChildAdded;
             //Entity.OnChildRemoved -= Entity_OnChildRemoved;
         }
 
-        private void Entity_OnParentSet(Entity sender)
+        private void OnParentEntitySet(Entity sender)
         {
-            this.Parent = sender.Parent.Transform;
+            this.Parent = (sender.Parent != null) ? sender.Parent.Transform : null;
+
+            if (this.Parent != null)
+            {
+                WorldPosition = Position;
+                WorldRotation = Rotation;
+                WorldScale = Scale;
+            }
+            else
+            {
+                Position = WorldPosition;
+                Rotation = WorldRotation;
+                Scale = WorldScale; 
+            }
         }
 
         //private void Entity_OnChildAdded(Entity sender, Entity child)

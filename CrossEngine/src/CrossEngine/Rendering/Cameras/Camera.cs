@@ -1,11 +1,11 @@
 ﻿using System.Numerics;
 
-using CrossEngine.Utils;
+using CrossEngine.Utils.Editor;
 using CrossEngine.Serialization;
 
 namespace CrossEngine.Rendering.Cameras
 {
-    public class Camera : ISerializable
+    public class Camera : ISerializable, IEditorValueDrawable
     {
         //_viewMatrix = Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
         public Matrix4x4 ProjectionMatrix = Matrix4x4.Identity;

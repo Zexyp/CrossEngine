@@ -112,7 +112,12 @@ namespace CrossEngine.Scenes
 
             Log.Core.Trace($"removed entity with uid {entity.UID}");
         }
-        #endregion
+
+        public Entity GetEntity(int uid)
+        {
+            if (!_uids.ContainsKey(uid)) return null;
+            return _uids[uid];
+        }
 
         public Entity GetPrimaryCameraEntity()
         {
@@ -127,11 +132,32 @@ namespace CrossEngine.Scenes
             return null;
         }
 
-        public Entity GetEntity(int uid)
+        public int GetEntityIndex(Entity value)
         {
-            if (!_uids.ContainsKey(uid)) return null;
-            return _uids[uid];
+            return _entities.IndexOf(value);
         }
+
+        public void ShiftEntity(Entity entity, int index)
+        {
+            if (!_entities.Contains(entity)) throw new InvalidOperationException("Scene does not contain given entity!");
+            if (index < 0 || index > _entities.Count - 1) throw new InvalidOperationException("Invalid index!");
+
+            Entity h = _entities[index];
+            int newindex = _entities.IndexOf(entity);
+            _entities[index] = entity;
+            _entities[newindex] = h;
+        }
+
+        public void SwapEntity(Entity entity1, Entity entity2)
+        {
+            if (!_entities.Contains(entity1) || !_entities.Contains(entity2)) throw new InvalidOperationException("Scene does not contain given entity!");
+
+            int index1 = _entities.IndexOf(entity1);
+            int index2 = _entities.IndexOf(entity2);
+            _entities[index1] = entity2;
+            _entities[index2] = entity1;
+        }
+        #endregion
 
         #region Start/End
         public void Start()
@@ -171,7 +197,7 @@ namespace CrossEngine.Scenes
 
         public void Unload()
         {
-            if (Running == true) AssetPool.Dispose();
+            if (Running == false) AssetPool.Dispose();
             else throw new InvalidOperationException();
         }
         #endregion
@@ -225,16 +251,14 @@ namespace CrossEngine.Scenes
         //
         //}
 
-        public void OnRenderRuntime()
+        public void OnRenderRuntime(Framebuffer framebuffer)
         {
             // TODO: fix no camera state
 
             var camEnt = GetPrimaryCameraEntity();
             if (camEnt != null)
             {
-                Matrix4x4 projectionMatrix = camEnt.GetComponent<CameraComponent>().Camera.ProjectionMatrix;
-                TransformComponent trans = camEnt.GetComponent<TransformComponent>();
-                RenderPipeline(Matrix4x4.CreateTranslation(-trans.WorldPosition) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(trans.WorldRotation)) * projectionMatrix);
+                RenderPipeline(camEnt.GetComponent<CameraComponent>().ViewProjectionMatrix, framebuffer);
             }
         }
 

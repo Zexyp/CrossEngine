@@ -73,7 +73,7 @@ namespace CrossEngineEditor.Panels
             if (Context.ActiveEntity != null) DrawComponents(Context.ActiveEntity);
         }
 
-        void DrawComponents(Entity context)
+        private void DrawComponents(Entity context)
         {
             // TODO: fix
             bool entityEnabled = context.Enabled;

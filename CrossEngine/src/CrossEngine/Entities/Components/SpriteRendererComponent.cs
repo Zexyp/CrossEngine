@@ -8,7 +8,6 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Rendering.Sprites;
 using CrossEngine.Serialization;
 using CrossEngine.Events;
-using CrossEngine.Rendering;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Assets;
 

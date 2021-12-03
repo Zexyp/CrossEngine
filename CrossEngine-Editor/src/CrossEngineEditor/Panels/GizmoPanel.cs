@@ -131,7 +131,7 @@ namespace CrossEngineEditor.Panels
                 {
                     // safety feature
                     if (!Matrix4x4Extension.HasNaNElement(transformMat))
-                        Context.ActiveEntity.GetComponent<TransformComponent>().SetTransform(transformMat);
+                        Context.ActiveEntity.Transform.SetWorldTransform(transformMat);
                 }
             }
         }

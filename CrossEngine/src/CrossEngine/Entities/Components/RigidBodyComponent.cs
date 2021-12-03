@@ -227,15 +227,8 @@ namespace CrossEngine.Entities.Components
             nativeRigidBody.UserObject = this;
         }
 
-        public override void OnAttach()
+        public override void OnStart()
         {
-            Transform = Entity.GetComponent<TransformComponent>();
-
-            if (Entity.TryGetComponent(out ColliderComponent cc, true))
-            {
-                Collider = cc;
-            }
-
             RecreateRigidBody();
 
             if (_static)
@@ -243,26 +236,35 @@ namespace CrossEngine.Entities.Components
                 nativeRigidBody.LinearVelocity = BulletVector3.Zero;
                 nativeRigidBody.AngularVelocity = BulletVector3.Zero;
             }
+        }
+
+        public override void OnAttach()
+        {
+            Transform = Entity.GetComponent<TransformComponent>();
+            Collider = Entity.GetComponent<ColliderComponent>();
 
             Entity.OnComponentAdded += OnComponentAdded;
             Entity.OnComponentRemoved += OnComponentRemoved;
         }
 
-        public override void OnDetach()
+        public override void OnEnd()
         {
             nativeRigidBody.Dispose();
             nativeRigidBody = null;
+        }
 
+        public override void OnDetach()
+        {
             Entity.OnComponentAdded -= OnComponentAdded;
             Entity.OnComponentRemoved -= OnComponentRemoved;
         }
 
-        public override void OnEnable()
+        protected override void OnEnable()
         {
             Entity.Scene.RigidBodyWorld.AddRigidBody(nativeRigidBody);
         }
 
-        public override void OnDisable()
+        protected override void OnDisable()
         {
             Entity.Scene.RigidBodyWorld.RemoveRigidBody(nativeRigidBody);
         }
@@ -272,8 +274,10 @@ namespace CrossEngine.Entities.Components
             if (e is RigidBodyWorldUpdateEvent)
             {
                 _transform.OnTransformChanged -= OnTransformChanged;
-                if (_transform.WorldTransformMatrix != nativeRigidBody.MotionState.WorldTransform.ToNumerics())
+                if (Entity.Parent == null)
                     _transform.SetTranslationRotation(nativeRigidBody.MotionState.WorldTransform.ToNumerics());
+                else
+                    _transform.SetWorldTranslationRotation(nativeRigidBody.MotionState.WorldTransform.ToNumerics());
                 _transform.OnTransformChanged += OnTransformChanged;
             }
         }

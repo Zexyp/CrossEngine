@@ -11,6 +11,7 @@ using CrossEngine.Utils;
 using CrossEngine.Entities.Components;
 using CrossEngine.Serialization.Json;
 using CrossEngine.Logging;
+using CrossEngine.Utils.Exceptions;
 
 namespace CrossEngine.Entities
 {
@@ -57,7 +58,7 @@ namespace CrossEngine.Entities
         public event OnComponentFunction OnComponentAdded;
         public event OnComponentFunction OnComponentRemoved;
 
-        public event Action<Entity> OnParentSet;
+        public event Action<Entity> OnParentChanged;
         public event Action<Entity, Entity> OnChildAdded;
         public event Action<Entity, Entity> OnChildRemoved;
         #endregion
@@ -174,11 +175,14 @@ namespace CrossEngine.Entities
 
             ValidateAllComponents(component);
 
+            if (component.Valid)
+                try { component.OnAttach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnAttach), component.GetType().Name, ex); }
+
             if (Active)
             {
                 if (component.Valid)
                 {
-                    component.OnAttach();
+                    try { component.OnStart(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnStart), component.GetType().Name, ex); }
                     component.Activate();
                 }
             }
@@ -209,9 +213,12 @@ namespace CrossEngine.Entities
                 if (component.Valid)
                 {
                     component.Deactivate();
-                    component.OnDetach();
+                    try { component.OnEnd(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEnd), component.GetType().Name, ex); }
                 }
             }
+
+            if (component.Valid) component.OnDetach();
+                try { component.OnDetach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDetach), component.GetType().Name, ex); }
 
             _components.Remove(component);
 
@@ -259,7 +266,6 @@ namespace CrossEngine.Entities
         }
         #endregion
 
-        #region Shift
         public void ShiftComponent(Component component, int index)
         {
             if (!_components.Contains(component)) throw new InvalidOperationException("Entity does not contain component!");
@@ -270,7 +276,16 @@ namespace CrossEngine.Entities
             _components[index] = component;
             _components[newindex] = h;
         }
-        #endregion
+
+        public void SwapComponent(Component component1, Component component2)
+        {
+            if (!_components.Contains(component1) || !_components.Contains(component2)) throw new InvalidOperationException("Entity does not contain given component!");
+
+            int index1 = _components.IndexOf(component1);
+            int index2 = _components.IndexOf(component2);
+            _components[index1] = component2;
+            _components[index2] = component1;
+        }
         #endregion
 
         #region Hierarchy
@@ -301,7 +316,7 @@ namespace CrossEngine.Entities
                         this.HierarchyNode.Parent = null;
                 }
 
-                OnParentSet?.Invoke(this);
+                OnParentChanged?.Invoke(this);
             }
         }
 
@@ -322,7 +337,8 @@ namespace CrossEngine.Entities
             isAttaching = false;
 
             for (int i = 0; i < _components.Count; i++)
-                if (_components[i].Valid) _components[i].OnAttach();
+                if (_components[i].Valid)
+                    try { _components[i].OnStart(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnStart), _components[i].GetType().Name, ex); }
 
             if (Enabled) OnEnable();
         }
@@ -333,7 +349,8 @@ namespace CrossEngine.Entities
             if (Enabled) OnDisable();
 
             for (int i = 0; i < _components.Count; i++)
-                if (_components[i].Valid) _components[i].OnDetach();
+                if (_components[i].Valid)
+                    try { _components[i].OnEnd(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEnd), _components[i].GetType().Name, ex); }
         }
 
         private void OnEnable()
@@ -352,7 +369,7 @@ namespace CrossEngine.Entities
             for (int i = 0; i < _components.Count; i++)
             {
                 if (_components[i].Enabled && _components[i].Valid)
-                    _components[i].OnUpdate(timestep);
+                    try { _components[i].OnUpdate(timestep); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnUpdate), _components[i].GetType().Name, ex); }
             }
         }
 
@@ -362,7 +379,8 @@ namespace CrossEngine.Entities
             {
                 if (e.Handled) break;
                 if (_components[i].Enabled && _components[i].Valid)
-                    _components[i].OnEvent(e);
+                    try { _components[i].OnEvent(e); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEvent), _components[i].GetType().Name, ex); }
+
             }
         }
 
@@ -371,7 +389,7 @@ namespace CrossEngine.Entities
             for (int i = 0; i < _components.Count; i++)
             {
                 if (_components[i].Enabled && _components[i].Valid)
-                    _components[i].OnRender(re);
+                    try { _components[i].OnRender(re); } catch (Exception ex) {Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnRender), _components[i].GetType().Name, ex); }
             }
         }
 
@@ -398,13 +416,14 @@ namespace CrossEngine.Entities
                 if (component.Valid != valid)
                 {
                     component.Valid = valid;
+                    if (!component.Active && component != attachExcept) try { component.OnAttach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnAttach), component.GetType().Name, ex); }
                     if (Active && component != attachExcept)
                     {
                         if (valid)
                         {
                             if (!component.Active)
                             {
-                                component.OnAttach();
+                                try { component.OnStart(); } catch (Exception ex) {Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnStart), component.GetType().Name, ex); }
                                 component.Activate();
                             }
                         }
@@ -413,10 +432,11 @@ namespace CrossEngine.Entities
                             if (component.Active)
                             {
                                 component.Deactivate();
-                                component.OnDetach();
+                                try { component.OnEnd(); } catch (Exception ex) {Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEnd), component.GetType().Name, ex); }
                             }
                         }
                     }
+                    if (component.Active && component != attachExcept) try { component.OnDetach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDetach), component.GetType().Name, ex); }
                 }
             }
         }

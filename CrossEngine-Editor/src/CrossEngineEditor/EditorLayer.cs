@@ -25,48 +25,15 @@ using CrossEngineEditor.Modals;
 
 namespace CrossEngineEditor
 {
-    public class EditorContext
-    {
-        private Entity _activeEntity = null;
-        private Scene _scene = null;
-
-        public Scene Scene
-        {
-            get => _scene;
-            set
-            {
-                if (value == _scene) return;
-                _scene = value;
-                OnSceneChanged?.Invoke();
-            }
-        }
-        public Entity ActiveEntity
-        {
-            get => _activeEntity;
-            set
-            {
-                if (value == _activeEntity) return;
-                var before = _activeEntity;
-                _activeEntity = value;
-                OnActiveEntityChanged?.Invoke();
-            }
-        }
-
-        public readonly List<Entity> SelectedEntities = new List<Entity>();
-
-        public event Action OnActiveEntityChanged;
-        public event Action OnSceneChanged;
-    }
-
     public class EditorLayer : Layer
     {
         static public EditorLayer Instance;
 
-        private List<EditorPanel> _panels = new List<EditorPanel>();
-
         public EditorCamera EditorCamera = new EditorCamera();
-
         public readonly EditorContext Context = new EditorContext();
+
+        private List<EditorPanel> _panels = new List<EditorPanel>();
+        private EditorModal _modal = null;
 
         //Texture dockspaceIconTexture;
 
@@ -111,6 +78,7 @@ namespace CrossEngineEditor
             ground.AddComponent(new RigidBodyComponent() { Mass = 0, Static = true, LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
             ground.AddComponent(new Box2DColliderComponent());
             ground.AddComponent(new TestCompo());
+            //ground.AddComponent(new ExcComponent());
 
             //CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
             //string json = serializer.Serialize(Scene);
@@ -129,8 +97,6 @@ namespace CrossEngineEditor
             //CrossEngine.Assets.GC.GPUGarbageCollector.Collect();
         }
 
-        private EditorModal _modal;
-
         // test pcode
         bool su = false;
         int sleep = 0;
@@ -143,30 +109,29 @@ namespace CrossEngineEditor
 
             SetupDockspace();
 
-            // draw modals
-            if (_modal != null)
-            {
-                if (!_modal.Draw())
-                    _modal = null;
-            }
+            DrawModals();
+            
 
             if (ImGui.BeginMenuBar())
             {
-                if (ImGui.BeginMenu("Scene"))
+                if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.MenuItem("New"))
+                    if (ImGui.MenuItem("New scene"))
                     {
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
                         {
                             if (flags == ActionModal.ModalButtonFlags.OK)
                             {
+                                Context.Scene?.Unload();
+
                                 ClearContext();
 
                                 Context.Scene = new Scene();
                             }
                         }));
                     }
-                    if (ImGui.MenuItem("Open ..."))
+
+                    if (ImGui.MenuItem("Open Scene..."))
                     {
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
                         {
@@ -174,9 +139,12 @@ namespace CrossEngineEditor
                             {
                                 if (FileDialog.Open(out string path, initialDir: Environment.CurrentDirectory))
                                 {
+                                    Context.Scene?.Unload();
+
                                     ClearContext();
 
                                     Context.Scene = SceneSerializer.DeserializeJson(File.ReadAllText(path));
+                                    Context.Scene.Load();
                                 }
                             }
                         }));
@@ -184,7 +152,7 @@ namespace CrossEngineEditor
 
                     ImGui.Separator();
 
-                    if (ImGui.MenuItem("Save as ...", Context.Scene != null))
+                    if (ImGui.MenuItem("Save Scene As...", Context.Scene != null))
                     {
                         if (FileDialog.Save(out string path, initialDir: Environment.CurrentDirectory))
                         {
@@ -192,10 +160,10 @@ namespace CrossEngineEditor
                             json = SceneSerializer.SertializeJson(Context.Scene);
                             Log.App.Debug(json);
 
-                            Context.Scene.AssetPool.Dispose();
+                            Context.Scene.Unload();
                             ClearContext();
                             Context.Scene = SceneSerializer.DeserializeJson(json);
-                            Context.Scene.AssetPool.Load();
+                            Context.Scene.Load();
                             //System.IO.File.WriteAllText(path, json);
                         }
                     }
@@ -358,6 +326,15 @@ namespace CrossEngineEditor
         #endregion
 
         #region Modal Methods
+        private void DrawModals()
+        {
+            if (_modal != null)
+            {
+                if (!_modal.Draw())
+                    _modal = null;
+            }
+        }
+
         public void PushModal(EditorModal modal)
         {
             if (_modal != null) throw new Exception("Modal already opened!");
@@ -424,13 +401,65 @@ namespace CrossEngineEditor
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is CrossEngine.Rendering.LineRenderEvent)
+            if (re is LineRenderEvent)
             {
                 for (int i = 0; i < _rays.Length; i++)
                 {
                     CrossEngine.Rendering.Lines.LineRenderer.DrawLine(_rays[i].Source, _rays[i].HitPoint, new Vector4(1, 0, 0, 1));
                 }
             }
+        }
+    }
+
+    class ExcComponent : ScriptableComponent
+    {
+        protected override void OnEnable()
+        {
+            throw new Exception();
+        }
+        protected override void OnDisable()
+        {
+            throw new Exception();
+        }
+
+        public override void OnUpdate(float timestep)
+        {
+            throw new Exception();
+        }
+        public override void OnRender(RenderEvent re)
+        {
+            throw new Exception();
+        }
+        public override void OnEvent(Event e)
+        {
+            throw new Exception();
+        }
+
+        public override void OnAttach()
+        {
+            throw new Exception();
+        }
+        public override void OnDetach()
+        {
+            throw new Exception();
+        }
+
+        public override void OnStart()
+        {
+            throw new Exception();
+        }
+        public override void OnEnd()
+        {
+            throw new Exception();
+        }
+
+        public override void OnSerialize(SerializationInfo info)
+        {
+            throw new Exception();
+        }
+        public override void OnDeserialize(SerializationInfo info)
+        {
+            throw new Exception();
         }
     }
 }

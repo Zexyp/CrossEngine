@@ -75,7 +75,7 @@ namespace CrossEngine.Entities.Components
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is LineRenderEvent)
+            if (re is LineRenderEvent && Entity.Transform != null)
             {
                 LineRenderer.DrawSquare(Matrix4x4.CreateScale(new Vector3(Size, 0)) * Entity.Transform.WorldTransformMatrix, ColliderRepresentationColor);
             }

@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections;
+
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Utils
 {
-    public class TreeNode<T>
+    public class TreeNode<T>/* : ISerializableUntyped*/
     {
         public TreeNode<T> _parent = null;
         private List<TreeNode<T>> _children = new List<TreeNode<T>>();
@@ -64,6 +67,35 @@ namespace CrossEngine.Utils
             if (this.Parent == potpar) return true;
             return this.Parent.IsParentedBy(potpar);
         }
+
+        public void SwapChildren(TreeNode<T> child1, TreeNode<T> child2)
+        {
+            if (!_children.Contains(child1) || !_children.Contains(child2)) throw new InvalidOperationException("Node does not contain given child!");
+
+            int index1 = _children.IndexOf(child1);
+            int index2 = _children.IndexOf(child2);
+            _children[index1] = child2;
+            _children[index2] = child1;
+        }
+
+        /*
+        #region ISerializable
+        public void OnSerialize(SerializationInfo info)
+        {
+            info.AddValue("Value", Value);
+            info.AddValue("Children", Children);
+        }
+
+        public void OnDeserialize(SerializationInfo info)
+        {
+            Value = (T) info.GetValue("Value", typeof(T));
+            foreach (var child in (IEnumerable)info.GetValue("Children", typeof(List<TreeNode<T>>)))
+            {
+                AddChild((TreeNode<T>)child);
+            }
+        }
+        #endregion
+        */
 
         //public bool HasRoot(TreeNode<T> node)
         //{

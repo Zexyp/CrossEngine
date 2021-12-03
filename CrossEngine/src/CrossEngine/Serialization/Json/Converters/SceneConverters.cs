@@ -8,6 +8,9 @@ using CrossEngine.Scenes;
 using CrossEngine.Entities;
 using CrossEngine.Entities.Components;
 using CrossEngine.Assets;
+using CrossEngine.Utils;
+using CrossEngine.Logging;
+using CrossEngine.Utils.Exceptions;
 
 namespace CrossEngine.Serialization.Json.Converters
 {
@@ -47,6 +50,9 @@ namespace CrossEngine.Serialization.Json.Converters
                 using (var par = ent.CreateReader())
                     entity = serializer.Deserialize<Entity>(par);
             }
+
+            //using (var reader = obj["Hierarchy"].CreateReader())
+            //    serializer.Deserialize<TreeNode<Entity>>(reader);
         }
 
         protected override void OnSerialize(JsonWriter writer, Scene value, JsonSerializer serializer, JsonObjectContract contract)
@@ -56,6 +62,9 @@ namespace CrossEngine.Serialization.Json.Converters
 
             writer.WritePropertyName("Entities");
             serializer.Serialize(writer, value.Entities);
+
+            //writer.WritePropertyName("Hierarchy");
+            //serializer.Serialize(writer, value.HierarchyRoot);
         }
     }
 
@@ -113,14 +122,27 @@ namespace CrossEngine.Serialization.Json.Converters
             writer.WritePropertyName("Enabled");
             serializer.Serialize(writer, value.Enabled);
 
-            value.OnSerialize(new SerializationInfo(writer, value, serializer, contract));
+            try
+            {
+                value.OnSerialize(new SerializationInfo(writer, value, serializer, contract));
+            } catch (Exception ex)
+            {
+                Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnSerialize), value.GetType().Name, ex);
+            }
         }
 
         protected override void Populate(JObject obj, Component value, JsonSerializer serializer)
         {
             value.Enabled = obj["Enabled"].Value<bool>();
 
-            value.OnDeserialize(new SerializationInfo(obj, value, serializer));
+            try
+            {
+                value.OnDeserialize(new SerializationInfo(obj, value, serializer));
+            }
+            catch (Exception ex)
+            {
+                Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDeserialize), value.GetType().Name, ex);
+            }
         }
     }
 }

@@ -2,6 +2,8 @@
 
 using CrossEngine.Events;
 using CrossEngine.Serialization;
+using CrossEngine.Logging;
+using CrossEngine.Utils.Exceptions;
 
 namespace CrossEngine.Entities.Components
 {
@@ -18,8 +20,10 @@ namespace CrossEngine.Entities.Components
                 _enabled = value;
                 if (Active)
                 {
-                    if (_enabled) OnEnable();
-                    else OnDisable();
+                    if (_enabled)
+                        try { OnEnable(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEnable), this.GetType().Name, ex); }
+                    else
+                        try { OnDisable(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDisable), this.GetType().Name, ex); }
                 }
             }
         }
@@ -36,18 +40,18 @@ namespace CrossEngine.Entities.Components
         internal void Activate()
         {
             Active = true;
-            if (Enabled) OnEnable();
+            if (Enabled) try { OnEnable(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEnable), this.GetType().Name, ex); }
         }
         internal void Deactivate()
         {
             Active = false;
-            if (Enabled) OnDisable();
+            if (Enabled) try { OnDisable(); } catch (Exception ex) {Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDisable), this.GetType().Name, ex); }
         }
 
-        public virtual void OnEnable()
+        protected virtual void OnEnable()
         {
         }
-        public virtual void OnDisable()
+        protected virtual void OnDisable()
         {
         }
 
@@ -65,6 +69,13 @@ namespace CrossEngine.Entities.Components
         {
         }
         public virtual void OnDetach()
+        {
+        }
+
+        public virtual void OnStart()
+        { 
+        }
+        public virtual void OnEnd()
         {
         }
 

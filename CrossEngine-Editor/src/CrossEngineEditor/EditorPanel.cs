@@ -20,6 +20,7 @@ namespace CrossEngineEditor
             set
             {
                 if (value == _open || !Attached) return;
+                _open = value;
                 if (_open == false) OnClose();
                 else OnOpen();
             }

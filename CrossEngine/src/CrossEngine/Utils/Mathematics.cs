@@ -417,26 +417,26 @@ namespace CrossEngine.Utils
             translation.Z = matvposition.Z;
         }
 
-        public static unsafe bool HasNaNElement(Matrix4x4 matrix)
+        public static bool HasNaNElement(Matrix4x4 matrix)
         {
             // faster
             return
-                    matrix.M11 == float.NaN ||
-                    matrix.M12 == float.NaN ||
-                    matrix.M13 == float.NaN ||
-                    matrix.M14 == float.NaN ||
-                    matrix.M21 == float.NaN ||
-                    matrix.M22 == float.NaN ||
-                    matrix.M23 == float.NaN ||
-                    matrix.M24 == float.NaN ||
-                    matrix.M31 == float.NaN ||
-                    matrix.M32 == float.NaN ||
-                    matrix.M33 == float.NaN ||
-                    matrix.M34 == float.NaN ||
-                    matrix.M41 == float.NaN ||
-                    matrix.M42 == float.NaN ||
-                    matrix.M43 == float.NaN ||
-                    matrix.M44 == float.NaN;
+                matrix.M11 is float.NaN ||
+                matrix.M12 is float.NaN ||
+                matrix.M13 is float.NaN ||
+                matrix.M14 is float.NaN ||
+                matrix.M21 is float.NaN ||
+                matrix.M22 is float.NaN ||
+                matrix.M23 is float.NaN ||
+                matrix.M24 is float.NaN ||
+                matrix.M31 is float.NaN ||
+                matrix.M32 is float.NaN ||
+                matrix.M33 is float.NaN ||
+                matrix.M34 is float.NaN ||
+                matrix.M41 is float.NaN ||
+                matrix.M42 is float.NaN ||
+                matrix.M43 is float.NaN ||
+                matrix.M44 is float.NaN;
         }
 
         /*
