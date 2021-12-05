@@ -5,7 +5,7 @@ using CrossEngine.Serialization;
 
 namespace CrossEngine.Rendering.Cameras
 {
-    public class Camera : ISerializable, IEditorValueDrawable
+    public class Camera : ISerializable
     {
         //_viewMatrix = Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
         public Matrix4x4 ProjectionMatrix = Matrix4x4.Identity;

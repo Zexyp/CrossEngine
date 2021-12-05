@@ -16,17 +16,17 @@ namespace CrossEngine.Physics
 
     public struct RaycastHitInfo
     {
-        public readonly Vector3 point;
-        public readonly Vector3 normal;
-        public readonly RigidBodyComponent rigidbody;
-        public readonly ColliderComponent collider;
+        public readonly Vector3 Point;
+        public readonly Vector3 Normal;
+        public readonly RigidBodyComponent Rigidbody;
+        public readonly ColliderComponent Collider;
 
         internal RaycastHitInfo(Vector3 point, Vector3 normal, RigidBodyComponent rigidbody, ColliderComponent collider = null)
         {
-            this.point = point;
-            this.normal = normal;
-            this.rigidbody = rigidbody;
-            this.collider = collider;
+            this.Point = point;
+            this.Normal = normal;
+            this.Rigidbody = rigidbody;
+            this.Collider = collider;
         }
     }
 
@@ -49,7 +49,10 @@ namespace CrossEngine.Physics
                 _contextWorld.RayTestRef(ref Bsource, ref Bdestination, cb);
                 if (cb.HasHit)
                 {
-                    info = new RaycastHitInfo(cb.HitPointWorld.ToNumerics(), Vector3.Normalize(cb.HitNormalWorld.ToNumerics()), (RigidBodyComponent)cb.CollisionObject.UserObject);
+                    info = new RaycastHitInfo(cb.HitPointWorld.ToNumerics(),
+                                              Vector3.Normalize(cb.HitNormalWorld.ToNumerics()),
+                                              (RigidBodyComponent)cb.CollisionObject.UserObject,
+                                              (ColliderComponent)cb.CollisionObject.CollisionShape.UserObject);
                     return true;
                 }
                 else

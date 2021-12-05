@@ -89,7 +89,7 @@ namespace CrossEngine.Serialization.Json.Converters
             }
 
             using (var par = obj["Parent"].CreateReader())
-                value.Parent = (Entity)serializer.Deserialize(par);
+                value.Parent = serializer.Deserialize<Entity>(par);
 
             value.Enabled = obj["Enabled"].Value<bool>();
         }

@@ -89,6 +89,7 @@ namespace CrossEngine.Serialization.Json
         public override sealed void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var contract = serializer.ContractResolver.ResolveContract(value.GetType());
+            // the array contract might cause problems later (contract is not JsonArrayContract)
             if (!(contract is JsonObjectContract))
             {
                 throw new JsonSerializationException(string.Format("Invalid non-object contract type {0}", contract));

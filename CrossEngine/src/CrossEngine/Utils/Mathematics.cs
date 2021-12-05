@@ -110,137 +110,6 @@ namespace CrossEngine.Utils
         //{
         //    return new Vector2(v.X, v.Y);
         //}
-
-        public static Vector3 ColorFromHex(uint color)
-        {
-            return new Vector3((float)(byte)(color >> 16) / 255, (float)(byte)(color >> 8) / 255, (float)(byte)color / 255);
-        }
-
-        public static Vector3 HSVToRGB(Vector3 hsvColor)
-        {
-            //while (hsvColor.X < 0) { hsvColor.X += 360; };
-            //while (hsvColor.X >= 360) { hsvColor.X -= 360; };
-            hsvColor.X = (hsvColor.X % 1.0f);
-            if (hsvColor.X < 0)
-                hsvColor.X += 1;
-            hsvColor.X *= 6;
-            Vector3 rgbColor = new Vector3();
-            if (hsvColor.Z <= 0)
-            { 
-                rgbColor.X = rgbColor.Y = rgbColor.Z = 0;
-            }
-            else if (hsvColor.Y <= 0)
-            {
-                rgbColor.X = rgbColor.Y = rgbColor.Z = hsvColor.Z;
-            }
-            else
-            {
-                float hf = hsvColor.X;
-                int i = (int)Math.Floor(hf);
-                float f = hf - i;
-                float pv = hsvColor.Z * (1 - hsvColor.Y);
-                float qv = hsvColor.Z * (1 - hsvColor.Y * f);
-                float tv = hsvColor.Z * (1 - hsvColor.Y * (1 - f));
-                switch (i)
-                {
-                    case 0:
-                        rgbColor.X = hsvColor.Z;
-                        rgbColor.Y = tv;
-                        rgbColor.Z = pv;
-                        break;
-                    case 1:
-                        rgbColor.X = qv;
-                        rgbColor.Y = hsvColor.Z;
-                        rgbColor.Z = pv;
-                        break;
-                    case 2:
-                        rgbColor.X = pv;
-                        rgbColor.Y = hsvColor.Z;
-                        rgbColor.Z = tv;
-                        break;
-                    case 3:
-                        rgbColor.X = pv;
-                        rgbColor.Y = qv;
-                        rgbColor.Z = hsvColor.Z;
-                        break;
-                    case 4:
-                        rgbColor.X = tv;
-                        rgbColor.Y = pv;
-                        rgbColor.Z = hsvColor.Z;
-                        break;
-                    case 5:
-                        rgbColor.X = hsvColor.Z;
-                        rgbColor.Y = pv;
-                        rgbColor.Z = qv;
-                        break;
-                    case 6:
-                        rgbColor.X = hsvColor.Z;
-                        rgbColor.Y = tv;
-                        rgbColor.Z = pv;
-                        break;
-                    case -1:
-                        rgbColor.X = hsvColor.Z;
-                        rgbColor.Y = pv;
-                        rgbColor.Z = qv;
-                        break;
-
-                    // The color is not defined, we should throw an error.
-
-                    default:
-                        Log.Core.Error("color conversion messed up!");
-                        rgbColor.X = rgbColor.Y = rgbColor.Z = hsvColor.Z;
-                        break;
-                }
-            }
-            return rgbColor;
-        }
-
-        public static Vector3 RGBToHSV(Vector3 rgbColor)
-        {
-            Vector3 hsvColor = new Vector3();
-            float min, max, delta;
-
-            min = rgbColor.X < rgbColor.Y ? rgbColor.X : rgbColor.Y;
-            min = min  < rgbColor.Z ? min  : rgbColor.Z;
-
-            max = rgbColor.X > rgbColor.Y ? rgbColor.X : rgbColor.Y;
-            max = max  > rgbColor.Z ? max  : rgbColor.Z;
-
-            hsvColor.Z = max;
-            delta = max - min;
-
-            if (delta < 0.00001f)
-            {
-                hsvColor.Y = 0.0f;
-                hsvColor.X = 0.0f;
-                return hsvColor;
-            }
-
-            if( max > 0.0f ) 
-            {
-                hsvColor.Y = (delta / max);
-            } 
-            else
-            {
-                hsvColor.Y = 0.0f;
-                hsvColor.X = 0.0f;
-                return hsvColor;
-            }
-
-            if (rgbColor.X >= max)
-                hsvColor.X = (rgbColor.Y - rgbColor.Z) / delta;
-            else if (rgbColor.Y >= max)
-                hsvColor.X = 2.0f + (rgbColor.Z - rgbColor.X) / delta;
-            else
-                hsvColor.X = 4.0f + (rgbColor.X - rgbColor.Y) / delta;
-
-            hsvColor.X /= 6.0f;
-
-            if (hsvColor.X < 0.0f)
-                hsvColor.X += 1.0f;
-
-            return hsvColor;
-        }
     }
 
     static class Vector4Extension
@@ -779,11 +648,142 @@ namespace CrossEngine.Utils
         }
     }
 
-    //static class ColorExtension
-    //{
-    //    public static System.Drawing.Color FromVector4(Vector4 vector)
-    //    {
-    //        return System.Drawing.Color.FromArgb((int)(vector.W * byte.MaxValue), (int)(vector.X * byte.MaxValue), (int)(vector.Y * byte.MaxValue), (int)(vector.Z * byte.MaxValue));
-    //    }
-    //}
+    public static class Color
+    {
+        public static Vector3 RGBFromUInt(uint color)
+        {
+            return new Vector3((float)(byte)color / 255, (float)(byte)(color >> 8) / 255, (float)(byte)(color >> 16) / 255);
+        }
+
+        public static Vector4 RGBAFromUInt(uint color)
+        {
+            return new Vector4((float)(byte)color / 255, (float)(byte)(color >> 8) / 255, (float)(byte)(color >> 16) / 255, (float)(byte)(color >> 24) / 255);
+        }
+
+        public static Vector3 HSVToRGB(Vector3 hsvColor)
+        {
+            //while (hsvColor.X < 0) { hsvColor.X += 360; };
+            //while (hsvColor.X >= 360) { hsvColor.X -= 360; };
+            hsvColor.X = (hsvColor.X % 1.0f);
+            if (hsvColor.X < 0)
+                hsvColor.X += 1;
+            hsvColor.X *= 6;
+            Vector3 rgbColor = new Vector3();
+            if (hsvColor.Z <= 0)
+            {
+                rgbColor.X = rgbColor.Y = rgbColor.Z = 0;
+            }
+            else if (hsvColor.Y <= 0)
+            {
+                rgbColor.X = rgbColor.Y = rgbColor.Z = hsvColor.Z;
+            }
+            else
+            {
+                float hf = hsvColor.X;
+                int i = (int)Math.Floor(hf);
+                float f = hf - i;
+                float pv = hsvColor.Z * (1 - hsvColor.Y);
+                float qv = hsvColor.Z * (1 - hsvColor.Y * f);
+                float tv = hsvColor.Z * (1 - hsvColor.Y * (1 - f));
+                switch (i)
+                {
+                    case 0:
+                        rgbColor.X = hsvColor.Z;
+                        rgbColor.Y = tv;
+                        rgbColor.Z = pv;
+                        break;
+                    case 1:
+                        rgbColor.X = qv;
+                        rgbColor.Y = hsvColor.Z;
+                        rgbColor.Z = pv;
+                        break;
+                    case 2:
+                        rgbColor.X = pv;
+                        rgbColor.Y = hsvColor.Z;
+                        rgbColor.Z = tv;
+                        break;
+                    case 3:
+                        rgbColor.X = pv;
+                        rgbColor.Y = qv;
+                        rgbColor.Z = hsvColor.Z;
+                        break;
+                    case 4:
+                        rgbColor.X = tv;
+                        rgbColor.Y = pv;
+                        rgbColor.Z = hsvColor.Z;
+                        break;
+                    case 5:
+                        rgbColor.X = hsvColor.Z;
+                        rgbColor.Y = pv;
+                        rgbColor.Z = qv;
+                        break;
+                    case 6:
+                        rgbColor.X = hsvColor.Z;
+                        rgbColor.Y = tv;
+                        rgbColor.Z = pv;
+                        break;
+                    case -1:
+                        rgbColor.X = hsvColor.Z;
+                        rgbColor.Y = pv;
+                        rgbColor.Z = qv;
+                        break;
+
+                    // The color is not defined, we should throw an error.
+
+                    default:
+                        Log.Core.Error("color conversion messed up!");
+                        rgbColor.X = rgbColor.Y = rgbColor.Z = hsvColor.Z;
+                        break;
+                }
+            }
+            return rgbColor;
+        }
+
+        public static Vector3 RGBToHSV(Vector3 rgbColor)
+        {
+            Vector3 hsvColor = new Vector3();
+            float min, max, delta;
+
+            min = rgbColor.X < rgbColor.Y ? rgbColor.X : rgbColor.Y;
+            min = min < rgbColor.Z ? min : rgbColor.Z;
+
+            max = rgbColor.X > rgbColor.Y ? rgbColor.X : rgbColor.Y;
+            max = max > rgbColor.Z ? max : rgbColor.Z;
+
+            hsvColor.Z = max;
+            delta = max - min;
+
+            if (delta < 0.00001f)
+            {
+                hsvColor.Y = 0.0f;
+                hsvColor.X = 0.0f;
+                return hsvColor;
+            }
+
+            if (max > 0.0f)
+            {
+                hsvColor.Y = (delta / max);
+            }
+            else
+            {
+                hsvColor.Y = 0.0f;
+                hsvColor.X = 0.0f;
+                return hsvColor;
+            }
+
+            if (rgbColor.X >= max)
+                hsvColor.X = (rgbColor.Y - rgbColor.Z) / delta;
+            else if (rgbColor.Y >= max)
+                hsvColor.X = 2.0f + (rgbColor.Z - rgbColor.X) / delta;
+            else
+                hsvColor.X = 4.0f + (rgbColor.X - rgbColor.Y) / delta;
+
+            hsvColor.X /= 6.0f;
+
+            if (hsvColor.X < 0.0f)
+                hsvColor.X += 1.0f;
+
+            return hsvColor;
+        }
+    }
 }

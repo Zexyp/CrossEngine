@@ -30,6 +30,13 @@ namespace CrossEngine.Utils.Editor
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorInnerValueAttribute : EditorValueAttribute
+    {
+        public EditorInnerValueAttribute() { }
+        public EditorInnerValueAttribute(string name) : base(name) { }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public abstract class EditorNumberValueAttribute : EditorValueAttribute
     {
         public NumberInputTypeRepresentation NumberInputType = NumberInputTypeRepresentation.Drag;

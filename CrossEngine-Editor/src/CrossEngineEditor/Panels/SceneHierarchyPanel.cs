@@ -50,10 +50,15 @@ namespace CrossEngineEditor.Panels
         {
             Entity nodeEntity = node.Value;
 
-            if (targetedNode == node && targetedNode.Value != null) ImGui.Button("", new Vector2(ImGui.GetColumnWidth(), 2.5f));
 
+            // drag drop
             unsafe
             {
+                if (targetedNode == node && targetedNode.Value != null) ImGui.Button("##target", new Vector2(ImGui.GetColumnWidth(), 2.5f));
+                // smoll fix
+                if (ImGui.IsItemHovered()) targetedNode = null;
+
+                // dropped next to
                 if (ImGui.BeginDragDropTarget())
                 {
                     var payload = ImGui.AcceptDragDropPayload("_TREENODE<ENTITY>");
@@ -68,9 +73,13 @@ namespace CrossEngineEditor.Panels
                             if (selectedDragNDropNode.Parent != targetedNode.Parent)
                                 selectedDragNDropNode.Value.Parent = targetedNode.Value.Parent;
 
-                            Context.Scene.SwapEntity(targetedNode.Value, selectedDragNDropNode.Value);
+                            int tnei = Context.Scene.GetEntityIndex(targetedNode.Value);
+                            if (tnei > Context.Scene.GetEntityIndex(selectedDragNDropNode.Value)) tnei--;
+                            Context.Scene.ShiftEntity(selectedDragNDropNode.Value, tnei);
 
-                            targetedNode.Parent.SwapChildren(targetedNode, selectedDragNDropNode);
+                            int tnci = targetedNode.Parent.GetChildIndex(targetedNode);
+                            if (tnci > targetedNode.Parent.GetChildIndex(selectedDragNDropNode)) tnci--;
+                            targetedNode.Parent.ShiftChild(selectedDragNDropNode, tnci);
                         }
                         else EditorApplication.Log.Trace($"drop failed (cyclic tree prevented)");
 
@@ -102,6 +111,7 @@ namespace CrossEngineEditor.Panels
             if (ImGui.IsItemClicked())
                 Context.ActiveEntity = nodeEntity;
 
+            // drag drop
             unsafe
             {
                 if (ImGui.BeginDragDropSource())
@@ -112,6 +122,7 @@ namespace CrossEngineEditor.Panels
                     ImGui.EndDragDropSource();
                 }
 
+                // dropped on to
                 if (ImGui.BeginDragDropTarget())
                 {
                     targetedNode = node;
@@ -133,6 +144,7 @@ namespace CrossEngineEditor.Panels
                 }
             }
 
+            // context menu
             {
                 if (ImGui.BeginPopupContextItem())
                 {

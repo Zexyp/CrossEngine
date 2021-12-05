@@ -52,6 +52,7 @@ namespace CrossEngineEditor.Panels
                         }
                         ImGui.EndMenu();
                     }
+                    ImGui.Separator();
                     if (ImGui.BeginMenu("Remove Component"))
                     {
                         var components = Context.ActiveEntity.Components;
@@ -72,6 +73,9 @@ namespace CrossEngineEditor.Panels
 
             if (Context.ActiveEntity != null) DrawComponents(Context.ActiveEntity);
         }
+
+        private Component selectedDragNDropComponent = null;
+        private Component targetedComponent = null;
 
         private void DrawComponents(Entity context)
         {
@@ -99,12 +103,75 @@ namespace CrossEngineEditor.Panels
                     ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.729f, 0.208f, 0.208f, 1.0f));
                 }
 
-                var style = ImGui.GetStyle();
+                // item shifting drop
+                unsafe
+                {
+                    if (targetedComponent == component) ImGui.Button("##target", new Vector2(ImGui.GetColumnWidth(), 2.5f));
+                    // smoll fix
+                    if (ImGui.IsItemHovered()) targetedComponent = null;
+
+                    if (ImGui.BeginDragDropTarget())
+                    {
+                        var payload = ImGui.AcceptDragDropPayload("_COMPONENT");
+                        if (payload.NativePtr != null && selectedDragNDropComponent != null)
+                        {
+                            int tci = Context.ActiveEntity.GetComponentIndex(targetedComponent);
+                            if (tci > Context.ActiveEntity.GetComponentIndex(selectedDragNDropComponent)) tci--;
+                            Context.ActiveEntity.ShiftComponent(selectedDragNDropComponent, tci);
+
+                            selectedDragNDropComponent = null;
+                            targetedComponent = null;
+                        }
+                        ImGui.EndDragDropTarget();
+                    }
+                }
+                
                 bool collapsingHeader = ImGui.CollapsingHeader(componentType.Name, ref stay);
+
+                // item shifting drag
+                {
+                    if (ImGui.BeginDragDropSource())
+                    {
+                        ImGui.Text("Component: " + componentType.Name);
+                        selectedDragNDropComponent = component;
+                        ImGui.SetDragDropPayload("_COMPONENT", IntPtr.Zero, 0);
+                        ImGui.EndDragDropSource();
+                    }
+
+                    if (ImGui.BeginDragDropTarget())
+                    {
+                        targetedComponent = component;
+                        ImGui.EndDragDropTarget();
+                    }
+                }
+
+                // contex menu
+                {
+                    if (ImGui.BeginPopupContextItem())
+                    {
+                        if (ImGui.MenuItem("Move Up"))
+                        {
+                            context.ShiftComponent(component, Math.Max(0, compi - 1));
+                        }
+                        if (ImGui.MenuItem("Move Down"))
+                        {
+                            context.ShiftComponent(component, Math.Min(components.Count - 1, compi + 1));
+                        }
+                        ImGui.Separator();
+                        if (ImGui.MenuItem("Remove"))
+                        {
+                            Context.ActiveEntity.RemoveComponent(component);
+                        }
+
+                        ImGui.EndPopup();
+                    }
+                }
+
+                var style = ImGui.GetStyle();
                 float collapsingHeaderButtonOffset = ((ImGui.GetTextLineHeight() + style.FramePadding.Y * 2) + 1);
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - (collapsingHeaderButtonOffset * 1 + style.FramePadding.X + style.FramePadding.Y));
                 bool enabled = component.Enabled;
-                if (ImGui.Checkbox("", ref enabled))
+                if (ImGui.Checkbox("##enabled", ref enabled))
                     component.Enabled = enabled;
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - (collapsingHeaderButtonOffset * 2 + style.FramePadding.X + style.FramePadding.Y));
                 if (ImGui.ArrowButton("up", ImGuiDir.Up))

@@ -108,8 +108,6 @@ namespace CrossEngine.Rendering.Buffers
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public Texture Texture { get; private set; }
-
         //---
 
         FramebufferSpecification specification;
@@ -377,10 +375,12 @@ namespace CrossEngine.Rendering.Buffers
         // cleanup
         ~Framebuffer()
         {
-            Texture.Dispose();
-
             Log.Core.Warn("unhandled framebuffer disposure (id: {0})", fboid);
             //System.Diagnostics.Debug.Assert(false);
+            for (int i = 0; i < _colorAttachments.Count; i++)
+                GPUGarbageCollector.MarkObject(GPUObjectType.Texture, _colorAttachments[i]);
+            if (_depthAttachment != 0) GPUGarbageCollector.MarkObject(GPUObjectType.Texture, _depthAttachment);
+
             GPUGarbageCollector.MarkObject(GPUObjectType.Framebuffer, fboid);
             //if (rboid != 0)
             //    GPUGarbageCollector.MarkObject(GPUObjectType.Renderbuffer, rboid);
@@ -397,9 +397,6 @@ namespace CrossEngine.Rendering.Buffers
 
         private unsafe void Dispose(bool disposing)
         {
-            if (Texture != null && Texture.ID != 0)
-                Texture.Dispose();
-            
             if (fboid != 0)
             {
                 Log.Core.Trace("deleting framebuffer (id: {0})", fboid);

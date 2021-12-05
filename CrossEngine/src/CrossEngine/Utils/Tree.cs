@@ -68,14 +68,19 @@ namespace CrossEngine.Utils
             return this.Parent.IsParentedBy(potpar);
         }
 
-        public void SwapChildren(TreeNode<T> child1, TreeNode<T> child2)
+        public int GetChildIndex(TreeNode<T> child)
         {
-            if (!_children.Contains(child1) || !_children.Contains(child2)) throw new InvalidOperationException("Node does not contain given child!");
+            //if (!_children.Contains(child)) throw new InvalidOperationException("Node does not have given child node!");
+            return _children.IndexOf(child);
+        }
 
-            int index1 = _children.IndexOf(child1);
-            int index2 = _children.IndexOf(child2);
-            _children[index1] = child2;
-            _children[index2] = child1;
+        public void ShiftChild(TreeNode<T> child, int destinationIndex)
+        {
+            if (!_children.Contains(child)) throw new InvalidOperationException("Node does not have given child node!");
+            if (destinationIndex < 0 || destinationIndex > _children.Count - 1) throw new InvalidOperationException("Invalid index!");
+
+            _children.Remove(child);
+            _children.Insert(destinationIndex, child);
         }
 
         /*
@@ -96,6 +101,16 @@ namespace CrossEngine.Utils
         }
         #endregion
         */
+
+        //public void SwapChildren(TreeNode<T> child1, TreeNode<T> child2)
+        //{
+        //    if (!_children.Contains(child1) || !_children.Contains(child2)) throw new InvalidOperationException("Node does not contain given child!");
+        //
+        //    int index1 = _children.IndexOf(child1);
+        //    int index2 = _children.IndexOf(child2);
+        //    _children[index1] = child2;
+        //    _children[index2] = child1;
+        //}
 
         //public bool HasRoot(TreeNode<T> node)
         //{

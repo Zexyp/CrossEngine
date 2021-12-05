@@ -132,30 +132,19 @@ namespace CrossEngine.Scenes
             return null;
         }
 
-        public int GetEntityIndex(Entity value)
+        public int GetEntityIndex(Entity entity)
         {
-            return _entities.IndexOf(value);
+            //if (!_entities.Contains(entity)) throw new InvalidOperationException("Scene does not contain given entity!");
+            return _entities.IndexOf(entity);
         }
 
-        public void ShiftEntity(Entity entity, int index)
+        public void ShiftEntity(Entity entity, int destinationIndex)
         {
             if (!_entities.Contains(entity)) throw new InvalidOperationException("Scene does not contain given entity!");
-            if (index < 0 || index > _entities.Count - 1) throw new InvalidOperationException("Invalid index!");
+            if (destinationIndex < 0 || destinationIndex > _entities.Count - 1) throw new InvalidOperationException("Invalid index!");
 
-            Entity h = _entities[index];
-            int newindex = _entities.IndexOf(entity);
-            _entities[index] = entity;
-            _entities[newindex] = h;
-        }
-
-        public void SwapEntity(Entity entity1, Entity entity2)
-        {
-            if (!_entities.Contains(entity1) || !_entities.Contains(entity2)) throw new InvalidOperationException("Scene does not contain given entity!");
-
-            int index1 = _entities.IndexOf(entity1);
-            int index2 = _entities.IndexOf(entity2);
-            _entities[index1] = entity2;
-            _entities[index2] = entity1;
+            _entities.Remove(entity);
+            _entities.Insert(destinationIndex, entity);
         }
         #endregion
 

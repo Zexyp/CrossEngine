@@ -225,6 +225,7 @@ namespace CrossEngine.Entities.Components
             //}
 
             nativeRigidBody.UserObject = this;
+
         }
 
         public override void OnStart()

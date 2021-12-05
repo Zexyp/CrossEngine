@@ -21,8 +21,7 @@ namespace CrossEngine.Serialization.Json.Converters
             var valtype = value.GetType();
             if (!valtype.IsGenericType)
                 serializer.Serialize(writer,
-                    valtype.Namespace + "." +
-                    valtype.Name + ", " +
+                    valtype.FullName + ", " +
                     valtype.Assembly.GetName().Name);
             else
                 serializer.Serialize(writer, valtype.AssemblyQualifiedName);

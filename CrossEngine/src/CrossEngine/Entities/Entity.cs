@@ -266,25 +266,18 @@ namespace CrossEngine.Entities
         }
         #endregion
 
-        public void ShiftComponent(Component component, int index)
+        public void ShiftComponent(Component component, int destinationIndex)
         {
             if (!_components.Contains(component)) throw new InvalidOperationException("Entity does not contain component!");
-            if (index < 0 || index > _components.Count - 1) throw new InvalidOperationException("Invalid index!");
+            if (destinationIndex < 0 || destinationIndex > _components.Count - 1) throw new InvalidOperationException("Invalid index!");
 
-            Component h = _components[index];
-            int newindex = _components.IndexOf(component);
-            _components[index] = component;
-            _components[newindex] = h;
+            _components.Remove(component);
+            _components.Insert(destinationIndex, component);
         }
 
-        public void SwapComponent(Component component1, Component component2)
+        public int GetComponentIndex(Component component)
         {
-            if (!_components.Contains(component1) || !_components.Contains(component2)) throw new InvalidOperationException("Entity does not contain given component!");
-
-            int index1 = _components.IndexOf(component1);
-            int index2 = _components.IndexOf(component2);
-            _components[index1] = component2;
-            _components[index2] = component1;
+            return _components.IndexOf(component);
         }
         #endregion
 

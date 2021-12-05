@@ -110,7 +110,12 @@ namespace CrossEngineEditor.Panels
                 if (zoomedImageSize.X < WindowSize.X && zoomedImageSize.Y < WindowSize.Y)
                     ImGui.SetCursorPos((WindowSize - zoomedImageSize) * 0.5f);
 
+                ImGui.PushStyleColor(ImGuiCol.Button, 0xff000000);
+                ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xff000000);
+                ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0xff000000);
                 ImGui.ImageButton(new IntPtr(SelectedTextureAsset.Texture.ID), SelectedTextureAsset.Texture.Size * zoom, new Vector2(0, 1), new Vector2(1, 0), 0);
+                ImGui.PopStyleColor(3);
+
                 bool imageHovered = ImGui.IsItemHovered();
 
                 if (resetView) ResetView();

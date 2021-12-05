@@ -11,7 +11,6 @@ using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Lines;
 using CrossEngine.Profiling;
-using CrossEngine.Logging;
 
 using CrossEngineEditor.Utils;
 

@@ -10,6 +10,7 @@ using CrossEngine.Layers;
 using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Scenes;
+using CrossEngine.Utils;
 
 namespace CrossEngineEditor.Panels
 {
@@ -45,6 +46,11 @@ namespace CrossEngineEditor.Panels
             var scene = Context.Scene;
             if (scene != null)
             {
+                if (framebuffer != null)
+                {
+                    framebuffer.Dispose();
+                }
+
                 var spec = new FramebufferSpecification();
                 spec.Attachments = new FramebufferAttachmentSpecification(
                     // using floating point colors
@@ -71,23 +77,51 @@ namespace CrossEngineEditor.Panels
         protected override void EndPrepareWindow()
         {
             ImGui.PopStyleVar();
-
-            if (ImGui.BeginMenuBar())
-            {
-                Vector2 cp = ImGui.GetCursorPos();
-                cp.X += ImGui.GetColumnWidth() / 2;
-                ImGui.SetCursorPos(cp);
-                ImGui.Button(Context.Scene.Running ? "[]" : ">");
-
-                ImGui.EndMenuBar();
-            }
         }
 
         protected override void DrawWindowContent()
         {
+            if (ImGui.BeginMenuBar())
+            {
+                // view mode selection
+                if (ImGui.BeginTabBar("##viewmode"))
+                {
+                    unsafe
+                    {
+                        if (ImGuiExtension.BeginTabItemNullableOpen("Edit", null, ImGuiTabItemFlags.SetSelected))
+                        {
+                            ImGui.EndTabItem();
+                        }
+                        if (ImGuiExtension.BeginTabItemNullableOpen("Game", null, ImGuiTabItemFlags.SetSelected))
+                        {
+                            ImGui.EndTabItem();
+                        }
+                        ImGui.EndTabBar();
+                    }
+                }
+
+                ImGui.SameLine();
+
+                // play mode button
+                Vector2 cp = ImGui.GetCursorPos();
+                cp.X += ImGui.GetColumnWidth() / 2;
+                ImGui.SetCursorPos(cp);
+                bool colorPushed = Context.Scene.Running;
+                if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff/*new Vector4(1, 0.2f, 0.1f, 1)*/);
+                if (ImGui.ArrowButton("##play", Context.Scene.Running ? ImGuiDir.Down : ImGuiDir.Right))
+                {
+                    if (!Context.Scene.Running) EditorLayer.Instance.StartPlaymode();
+                    else EditorLayer.Instance.EndPlaymode();
+                }
+                if (colorPushed) ImGui.PopStyleColor();
+
+
+                ImGui.EndMenuBar();
+            }
+
+            // !
+            // TODO: this seems kinda sus
             ImGuiLayer.Instance.BlockEvents = !Focused;
-            if (Focused)
-                EditorCameraController.OnUpdate(Time.DeltaTimeF);
 
             if (Context.Scene != null)
             {
@@ -102,6 +136,7 @@ namespace CrossEngineEditor.Panels
 
                         EditorCameraController.SetViewportSize(viewportSize.X, viewportSize.Y);
 
+                        // notify scene
                         if (Context.Scene.Running) Context.Scene.OnEvent(new WindowResizeEvent((uint)viewportSize.X, (uint)viewportSize.Y));
                     }
                 }
@@ -116,20 +151,40 @@ namespace CrossEngineEditor.Panels
                 Renderer.Clear();
                 framebuffer.ClearAttachment((uint)Context.Scene.Pipeline.FBStructureIndex.ID, 0);
 
+                // draw
                 if (Context.Scene != null)
                 {
                     if (Context.Scene.Running) Context.Scene.OnRenderRuntime(framebuffer);
                     else Context.Scene.OnRenderEditor(EditorLayer.Instance.EditorCamera, framebuffer);
                 }
 
-                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsItemHovered() && Focused && EnableSelect)
+                // interaction
+                if (ImGui.IsItemHovered() && Focused)
                 {
-                    Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
-                    texpos.Y = -texpos.Y;
-                    int result = framebuffer.ReadPixel(1, (int)texpos.X, (int)texpos.Y);
-                    EditorApplication.Log.Trace($"selected entity id {result}");
+                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && EnableSelect)
+                    {
+                        Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
+                        texpos.Y = -texpos.Y;
+                        int result = framebuffer.ReadPixel(1, (int)texpos.X, (int)texpos.Y);
+                        EditorApplication.Log.Trace($"selected entity id {result}");
 
-                    Context.ActiveEntity = Context.Scene.GetEntity(result);
+                        Context.ActiveEntity = Context.Scene.GetEntity(result);
+                    }
+                    
+                    EditorCameraController.OnUpdate(Time.DeltaTimeF);
+                }
+
+                // check camera source
+                if (Context.Scene?.Running == true && Context.Scene?.GetPrimaryCameraEntity() == null)
+                {
+                    //Vector2 cursorBackup = ImGui.GetCursorPos();
+                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, 0, 0, 1));
+                    const string noCameraMessage = "No Primary Camera!";
+                    Vector2 buttSize = ImGui.CalcTextSize(noCameraMessage) + ImGui.GetStyle().FramePadding * 2;
+                    ImGui.SetCursorPos(WindowSize / 2 - buttSize / 2);
+                    ImGui.Button(noCameraMessage, buttSize);
+                    ImGui.PopStyleColor();
+                    //ImGui.SetCursorPos(cursorBackup);
                 }
 
                 Framebuffer.Unbind();

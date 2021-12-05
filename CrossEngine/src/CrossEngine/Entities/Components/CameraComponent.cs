@@ -11,6 +11,7 @@ namespace CrossEngine.Entities.Components
 {
     public class CameraComponent : Component
     {
+        [EditorInnerValue]
         public Camera Camera;
         [EditorBooleanValue]
         public bool Primary = true;

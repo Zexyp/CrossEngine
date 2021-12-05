@@ -6,15 +6,23 @@ using System.Linq;
 
 using CrossEngine.Serialization;
 using CrossEngine.Logging;
+using System.Collections;
 
 namespace CrossEngine.Assets
 {
-    public abstract class AssetCollection : ISerializable, IDisposable/*, ICollection<IAsset>*/
+    public abstract class AssetCollection : ISerializable, IDisposable/*, ICollection<Asset>*/
     {
         Dictionary<string, Asset> _assets = new Dictionary<string, Asset>();
 
         public event Action<AssetCollection, Asset> OnAssetAdded;
         public event Action<AssetCollection, Asset> OnAssetRemoved;
+
+        // TODO: check if this makes sense
+        private bool loaded = false;
+
+        public int Count => throw new NotImplementedException();
+
+        public bool IsReadOnly => throw new NotImplementedException();
 
         public Asset this[string name]
         {
@@ -38,7 +46,10 @@ namespace CrossEngine.Assets
             _assets.Add(asset.Name, asset);
             
             asset.IsValid = true;
-            
+
+            if (loaded && !asset.IsLoaded)
+                asset.Load();
+
             OnAssetAdded?.Invoke(this, asset);
         }
 
@@ -46,7 +57,10 @@ namespace CrossEngine.Assets
         {
             asset.OnNameChanged -= OnAssetNameChanged;
             _assets.Remove(asset.Name);
-            
+
+            if (loaded && asset.IsLoaded)
+                asset.Dispose();
+
             asset.IsValid = false;
 
             OnAssetRemoved?.Invoke(this, asset);
@@ -135,6 +149,8 @@ namespace CrossEngine.Assets
 
         public void Load()
         {
+            loaded = true;
+
             foreach (var ass in _assets.Values)
             {
                 ass.Load();
@@ -144,12 +160,26 @@ namespace CrossEngine.Assets
 
         public void Dispose()
         {
+            loaded = false;
+
             foreach (var ass in _assets.Values)
             {
                 ass.Dispose();
             }
             Log.Core.Trace($"unloaded asset collection of type '{this.GetType().GetGenericArguments()[0].Name}'");
         }
+
+        /*
+        public bool Contains(Asset item) => ((ICollection<Asset>)_assets.Values).Contains(item);
+
+        public void CopyTo(Asset[] array, int index) => ((ICollection<Asset>)_assets.Values).CopyTo(array, index);
+
+        public IEnumerator<Asset> GetEnumerator() => ((ICollection<Asset>)_assets.Values).GetEnumerator();
+
+        bool ICollection<Asset>.Remove(Asset item) => ((ICollection<Asset>) _assets.Values).Remove(item);
+
+        IEnumerator IEnumerable.GetEnumerator() => ((ICollection<Asset>)_assets.Values).GetEnumerator();
+        */
     }
 
     public class AssetCollection<T> : AssetCollection where T : Asset

@@ -37,6 +37,8 @@ namespace CrossEngineEditor
 
         //Texture dockspaceIconTexture;
 
+        private Scene workingScene = null;
+
         public EditorLayer()
         {
             if (Instance != null)
@@ -66,7 +68,7 @@ namespace CrossEngineEditor
                 Entity ent = Context.Scene.CreateEntity();
                 ent.Transform.WorldPosition = new Vector3(i, 0, 0);
                 ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
-                ent.AddComponent(new TagComponent("asd"));
+                ent.AddComponent(new TagComponent("asd" + i));
                 ent.AddComponent(new RigidBodyComponent() { LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
                 ent.AddComponent(new Box2DColliderComponent());
             }
@@ -110,91 +112,8 @@ namespace CrossEngineEditor
             SetupDockspace();
 
             DrawModals();
-            
 
-            if (ImGui.BeginMenuBar())
-            {
-                if (ImGui.BeginMenu("File"))
-                {
-                    if (ImGui.MenuItem("New scene"))
-                    {
-                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
-                        {
-                            if (flags == ActionModal.ModalButtonFlags.OK)
-                            {
-                                Context.Scene?.Unload();
-
-                                ClearContext();
-
-                                Context.Scene = new Scene();
-                            }
-                        }));
-                    }
-
-                    if (ImGui.MenuItem("Open Scene..."))
-                    {
-                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
-                        {
-                            if (flags == ActionModal.ModalButtonFlags.OK)
-                            {
-                                if (FileDialog.Open(out string path, initialDir: Environment.CurrentDirectory))
-                                {
-                                    Context.Scene?.Unload();
-
-                                    ClearContext();
-
-                                    Context.Scene = SceneSerializer.DeserializeJson(File.ReadAllText(path));
-                                    Context.Scene.Load();
-                                }
-                            }
-                        }));
-                    }
-
-                    ImGui.Separator();
-
-                    if (ImGui.MenuItem("Save Scene As...", Context.Scene != null))
-                    {
-                        if (FileDialog.Save(out string path, initialDir: Environment.CurrentDirectory))
-                        {
-                            string json;
-                            json = SceneSerializer.SertializeJson(Context.Scene);
-                            Log.App.Debug(json);
-
-                            Context.Scene.Unload();
-                            ClearContext();
-                            Context.Scene = SceneSerializer.DeserializeJson(json);
-                            Context.Scene.Load();
-                            //System.IO.File.WriteAllText(path, json);
-                        }
-                    }
-
-                    ImGui.EndMenu();
-                }
-
-                if (ImGui.BeginMenu("Window"))
-                {
-                    if (ImGui.BeginMenu("Panels"))
-                    {
-                        for (int i = 0; i < _panels.Count; i++)
-                        {
-                            if (_panels[i].Open != null)
-                            {
-                                if (ImGui.MenuItem(_panels[i].Name, null, (bool)_panels[i].Open))
-                                {
-                                    _panels[i].Open = !(bool)_panels[i].Open;
-                                }
-                            }
-                            else
-                            {
-                                ImGui.MenuItem(_panels[i].Name);
-                            }
-                        }
-                        ImGui.EndMenu();
-                    }
-                    ImGui.EndMenu();
-                }
-                ImGui.EndMenuBar();
-            }
+            DrawMenuBar();
 
             ImGui.ShowDemoWindow(); // purely dev thing
 
@@ -291,6 +210,95 @@ namespace CrossEngineEditor
         }
         #endregion
 
+        private void DrawMenuBar()
+        {
+            if (ImGui.BeginMenuBar())
+            {
+                if (ImGui.BeginMenu("File"))
+                {
+                    if (ImGui.MenuItem("New Scene"))
+                    {
+                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
+                        {
+                            if (flags == ActionModal.ModalButtonFlags.OK)
+                            {
+                                Context.Scene?.Unload();
+
+                                ClearContext();
+
+                                Context.Scene = new Scene();
+                                Context.Scene.Load();
+                            }
+                        }));
+                    }
+
+                    if (ImGui.MenuItem("Open Scene..."))
+                    {
+                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
+                        {
+                            if (flags == ActionModal.ModalButtonFlags.OK)
+                            {
+                                if (FileDialog.Open(out string path, initialDir: Environment.CurrentDirectory))
+                                {
+                                    Context.Scene?.Unload();
+
+                                    ClearContext();
+
+                                    Context.Scene = SceneSerializer.DeserializeJson(File.ReadAllText(path));
+                                    Context.Scene.Load();
+                                }
+                            }
+                        }));
+                    }
+
+                    ImGui.Separator();
+
+                    if (ImGui.MenuItem("Save Scene As...", Context.Scene != null))
+                    {
+                        if (FileDialog.Save(out string path, initialDir: Environment.CurrentDirectory))
+                        {
+                            string json;
+                            json = SceneSerializer.SertializeJson(Context.Scene);
+                            Log.App.Debug(json);
+
+                            Context.Scene.Unload();
+                            ClearContext();
+                            Context.Scene = SceneSerializer.DeserializeJson(json);
+                            Context.Scene.Load();
+                            EditorApplication.Log.Warn("only test rn");
+                            //System.IO.File.WriteAllText(path, json);
+                        }
+                    }
+
+                    ImGui.EndMenu();
+                }
+
+                if (ImGui.BeginMenu("Window"))
+                {
+                    if (ImGui.BeginMenu("Panels"))
+                    {
+                        for (int i = 0; i < _panels.Count; i++)
+                        {
+                            if (_panels[i].Open != null)
+                            {
+                                if (ImGui.MenuItem(_panels[i].Name, null, (bool)_panels[i].Open))
+                                {
+                                    _panels[i].Open = !(bool)_panels[i].Open;
+                                }
+                            }
+                            else
+                            {
+                                ImGui.MenuItem(_panels[i].Name);
+                            }
+                        }
+                        ImGui.EndMenu();
+                    }
+                    ImGui.EndMenu();
+                }
+                ImGui.EndMenuBar();
+            }
+        }
+
         #region Panel Methods
         private void AddPanel(EditorPanel panel)
         {
@@ -352,7 +360,36 @@ namespace CrossEngineEditor
         {
             Context.SelectedEntities.Clear();
             Context.ActiveEntity = null;
-            Context.Scene = null;
+        }
+        #endregion
+
+        #region Real Magic
+        public void StartPlaymode()
+        {
+            EditorApplication.Log.Info("starting playmode");
+
+            string json;
+            json = SceneSerializer.SertializeJson(Context.Scene);
+            Log.App.Debug(json);
+            workingScene = Context.Scene;
+            ClearContext();
+            Context.Scene = SceneSerializer.DeserializeJson(json);
+            Context.Scene.Load();
+            Context.Scene.Start();
+
+            EditorApplication.Log.Info("playmode started");
+        }
+
+        public void EndPlaymode()
+        {
+            EditorApplication.Log.Info("ending playmode");
+
+            Context.Scene.End();
+            Context.Scene.Unload();
+            Context.Scene = workingScene;
+            workingScene = null;
+
+            EditorApplication.Log.Info("playmode ended");
         }
         #endregion
     }
@@ -368,12 +405,6 @@ namespace CrossEngineEditor
             public Vector3 Destination;
             public Vector3 HitPoint;
             public Vector3 Normal;
-
-            public void MoveX(float move)
-            {
-                Source.X += move;
-                Destination.X += move;
-            }
         }
 
         public override void OnAttach()
@@ -393,7 +424,8 @@ namespace CrossEngineEditor
                 Ray ray = _rays[i];
 
                 Physics.Raycast(_rays[i].Source, _rays[i].Destination, out RaycastHitInfo info);
-                ray.HitPoint = info.point;
+                ray.HitPoint = info.Point;
+                ray.Normal = info.Normal;
 
                 _rays[i] = ray;
             }
