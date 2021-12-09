@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using CrossEngine.Rendering.Buffers;
+using CrossEngine.Profiling;
 
 namespace CrossEngine.Rendering.Passes
 {
@@ -51,12 +52,16 @@ namespace CrossEngine.Rendering.Passes
 
         public void Render(SceneData sceneData, Framebuffer framebuffer = null)
         {
+            Profiler.BeginScope("Drawing pipeline");
+
             framebuffer.Bind();
             framebuffer.EnableAllColorDrawBuffers(true);
             for (int i = 0; i < _passes.Count; i++)
             {
                 _passes[i].Draw(sceneData.Scene, sceneData.ViewProjectionMatrix, framebuffer);
             }
+
+            Profiler.EndScope();
         }
     }
 }

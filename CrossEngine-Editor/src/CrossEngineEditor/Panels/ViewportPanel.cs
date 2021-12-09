@@ -6,6 +6,7 @@ using System.Numerics;
 using CrossEngine;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering;
+using CrossEngine.Rendering.Cameras;
 using CrossEngine.Layers;
 using CrossEngine.Events;
 using CrossEngine.Logging;
@@ -16,8 +17,19 @@ namespace CrossEngineEditor.Panels
 {
     class ViewportPanel : EditorPanel
     {
+        enum ViewMode
+        {
+            Edit,
+            Game,
+        }
+
         Framebuffer framebuffer;
         Vector2 viewportSize;
+        ViewMode viewMode = ViewMode.Edit;
+
+        private bool interactioActive = false;
+
+        private bool sceneUpdate = true;
 
         public OrthographicEditorCameraController EditorCameraController;
 
@@ -43,6 +55,8 @@ namespace CrossEngineEditor.Panels
 
         private void OnContextSceneChanged()
         {
+            viewMode = ViewMode.Edit;
+
             var scene = Context.Scene;
             if (scene != null)
             {
@@ -88,13 +102,19 @@ namespace CrossEngineEditor.Panels
                 {
                     unsafe
                     {
-                        if (ImGuiExtension.BeginTabItemNullableOpen("Edit", null, ImGuiTabItemFlags.SetSelected))
+                        if (ImGuiExtension.BeginTabItemNullableOpen("Edit", null, (viewMode == ViewMode.Edit) ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None))
                         {
                             ImGui.EndTabItem();
                         }
-                        if (ImGuiExtension.BeginTabItemNullableOpen("Game", null, ImGuiTabItemFlags.SetSelected))
+                        if (ImGui.IsItemClicked()) viewMode = ViewMode.Edit;
+                        if (ImGuiExtension.BeginTabItemNullableOpen("Game", null, (viewMode == ViewMode.Game) ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None))
                         {
                             ImGui.EndTabItem();
+                        }
+                        if (ImGui.IsItemClicked())
+                        {
+                            viewMode = ViewMode.Game;
+                            Context.Scene?.GetPrimaryCamera()?.Resize(viewportSize.X, viewportSize.Y);
                         }
                         ImGui.EndTabBar();
                     }
@@ -106,14 +126,29 @@ namespace CrossEngineEditor.Panels
                 Vector2 cp = ImGui.GetCursorPos();
                 cp.X += ImGui.GetColumnWidth() / 2;
                 ImGui.SetCursorPos(cp);
-                bool colorPushed = Context.Scene.Running;
-                if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff/*new Vector4(1, 0.2f, 0.1f, 1)*/);
-                if (ImGui.ArrowButton("##play", Context.Scene.Running ? ImGuiDir.Down : ImGuiDir.Right))
+                bool colorPushed = Context.Scene?.Running == true;
+                if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000dd/*new Vector4(1, 0.2f, 0.1f, 1)*/);
+                if (ImGui.ArrowButton("##play", Context.Scene?.Running == true ? ImGuiDir.Down : ImGuiDir.Right))
                 {
-                    if (!Context.Scene.Running) EditorLayer.Instance.StartPlaymode();
-                    else EditorLayer.Instance.EndPlaymode();
+                    if (Context.Scene != null)
+                    {
+                        if (!Context.Scene.Running)
+                        {
+                            EditorLayer.Instance.StartPlaymode();
+                            viewMode = ViewMode.Game;
+                        }
+                        else
+                        {
+                            EditorLayer.Instance.EndPlaymode();
+                            viewMode = ViewMode.Edit;
+
+                            sceneUpdate = true;
+                        }
+                    }
                 }
                 if (colorPushed) ImGui.PopStyleColor();
+
+                ImGui.Checkbox("##update", ref sceneUpdate);
 
 
                 ImGui.EndMenuBar();
@@ -125,6 +160,8 @@ namespace CrossEngineEditor.Panels
 
             if (Context.Scene != null)
             {
+                if (Context.Scene.Running && sceneUpdate) Context.Scene.OnUpdateRuntime(Time.DeltaTimeF);
+
                 // resize check
                 {
                     Vector2 viewportPanelSize = ImGui.GetContentRegionAvail();
@@ -138,10 +175,12 @@ namespace CrossEngineEditor.Panels
 
                         // notify scene
                         if (Context.Scene.Running) Context.Scene.OnEvent(new WindowResizeEvent((uint)viewportSize.X, (uint)viewportSize.Y));
+
+                        Context.Scene.GetPrimaryCamera()?.Resize(viewportSize.X, viewportSize.Y);
                     }
                 }
 
-                // draw the framebuffer as 
+                // draw the framebuffer as image
                 ImGui.Image(new IntPtr(framebuffer.ColorAttachments[Context.Scene.Pipeline.FBStructureIndex.Color]),
                     viewportSize,
                     new Vector2(0, 1),
@@ -150,13 +189,6 @@ namespace CrossEngineEditor.Panels
                 framebuffer.Bind();
                 Renderer.Clear();
                 framebuffer.ClearAttachment((uint)Context.Scene.Pipeline.FBStructureIndex.ID, 0);
-
-                // draw
-                if (Context.Scene != null)
-                {
-                    if (Context.Scene.Running) Context.Scene.OnRenderRuntime(framebuffer);
-                    else Context.Scene.OnRenderEditor(EditorLayer.Instance.EditorCamera, framebuffer);
-                }
 
                 // interaction
                 if (ImGui.IsItemHovered() && Focused)
@@ -170,12 +202,19 @@ namespace CrossEngineEditor.Panels
 
                         Context.ActiveEntity = Context.Scene.GetEntity(result);
                     }
-                    
+
                     EditorCameraController.OnUpdate(Time.DeltaTimeF);
                 }
 
-                // check camera source
-                if (Context.Scene?.Running == true && Context.Scene?.GetPrimaryCameraEntity() == null)
+                Matrix4x4? viewProjectionMatrix = GetSuitableCamerasViewProjectionMatrix();
+                // draw
+                if (viewProjectionMatrix.HasValue)
+                {
+                    if (viewMode == ViewMode.Game) Context.Scene.OnRenderRuntime(framebuffer);
+                    else Context.Scene.OnRenderEditor((Matrix4x4)viewProjectionMatrix, framebuffer);
+                }
+                // report invalid camera source
+                else
                 {
                     //Vector2 cursorBackup = ImGui.GetCursorPos();
                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, 0, 0, 1));
@@ -194,6 +233,13 @@ namespace CrossEngineEditor.Panels
         public override void OnEvent(Event e)
         {
             EditorCameraController.OnEvent(e);
+        }
+
+        public Matrix4x4? GetSuitableCamerasViewProjectionMatrix()
+        {
+            if (viewMode == ViewMode.Edit) return EditorLayer.Instance.EditorCamera.ViewProjectionMatrix;
+            else if (viewMode == ViewMode.Game) return Context.Scene?.GetPrimaryCamerasViewProjectionMatrix();
+            else return null;
         }
     }
 }

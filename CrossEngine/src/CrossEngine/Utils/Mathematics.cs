@@ -1,6 +1,7 @@
 ﻿using System;
 
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 using CrossEngine.Logging;
 
@@ -13,19 +14,23 @@ namespace CrossEngine.Utils
         public const float ToRadConstF = MathF.PI / 180.0f;
         public const double ToRadConst = MathF.PI / 180.0;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public double ToRadians(double degrees)
         {
             return ToRadConst * degrees;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public float ToRadians(float degrees)
         {
             return ToRadConstF * degrees;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public double ToDegrees(double radians)
         {
             return ToDegConst * radians;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public float ToDegrees(float radians)
         {
             return ToDegConstF * radians;
@@ -240,12 +245,12 @@ namespace CrossEngine.Utils
             return matrix;
         }
 
-        static public Matrix4x4 Perspective(float fovy, float aspect, float zNear, float zFar)
+        static public Matrix4x4 Perspective(float fovyRad, float aspect, float zNear, float zFar)
         {
             if (Math.Abs(aspect - float.Epsilon) <= 0) throw new Exception("invalid aspect");
             Matrix4x4 projMat = new Matrix4x4();
-            float tanHalfFovy = MathF.Tan(fovy / 2);
-            projMat.M11 = 1 / aspect * fovy;
+            float tanHalfFovy = MathF.Tan(fovyRad / 2);
+            projMat.M11 = 1 / aspect * fovyRad;
             projMat.M22 = 1 / tanHalfFovy;
             projMat.M33 = (zFar + zNear) / (zFar - zNear);
             projMat.M34 = 1.0f;

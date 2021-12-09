@@ -30,14 +30,14 @@ namespace CrossEngine.Rendering.Passes
                 {
                     SpriteRendererComponent src = spEnt.Item2;
                     // check if enabled
-                    if (!src.Enabled) continue;
+                    if (!src.Enabled || !src.Valid) continue;
                     TransformComponent trans = spEnt.Item1;
 
                     // forced z index
                     //if (!ForceZIndex)
                     //else
 
-                    Matrix4x4 matrix = Matrix4x4.CreateScale(new Vector3(src.Size, 1.0f)) * Matrix4x4.CreateTranslation(new Vector3(src.DrawOffset, 1.0f)) * trans.WorldTransformMatrix;
+                    Matrix4x4 matrix = Matrix4x4.CreateScale(new Vector3(src.Size, 1.0f)) * Matrix4x4.CreateTranslation(new Vector3(src.DrawOffset, 0.0f)) * trans.WorldTransformMatrix;
 
                     //                          small check can be implemented later
                     if (src.TextureAsset == null) Renderer2D.DrawQuad(matrix, src.Color, spEnt.CommonEntity.UID);

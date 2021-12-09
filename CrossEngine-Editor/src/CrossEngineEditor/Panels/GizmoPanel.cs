@@ -1,8 +1,12 @@
 ﻿using ImGuiNET;
 using ImGuizmoNET;
+
 using System.Numerics;
+
 using CrossEngine.Entities.Components;
 using CrossEngine.Utils;
+
+using CrossEngineEditor.Utils;
 
 namespace CrossEngineEditor.Panels
 {
@@ -69,12 +73,14 @@ namespace CrossEngineEditor.Panels
                         //    ImGui.EndTooltip();
                         //}
 
+                        ImGuiUtils.BeginGroupFrame();
                         if (ImGui.RadioButton("Translate", currentGizmoOperation == OPERATION.TRANSLATE))
                             currentGizmoOperation = OPERATION.TRANSLATE;
                         if (ImGui.RadioButton("Rotate", currentGizmoOperation == OPERATION.ROTATE))
                             currentGizmoOperation = OPERATION.ROTATE;
                         if (ImGui.RadioButton("Scale", currentGizmoOperation == OPERATION.SCALE))
                             currentGizmoOperation = OPERATION.SCALE;
+                        ImGuiUtils.EndGroupFrame(0xff363636);
                     }
 
                     //ImGui.Separator();
@@ -99,16 +105,17 @@ namespace CrossEngineEditor.Panels
                     //    }
                     //}
 
-                    ImGui.Separator();
-
                     ImGui.Text("Mode");
                     {
                         if (currentGizmoOperation != OPERATION.SCALE)
                         {
+                            ImGuiUtils.BeginGroupFrame();
                             if (ImGui.RadioButton("Local", currentGizmoMode == MODE.LOCAL))
                                 currentGizmoMode = MODE.LOCAL;
+                            ImGui.SameLine();
                             if (ImGui.RadioButton("World", currentGizmoMode == MODE.WORLD))
                                 currentGizmoMode = MODE.WORLD;
+                            ImGuiUtils.EndGroupFrame(0xff363636);
                         }
                     }
 

@@ -227,7 +227,7 @@ namespace CrossEngine.Entities
                 Transform = GetComponent<TransformComponent>();
 #endif
 
-            if (Active) ValidateAllComponents(component);
+            ValidateAllComponents(component);
             component.Entity = null;
 
             OnComponentRemoved?.Invoke(this, component);

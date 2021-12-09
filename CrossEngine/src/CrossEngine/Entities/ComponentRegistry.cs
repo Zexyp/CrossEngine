@@ -9,7 +9,7 @@ using CrossEngine.Entities.Components;
 
 namespace CrossEngine.Entities.Components
 {
-    class ComponentRegistry
+    public class ComponentRegistry
     {
         Dictionary<Type, IList> _registryDict = new Dictionary<Type, IList>();
 
@@ -121,7 +121,7 @@ namespace CrossEngine.Entities.Components
         }
     }
 
-    class ComponentGroup<T1, T2> : Tuple<T1, T2>, IComponentGroup where T1 : Component where T2 : Component
+    public class ComponentGroup<T1, T2> : Tuple<T1, T2>, IComponentGroup where T1 : Component where T2 : Component
     {
         public Entity CommonEntity { get; private init; }
 

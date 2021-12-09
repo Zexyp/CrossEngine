@@ -33,7 +33,7 @@ namespace CrossEngine.Assets
             IsLoaded = true;
         }
 
-        public override void Dispose()
+        public override void Unload()
         {
             Texture.Dispose();
             Texture = null;

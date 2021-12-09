@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Logging;
 using CrossEngine.Assets.GC;
+using CrossEngine.Profiling;
 
 namespace CrossEngine.Rendering.Buffers
 {
@@ -137,6 +138,8 @@ namespace CrossEngine.Rendering.Buffers
         
         unsafe void Invalidate()
         {
+            Profiler.BeginScope($"{nameof(Framebuffer)}.{nameof(Framebuffer.Invalidate)}");
+
             if (fboid != 0)
             {
                 fixed (uint* p = &fboid)
@@ -229,6 +232,8 @@ namespace CrossEngine.Rendering.Buffers
                 // Only depth-pass
                 glDrawBuffer(GL_NONE);
             }
+
+            Profiler.EndScope();
         }
 
         private static unsafe void AttachColorTexture(uint id, FramebufferTextureSpecification spec, int width, int height, int index)

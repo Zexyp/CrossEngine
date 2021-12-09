@@ -10,6 +10,8 @@ using System.Reflection;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Assets;
 
+using CrossEngineEditor.Utils;
+
 namespace CrossEngineEditor.Utils
 {
     public class PropertyDrawer
@@ -25,22 +27,22 @@ namespace CrossEngineEditor.Utils
                 bool success;
                 switch (cattribt.NumberInputType)
                 {
-                    case NumberInputTypeRepresentation.Drag:
+                    case NumberInputType.Drag:
                         {
                             success = ImGui.DragInt(name, ref v, cattribt.Step, (int)cattribt.Min, (int)cattribt.Max);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Input:
+                    case NumberInputType.Input:
                         {
                             success = ImGui.InputInt(cattribt.Name, ref v);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Slider:
+                    case NumberInputType.Slider:
                         {
                             success = ImGui.SliderInt(cattribt.Name, ref v, (int)cattribt.Min, (int)cattribt.Max);
                         }
                         break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
+                    default: throw new ArgumentException("Invalid " + nameof(NumberInputType) + " value.");
                 }
                 if (success) value = v;
                 return success;
@@ -51,22 +53,22 @@ namespace CrossEngineEditor.Utils
                 bool success;
                 switch (cattribt.NumberInputType)
                 {
-                    case NumberInputTypeRepresentation.Drag:
+                    case NumberInputType.Drag:
                         {
                             success = ImGui.DragFloat(name, ref v, cattribt.Step, cattribt.Min, cattribt.Max);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Input:
+                    case NumberInputType.Input:
                         {
                             success = ImGui.InputFloat(cattribt.Name, ref v);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Slider:
+                    case NumberInputType.Slider:
                         {
                             success = ImGui.SliderFloat(cattribt.Name, ref v, cattribt.Min, cattribt.Max);
                         }
                         break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
+                    default: throw new ArgumentException("Invalid " + nameof(NumberInputType) + " value.");
                 }
                 if (success) value = v;
                 return success;
@@ -77,22 +79,22 @@ namespace CrossEngineEditor.Utils
                 bool success;
                 switch (cattribt.NumberInputType)
                 {
-                    case NumberInputTypeRepresentation.Drag:
+                    case NumberInputType.Drag:
                         {
                             success = ImGui.DragFloat2(name, ref v, cattribt.Step, cattribt.Min, cattribt.Max);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Input:
+                    case NumberInputType.Input:
                         {
                             success = ImGui.InputFloat2(cattribt.Name, ref v);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Slider:
+                    case NumberInputType.Slider:
                         {
                             success = ImGui.SliderFloat2(cattribt.Name, ref v, cattribt.Min, cattribt.Max);
                         }
                         break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
+                    default: throw new ArgumentException("Invalid " + nameof(NumberInputType) + " value.");
                 }
                 if (success) value = v;
                 return success;
@@ -103,22 +105,22 @@ namespace CrossEngineEditor.Utils
                 bool success;
                 switch (cattribt.NumberInputType)
                 {
-                    case NumberInputTypeRepresentation.Drag:
+                    case NumberInputType.Drag:
                         {
                             success = ImGui.DragFloat3(name, ref v, cattribt.Step, cattribt.Min, cattribt.Max);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Input:
+                    case NumberInputType.Input:
                         {
                             success = ImGui.InputFloat3(cattribt.Name, ref v);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Slider:
+                    case NumberInputType.Slider:
                         {
                             success = ImGui.SliderFloat3(cattribt.Name, ref v, cattribt.Min, cattribt.Max);
                         }
                         break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
+                    default: throw new ArgumentException("Invalid " + nameof(NumberInputType) + " value.");
                 }
                 if (success) value = v;
                 return success;
@@ -129,22 +131,22 @@ namespace CrossEngineEditor.Utils
                 bool success;
                 switch (cattribt.NumberInputType)
                 {
-                    case NumberInputTypeRepresentation.Drag:
+                    case NumberInputType.Drag:
                         {
                             success = ImGui.DragFloat4(name, ref v, cattribt.Step, cattribt.Min, cattribt.Max);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Input:
+                    case NumberInputType.Input:
                         {
                             success = ImGui.InputFloat4(cattribt.Name, ref v);
                         }
                         break;
-                    case NumberInputTypeRepresentation.Slider:
+                    case NumberInputType.Slider:
                         {
                             success = ImGui.SliderFloat4(cattribt.Name, ref v, cattribt.Min, cattribt.Max);
                         }
                         break;
-                    default: throw new ArgumentException("Invalid " + nameof(NumberInputTypeRepresentation) + " value.");
+                    default: throw new ArgumentException("Invalid " + nameof(NumberInputType) + " value.");
                 }
                 if (success) value = v;
                 return success;
@@ -240,6 +242,24 @@ namespace CrossEngineEditor.Utils
 
                 if (success) value = v;
                 return success;
+            } },
+
+            { typeof(EditorInnerValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                var cattribt = (EditorInnerValueAttribute)attribute;
+                Type valtype = value.GetType();
+                MemberInfo[] membs = valtype.GetMembers();
+                ImGuiUtils.BeginGroupFrame();
+                for (int mi = 0; mi < membs.Length; mi++)
+                {
+                    var mem = membs[mi];
+                    switch (mem.MemberType)
+                    {
+                        case MemberTypes.Field:    PropertyDrawer.DrawEditorValue((FieldInfo)mem, value); break;
+                        case MemberTypes.Property: PropertyDrawer.DrawEditorValue((PropertyInfo)mem, value); break;
+                    }
+                }
+                ImGuiUtils.EndGroupFrame(0xff363636);
+                return false;
             } },
         };
 

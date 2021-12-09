@@ -17,18 +17,17 @@ using CrossEngineEditor.Utils;
 
 namespace CrossEngineEditor.Panels
 {
-    // TODO: second rework (attributes)
     class InspectorPanel : EditorPanel
     {
-        readonly List<Type> ComponentTypes = new List<Type>()
-        {
-            typeof(TransformComponent),
-            typeof(TagComponent),
-            typeof(SpriteRendererComponent),
-            typeof(CameraComponent),
-            typeof(RigidBodyComponent),
-            typeof(Box2DColliderComponent),
-        };
+        //static readonly List<Type> ComponentTypes = new List<Type>()
+        //{
+        //    typeof(TransformComponent),
+        //    typeof(TagComponent),
+        //    typeof(SpriteRendererComponent),
+        //    typeof(CameraComponent),
+        //    typeof(RigidBodyComponent),
+        //    typeof(Box2DColliderComponent),
+        //};
 
         public InspectorPanel() : base("Inspector")
         {
@@ -37,17 +36,27 @@ namespace CrossEngineEditor.Panels
 
         protected override void DrawWindowContent()
         {
+            Component InstantiateComponent(Type type) => (Component)type.GetConstructor(Type.EmptyTypes).Invoke(null);
+
             if (ImGui.BeginMenuBar())
             {
                 if (ImGui.BeginMenu("Edit", Context.ActiveEntity != null))
                 {
                     if (ImGui.BeginMenu("Add Component"))
                     {
-                        for (int i = 0; i < ComponentTypes.Count; i++)
+                        for (int i = 0; i < EditorLayer.Instance.CoreComponentTypes.Length; i++)
                         {
-                            if (ImGui.MenuItem(ComponentTypes[i].Name))
+                            if (ImGui.MenuItem(EditorLayer.Instance.CoreComponentTypes[i].Name))
                             {
-                                Context.ActiveEntity.AddComponent((Component)ComponentTypes[i].GetConstructor(System.Type.EmptyTypes).Invoke(null));
+                                Context.ActiveEntity.AddComponent(InstantiateComponent(EditorLayer.Instance.CoreComponentTypes[i]));
+                            }
+                        }
+                        ImGui.Separator();
+                        for (int i = 0; i < EditorLayer.Instance.ComponentTypeRegistry.Count; i++)
+                        {
+                            if (ImGui.MenuItem(EditorLayer.Instance.ComponentTypeRegistry[i].Name))
+                            {
+                                Context.ActiveEntity.AddComponent(InstantiateComponent(EditorLayer.Instance.ComponentTypeRegistry[i]));
                             }
                         }
                         ImGui.EndMenu();
@@ -106,9 +115,13 @@ namespace CrossEngineEditor.Panels
                 // item shifting drop
                 unsafe
                 {
-                    if (targetedComponent == component) ImGui.Button("##target", new Vector2(ImGui.GetColumnWidth(), 2.5f));
                     // smoll fix
-                    if (ImGui.IsItemHovered()) targetedComponent = null;
+                    bool resetTarget = false;
+                    if (targetedComponent == component)
+                    {
+                        ImGui.Button("##target", new Vector2(ImGui.GetColumnWidth(), 2.5f));
+                        if (ImGui.IsItemHovered()) resetTarget = true;
+                    }
 
                     if (ImGui.BeginDragDropTarget())
                     {
@@ -124,8 +137,10 @@ namespace CrossEngineEditor.Panels
                         }
                         ImGui.EndDragDropTarget();
                     }
+
+                    if (resetTarget) targetedComponent = null;
                 }
-                
+
                 bool collapsingHeader = ImGui.CollapsingHeader(componentType.Name, ref stay);
 
                 // item shifting drag
@@ -180,8 +195,11 @@ namespace CrossEngineEditor.Panels
                 if (ImGui.ArrowButton("down", ImGuiDir.Down))
                     context.ShiftComponent(component, Math.Min(components.Count - 1, compi + 1));
 
+
                 if (collapsingHeader)
                 {
+                    ImGuiUtils.BeginGroupFrame();
+
                     MemberInfo[] membs = componentType.GetMembers();
 
                     for (int mi = 0; mi < membs.Length; mi++)
@@ -193,7 +211,10 @@ namespace CrossEngineEditor.Panels
                             case MemberTypes.Property: PropertyDrawer.DrawEditorValue((PropertyInfo)mem, component); break;
                         }
                     }
-                    ImGui.Separator();
+
+                    //ImGui.Separator();
+
+                    ImGuiUtils.EndGroupFrame(0xff363636);
                 }
 
                 if (valcol) ImGui.PopStyleColor(2);

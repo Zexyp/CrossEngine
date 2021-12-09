@@ -4,7 +4,7 @@ using CrossEngine.Serialization;
 
 namespace CrossEngine.Assets
 {
-    public abstract class Asset : ISerializable, IDisposable
+    public abstract class Asset : ISerializable
     {
         public string Path { get; set; } = "";
         private string _name = "";
@@ -39,7 +39,7 @@ namespace CrossEngine.Assets
         public virtual void Load()
         {
         }
-        public virtual void Dispose()
+        public virtual void Unload()
         {
         }
     }

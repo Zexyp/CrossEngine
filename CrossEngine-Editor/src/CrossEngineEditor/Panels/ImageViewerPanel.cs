@@ -205,7 +205,7 @@ namespace CrossEngineEditor.Panels
         private void UnloadAsset()
         {
             textureAssets.Remove(SelectedTextureAsset);
-            SelectedTextureAsset.Dispose();
+            SelectedTextureAsset.Unload();
             SelectedTextureAsset = null;
 
             selectedIndex = textureAssets.GetAll().Count - 1;

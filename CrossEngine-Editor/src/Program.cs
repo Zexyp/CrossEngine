@@ -1,4 +1,6 @@
-﻿namespace CrossEngineEditor
+﻿using CrossEngine.Profiling;
+
+namespace CrossEngineEditor
 {
     class Program
     {

@@ -54,9 +54,14 @@ namespace CrossEngineEditor.Panels
             // drag drop
             unsafe
             {
-                if (targetedNode == node && targetedNode.Value != null) ImGui.Button("##target", new Vector2(ImGui.GetColumnWidth(), 2.5f));
                 // smoll fix
-                if (ImGui.IsItemHovered()) targetedNode = null;
+                bool resetTarget = false;
+                if (targetedNode == node && targetedNode.Value != null)
+                {
+                    ImGui.Button("##target", new Vector2(ImGui.GetColumnWidth(), 2.5f));
+
+                    if (ImGui.IsItemHovered()) resetTarget = true;
+                }
 
                 // dropped next to
                 if (ImGui.BeginDragDropTarget())
@@ -88,6 +93,8 @@ namespace CrossEngineEditor.Panels
                     }
                     ImGui.EndDragDropTarget();
                 }
+
+                if (resetTarget) targetedNode = null;
             }
 
             ImGuiTreeNodeFlags flags = ((nodeEntity == Context.ActiveEntity) ? ImGuiTreeNodeFlags.Selected : ImGuiTreeNodeFlags.None) |

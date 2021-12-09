@@ -27,19 +27,25 @@ namespace CrossEngineEditor.Panels
         int frameTimePlotOffset = 0;
         bool updateFrameTimePlot = true;
 
+        float memoryLastUpdated = 0.0f;
+        float memoryUpdateEvery = 5f;
+        float memoryMegabytes = 0;
+
         protected override void DrawWindowContent()
         {
-            frames++;
-            queue += Time.DeltaTimeF;
-            if (queue >= updateFramesEvery)
             {
-                queue = 0;
-                lastFrames = (int)((float)frames / updateFramesEvery);
-                frames = 0;
+                frames++;
+                queue += Time.DeltaTimeF;
+                if (queue >= updateFramesEvery)
+                {
+                    queue = 0;
+                    lastFrames = (int)((float)frames / updateFramesEvery);
+                    frames = 0;
+                }
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, Math.Min((float)lastFrames / 30, 1), (float)lastFrames / 60, 1));
+                ImGui.Text($"FPS: {lastFrames:F1}");
+                ImGui.PopStyleColor();
             }
-            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, Math.Min((float)lastFrames / 30, 1), (float)lastFrames / 60, 1));
-            ImGui.Text(String.Format("FPS: {0:F1}", lastFrames));
-            ImGui.PopStyleColor();
 
             {
                 if (updateFrameTimePlot)
@@ -50,6 +56,7 @@ namespace CrossEngineEditor.Panels
 
                 float average = 0.0f;
                 float max = 0.0f;
+                // so lazy, replace dis to remember max value index
                 for (int n = 0; n < frameTimePlot.Length; n++)
                 {
                     max = (max < frameTimePlot[n]) ? frameTimePlot[n] : max;
@@ -57,12 +64,19 @@ namespace CrossEngineEditor.Panels
                 }
                 average /= (float)frameTimePlot.Length;
 
-                ImGui.PlotHistogram("Frame times", ref frameTimePlot[0], frameTimePlot.Length, frameTimePlotOffset, String.Format("avg {0:F2} ms", average), 0, max, new Vector2(0, 80.0f));
+                ImGui.PlotHistogram("Frame times", ref frameTimePlot[0], frameTimePlot.Length, frameTimePlotOffset, $"avg {average:F2} ms", 0, max, new Vector2(0, 80.0f));
                 updateFrameTimePlot = !(ImGui.IsItemHovered() && ImGui.IsMouseDown(ImGuiMouseButton.Left));
             }
 
-            //using (System.Diagnostics.Process proc = System.Diagnostics.Process.GetCurrentProcess())
-            //    ImGui.Text("Memory usage: " + (proc.PrivateMemorySize64 / (1024 * 1024)).ToString() + " MB");
+            {
+                if (Time.TotalElapsedSecondsF - memoryLastUpdated >= memoryUpdateEvery)
+                {
+                    memoryLastUpdated = Time.TotalElapsedSecondsF;
+                    using (System.Diagnostics.Process proc = System.Diagnostics.Process.GetCurrentProcess())
+                        memoryMegabytes = (proc.PrivateMemorySize64 / (1024 * 1024));
+                }
+                ImGui.Text($"Memory usage: {memoryMegabytes} MB");
+            }
         }
     }
 }

@@ -42,13 +42,13 @@ namespace CrossEngine.Serialization
                 Converters = {
                     //new ArrayReferencePreservngConverter(),
                     new SerializableJsonConverter(),
-
+                    
                     new Vector2JsonConverter(),
                     new Vector3JsonConverter(),
                     new Vector4JsonConverter(),
                     new QuaternionJsonConverter(),
                     new Matrix4x4JsonConverter(),
-
+                    
                     new SceneJsonConverter(scene),
                     new EntityJsonConverter(scene),
                     new ComponentJsonConverter(),

@@ -67,5 +67,33 @@ namespace CrossEngine.Serialization
             using (var reader = obj[name].CreateReader())
                 return serializer.Deserialize<T>(reader);
         }
+
+        public bool TryGetValue(string name, Type typeOfValue, out object? value)
+        {
+            if (operation != Operation.Read) throw new InvalidOperationException();
+
+            if (obj.TryGetValue(name, out JToken jt))
+            {
+                using (var reader = jt.CreateReader())
+                    value = serializer.Deserialize(reader, typeOfValue);
+                return true;
+            }
+            value = null;
+            return false;
+        }
+
+        public bool TryGetValue<T>(string name, out T? value)
+        {
+            if (operation != Operation.Read) throw new InvalidOperationException();
+
+            if (obj.TryGetValue(name, out JToken jt))
+            {
+                using (var reader = jt.CreateReader())
+                    value = serializer.Deserialize<T>(reader);
+                return true;
+            }
+            value = default;
+            return false;
+        }
     }
 }

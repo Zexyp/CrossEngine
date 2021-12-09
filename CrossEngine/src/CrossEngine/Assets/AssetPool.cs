@@ -7,7 +7,7 @@ using CrossEngine.Serialization;
 
 namespace CrossEngine.Assets
 {
-    public class AssetPool : ISerializable, IDisposable
+    public class AssetPool : ISerializable
     {
         public string Directory = "/.";
 
@@ -76,11 +76,11 @@ namespace CrossEngine.Assets
             }
         }
 
-        public void Dispose()
+        public void Unload()
         {
             foreach (var col in _collections.Values)
             {
-                col.Dispose();
+                col.Unload();
             }
         }
     }

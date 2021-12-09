@@ -31,11 +31,15 @@ namespace CrossEngineEditor
 
         protected override void Init()
         {
+            Profiler.BeginScope($"{nameof(EditorApplication)}.{nameof(EditorApplication.Init)}");
+
             LineRenderer.Init();
             Renderer2D.Init();
             CrossEngine.Logging.Log.EnableGLDebugging(LogLevel.Warn);
             //Renderer.SetClearColor(0.05f, 0.05f, 0.05f);
-            Renderer.SetClearColor(0.75f, 0.75f, 0.75f);
+            Renderer.SetClearColor(0.2f, 0.2f, 0.2f);
+
+            Profiler.EndScope();
         }
     }
 }

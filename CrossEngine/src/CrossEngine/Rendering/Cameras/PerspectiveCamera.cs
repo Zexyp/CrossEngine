@@ -8,24 +8,13 @@ using CrossEngine.Serialization;
 
 namespace CrossEngine.Rendering.Cameras
 {
-    public class OrthographicCamera : Camera
+    public class PerspectiveCamera : Camera
     {
-        private float _orthographicSize = 1.0f;
-        private float _zNear = -1.0f;
-        private float _zFar = 1.0f;
+        private float _zNear = 0.1f;
+        private float _zFar = 100f;
+        private float _fov = 60f;
         private float _aspectRatio = 1.0f;
 
-        [EditorSingleValue]
-        public float OrthographicSize
-        {
-            get => _orthographicSize;
-            set
-            {
-                if (_orthographicSize == value) return;
-                _orthographicSize = value;
-                MarkProjectionDirty();
-            }
-        }
         [EditorSingleValue]
         public float ZNear
         {
@@ -49,6 +38,17 @@ namespace CrossEngine.Rendering.Cameras
             }
         }
         [EditorSingleValue]
+        public float FOV
+        {
+            get => _fov;
+            set
+            {
+                if (_fov == value) return;
+                _fov = value;
+                MarkProjectionDirty();
+            }
+        }
+        [EditorSingleValue]
         public float AspectRatio
         {
             get => _aspectRatio;
@@ -60,9 +60,9 @@ namespace CrossEngine.Rendering.Cameras
             }
         }
 
-        public OrthographicCamera()
+        public PerspectiveCamera()
         {
-
+            
         }
 
         public override void Resize(float width, float height)
@@ -72,7 +72,7 @@ namespace CrossEngine.Rendering.Cameras
 
         protected override Matrix4x4 CreateProjectionMatrix()
         {
-            return Matrix4x4Extension.Ortho(-_orthographicSize * _aspectRatio, _orthographicSize * _aspectRatio, -_orthographicSize, _orthographicSize, ZNear, ZFar);
+            return Matrix4x4.CreatePerspectiveFieldOfView(MathExtension.ToRadians(Math.Clamp(_fov, 0, 179.999985f)), _aspectRatio, _zNear, _zFar);
         }
 
         #region Serialization
@@ -80,18 +80,17 @@ namespace CrossEngine.Rendering.Cameras
         {
             base.OnSerialize(info);
 
-            info.AddValue("OrthographicSize", _orthographicSize);
+            info.AddValue("FOV", _fov);
             info.AddValue("ZNear", _zNear);
             info.AddValue("ZFar", _zFar);
             info.AddValue("AspectRatio", _aspectRatio);
-
         }
 
         public override void OnDeserialize(SerializationInfo info)
         {
             base.OnDeserialize(info);
 
-            _orthographicSize = info.GetValue<float>("OrthographicSize");
+            _fov = info.GetValue<float>("FOV");
             _zNear = info.GetValue<float>("ZNear");
             _zFar = info.GetValue<float>("ZFar");
             _aspectRatio = info.GetValue<float>("AspectRatio");

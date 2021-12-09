@@ -31,7 +31,7 @@ namespace CrossEngine.Scenes
 
         public bool Running { get; private set; } = false;
 
-        internal readonly ComponentRegistry Registry = new ComponentRegistry();
+        public readonly ComponentRegistry Registry = new ComponentRegistry();
 
         private readonly List<Entity> _entities = new List<Entity>();
         private Dictionary<int, Entity> _uids = new Dictionary<int, Entity>();
@@ -119,14 +119,43 @@ namespace CrossEngine.Scenes
             return _uids[uid];
         }
 
-        public Entity GetPrimaryCameraEntity()
+        //public Entity GetPrimaryCameraEntity()
+        //{
+        //    if (Registry.ContainsType<CameraComponent>())
+        //    {
+        //        var col = Registry.GetComponentsCollection<CameraComponent>();
+        //        for (int i = 0; i < col.Count; i++)
+        //        {
+        //            CameraComponent camComp = col[i];
+        //            if (camComp.Primary) return camComp.Camera;
+        //        }
+        //    }
+        //    return null;
+        //}
+
+        public Camera GetPrimaryCamera()
         {
-            // TODO: fix
             if (Registry.ContainsType<CameraComponent>())
             {
-                foreach (var cameraComp in Registry.GetComponentsCollection<CameraComponent>())
+                var col = Registry.GetComponentsCollection<CameraComponent>();
+                for (int i = 0; i < col.Count; i++)
                 {
-                    if (cameraComp.Primary) return cameraComp.Entity;
+                    CameraComponent camComp = col[i];
+                    if (camComp.Primary) return camComp.Camera;
+                }
+            }
+            return null;
+        }
+
+        public Matrix4x4? GetPrimaryCamerasViewProjectionMatrix()
+        {
+            if (Registry.ContainsType<CameraComponent>())
+            {
+                var col = Registry.GetComponentsCollection<CameraComponent>();
+                for (int i = 0; i < col.Count; i++)
+                {
+                    CameraComponent camComp = col[i];
+                    if (camComp.Primary) return camComp.ViewProjectionMatrix;
                 }
             }
             return null;
@@ -167,10 +196,13 @@ namespace CrossEngine.Scenes
         {
             Running = false;
 
+
             for (int i = 0; i < _entities.Count; i++)
             {
                 _entities[i].Deactivate();
             }
+
+            Physics.Physics.SetContext(null);
 
             RigidBodyWorld.Cleanup();
             RigidBodyWorld = null;
@@ -186,7 +218,7 @@ namespace CrossEngine.Scenes
 
         public void Unload()
         {
-            if (Running == false) AssetPool.Dispose();
+            if (Running == false) AssetPool.Unload();
             else throw new InvalidOperationException();
         }
         #endregion
@@ -240,15 +272,20 @@ namespace CrossEngine.Scenes
         //
         //}
 
-        public void OnRenderRuntime(Framebuffer framebuffer)
+        public void OnRenderRuntime(Framebuffer framebuffer = null)
         {
             // TODO: fix no camera state
 
-            var camEnt = GetPrimaryCameraEntity();
-            if (camEnt != null)
+            var vpMatrix = GetPrimaryCamerasViewProjectionMatrix();
+            if (vpMatrix != null)
             {
-                RenderPipeline(camEnt.GetComponent<CameraComponent>().ViewProjectionMatrix, framebuffer);
+                RenderPipeline((Matrix4x4)vpMatrix, framebuffer);
             }
+        }
+
+        public void OnRenderEditor(Matrix4x4 viewProjectionMatrix, Framebuffer framebuffer = null)
+        {
+            RenderPipeline(viewProjectionMatrix, framebuffer);
         }
 
         public void OnRenderEditor(EditorCamera camera, Framebuffer framebuffer = null)

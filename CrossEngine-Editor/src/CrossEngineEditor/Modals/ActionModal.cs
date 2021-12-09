@@ -11,25 +11,26 @@ using CrossEngine.Utils;
 
 namespace CrossEngineEditor.Modals
 {
+    public enum ActionModalButtonFlags
+    {
+        None = 0,
+        OK = 1 << 0,
+        Cancel = 1 << 1,
+        Yes = 1 << 2,
+        No = 1 << 3,
+            
+        OKCancel = OK | Cancel,
+        YesNo = Yes | No,
+    }
+
     public class ActionModal : EditorModal
     {
-        public enum ModalButtonFlags
-        {
-            None = 0,
-            OK = 1 << 0,
-            Cancel = 1 << 1,
-            Yes = 1 << 2,
-            No = 1 << 3,
-            
-            OKCancel = OK | Cancel,
-            YesNo = Yes | No,
-        }
 
         string Text;
-        Action<ModalButtonFlags> Action;
-        ModalButtonFlags Buttons;
+        Action<ActionModalButtonFlags> Action;
+        ActionModalButtonFlags Buttons;
 
-        public ActionModal(string text, ModalButtonFlags buttons = ModalButtonFlags.None, Action <ModalButtonFlags> action = null, string name = "") : base(name)
+        public ActionModal(string text, ActionModalButtonFlags buttons = ActionModalButtonFlags.None, Action <ActionModalButtonFlags> action = null, string name = "") : base(name)
         {
             this.Text = text;
             this.Action = action;
@@ -42,38 +43,38 @@ namespace CrossEngineEditor.Modals
 
             ImGui.Separator();
 
-            if ((Buttons & ModalButtonFlags.OK) > 0)
+            if ((Buttons & ActionModalButtonFlags.OK) > 0)
             {
                 if (ImGui.Button("OK", new Vector2(60, 0)))
                 {
-                    Action?.Invoke(ModalButtonFlags.OK);
+                    Action?.Invoke(ActionModalButtonFlags.OK);
                     ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
             }
-            if ((Buttons & ModalButtonFlags.Cancel) > 0)
+            if ((Buttons & ActionModalButtonFlags.Cancel) > 0)
             {
                 if (ImGui.Button("Cancel", new Vector2(60, 0)))
                 {
-                    Action?.Invoke(ModalButtonFlags.Cancel);
+                    Action?.Invoke(ActionModalButtonFlags.Cancel);
                     ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
             }
-            if ((Buttons & ModalButtonFlags.Yes) > 0)
+            if ((Buttons & ActionModalButtonFlags.Yes) > 0)
             {
                 if (ImGui.Button("Yes", new Vector2(60, 0)))
                 {
-                    Action?.Invoke(ModalButtonFlags.Yes);
+                    Action?.Invoke(ActionModalButtonFlags.Yes);
                     ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
             }
-            if ((Buttons & ModalButtonFlags.No) > 0)
+            if ((Buttons & ActionModalButtonFlags.No) > 0)
             {
                 if (ImGui.Button("No", new Vector2(60, 0)))
                 {
-                    Action?.Invoke(ModalButtonFlags.No);
+                    Action?.Invoke(ActionModalButtonFlags.No);
                     ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
@@ -82,7 +83,7 @@ namespace CrossEngineEditor.Modals
 
         protected override void Default()
         {
-            Action?.Invoke(ModalButtonFlags.None);
+            Action?.Invoke(ActionModalButtonFlags.None);
         }
     }
 }

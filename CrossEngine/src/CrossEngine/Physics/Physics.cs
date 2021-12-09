@@ -9,6 +9,7 @@ using System.Numerics;
 
 using CrossEngine.Entities.Components;
 using CrossEngine.Utils;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Physics
 {
@@ -41,6 +42,12 @@ namespace CrossEngine.Physics
 
         public static bool Raycast(Vector3 source, Vector3 destination, out RaycastHitInfo info)
         {
+            if (_contextWorld == null)
+            {
+                Log.Core.Error("raycast attempted without world context!");
+                throw new InvalidOperationException("Raycast attempted without world context.");
+            }
+
             BulletVector3 Bdestination = destination.ToBullet();
             BulletVector3 Bsource = source.ToBullet();
 

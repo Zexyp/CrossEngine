@@ -97,6 +97,32 @@ namespace CrossEngine.Profiling
         [Conditional("PROFILING")]
         public static void BeginScope(string name)
         {
+            if (currentSession == null)
+            {
+                Log.Core.Error($"[profiler] no session to profile scope '{name}'");
+                return;
+            }
+
+            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
+
+            mutex.WaitOne();
+
+            profileResultsStack.Push(result);
+
+            mutex.ReleaseMutex();
+        }
+
+        [Conditional("PROFILING")]
+        public static void BeginScope()
+        {
+            string name = new StackTrace().GetFrame(1).GetMethod().Name;
+
+            if (currentSession == null)
+            {
+                Log.Core.Error($"[profiler] no session to profile scope '{name}'");
+                return;
+            }
+
             ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
 
             mutex.WaitOne();
@@ -109,6 +135,12 @@ namespace CrossEngine.Profiling
         [Conditional("PROFILING")]
         public static void EndScope()
         {
+            if (currentSession == null)
+            {
+                Log.Core.Error("[profiler] no session to end a scope");
+                return;
+            }
+
             mutex.WaitOne();
 
             ProfileResult result = profileResultsStack.Pop();
@@ -121,6 +153,31 @@ namespace CrossEngine.Profiling
         [Conditional("PROFILING")]
         public static void Function(string name)
         {
+            if (currentSession == null)
+            {
+                Log.Core.Error($"[profiler] no session to profile function '{name}'");
+                return;
+            }
+
+            mutex.WaitOne();
+
+            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
+            WriteProfile(ref result);
+
+            mutex.ReleaseMutex();
+        }
+
+        [Conditional("PROFILING")]
+        public static void Function()
+        {
+            string name = new StackTrace().GetFrame(1).GetMethod().Name;
+
+            if (currentSession == null)
+            {
+                Log.Core.Error($"[profiler] no session to profile function '{name}'");
+                return;
+            }
+
             mutex.WaitOne();
 
             ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);

@@ -5,14 +5,19 @@ using System.Numerics;
 
 namespace CrossEngine.Utils.Editor
 {
-    public enum NumberInputTypeRepresentation
+    public enum NumberInputType
     {
         Drag,
         Input,
         Slider,
     }
 
-    // maybe add generics later
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
+    public class EditorDrawableAttribute : Attribute
+    {
+
+    }
+
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorValueAttribute : Attribute
     {
@@ -39,7 +44,7 @@ namespace CrossEngine.Utils.Editor
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public abstract class EditorNumberValueAttribute : EditorValueAttribute
     {
-        public NumberInputTypeRepresentation NumberInputType = NumberInputTypeRepresentation.Drag;
+        public NumberInputType NumberInputType = NumberInputType.Drag;
         public float Max = float.MaxValue;
         public float Min = float.MinValue;
         public float Step = 0.1f;
@@ -48,7 +53,7 @@ namespace CrossEngine.Utils.Editor
 
         public EditorNumberValueAttribute(
             string name = null,
-            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            NumberInputType numberInputType = NumberInputType.Drag,
             float max = float.MaxValue,
             float min = float.MinValue,
             float step = 0.1f)
@@ -63,7 +68,7 @@ namespace CrossEngine.Utils.Editor
         public EditorInt32ValueAttribute(string name) : base(name) { }
         public EditorInt32ValueAttribute(
             string name = null,
-            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            NumberInputType numberInputType = NumberInputType.Drag,
             float max = float.MaxValue,
             float min = float.MinValue,
             float step = 0.1f)
@@ -77,7 +82,7 @@ namespace CrossEngine.Utils.Editor
         public EditorSingleValueAttribute(string name) : base(name) { }
         public EditorSingleValueAttribute(
             string name = null,
-            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            NumberInputType numberInputType = NumberInputType.Drag,
             float max = float.MaxValue,
             float min = float.MinValue,
             float step = 0.1f)
@@ -91,7 +96,7 @@ namespace CrossEngine.Utils.Editor
         public EditorVector2ValueAttribute(string name) : base(name) { }
         public EditorVector2ValueAttribute(
             string name = null,
-            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            NumberInputType numberInputType = NumberInputType.Drag,
             float max = float.MaxValue,
             float min = float.MinValue,
             float step = 0.1f)
@@ -105,7 +110,7 @@ namespace CrossEngine.Utils.Editor
         public EditorVector3ValueAttribute(string name) : base(name) { }
         public EditorVector3ValueAttribute(
             string name = null,
-            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            NumberInputType numberInputType = NumberInputType.Drag,
             float max = float.MaxValue,
             float min = float.MinValue,
             float step = 0.1f)
@@ -119,7 +124,7 @@ namespace CrossEngine.Utils.Editor
         public EditorVector4ValueAttribute(string name) : base(name) { }
         public EditorVector4ValueAttribute(
             string name = null,
-            NumberInputTypeRepresentation numberInputType = NumberInputTypeRepresentation.Drag,
+            NumberInputType numberInputType = NumberInputType.Drag,
             float max = float.MaxValue,
             float min = float.MinValue,
             float step = 0.1f)

@@ -2,8 +2,11 @@
 using System;
 
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Numerics;
 using System.IO;
+using System.Reflection;
+using System.Linq;
 
 using CrossEngine;
 using CrossEngine.Entities;
@@ -18,6 +21,7 @@ using CrossEngine.Utils;
 using CrossEngine.Assets;
 using CrossEngine.Physics;
 using CrossEngine.Serialization;
+using CrossEngine.Profiling;
 
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Panels;
@@ -35,6 +39,10 @@ namespace CrossEngineEditor
         private List<EditorPanel> _panels = new List<EditorPanel>();
         private EditorModal _modal = null;
 
+        public Type[] CoreComponentTypes = Assembly.GetAssembly(typeof(Component)).ExportedTypes.Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract).ToArray();
+        private readonly List<Type> _componentTypeRegistry = new List<Type>();
+        public readonly ReadOnlyCollection<Type> ComponentTypeRegistry;
+
         //Texture dockspaceIconTexture;
 
         private Scene workingScene = null;
@@ -45,6 +53,8 @@ namespace CrossEngineEditor
                 Log.App.Warn("there should be only one editor layer");
 
             Instance = this;
+
+            ComponentTypeRegistry = _componentTypeRegistry.AsReadOnly();
 
             AddPanel(new InspectorPanel());
             AddPanel(new SceneHierarchyPanel());
@@ -65,6 +75,15 @@ namespace CrossEngineEditor
             Context.Scene = new Scene();
             for (int i = -5; i <= 5; i++)
             {
+                if (i == 0)
+                {
+                    Entity okl = Context.Scene.CreateEntity();
+                    okl.Transform.WorldPosition = new Vector3(i, 0, 0);
+                    okl.AddComponent(new TagComponent("Main"));
+                    okl.AddComponent(new SpriteRendererComponent() { Color = new Vector4(0, 1, 0, 1)});
+                    okl.AddComponent(new CameraComponent(new OrthographicCamera() { OrthographicSize = 10 }));
+                    continue;
+                }
                 Entity ent = Context.Scene.CreateEntity();
                 ent.Transform.WorldPosition = new Vector3(i, 0, 0);
                 ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
@@ -79,7 +98,6 @@ namespace CrossEngineEditor
             ground.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
             ground.AddComponent(new RigidBodyComponent() { Mass = 0, Static = true, LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
             ground.AddComponent(new Box2DColliderComponent());
-            ground.AddComponent(new TestCompo());
             //ground.AddComponent(new ExcComponent());
 
             //CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
@@ -100,11 +118,12 @@ namespace CrossEngineEditor
         }
 
         // test pcode
-        bool su = false;
         int sleep = 0;
 
         public unsafe override void OnRender()
         {
+            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.OnRender)}");
+
             Renderer.Clear();
 
             ImGuiLayer.Instance.Begin();
@@ -121,24 +140,9 @@ namespace CrossEngineEditor
             ImGui.Begin("Debug");
             if (Context.Scene != null)
             {
-                if (ImGui.ArrowButton("start", Context.Scene.Running ? ImGuiDir.Left : ImGuiDir.Right))
-                {
-                    if (!Context.Scene.Running)
-                    {
-                        Context.Scene.Load();
-                        Context.Scene.Start();
-                    }
-                    else
-                    {
-                        Context.Scene.End();
-                        Context.Scene.Unload();
-                    }
-                }
-                ImGui.Checkbox("Update physics", ref su);
-                if (su) Context.Scene.OnUpdateRuntime(Time.DeltaTimeF);
                 Vector3 gr = (Context.Scene.RigidBodyWorld != null) ? Context.Scene.RigidBodyWorld.Gravity : default;
                 if (ImGui.DragFloat3("gravity", ref gr)) Context.Scene.RigidBodyWorld.Gravity = gr;
-                ImGui.Text("editor camera:");
+                ImGui.Text("editor camera pos:");
                 ImGui.Text(EditorCamera.Position.ToString("0.00"));
                 ImGui.SliderInt("sleep", ref sleep, 0, 1000);
                 if (sleep > 0) System.Threading.Thread.Sleep(sleep);
@@ -146,22 +150,27 @@ namespace CrossEngineEditor
             ImGui.End();
 
 
-            for (int i = 0; i < _panels.Count; i++)
-            {
-                _panels[i].Draw();
-            }
+            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.DrawPanels)}");
+            DrawPanels();
+            Profiler.EndScope();
 
             EndDockspace();
 
             ImGuiLayer.Instance.End();
+
+            Profiler.EndScope();
         }
 
         public override void OnEvent(Event e)
         {
+            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.OnEvent)}");
+
             for (int i = _panels.Count - 1; i >= 0; i--)
             {
                 _panels[i].OnEvent(e);
             }
+
+            Profiler.EndScope();
         }
 
         #region Dockspace
@@ -210,6 +219,14 @@ namespace CrossEngineEditor
         }
         #endregion
 
+        private void DrawPanels()
+        {
+            for (int i = 0; i < _panels.Count; i++)
+            {
+                _panels[i].Draw();
+            }
+        }
+
         private void DrawMenuBar()
         {
             if (ImGui.BeginMenuBar())
@@ -218,9 +235,9 @@ namespace CrossEngineEditor
                 {
                     if (ImGui.MenuItem("New Scene"))
                     {
-                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
+                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModalButtonFlags.OKCancel, (flags) =>
                         {
-                            if (flags == ActionModal.ModalButtonFlags.OK)
+                            if (flags == ActionModalButtonFlags.OK)
                             {
                                 Context.Scene?.Unload();
 
@@ -234,9 +251,9 @@ namespace CrossEngineEditor
 
                     if (ImGui.MenuItem("Open Scene..."))
                     {
-                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ModalButtonFlags.OKCancel, (flags) =>
+                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModalButtonFlags.OKCancel, (flags) =>
                         {
-                            if (flags == ActionModal.ModalButtonFlags.OK)
+                            if (flags == ActionModalButtonFlags.OK)
                             {
                                 if (FileDialog.Open(out string path, initialDir: Environment.CurrentDirectory))
                                 {
@@ -295,6 +312,24 @@ namespace CrossEngineEditor
                     }
                     ImGui.EndMenu();
                 }
+
+                if (ImGui.BeginMenu("Resources", Context.Scene != null))
+                {
+                    if (ImGui.BeginMenu("Import Assets"))
+                    {
+                        if (ImGui.MenuItem("Texture"))
+                        {
+                            
+                        }
+
+                        ImGui.EndMenu();
+                    }
+
+                    ImGui.Separator();
+
+                    ImGui.EndMenu();
+                }
+
                 ImGui.EndMenuBar();
             }
         }
@@ -370,9 +405,10 @@ namespace CrossEngineEditor
 
             string json;
             json = SceneSerializer.SertializeJson(Context.Scene);
-            Log.App.Debug(json);
+            //EditorApplication.Log.Debug($"\n{json}");
             workingScene = Context.Scene;
             ClearContext();
+            //throw new NotImplementedException("Memory leaks as fuck...");
             Context.Scene = SceneSerializer.DeserializeJson(json);
             Context.Scene.Load();
             Context.Scene.Start();
@@ -387,111 +423,11 @@ namespace CrossEngineEditor
             Context.Scene.End();
             Context.Scene.Unload();
             Context.Scene = workingScene;
+            ClearContext();
             workingScene = null;
 
             EditorApplication.Log.Info("playmode ended");
         }
         #endregion
-    }
-
-    class TestCompo : ScriptableComponent
-    {
-        const int NumRays = 360;
-        Ray[] _rays = new Ray[NumRays];
-
-        struct Ray
-        {
-            public Vector3 Source;
-            public Vector3 Destination;
-            public Vector3 HitPoint;
-            public Vector3 Normal;
-        }
-
-        public override void OnAttach()
-        {
-            for (int i = 0; i < _rays.Length; i++)
-            {
-                Ray ray = new Ray();
-                ray.Destination = Vector3.Transform(Vector3.UnitY, Quaternion.CreateFromAxisAngle(Vector3.UnitZ, ((float)i / NumRays) * MathF.PI * 2)) * 10;
-                _rays[i] = ray;
-            }
-        }
-
-        public override void OnUpdate(float timestep)
-        {
-            for (int i = 0; i < _rays.Length; i++)
-            {
-                Ray ray = _rays[i];
-
-                Physics.Raycast(_rays[i].Source, _rays[i].Destination, out RaycastHitInfo info);
-                ray.HitPoint = info.Point;
-                ray.Normal = info.Normal;
-
-                _rays[i] = ray;
-            }
-        }
-
-        public override void OnRender(RenderEvent re)
-        {
-            if (re is LineRenderEvent)
-            {
-                for (int i = 0; i < _rays.Length; i++)
-                {
-                    CrossEngine.Rendering.Lines.LineRenderer.DrawLine(_rays[i].Source, _rays[i].HitPoint, new Vector4(1, 0, 0, 1));
-                }
-            }
-        }
-    }
-
-    class ExcComponent : ScriptableComponent
-    {
-        protected override void OnEnable()
-        {
-            throw new Exception();
-        }
-        protected override void OnDisable()
-        {
-            throw new Exception();
-        }
-
-        public override void OnUpdate(float timestep)
-        {
-            throw new Exception();
-        }
-        public override void OnRender(RenderEvent re)
-        {
-            throw new Exception();
-        }
-        public override void OnEvent(Event e)
-        {
-            throw new Exception();
-        }
-
-        public override void OnAttach()
-        {
-            throw new Exception();
-        }
-        public override void OnDetach()
-        {
-            throw new Exception();
-        }
-
-        public override void OnStart()
-        {
-            throw new Exception();
-        }
-        public override void OnEnd()
-        {
-            throw new Exception();
-        }
-
-        public override void OnSerialize(SerializationInfo info)
-        {
-            throw new Exception();
-        }
-        public override void OnDeserialize(SerializationInfo info)
-        {
-            throw new Exception();
-        }
     }
 }

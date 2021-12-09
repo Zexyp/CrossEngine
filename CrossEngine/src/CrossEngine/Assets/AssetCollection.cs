@@ -10,7 +10,7 @@ using System.Collections;
 
 namespace CrossEngine.Assets
 {
-    public abstract class AssetCollection : ISerializable, IDisposable/*, ICollection<Asset>*/
+    public abstract class AssetCollection : ISerializable/*, ICollection<Asset>*/
     {
         Dictionary<string, Asset> _assets = new Dictionary<string, Asset>();
 
@@ -59,7 +59,7 @@ namespace CrossEngine.Assets
             _assets.Remove(asset.Name);
 
             if (loaded && asset.IsLoaded)
-                asset.Dispose();
+                asset.Unload();
 
             asset.IsValid = false;
 
@@ -158,13 +158,13 @@ namespace CrossEngine.Assets
             Log.Core.Trace($"loaded asset collection of type '{this.GetType().GetGenericArguments()[0].Name}'");
         }
 
-        public void Dispose()
+        public void Unload()
         {
             loaded = false;
 
             foreach (var ass in _assets.Values)
             {
-                ass.Dispose();
+                ass.Unload();
             }
             Log.Core.Trace($"unloaded asset collection of type '{this.GetType().GetGenericArguments()[0].Name}'");
         }
