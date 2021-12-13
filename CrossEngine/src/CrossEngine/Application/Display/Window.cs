@@ -42,8 +42,9 @@ namespace CrossEngine.Rendering.Display
 
         public GLFW.Window Handle { get; private set; }
 
-        public uint Width { get => data.width; }
-        public uint Height { get => data.height; }
+        public uint Width { get => data.width; set => Glfw.SetWindowSize(Handle, (int)(data.width = value), (int)data.height); }
+        public uint Height { get => data.height; set => Glfw.SetWindowSize(Handle, (int)data.width, (int)(data.height = value)); }
+        public string Title { get => data.title; set => Glfw.SetWindowTitle(Handle, data.title = value); }
 
         private WindowData data;
 

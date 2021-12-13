@@ -18,9 +18,9 @@ namespace CrossEngine.Entities.Components
         //
         //}
 
-        public void AddComponent<T>(T component) where T : Component
+        public void AddComponent(Component component)
         {
-            Type type = typeof(T);
+            Type type = component.GetType();
             if (type == typeof(Component)) type = component.GetType();
             if (_registryDict.ContainsKey(type))
             {
@@ -32,18 +32,13 @@ namespace CrossEngine.Entities.Components
             }
             else
             {
-                if (!typeof(T).Equals(typeof(Component)))
-                    _registryDict.Add(type, new List<T> { component });
-                else
-                {
-                    var createdList = (IList)typeof(List<>)
+                var createdList = (IList)typeof(List<>)
                         .MakeGenericType(type)
                         .GetConstructor(new Type[0])
                         .Invoke(null);
-                    createdList.Add(component);
+                createdList.Add(component);
 
-                    _registryDict.Add(type, createdList);
-                }
+                _registryDict.Add(type, createdList);
             }
         }
 

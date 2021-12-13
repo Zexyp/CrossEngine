@@ -16,7 +16,7 @@ namespace CrossEngine.Serialization.Json.Converters
 {
     abstract class SceneReferenceHandlingCreationConverter<T> : ReferenceHandlingCreationConverter<T> where T : class
     {
-        protected Scene Scene = null;
+        public static Scene Scene = null;
 
         public SceneReferenceHandlingCreationConverter(Scene scene)
         {

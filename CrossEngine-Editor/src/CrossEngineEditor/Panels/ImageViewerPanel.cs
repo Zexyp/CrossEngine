@@ -225,14 +225,14 @@ namespace CrossEngineEditor.Panels
 
         private void OnContextSceneChanged()
         {
-            if (textureAssets != null) textureAssets.OnAssetAdded -= OnTextureAssetsAdded;
-            textureAssets = null;
-            var assetPool = (Context.Scene != null) ? Context.Scene.AssetPool : null;
-            if (assetPool != null)
-            {
-                textureAssets = assetPool.GetCollection<TextureAsset>();
-            }
-            if (textureAssets != null) textureAssets.OnAssetAdded += OnTextureAssetsAdded;
+            //if (textureAssets != null) textureAssets.OnAssetAdded -= OnTextureAssetsAdded;
+            //textureAssets = null;
+            //var assetPool = Context.Scene?.AssetPool;
+            //if (assetPool != null)
+            //{
+            //    textureAssets = assetPool.GetCollection<TextureAsset>();
+            //}
+            //if (textureAssets != null) textureAssets.OnAssetAdded += OnTextureAssetsAdded;
         }
 
         public override void OnOpen()

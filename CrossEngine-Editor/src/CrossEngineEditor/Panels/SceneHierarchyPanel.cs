@@ -30,7 +30,7 @@ namespace CrossEngineEditor.Panels
                     }
                     if (ImGui.MenuItem("Remove Entity", Context.ActiveEntity != null))
                     {
-                        Context.Scene.RemoveEntity(Context.ActiveEntity);
+                        Context.Scene.DestroyEntity(Context.ActiveEntity);
                         Context.ActiveEntity = null;
                     }
 
@@ -168,7 +168,7 @@ namespace CrossEngineEditor.Panels
                     ImGui.Separator();
                     if (ImGui.MenuItem("Remove entity", nodeEntity != null))
                     {
-                        Context.Scene.RemoveEntity(nodeEntity);
+                        Context.Scene.DestroyEntity(nodeEntity);
                         Context.ActiveEntity = null;
                     }
 

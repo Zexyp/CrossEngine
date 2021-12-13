@@ -67,7 +67,7 @@ namespace CrossEngine.Physics
             _overlappingPairCache = new DbvtBroadphase();
             _world = new DiscreteDynamicsWorld(_dispatcher, _overlappingPairCache, null, _collisionConfiguration);
 
-            _world.DebugDrawer = new RigidBodyWorldDebugDraw();
+            //_world.DebugDrawer = new RigidBodyWorldDebugDraw();
             
             // 2D rn!
             //

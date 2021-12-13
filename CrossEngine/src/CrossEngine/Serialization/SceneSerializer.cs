@@ -41,7 +41,7 @@ namespace CrossEngine.Serialization
                 Formatting = Formatting.Indented,
                 Converters = {
                     //new ArrayReferencePreservngConverter(),
-                    new SerializableJsonConverter(),
+                    new SerializableInterfaceJsonConverter(),
                     
                     new Vector2JsonConverter(),
                     new Vector3JsonConverter(),

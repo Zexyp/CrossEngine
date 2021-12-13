@@ -1,19 +1,10 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
-namespace CrossEngine.Serialization
-{
-    public interface ISerializable
-    {
-        public void OnSerialize(SerializationInfo info);
-        public void OnDeserialize(SerializationInfo info);
-    }
-}
-
 namespace CrossEngine.Serialization.Json.Converters
 {
-    class SerializableJsonConverter : ReferenceHandlingCreationConverter<ISerializable>
+    class SerializableInterfaceJsonConverter : ReferenceHandlingCreationConverter<ISerializable>
     {
         protected override void WriteProperties(JsonWriter writer, ISerializable value, JsonSerializer serializer, JsonObjectContract contract)
         {

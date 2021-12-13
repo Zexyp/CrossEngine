@@ -14,8 +14,9 @@ namespace CrossEngine
         public static Application Instance { get; private set; } = null;
 
         internal Window Window { get; private set; }
-        public uint Width => Window.Width;
-        public uint Height => Window.Height;
+        public uint Width { get => Window.Width; set => Window.Width = value; }
+        public uint Height { get => Window.Height; set => Window.Height = value; }
+        public string Title { get => Window.Title; set => Window.Title = value; }
 
         private LayerStack LayerStack;
 

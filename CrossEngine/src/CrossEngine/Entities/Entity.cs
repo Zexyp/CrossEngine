@@ -82,8 +82,10 @@ namespace CrossEngine.Entities
             return _components.Contains(component);
         }
 
-        public bool HasComponent<T>(bool inherit = false) where T : Component
+        public bool HasComponentOfType<T>(bool inherit = false) where T : Component
         {
+            if (typeof(T) == typeof(Component)) throw new InvalidOperationException();
+
             for (int i = 0; i < _components.Count; i++)
             {
                 if ((!inherit) ?
@@ -99,9 +101,7 @@ namespace CrossEngine.Entities
             for (int i = 0; i < _components.Count; i++)
             {
                 Type componentType = _components[i].GetType();
-                if ((!inherit) ?
-                    type == componentType :
-                    componentType.IsSubclassOf(type))
+                if (type == componentType || (inherit ? componentType.IsSubclassOf(type) : false))
                     return true;
             }
             return false;
@@ -171,16 +171,13 @@ namespace CrossEngine.Entities
             _components.Add(component);
             component.Entity = this;
 
-            if (Scene != null) Scene.Registry.AddComponent(component);
-
             ValidateAllComponents(component);
 
             if (component.Valid)
+            {
                 try { component.OnAttach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnAttach), component.GetType().Name, ex); }
 
-            if (Active)
-            {
-                if (component.Valid)
+                if (Active)
                 {
                     try { component.OnStart(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnStart), component.GetType().Name, ex); }
                     component.Activate();
@@ -204,23 +201,21 @@ namespace CrossEngine.Entities
             if (Transform == component) Transform = null;
 #endif
 
-            if (!_components.Contains(component)) throw new Exception("Entity doesn't have this component");
+            if (!_components.Contains(component)) throw new InvalidOperationException("Entity doesn't have this component");
 
-            if (Scene != null) Scene.Registry.RemoveComponent(component);
-
-            if (Active)
+            if (component.Valid)
             {
-                if (component.Valid)
+                if (Active)
                 {
                     component.Deactivate();
                     try { component.OnEnd(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEnd), component.GetType().Name, ex); }
                 }
+
+                try { component.OnDetach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDetach), component.GetType().Name, ex); }
             }
 
-            if (component.Valid) component.OnDetach();
-                try { component.OnDetach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDetach), component.GetType().Name, ex); }
-
             _components.Remove(component);
+            component.Entity = null;
 
 #if USE_TRANSFORM_CACHE
             if (component.GetType() == typeof(TransformComponent))
@@ -228,7 +223,6 @@ namespace CrossEngine.Entities
 #endif
 
             ValidateAllComponents(component);
-            component.Entity = null;
 
             OnComponentRemoved?.Invoke(this, component);
         }
@@ -391,45 +385,50 @@ namespace CrossEngine.Entities
             for (int i = 0; i < _components.Count; i++)
             {
                 Component component = _components[i];
+
                 object[] requireAttributes = component.GetType().GetCustomAttributes(typeof(RequireComponentAttribute), false);
 
                 bool valid = true;
                 for (int rai = 0; rai < requireAttributes.Length; rai++)
                 {
-                    if (!(HasComponentOfType(((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType) ||
-                        HasComponentOfType(((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType, true)))
+                    if (!HasComponentOfType(((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType, true))
                     {
-                        //Log.Core.Warn($"component of type {component.GetType().Name} needs component of type {((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType.Name}");
-                        valid = valid && false;
+                        Log.Core.Warn($"component of type '{component.GetType().Name}' needs component of type '{((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType.Name}'");
+                        valid = false;
+                        break;
                     }
-                    else
-                        valid = valid && true;
                 }
 
                 if (component.Valid != valid)
                 {
                     component.Valid = valid;
-                    if (!component.Active && component != attachExcept) try { component.OnAttach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnAttach), component.GetType().Name, ex); }
-                    if (Active && component != attachExcept)
+
+                    if (component != attachExcept)
                     {
-                        if (valid)
+                        if (valid) try { component.OnAttach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnAttach), component.GetType().Name, ex); }
+                    
+                        if (Active)
                         {
-                            if (!component.Active)
+                            if (valid)
                             {
-                                try { component.OnStart(); } catch (Exception ex) {Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnStart), component.GetType().Name, ex); }
-                                component.Activate();
+                                if (!component.Active)
+                                {
+                                    try { component.OnStart(); } catch (Exception ex) {Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnStart), component.GetType().Name, ex); }
+                                    component.Activate();
+                                }
+                            }
+                            else
+                            {
+                                if (component.Active)
+                                {
+                                    component.Deactivate();
+                                    try { component.OnEnd(); } catch (Exception ex) {Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEnd), component.GetType().Name, ex); }
+                                }
                             }
                         }
-                        else
-                        {
-                            if (component.Active)
-                            {
-                                component.Deactivate();
-                                try { component.OnEnd(); } catch (Exception ex) {Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnEnd), component.GetType().Name, ex); }
-                            }
-                        }
+
+                        if (!valid) try { component.OnDetach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDetach), component.GetType().Name, ex); }
                     }
-                    if (component.Active && component != attachExcept) try { component.OnDetach(); } catch (Exception ex) { Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDetach), component.GetType().Name, ex); }
                 }
             }
         }

@@ -146,6 +146,19 @@ namespace CrossEngineEditor
                 ImGui.Text(EditorCamera.Position.ToString("0.00"));
                 ImGui.SliderInt("sleep", ref sleep, 0, 1000);
                 if (sleep > 0) System.Threading.Thread.Sleep(sleep);
+
+                // test seri
+                if (ImGui.Button("seri test"))
+                {
+                    string json;
+                    json = SceneSerializer.SertializeJson(Context.Scene);
+                    Log.App.Debug(json);
+
+                    Context.Scene.Unload();
+                    ClearContext();
+                    Context.Scene = SceneSerializer.DeserializeJson(json);
+                    Context.Scene.Load();
+                }
             }
             ImGui.End();
 
@@ -231,21 +244,14 @@ namespace CrossEngineEditor
         {
             if (ImGui.BeginMenuBar())
             {
+                #region File Menu
                 if (ImGui.BeginMenu("File"))
                 {
                     if (ImGui.MenuItem("New Scene"))
                     {
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModalButtonFlags.OKCancel, (flags) =>
                         {
-                            if (flags == ActionModalButtonFlags.OK)
-                            {
-                                Context.Scene?.Unload();
-
-                                ClearContext();
-
-                                Context.Scene = new Scene();
-                                Context.Scene.Load();
-                            }
+                            if (flags == ActionModalButtonFlags.OK) NewScene();
                         }));
                     }
 
@@ -253,42 +259,30 @@ namespace CrossEngineEditor
                     {
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModalButtonFlags.OKCancel, (flags) =>
                         {
-                            if (flags == ActionModalButtonFlags.OK)
-                            {
-                                if (FileDialog.Open(out string path, initialDir: Environment.CurrentDirectory))
-                                {
-                                    Context.Scene?.Unload();
-
-                                    ClearContext();
-
-                                    Context.Scene = SceneSerializer.DeserializeJson(File.ReadAllText(path));
-                                    Context.Scene.Load();
-                                }
-                            }
+                            if (flags == ActionModalButtonFlags.OK) OpenScene();
                         }));
                     }
 
                     ImGui.Separator();
 
+                    if (ImGui.MenuItem("Save Scene", Context.Scene != null))
+                    {
+                        SaveScene();
+                    }
+
                     if (ImGui.MenuItem("Save Scene As...", Context.Scene != null))
                     {
-                        if (FileDialog.Save(out string path, initialDir: Environment.CurrentDirectory))
-                        {
-                            string json;
-                            json = SceneSerializer.SertializeJson(Context.Scene);
-                            Log.App.Debug(json);
+                        SaveSceneAs();
+                    }
 
-                            Context.Scene.Unload();
-                            ClearContext();
-                            Context.Scene = SceneSerializer.DeserializeJson(json);
-                            Context.Scene.Load();
-                            EditorApplication.Log.Warn("only test rn");
-                            //System.IO.File.WriteAllText(path, json);
-                        }
+                    if (ImGui.MenuItem("Save Scene Copy...", Context.Scene != null))
+                    {
+                        SaveSceneAs();
                     }
 
                     ImGui.EndMenu();
                 }
+                #endregion
 
                 if (ImGui.BeginMenu("Window"))
                 {
@@ -315,17 +309,41 @@ namespace CrossEngineEditor
 
                 if (ImGui.BeginMenu("Resources", Context.Scene != null))
                 {
-                    if (ImGui.BeginMenu("Import Assets"))
+                    //if (ImGui.BeginMenu("Import Assets"))
+                    //{
+                    //    if (ImGui.MenuItem("Texture"))
+                    //    {
+                    //        
+                    //    }
+                    //
+                    //    ImGui.EndMenu();
+                    //}
+                    //
+                    //ImGui.Separator();
+
+                    if (ImGui.BeginMenu("Assemblies"))
                     {
-                        if (ImGui.MenuItem("Texture"))
+                        if (ImGui.MenuItem("Load New..."))
                         {
-                            
+
+                        }
+                        if (ImGui.MenuItem("Load List..."))
+                        {
+
+                        }
+                        ImGui.Separator();
+                        if (ImGui.MenuItem("Reload"))
+                        {
+
+                        }
+                        ImGui.Separator();
+                        if (ImGui.MenuItem("Unload"))
+                        {
+
                         }
 
                         ImGui.EndMenu();
                     }
-
-                    ImGui.Separator();
 
                     ImGui.EndMenu();
                 }
@@ -398,6 +416,101 @@ namespace CrossEngineEditor
         }
         #endregion
 
+        #region File Menu Actions
+        private string _savePath = null;
+
+        private string SavePath
+        {
+            set
+            {
+                _savePath = value;
+
+                if (_savePath == null) Application.Instance.Title = "CrossEngine Editor";
+                else Application.Instance.Title = $"CrossEngine Editor [{_savePath}]";
+            }
+        }
+
+        private void NewScene()
+        {
+            Context.Scene?.Unload();
+            Context.Scene?.Destroy();
+
+            ClearContext();
+
+            Context.Scene = new Scene();
+            Context.Scene.Load();
+
+            SavePath = null;
+        }
+        private void OpenScene()
+        {
+            if (FileDialog.Open(out string path,
+                                    filter:
+                                    "JSON (*.json)\0*.json\0" +
+                                    "All Files (*.*)\0*.*\0"))
+            {
+                Context.Scene?.Unload();
+                Context.Scene?.Destroy();
+
+                ClearContext();
+
+                Context.Scene = SceneSerializer.DeserializeJson(File.ReadAllText(path));
+                Context.Scene.Load();
+
+                SavePath = path;
+            }
+        }
+        private void SaveScene()
+        {
+            if (_savePath != null)
+            {
+                string json;
+                json = SceneSerializer.SertializeJson(Context.Scene);
+
+                string backupPath = _savePath + "1";
+
+                if (File.Exists(_savePath))
+                    File.Move(_savePath, backupPath, true);
+
+                File.WriteAllText(_savePath, json);
+            }
+            else
+            {
+                SaveSceneAs();
+            }
+        }
+        private void SaveSceneAs()
+        {
+            if (FileDialog.Save(out string path,
+                            filter:
+                            "JSON (*.json)\0*.json\0" +
+                            "All Files (*.*)\0*.*\0",
+                            name: "scene"))
+            {
+                string json;
+                json = SceneSerializer.SertializeJson(Context.Scene);
+
+                File.WriteAllText(path, json);
+
+                SavePath = path;
+            }
+        }
+        private void SaveCopy()
+        {
+            if (FileDialog.Save(out string path,
+                            filter:
+                            "JSON (*.json)\0*.json\0" +
+                            "All Files (*.*)\0*.*\0",
+                            name: "scene"))
+            {
+                string json;
+                json = SceneSerializer.SertializeJson(Context.Scene);
+
+                File.WriteAllText(path, json);
+            }
+        }
+        #endregion
+
         #region Real Magic
         public void StartPlaymode()
         {
@@ -408,8 +521,9 @@ namespace CrossEngineEditor
             //EditorApplication.Log.Debug($"\n{json}");
             workingScene = Context.Scene;
             ClearContext();
-            //throw new NotImplementedException("Memory leaks as fuck...");
+
             Context.Scene = SceneSerializer.DeserializeJson(json);
+
             Context.Scene.Load();
             Context.Scene.Start();
 
@@ -422,6 +536,8 @@ namespace CrossEngineEditor
 
             Context.Scene.End();
             Context.Scene.Unload();
+            Context.Scene.Destroy();
+
             Context.Scene = workingScene;
             ClearContext();
             workingScene = null;

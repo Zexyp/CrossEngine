@@ -20,7 +20,7 @@ namespace CrossEngineEditor
     {
         public static Logger Log = CrossEngine.Logging.Log.GetLogger("EDITOR");
 
-        public EditorApplication() : base("Editor")
+        public EditorApplication() : base("CrossEngine Editor")
         {
             PushOverlay(new ImGuiLayer());
             PushLayer(new EditorLayer());

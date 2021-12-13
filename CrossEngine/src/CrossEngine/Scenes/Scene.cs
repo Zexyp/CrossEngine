@@ -77,6 +77,9 @@ namespace CrossEngine.Scenes
                 entity.Activate();
             }
 
+            entity.OnComponentAdded += Entity_OnComponentAdded;
+            entity.OnComponentRemoved += Entity_OnComponentRemoved;
+
             Log.Core.Trace($"created entity with uid {entity.UID}");
 
             return entity;
@@ -90,15 +93,15 @@ namespace CrossEngine.Scenes
             return entity;
         }
 
-        public void RemoveEntity(Entity entity)
+        public void DestroyEntity(Entity entity)
         {
-            var comps = entity.Components;
-            while (comps.Count > 0) entity.RemoveComponent(comps[0]);
-
             if (Running)
             {
                 entity.Deactivate();
             }
+
+            var comps = entity.Components;
+            while (comps.Count > 0) entity.RemoveComponent(comps[0]);
 
             for (int i = 0; i < entity.HierarchyNode.Children.Count; i++)
             {
@@ -110,7 +113,42 @@ namespace CrossEngine.Scenes
             _entities.Remove(entity);
             _uids.Remove(entity.UID);
 
+            entity.OnComponentAdded -= Entity_OnComponentAdded;
+            entity.OnComponentRemoved -= Entity_OnComponentRemoved;
+
             Log.Core.Trace($"removed entity with uid {entity.UID}");
+        }
+
+        public void DestroyEntityWithChildren(Entity entity)
+        {
+            if (Running)
+            {
+                entity.Deactivate();
+            }
+
+            var comps = entity.Components;
+            while (comps.Count > 0) entity.RemoveComponent(comps[0]);
+
+            for (int i = 0; i < entity.HierarchyNode.Children.Count; i++)
+            {
+                DestroyEntityWithChildren(entity.HierarchyNode.Children[i].Value);
+            }
+            entity.Parent = null;
+            entity.HierarchyNode.Parent = null;
+
+            _entities.Remove(entity);
+            _uids.Remove(entity.UID);
+
+            Log.Core.Trace($"removed entity with uid {entity.UID}");
+        }
+
+        private void Entity_OnComponentAdded(Entity sender, Component component)
+        {
+            Registry.AddComponent(component);
+        }
+        private void Entity_OnComponentRemoved(Entity sender, Component component)
+        {
+            Registry.RemoveComponent(component);
         }
 
         public Entity GetEntity(int uid)
@@ -221,6 +259,11 @@ namespace CrossEngine.Scenes
             if (Running == false) AssetPool.Unload();
             else throw new InvalidOperationException();
         }
+
+        public void Destroy()
+        {
+            while (_uids.Count > 0) DestroyEntity(_uids.ElementAt(0).Value);
+        }
         #endregion
 
         public void OnEvent(Event e)
@@ -295,6 +338,7 @@ namespace CrossEngine.Scenes
 
         private void RenderPipeline(Matrix4x4 viewProjectionMatrix, Framebuffer framebuffer = null)
         {
+            if (framebuffer == null) return;
             Pipeline.Render(new SceneData(this, viewProjectionMatrix), framebuffer);
 
             //if (framebuffer != null) framebuffer.Bind();

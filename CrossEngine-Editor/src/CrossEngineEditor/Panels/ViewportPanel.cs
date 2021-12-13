@@ -63,8 +63,9 @@ namespace CrossEngineEditor.Panels
                 if (framebuffer != null)
                 {
                     framebuffer.Dispose();
+                    framebuffer = null;
                 }
-
+            
                 var spec = new FramebufferSpecification();
                 spec.Attachments = new FramebufferAttachmentSpecification(
                     // using floating point colors
@@ -169,7 +170,7 @@ namespace CrossEngineEditor.Panels
                     {
                         viewportSize = viewportPanelSize;
 
-                        framebuffer.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
+                        framebuffer?.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
 
                         EditorCameraController.SetViewportSize(viewportSize.X, viewportSize.Y);
 

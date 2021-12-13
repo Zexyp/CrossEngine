@@ -410,6 +410,16 @@ namespace CrossEngine.Rendering.Buffers
                     glDeleteFramebuffers(1, fbop);
                 fboid = 0;
 
+                // fuck this caused a lot of headaches
+                fixed (uint* p = &_colorAttachments.ToArray()[0])
+                    glDeleteTextures(_colorAttachments.Count, p);
+                _colorAttachments.Clear();
+                if (_depthAttachment != 0)
+                {
+                    fixed (uint* p = &_depthAttachment)
+                        glDeleteTextures(1, p);
+                }
+
                 //if (rboid != 0)
                 //{
                 //    fixed (uint* rbop = &rboid)

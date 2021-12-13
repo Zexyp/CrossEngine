@@ -13,7 +13,7 @@ namespace CrossEngineEditor.Panels
     class GizmoPanel : EditorPanel
     {
         ViewportPanel _viewportPanel;
-        public ViewportPanel ViewportPanel
+        ViewportPanel ViewportPanel
         {
             set
             {
@@ -44,10 +44,8 @@ namespace CrossEngineEditor.Panels
         {
             if (_viewportPanel == null || !_viewportPanel.IsOpen()) return;
 
-            if (ready = (Context.ActiveEntity != null && Context.ActiveEntity.HasComponent<TransformComponent>()))
+            if (ready = (Context.ActiveEntity != null && Context.ActiveEntity.HasComponentOfType<TransformComponent>()))
             {
-                ImGuiIOPtr io = ImGui.GetIO();
-                
                 ImGuizmo.SetOrthographic(true);
 
                 if (EditorLayer.Instance.EditorCamera != null)
