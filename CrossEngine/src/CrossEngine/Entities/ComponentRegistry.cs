@@ -111,8 +111,14 @@ namespace CrossEngine.Entities.Components
         public bool ContainsType<T>(bool inherit = false) where T : Component
         {
             Type type = typeof(T);
-            if (type == typeof(Component)) throw new InvalidOperationException();
+            if (type == typeof(Component)) throw new ArgumentException();
             return ContainsType(type, inherit);
+        }
+
+        public bool Contains(Component component)
+        {
+            Type type = component.GetType();
+            return _registryDict.ContainsKey(type) && _registryDict[type].Contains(component);
         }
     }
 

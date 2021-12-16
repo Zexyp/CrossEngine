@@ -16,7 +16,9 @@ namespace CrossEngine.Assets
         //                  |            |
         private Dictionary<Type, AssetCollection> _collections = new Dictionary<Type, AssetCollection>();
 
-        public string ResolveRelativePath(string fullpath) => Path.GetRelativePath(Directory, fullpath);
+        string AssembliesListPath = "assemblies.list";
+
+        //public string ResolveRelativePath(string fullpath) => PathUtils.GetRelativePath(Directory, fullpath);
 
         //public void AddAsset<T>(T asset) where T : Asset
         //{

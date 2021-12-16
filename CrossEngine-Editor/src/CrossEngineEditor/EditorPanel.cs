@@ -13,7 +13,7 @@ namespace CrossEngineEditor
         private bool? _open = true;
 
         public EditorContext Context;
-        public string Name = "";
+        public string WindowName = "";
         public bool? Open
         {
             get => _open;
@@ -39,23 +39,23 @@ namespace CrossEngineEditor
 
         public EditorPanel(string name)
         {
-            this.Name = name;
+            this.WindowName = name;
         }
 
         public EditorPanel()
         {
-            this.Name = "Panel";
+            this.WindowName = "Panel";
         }
 
         public void Draw()
         {
             if (_open != null && !(bool)_open) return;
 
-            ImGui.PushID((int)ImGui.GetID(Name));
+            ImGui.PushID((int)ImGui.GetID(WindowName));
 
             PrepareWindow();
 
-            if (!ImGuiExtension.BeginNullableOpen(Name, ref _open, WindowFlags))
+            if (!ImGuiExtension.BeginNullableOpen(WindowName, ref _open, WindowFlags))
             {
                 EndPrepareWindow();
 

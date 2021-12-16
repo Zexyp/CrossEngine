@@ -1,12 +1,10 @@
 ﻿using System;
 
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 using CrossEngine.Serialization;
 using CrossEngine.Logging;
-using System.Collections;
+using CrossEngine.Utils;
 
 namespace CrossEngine.Assets
 {
@@ -81,7 +79,7 @@ namespace CrossEngine.Assets
         {
             foreach (var item in _assets.Values)
             {
-                item.Path = Path.GetRelativePath(directory, item.Path);
+                item.Path = PathUtils.GetRelativePath(directory, item.Path);
             }
         }
 

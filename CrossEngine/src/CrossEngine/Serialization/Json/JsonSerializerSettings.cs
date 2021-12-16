@@ -1,0 +1,48 @@
+﻿using System;
+using System.Text.Json;
+using System.Collections;
+using System.Collections.Generic;
+
+using CrossEngine.Serialization.Json.Converters;
+using CrossEngine.Serialization.Json;
+
+namespace CrossEngine
+{
+    // TODO: add lock
+    public class JsonSerializerSettings
+    {
+        public IList<JsonConverter> Converters;
+        public TypeResolver TypeResolver;
+        public JsonWriterOptions WriterOptions;
+
+        public JsonSerializerSettings()
+        {
+            Converters = new List<JsonConverter>();
+        }
+
+        public static JsonSerializerSettings Default
+        {
+            get
+            {
+                return new JsonSerializerSettings()
+                {
+                    Converters =
+                    {
+                        new EnumJsonConverter(),
+                        new TypeJsonConverter(),
+                        new Vector2JsonConverter(),
+                        new Vector3JsonConverter(),
+                        new Vector4JsonConverter(),
+                        new QuaternionJsonConverter(),
+                        new Matrix4x4JsonConverter(),
+                        new ArrayJsonConverter(),
+                        new ListInterfaceJsonConverter(),
+                        new DictionaryInterfaceJsonConverter(),
+                        new SerializableInterfaceJsonConverter(),
+                    },
+                    TypeResolver = new DefaultTypeResolver()
+                };
+            }
+        }
+    }
+}

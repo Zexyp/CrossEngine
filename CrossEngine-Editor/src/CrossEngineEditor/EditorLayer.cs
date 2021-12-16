@@ -22,6 +22,7 @@ using CrossEngine.Assets;
 using CrossEngine.Physics;
 using CrossEngine.Serialization;
 using CrossEngine.Profiling;
+using CrossEngine.Assemblies;
 
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Panels;
@@ -39,11 +40,15 @@ namespace CrossEngineEditor
         private List<EditorPanel> _panels = new List<EditorPanel>();
         private EditorModal _modal = null;
 
+
         public Type[] CoreComponentTypes = Assembly.GetAssembly(typeof(Component)).ExportedTypes.Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract).ToArray();
+        
         private readonly List<Type> _componentTypeRegistry = new List<Type>();
         public readonly ReadOnlyCollection<Type> ComponentTypeRegistry;
 
         //Texture dockspaceIconTexture;
+
+        public bool SceneUpdate = false;
 
         private Scene workingScene = null;
 
@@ -62,6 +67,7 @@ namespace CrossEngineEditor
             AddPanel(new GizmoPanel());
             AddPanel(new LagometerPanel());
             AddPanel(new ImageViewerPanel());
+            AddPanel(new GamePanel());
         }
 
         public override void OnAttach()
@@ -174,6 +180,11 @@ namespace CrossEngineEditor
             Profiler.EndScope();
         }
 
+        public override void OnUpdate(float timestep)
+        {
+            if (Context.Scene?.Running == true && SceneUpdate) Context.Scene.OnUpdateRuntime(Time.DeltaTimeF);
+        }
+
         public override void OnEvent(Event e)
         {
             Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.OnEvent)}");
@@ -251,7 +262,7 @@ namespace CrossEngineEditor
                     {
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModalButtonFlags.OKCancel, (flags) =>
                         {
-                            if (flags == ActionModalButtonFlags.OK) NewScene();
+                            if (flags == ActionModalButtonFlags.OK) FileNewScene();
                         }));
                     }
 
@@ -259,7 +270,7 @@ namespace CrossEngineEditor
                     {
                         PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModalButtonFlags.OKCancel, (flags) =>
                         {
-                            if (flags == ActionModalButtonFlags.OK) OpenScene();
+                            if (flags == ActionModalButtonFlags.OK) FileOpenScene();
                         }));
                     }
 
@@ -267,17 +278,17 @@ namespace CrossEngineEditor
 
                     if (ImGui.MenuItem("Save Scene", Context.Scene != null))
                     {
-                        SaveScene();
+                        FileSaveScene();
                     }
 
                     if (ImGui.MenuItem("Save Scene As...", Context.Scene != null))
                     {
-                        SaveSceneAs();
+                        FileSaveSceneAs();
                     }
 
                     if (ImGui.MenuItem("Save Scene Copy...", Context.Scene != null))
                     {
-                        SaveSceneAs();
+                        FileSaveSceneAs();
                     }
 
                     ImGui.EndMenu();
@@ -292,14 +303,14 @@ namespace CrossEngineEditor
                         {
                             if (_panels[i].Open != null)
                             {
-                                if (ImGui.MenuItem(_panels[i].Name, null, (bool)_panels[i].Open))
+                                if (ImGui.MenuItem(_panels[i].WindowName, null, (bool)_panels[i].Open))
                                 {
                                     _panels[i].Open = !(bool)_panels[i].Open;
                                 }
                             }
                             else
                             {
-                                ImGui.MenuItem(_panels[i].Name);
+                                ImGui.MenuItem(_panels[i].WindowName);
                             }
                         }
                         ImGui.EndMenu();
@@ -323,23 +334,40 @@ namespace CrossEngineEditor
 
                     if (ImGui.BeginMenu("Assemblies"))
                     {
-                        if (ImGui.MenuItem("Load New..."))
+                        if (ImGui.MenuItem("Load..."))
                         {
-
+                            AssembliesLoad();
+                            ResetComponentTypeRegistry();
                         }
                         if (ImGui.MenuItem("Load List..."))
                         {
-
+                            throw new NotImplementedException();
+                            ResetComponentTypeRegistry();
                         }
                         ImGui.Separator();
                         if (ImGui.MenuItem("Reload"))
                         {
-
+                            throw new NotImplementedException();
+                            ResetComponentTypeRegistry();
                         }
                         ImGui.Separator();
-                        if (ImGui.MenuItem("Unload"))
+                        if (ImGui.MenuItem("Save List Copy..."))
                         {
+                            throw new NotImplementedException();
+                        }
+                        if (ImGui.BeginMenu("Unload", AssemblyLoader.LoadedAssemblies.Count > 0))
+                        {
+                            foreach (var item in AssemblyLoader.LoadedAssemblies)
+                            {
+                                if (ImGui.MenuItem(item.Path))
+                                {
+                                    AssemblyLoader.Unload(item.Path);
+                                    ResetComponentTypeRegistry();
+                                    break;
+                                }
+                            }
 
+                            ImGui.EndMenu();
                         }
 
                         ImGui.EndMenu();
@@ -418,7 +446,6 @@ namespace CrossEngineEditor
 
         #region File Menu Actions
         private string _savePath = null;
-
         private string SavePath
         {
             set
@@ -429,8 +456,7 @@ namespace CrossEngineEditor
                 else Application.Instance.Title = $"CrossEngine Editor [{_savePath}]";
             }
         }
-
-        private void NewScene()
+        private void FileNewScene()
         {
             Context.Scene?.Unload();
             Context.Scene?.Destroy();
@@ -442,7 +468,7 @@ namespace CrossEngineEditor
 
             SavePath = null;
         }
-        private void OpenScene()
+        private void FileOpenScene()
         {
             if (FileDialog.Open(out string path,
                                     filter:
@@ -460,7 +486,7 @@ namespace CrossEngineEditor
                 SavePath = path;
             }
         }
-        private void SaveScene()
+        private void FileSaveScene()
         {
             if (_savePath != null)
             {
@@ -476,10 +502,10 @@ namespace CrossEngineEditor
             }
             else
             {
-                SaveSceneAs();
+                FileSaveSceneAs();
             }
         }
-        private void SaveSceneAs()
+        private void FileSaveSceneAs()
         {
             if (FileDialog.Save(out string path,
                             filter:
@@ -495,7 +521,7 @@ namespace CrossEngineEditor
                 SavePath = path;
             }
         }
-        private void SaveCopy()
+        private void FileSaveCopy()
         {
             if (FileDialog.Save(out string path,
                             filter:
@@ -508,6 +534,25 @@ namespace CrossEngineEditor
 
                 File.WriteAllText(path, json);
             }
+        }
+        #endregion
+
+        #region Assemblies Menu Actions
+        private void AssembliesLoad()
+        {
+            if (FileDialog.Open(out string path,
+                                    filter:
+                                    "DLL (*.dll)\0*.dll\0" +
+                                    "All Files (*.*)\0*.*\0"))
+            {
+                AssemblyLoader.Load(path);
+            }
+        }
+
+        private void ResetComponentTypeRegistry()
+        {
+            _componentTypeRegistry.Clear();
+            _componentTypeRegistry.AddRange(AssemblyLoader.GetSubTypesOf(typeof(Component)));
         }
         #endregion
 

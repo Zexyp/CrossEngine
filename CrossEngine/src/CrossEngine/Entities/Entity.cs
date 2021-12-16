@@ -163,6 +163,10 @@ namespace CrossEngine.Entities
         #region Add
         public void AddComponet(Component component)
         {
+            if (component == null) throw new ArgumentNullException();
+            if (_components.Contains(component)) throw new InvalidOperationException("Entity already has this component.");
+            if (Scene.Registry.Contains(component) == true) throw new InvalidOperationException("Component already contained in registry.");
+
 #if USE_TRANSFORM_CACHE
             // only sets Transform cache if it's empty
             if (Transform == null && component.GetType() == typeof(TransformComponent)) Transform = (TransformComponent)(Component)component;
@@ -197,11 +201,13 @@ namespace CrossEngine.Entities
         #region Remove
         public void RemoveComponent(Component component)
         {
+            if (component == null) throw new ArgumentNullException();
+            if (!_components.Contains(component)) throw new InvalidOperationException("Entity doesn't have this component.");
+            //if (!Scene?.Registry.Contains(component) == true) throw new Exception("Something went wrong.");
+
 #if USE_TRANSFORM_CACHE
             if (Transform == component) Transform = null;
 #endif
-
-            if (!_components.Contains(component)) throw new InvalidOperationException("Entity doesn't have this component");
 
             if (component.Valid)
             {

@@ -36,8 +36,6 @@ namespace CrossEngineEditor.Panels
 
         protected override void DrawWindowContent()
         {
-            Component InstantiateComponent(Type type) => (Component)type.GetConstructor(Type.EmptyTypes).Invoke(null);
-
             if (ImGui.BeginMenuBar())
             {
                 if (ImGui.BeginMenu("Edit", Context.ActiveEntity != null))
@@ -48,7 +46,7 @@ namespace CrossEngineEditor.Panels
                         {
                             if (ImGui.MenuItem(EditorLayer.Instance.CoreComponentTypes[i].Name))
                             {
-                                Context.ActiveEntity.AddComponent(InstantiateComponent(EditorLayer.Instance.CoreComponentTypes[i]));
+                                Context.ActiveEntity.AddComponent((Component)Activator.CreateInstance(EditorLayer.Instance.CoreComponentTypes[i]));
                             }
                         }
                         ImGui.Separator();
@@ -56,7 +54,7 @@ namespace CrossEngineEditor.Panels
                         {
                             if (ImGui.MenuItem(EditorLayer.Instance.ComponentTypeRegistry[i].Name))
                             {
-                                Context.ActiveEntity.AddComponent(InstantiateComponent(EditorLayer.Instance.ComponentTypeRegistry[i]));
+                                Context.ActiveEntity.AddComponent((Component)Activator.CreateInstance(EditorLayer.Instance.ComponentTypeRegistry[i]));
                             }
                         }
                         ImGui.EndMenu();

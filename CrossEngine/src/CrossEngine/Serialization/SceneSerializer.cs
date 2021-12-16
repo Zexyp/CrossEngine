@@ -3,14 +3,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+//using System.Text.Json;
 using System.Threading.Tasks;
 using System.IO;
-
-using Newtonsoft.Json;
 
 using CrossEngine.Scenes;
 using CrossEngine.Serialization.Json;
 using CrossEngine.Serialization.Json.Converters;
+using CrossEngine.Assemblies;
 
 namespace CrossEngine.Serialization
 {
@@ -32,35 +32,29 @@ namespace CrossEngine.Serialization
         //    new TextureCustomJsonConverter(),
         //};
 
+        class CrossAssemblyTypeResolver : TypeResolver
+        {
+            public override Type ResolveType(string typeName)
+            {
+                return Type.GetType(typeName) ?? AssemblyLoader.GetType(typeName);
+            }
+        }
+
         private static JsonSerializerSettings CreateSettings(Scene scene)
         {
-            return new JsonSerializerSettings()
-            {
-                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
-                TypeNameHandling = TypeNameHandling.Auto,
-                Formatting = Formatting.Indented,
-                Converters = {
-                    //new ArrayReferencePreservngConverter(),
-                    new SerializableInterfaceJsonConverter(),
-                    
-                    new Vector2JsonConverter(),
-                    new Vector3JsonConverter(),
-                    new Vector4JsonConverter(),
-                    new QuaternionJsonConverter(),
-                    new Matrix4x4JsonConverter(),
-                    
-                    new SceneJsonConverter(scene),
-                    new EntityJsonConverter(scene),
-                    new ComponentJsonConverter(),
-                }
-            };
+            var settings = JsonSerializerSettings.Default;
+            settings.Converters.Add(new SceneJsonConverter(scene));
+            settings.Converters.Add(new EntityJsonConverter(scene));
+            settings.Converters.Add(new ComponentJsonConverter());
+            settings.TypeResolver = new CrossAssemblyTypeResolver();
+            return settings;
         }
 
         public static string SertializeJson(Scene scene)
         {
-            JsonSerializer serializer = JsonSerializer.Create(CreateSettings(scene));
+            JsonSerializer serializer = new JsonSerializer(CreateSettings(scene));
             using (MemoryStream stream = new MemoryStream())
-            using (StreamWriter writer = new StreamWriter(stream))
+            using (System.Text.Json.Utf8JsonWriter writer = new System.Text.Json.Utf8JsonWriter(stream, new System.Text.Json.JsonWriterOptions() { Indented = true }))
             {
                 serializer.Serialize(writer, scene);
                 writer.Flush();
@@ -73,11 +67,10 @@ namespace CrossEngine.Serialization
         {
             Scene scene = new Scene();
 
-            JsonSerializer serializer = JsonSerializer.Create(CreateSettings(scene));
-            using (MemoryStream stream = new MemoryStream(Encoding.Default.GetBytes(json)))
-            using (StreamReader reader = new StreamReader(stream))
+            JsonSerializer serializer = new JsonSerializer(CreateSettings(scene));
+            using (System.Text.Json.JsonDocument reader = System.Text.Json.JsonDocument.Parse(json))
             {
-                serializer.Deserialize(reader, typeof(Scene));
+                serializer.Deserialize(reader.RootElement, typeof(Scene));
                 return scene;
             }
         }
