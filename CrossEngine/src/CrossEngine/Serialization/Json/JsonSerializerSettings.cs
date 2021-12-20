@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using CrossEngine.Serialization.Json.Converters;
 using CrossEngine.Serialization.Json;
 
-namespace CrossEngine
+namespace CrossEngine.Serialization.Json
 {
     // TODO: add lock
     public class JsonSerializerSettings
@@ -40,7 +40,8 @@ namespace CrossEngine
                         new DictionaryInterfaceJsonConverter(),
                         new SerializableInterfaceJsonConverter(),
                     },
-                    TypeResolver = new DefaultTypeResolver()
+                    TypeResolver = new DefaultTypeResolver(),
+                    WriterOptions = default,
                 };
             }
         }

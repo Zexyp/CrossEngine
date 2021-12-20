@@ -200,6 +200,8 @@ namespace CrossEngine.Rendering.Textures
             SetFilterParameter(FilterParameter.Linear);
             //SetWrapParameter(WrapParameter.Repeat);
 
+            glBindTexture((int)_target, 0);
+
             this._size = new IntVec2(width, height);
         }
 

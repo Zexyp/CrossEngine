@@ -13,10 +13,10 @@ namespace CrossEngine
     {
         public static Application Instance { get; private set; } = null;
 
-        internal Window Window { get; private set; }
-        public uint Width { get => Window.Width; set => Window.Width = value; }
-        public uint Height { get => Window.Height; set => Window.Height = value; }
-        public string Title { get => Window.Title; set => Window.Title = value; }
+        public Window Window { get; private set; }
+        //public uint Width { get => Window.Width; set => Window.Width = value; }
+        //public uint Height { get => Window.Height; set => Window.Height = value; }
+        //public string Title { get => Window.Title; set => Window.Title = value; }
 
         private LayerStack LayerStack;
 
@@ -58,11 +58,14 @@ namespace CrossEngine
             while (!Window.ShouldClose)
             {
                 Profiler.BeginScope("Main loop");
+
                 Time.Update(Window.Time);
 
                 Profiler.BeginScope(nameof(Update));
                 Update(Math.Min((float)Time.DeltaTime, MaxTimestep));
                 Profiler.EndScope();
+
+                EventLoop.Update();
 
                 Profiler.BeginScope(nameof(Render));
                 Render();

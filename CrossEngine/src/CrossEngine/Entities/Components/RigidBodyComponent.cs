@@ -242,7 +242,7 @@ namespace CrossEngine.Entities.Components
         public override void OnAttach()
         {
             Transform = Entity.GetComponent<TransformComponent>();
-            Collider = Entity.GetComponent<ColliderComponent>();
+            Collider = Entity.GetComponent<ColliderComponent>(true);
 
             Entity.OnComponentAdded += OnComponentAdded;
             Entity.OnComponentRemoved += OnComponentRemoved;
@@ -272,7 +272,7 @@ namespace CrossEngine.Entities.Components
 
         public override void OnEvent(Event e)
         {
-            if (e is RigidBodyWorldUpdateEvent)
+            if (e is RigidBodyWorldUpdateEvent && nativeRigidBody.IsActive && !Static)
             {
                 _transform.OnTransformChanged -= OnTransformChanged;
                 if (Entity.Parent == null)

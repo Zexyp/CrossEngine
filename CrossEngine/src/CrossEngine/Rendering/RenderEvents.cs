@@ -12,4 +12,9 @@ namespace CrossEngine.Rendering
     {
 
     }
+
+    public class EditorDrawRenderEvent : RenderEvent
+    {
+
+    }
 }

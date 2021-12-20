@@ -161,7 +161,7 @@ namespace CrossEngine.Entities
         #endregion
 
         #region Add
-        public void AddComponet(Component component)
+        public void AddComponent(Component component)
         {
             if (component == null) throw new ArgumentNullException();
             if (_components.Contains(component)) throw new InvalidOperationException("Entity already has this component.");
@@ -193,7 +193,7 @@ namespace CrossEngine.Entities
 
         public T AddComponent<T>(T component) where T : Component
         {
-            AddComponet(component);
+            AddComponent((Component)component);
             return component;
         }
         #endregion
@@ -399,7 +399,7 @@ namespace CrossEngine.Entities
                 {
                     if (!HasComponentOfType(((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType, true))
                     {
-                        Log.Core.Warn($"component of type '{component.GetType().Name}' needs component of type '{((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType.Name}'");
+                        //Log.Core.Warn($"component of type '{component.GetType().Name}' needs component of type '{((RequireComponentAttribute)requireAttributes[rai]).RequiredComponentType.Name}'");
                         valid = false;
                         break;
                     }

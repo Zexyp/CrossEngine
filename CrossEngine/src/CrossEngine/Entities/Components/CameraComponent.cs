@@ -126,9 +126,13 @@ namespace CrossEngine.Entities.Components
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is LineRenderEvent && Entity.Transform != null)
+            if (re is EditorDrawRenderEvent && Entity.Transform != null)
             {
-                LineRenderer.DrawBox(Matrix4x4.CreateScale(new Vector3(2)) * Matrix4x4Extension.Invert(_camera.ProjectionMatrix) * Entity.Transform.WorldTransformMatrix, new Vector4(1, 0.8f, 0.2f, 1));
+                LineRenderer.DrawBox(
+                    Matrix4x4.CreateScale(new Vector3(2)) *
+                    Matrix4x4Extension.Invert(_camera.ProjectionMatrix) *
+                    Matrix4x4.CreateFromQuaternion(Entity.Transform.WorldRotation) *
+                    Matrix4x4.CreateTranslation(Entity.Transform.WorldPosition), new Vector4(1, 0.8f, 0.2f, 1));
             }
         }
 
@@ -142,6 +146,11 @@ namespace CrossEngine.Entities.Components
         {
             Type = (CameraType)info.GetValue("Type", typeof(CameraType));
             Camera = (Camera)info.GetValue("Camera", typeof(Camera));
+        }
+
+        public void Resize(float x, float y)
+        {
+            Camera.Resize(x, y);
         }
     }
 }

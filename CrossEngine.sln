@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "Sandbox\Sandbox.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngine-Editor", "CrossEngine-Editor\CrossEngine-Editor.csproj", "{D6CB77AE-1080-4D2F-B540-1BEF0FBCF655}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossEngine-Runtime", "CrossEngine-Runtime\CrossEngine-Runtime.csproj", "{52FFFF74-A95F-4586-96F9-DD90F5429761}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,18 @@ Global
 		{D6CB77AE-1080-4D2F-B540-1BEF0FBCF655}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D6CB77AE-1080-4D2F-B540-1BEF0FBCF655}.Release|x64.ActiveCfg = Release|Any CPU
 		{D6CB77AE-1080-4D2F-B540-1BEF0FBCF655}.Release|x64.Build.0 = Release|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Debug|x64.Build.0 = Debug|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Profiling Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Profiling Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Profiling Debug|x64.ActiveCfg = Debug|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Profiling Debug|x64.Build.0 = Debug|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Release|x64.ActiveCfg = Release|Any CPU
+		{52FFFF74-A95F-4586-96F9-DD90F5429761}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -12,13 +12,15 @@ using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
+using CrossEngine.Rendering.Passes;
+using CrossEngine.Inputs;
 
 namespace CrossEngineEditor.Panels
 {
     class GamePanel : EditorPanel
     {
-        Framebuffer framebuffer;
         Vector2 viewportSize;
+        RenderPipeline pipeline;
 
         public GamePanel() : base("Game")
         {
@@ -27,41 +29,23 @@ namespace CrossEngineEditor.Panels
 
         public override void OnAttach()
         {
-            Context.OnSceneChanged += OnContextSceneChanged;
         }
 
         public override void OnDetach()
         {
-            Context.OnSceneChanged -= OnContextSceneChanged;
         }
 
-        private void OnContextSceneChanged()
+        public override void OnOpen()
         {
-            var scene = Context.Scene;
-            if (scene != null)
-            {
-                if (framebuffer != null)
-                {
-                    framebuffer.Dispose();
-                    framebuffer = null;
-                }
+            pipeline = new RenderPipeline();
+            pipeline.RegisterPass(new Renderer2DPass());
+            pipeline.RegisterPass(new LineRenderPass());
+        }
 
-                var spec = new FramebufferSpecification();
-                spec.Attachments = new FramebufferAttachmentSpecification(
-                    // using floating point colors
-                    new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F) { Index = scene.Pipeline.FBStructureIndex.Color },
-                    new FramebufferTextureSpecification(TextureFormat.ColorR32I) { Index = scene.Pipeline.FBStructureIndex.ID },
-                    new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
-                    );
-                spec.Width = Math.Max((uint)viewportSize.X, 1);
-                spec.Height = Math.Max((uint)viewportSize.Y, 1);
-                framebuffer = new Framebuffer(spec);
-            }
-            else
-            {
-                framebuffer.Dispose();
-                framebuffer = null;
-            }
+        public override void OnClose()
+        {
+            pipeline.Dispose();
+            pipeline = null;
         }
 
         protected override void PrepareWindow()
@@ -85,27 +69,32 @@ namespace CrossEngineEditor.Panels
                     {
                         viewportSize = viewportPanelSize;
 
-                        framebuffer?.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
+                        pipeline.Framebuffer.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
 
                         // notify scene
                         if (Context.Scene.Running) Context.Scene.OnEvent(new WindowResizeEvent((uint)viewportSize.X, (uint)viewportSize.Y));
 
-                        Context.Scene.GetPrimaryCamera()?.Resize(viewportSize.X, viewportSize.Y);
+                        var camcomp = Context.Scene.GetPrimaryCameraComponent();
+                        if (camcomp != null && camcomp.Usable && !camcomp.FixedAspectRatio)
+                        {
+                            camcomp.Resize(viewportSize.X, viewportSize.Y);
+                        }
                     }
                 }
 
                 // draw the framebuffer as image
-                ImGui.Image(new IntPtr(framebuffer.ColorAttachments[Context.Scene.Pipeline.FBStructureIndex.Color]),
+                ImGui.Image(new IntPtr(pipeline.Framebuffer.ColorAttachments[pipeline.FBStructureIndex.Color]),
                     viewportSize,
                     new Vector2(0, 1),
                     new Vector2(1, 0));
 
-                framebuffer.Bind();
+                pipeline.Framebuffer.Bind();
                 Renderer.Clear();
-                framebuffer.ClearAttachment((uint)Context.Scene.Pipeline.FBStructureIndex.ID, 0);
+                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FBStructureIndex.ID, 0);
 
                 // draw
-                Context.Scene.OnRenderRuntime(framebuffer);
+                Context.Scene.Pipeline = pipeline;
+                Context.Scene.OnRenderRuntime();
 
                 if (Context.Scene.GetPrimaryCamera() == null)
                 {
@@ -120,6 +109,26 @@ namespace CrossEngineEditor.Panels
                 }
 
                 Framebuffer.Unbind();
+
+                // !
+                // TODO: this seems kinda sus
+                if (Context.Scene.Running && Focused)
+                {
+                    ImGuiLayer.Instance.BlockEvents = false;
+                    Input.Enabled = true;
+                }
+                else Input.Enabled = false;
+            }
+        }
+
+        public override void OnEvent(Event e)
+        {
+            if (Context.Scene?.Running == true)
+            {
+                if (Focused)
+                {
+                    Context.Scene.OnEvent(e);
+                }
             }
         }
     }

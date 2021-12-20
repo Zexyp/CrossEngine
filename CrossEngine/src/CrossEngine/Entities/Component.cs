@@ -30,6 +30,8 @@ namespace CrossEngine.Entities.Components
 
         public bool Valid { get; internal set; } = false;
 
+        public bool Usable { get => Valid && Enabled; }
+
         public Entity Entity { get; internal set; } = null;
 
         public Component()

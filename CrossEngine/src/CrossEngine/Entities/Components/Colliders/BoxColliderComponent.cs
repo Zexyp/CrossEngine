@@ -51,7 +51,7 @@ namespace CrossEngine.Entities.Components
 
         public BoxColliderComponent()
         {
-
+            throw new NotImplementedException();
         }
 
         public override void OnAttach()

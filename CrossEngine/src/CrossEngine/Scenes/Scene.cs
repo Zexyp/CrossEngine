@@ -18,6 +18,7 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Lines;
 using CrossEngine.Assets;
 using CrossEngine.Rendering.Passes;
+using CrossEngine.Profiling;
 
 namespace CrossEngine.Scenes
 {
@@ -38,7 +39,7 @@ namespace CrossEngine.Scenes
 
         public readonly TreeNode<Entity> HierarchyRoot = new TreeNode<Entity>();
 
-        public readonly RenderPipeline Pipeline;
+        public RenderPipeline Pipeline;
 
         public RigidBodyWorld RigidBodyWorld;
 
@@ -50,9 +51,9 @@ namespace CrossEngine.Scenes
         {
             Entities = _entities.AsReadOnly();
 
-            Pipeline = new RenderPipeline();
-            Pipeline.RegisterPass(new Renderer2DPass());
-            Pipeline.RegisterPass(new LineRenderPass());
+            //Pipeline = new RenderPipeline();
+            //Pipeline.RegisterPass(new Renderer2DPass());
+            //Pipeline.RegisterPass(new LineRenderPass());
         }
 
         #region Entity Manage
@@ -173,30 +174,17 @@ namespace CrossEngine.Scenes
 
         public Camera GetPrimaryCamera()
         {
-            if (Registry.ContainsType<CameraComponent>())
-            {
-                var col = Registry.GetComponentsCollection<CameraComponent>();
-                for (int i = 0; i < col.Count; i++)
-                {
-                    CameraComponent camComp = col[i];
-                    if (camComp.Primary) return camComp.Camera;
-                }
-            }
-            return null;
+            return Registry.Find<CameraComponent>((camcomp) => camcomp.Primary)?.Camera;
+        }
+
+        public CameraComponent GetPrimaryCameraComponent()
+        {
+            return Registry.Find<CameraComponent>((camcomp) => camcomp.Primary);
         }
 
         public Matrix4x4? GetPrimaryCamerasViewProjectionMatrix()
         {
-            if (Registry.ContainsType<CameraComponent>())
-            {
-                var col = Registry.GetComponentsCollection<CameraComponent>();
-                for (int i = 0; i < col.Count; i++)
-                {
-                    CameraComponent camComp = col[i];
-                    if (camComp.Primary) return camComp.ViewProjectionMatrix;
-                }
-            }
-            return null;
+            return Registry.Find<CameraComponent>((camcomp) => camcomp.Primary)?.ViewProjectionMatrix;
         }
 
         public int GetEntityIndex(Entity entity)
@@ -293,7 +281,10 @@ namespace CrossEngine.Scenes
                     _entities[i].OnUpdate(timestep);
             }
 
+            Profiler.BeginScope("Update physics");
             RigidBodyWorld.Update(timestep);
+            Profiler.EndScope();
+
             OnEvent(new RigidBodyWorldUpdateEvent());
 
             //// fixed update mechanism
@@ -315,31 +306,30 @@ namespace CrossEngine.Scenes
         //
         //}
 
-        public void OnRenderRuntime(Framebuffer framebuffer = null)
+        public void OnRenderRuntime()
         {
             // TODO: fix no camera state
 
             var vpMatrix = GetPrimaryCamerasViewProjectionMatrix();
             if (vpMatrix != null)
             {
-                RenderPipeline((Matrix4x4)vpMatrix, framebuffer);
+                RenderPipeline((Matrix4x4)vpMatrix);
             }
         }
 
-        public void OnRenderEditor(Matrix4x4 viewProjectionMatrix, Framebuffer framebuffer = null)
+        public void OnRenderEditor(Matrix4x4 viewProjectionMatrix)
         {
-            RenderPipeline(viewProjectionMatrix, framebuffer);
+            RenderPipeline(viewProjectionMatrix);
         }
 
-        public void OnRenderEditor(EditorCamera camera, Framebuffer framebuffer = null)
+        public void OnRenderEditor(EditorCamera camera)
         {
-            RenderPipeline(camera.ViewProjectionMatrix, framebuffer);
+            RenderPipeline(camera.ViewProjectionMatrix);
         }
 
-        private void RenderPipeline(Matrix4x4 viewProjectionMatrix, Framebuffer framebuffer = null)
+        private void RenderPipeline(Matrix4x4 viewProjectionMatrix)
         {
-            if (framebuffer == null) return;
-            Pipeline.Render(new SceneData(this, viewProjectionMatrix), framebuffer);
+            Pipeline?.Render(new SceneData(this, viewProjectionMatrix));
 
             //if (framebuffer != null) framebuffer.Bind();
             //

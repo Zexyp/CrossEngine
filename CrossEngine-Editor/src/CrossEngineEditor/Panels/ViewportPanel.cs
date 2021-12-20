@@ -12,13 +12,14 @@ using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
+using CrossEngine.Rendering.Passes;
 
 namespace CrossEngineEditor.Panels
 {
     class ViewportPanel : EditorPanel
     {
-        Framebuffer framebuffer;
         Vector2 viewportSize;
+        RenderPipeline pipeline;
 
         public OrthographicEditorCameraController EditorCameraController;
 
@@ -32,43 +33,25 @@ namespace CrossEngineEditor.Panels
         public override void OnAttach()
         {
             EditorCameraController = new OrthographicEditorCameraController(EditorLayer.Instance.EditorCamera);
-            EditorCameraController.SetViewportSize(Application.Instance.Width, Application.Instance.Height);
-
-            Context.OnSceneChanged += OnContextSceneChanged;
+            new CrossEngine.Rendering.Textures.Texture(0x00000000);
         }
 
         public override void OnDetach()
         {
-            Context.OnSceneChanged -= OnContextSceneChanged;
         }
 
-        private void OnContextSceneChanged()
+        public override void OnOpen()
         {
-            var scene = Context.Scene;
-            if (scene != null)
-            {
-                if (framebuffer != null)
-                {
-                    framebuffer.Dispose();
-                    framebuffer = null;
-                }
-            
-                var spec = new FramebufferSpecification();
-                spec.Attachments = new FramebufferAttachmentSpecification(
-                    // using floating point colors
-                    new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F) { Index = scene.Pipeline.FBStructureIndex.Color },
-                    new FramebufferTextureSpecification(TextureFormat.ColorR32I) { Index = scene.Pipeline.FBStructureIndex.ID },
-                    new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
-                    );
-                spec.Width = Math.Max((uint)viewportSize.X, 1);
-                spec.Height = Math.Max((uint)viewportSize.Y, 1);
-                framebuffer = new Framebuffer(spec);
-            }
-            else
-            {
-                framebuffer.Dispose();
-                framebuffer = null;
-            }
+            pipeline = new RenderPipeline();
+            pipeline.RegisterPass(new Renderer2DPass());
+            pipeline.RegisterPass(new LineRenderPass());
+            pipeline.RegisterPass(new EditorDrawPass());
+        }
+
+        public override void OnClose()
+        {
+            pipeline.Dispose();
+            pipeline = null;
         }
 
         protected override void PrepareWindow()
@@ -85,39 +68,8 @@ namespace CrossEngineEditor.Panels
         {
             if (ImGui.BeginMenuBar())
             {
-                // play mode button
-                Vector2 cp = ImGui.GetCursorPos();
-                cp.X += ImGui.GetColumnWidth() / 2;
-                ImGui.SetCursorPos(cp);
-                bool colorPushed = Context.Scene?.Running == true;
-                if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000dd/*new Vector4(1, 0.2f, 0.1f, 1)*/);
-                if (ImGui.ArrowButton("##play", Context.Scene?.Running == true ? ImGuiDir.Down : ImGuiDir.Right))
-                {
-                    if (Context.Scene != null)
-                    {
-                        if (!Context.Scene.Running)
-                        {
-                            EditorLayer.Instance.StartPlaymode();
-                            ImGui.SetWindowFocus(EditorLayer.Instance.GetPanel<GamePanel>().WindowName);
-                        }
-                        else
-                        {
-                            EditorLayer.Instance.EndPlaymode();
-                            ImGui.SetWindowFocus(WindowName);
-                        }
-                    }
-                }
-                if (colorPushed) ImGui.PopStyleColor();
-
-                ImGui.Checkbox("##update", ref EditorLayer.Instance.SceneUpdate);
-
-
                 ImGui.EndMenuBar();
             }
-
-            // !
-            // TODO: this seems kinda sus
-            ImGuiLayer.Instance.BlockEvents = !Focused;
 
             if (Context.Scene != null)
             {
@@ -128,53 +80,51 @@ namespace CrossEngineEditor.Panels
                     {
                         viewportSize = viewportPanelSize;
 
-                        framebuffer?.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
+                        pipeline.Framebuffer.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
 
-                        EditorCameraController.SetViewportSize(viewportSize.X, viewportSize.Y);
-
-                        // notify scene
-                        if (Context.Scene.Running) Context.Scene.OnEvent(new WindowResizeEvent((uint)viewportSize.X, (uint)viewportSize.Y));
-
-                        Context.Scene.GetPrimaryCamera()?.Resize(viewportSize.X, viewportSize.Y);
+                        EditorCameraController.Resize(viewportSize);
                     }
                 }
 
                 // draw the framebuffer as image
-                ImGui.Image(new IntPtr(framebuffer.ColorAttachments[Context.Scene.Pipeline.FBStructureIndex.Color]),
+                ImGui.Image(new IntPtr(pipeline.Framebuffer.ColorAttachments[pipeline.FBStructureIndex.Color]),
                     viewportSize,
                     new Vector2(0, 1),
                     new Vector2(1, 0));
 
-                framebuffer.Bind();
+                pipeline.Framebuffer.Bind();
                 Renderer.Clear();
-                framebuffer.ClearAttachment((uint)Context.Scene.Pipeline.FBStructureIndex.ID, 0);
+                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FBStructureIndex.ID, 0);
 
                 // interaction
                 if (ImGui.IsItemHovered() && Focused)
                 {
-                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && EnableSelect)
+                    // camera
+                    var io = ImGui.GetIO();
+                    EditorCameraController.Zoom(io.MouseWheel);
+                        
+                    if (ImGui.IsMouseDown(ImGuiMouseButton.Middle))
+                    {
+                        EditorCameraController.Move(io.MouseDelta * new Vector2(-1, 1));
+                        io.MouseDelta = Vector2.Zero;
+                    }
+                    else if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && EnableSelect)
                     {
                         Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
                         texpos.Y = -texpos.Y;
-                        int result = framebuffer.ReadPixel(1, (int)texpos.X, (int)texpos.Y);
+                        int result = pipeline.Framebuffer.ReadPixel((uint)Context.Scene.Pipeline.FBStructureIndex.ID, (int)texpos.X, (int)texpos.Y);
                         EditorApplication.Log.Trace($"selected entity id {result}");
 
                         Context.ActiveEntity = Context.Scene.GetEntity(result);
                     }
-
-                    EditorCameraController.OnUpdate(Time.DeltaTimeF);
                 }
 
                 // draw
-                Context.Scene.OnRenderEditor(EditorCameraController.Camera.ViewProjectionMatrix, framebuffer);
+                Context.Scene.Pipeline = pipeline;
+                Context.Scene.OnRenderEditor(EditorCameraController.Camera.ViewProjectionMatrix);
 
                 Framebuffer.Unbind();
             }
-        }
-
-        public override void OnEvent(Event e)
-        {
-            EditorCameraController.OnEvent(e);
         }
     }
 }

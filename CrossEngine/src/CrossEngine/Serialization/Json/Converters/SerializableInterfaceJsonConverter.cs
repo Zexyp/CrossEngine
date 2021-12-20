@@ -12,7 +12,7 @@ namespace CrossEngine.Serialization.Json.Converters
         public override void WriteJson(Utf8JsonWriter writer, ISerializable value, JsonSerializer serializer)
         {
             var valtype = value.GetType();
-            writer.WriteString("$type", valtype.FullName);
+            //writer.WriteString("$type", valtype.FullName);
             value.OnSerialize(new JsonSerializationInfo(writer, serializer));
         }
     }

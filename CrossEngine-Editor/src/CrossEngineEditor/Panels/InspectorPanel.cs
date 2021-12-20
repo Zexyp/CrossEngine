@@ -46,7 +46,7 @@ namespace CrossEngineEditor.Panels
                         {
                             if (ImGui.MenuItem(EditorLayer.Instance.CoreComponentTypes[i].Name))
                             {
-                                Context.ActiveEntity.AddComponent((Component)Activator.CreateInstance(EditorLayer.Instance.CoreComponentTypes[i]));
+                                Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.CoreComponentTypes[i]));
                             }
                         }
                         ImGui.Separator();
@@ -54,7 +54,7 @@ namespace CrossEngineEditor.Panels
                         {
                             if (ImGui.MenuItem(EditorLayer.Instance.ComponentTypeRegistry[i].Name))
                             {
-                                Context.ActiveEntity.AddComponent((Component)Activator.CreateInstance(EditorLayer.Instance.ComponentTypeRegistry[i]));
+                                Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.ComponentTypeRegistry[i]));
                             }
                         }
                         ImGui.EndMenu();

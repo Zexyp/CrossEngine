@@ -102,6 +102,24 @@ namespace CrossEngine.Assemblies
             }
         }
 
+        public static void Reload(string path)
+        {
+            if (!File.Exists(path)) throw new FileNotFoundException();
+
+            Unload(path);
+            Load(path);
+        }
+
+        public static void ReloadAll()
+        {
+            string[] paths = new string[_assemblies.Count];
+            _assemblies.Keys.CopyTo(paths, 0);
+            for (int i = 0; i < paths.Length; i++)
+            {
+                Reload(paths[i]);
+            }
+        }
+
         public static void Unload(Assembly obj)
         {
             string key = null;
@@ -129,6 +147,11 @@ namespace CrossEngine.Assemblies
             Log.Core.Info($"[assembly loader] unloaded assembly '{path}'");
 
             _assemblies.Remove(path);
+        }
+
+        public static void UnloadAll()
+        {
+            while (_assemblies.Count > 0) Unload(_assemblies.Keys.First());
         }
 
         public static Type[] GetSubTypesOf(Type type)

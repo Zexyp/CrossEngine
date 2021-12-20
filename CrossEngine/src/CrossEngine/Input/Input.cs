@@ -23,6 +23,8 @@ namespace CrossEngine.Inputs
         static Vector2 mouseDelta;
         static Vector2 mouseLastPosition;
 
+        public static bool Enabled = true;
+
         // meh
         //static Input()
         //{
@@ -73,6 +75,8 @@ namespace CrossEngine.Inputs
         #region Events
         internal static void OnEvent(Event e)
         {
+            if (!Enabled) return;
+
             EventDispatcher dispatcher = new EventDispatcher(e);
             dispatcher.Dispatch<KeyPressedEvent>(OnKeyPressed);
             dispatcher.Dispatch<KeyReleasedEvent>(OnKeyReleased);

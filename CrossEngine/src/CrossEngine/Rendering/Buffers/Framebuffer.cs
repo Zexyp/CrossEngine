@@ -103,7 +103,7 @@ namespace CrossEngine.Rendering.Buffers
             }
         }
 
-        uint fboid = 0;
+        private uint fboid = 0;
         //uint rboid = 0;
 
         public int Width { get; private set; }
@@ -114,14 +114,16 @@ namespace CrossEngine.Rendering.Buffers
         FramebufferSpecification specification;
         List<FramebufferTextureSpecification> colorAttachmentSpecifications = new List<FramebufferTextureSpecification>();
         FramebufferTextureSpecification depthAttachmentSpecification = new FramebufferTextureSpecification(TextureFormat.None);
-        List<uint> _colorAttachments = new List<uint>();
-        public ReadOnlyCollection<uint> ColorAttachments { get => _colorAttachments.AsReadOnly(); }
+        readonly List<uint> _colorAttachments = new List<uint>();
+        public readonly ReadOnlyCollection<uint> ColorAttachments;
         uint _depthAttachment;
         public uint DepthAttachment { get => _depthAttachment; }
         //uint colorAttachment;
 
         public unsafe Framebuffer(FramebufferSpecification spec)
         {
+            ColorAttachments = _colorAttachments.AsReadOnly();
+
             specification = spec;
             foreach (FramebufferTextureSpecification att in spec.Attachments.Attachments)
             {
@@ -136,7 +138,7 @@ namespace CrossEngine.Rendering.Buffers
             Log.Core.Trace("created framebuffer (id: {0})", fboid);
         }
         
-        unsafe void Invalidate()
+        unsafe private void Invalidate()
         {
             Profiler.BeginScope($"{nameof(Framebuffer)}.{nameof(Framebuffer.Invalidate)}");
 
@@ -213,6 +215,7 @@ namespace CrossEngine.Rendering.Buffers
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             //Log.Core.Trace("invalidated framebuffer (id: {0})", fboid);
+            Profiler.EndScope();
         }
 
         private unsafe void SetDrawBuffers()
@@ -232,8 +235,6 @@ namespace CrossEngine.Rendering.Buffers
                 // Only depth-pass
                 glDrawBuffer(GL_NONE);
             }
-
-            Profiler.EndScope();
         }
 
         private static unsafe void AttachColorTexture(uint id, FramebufferTextureSpecification spec, int width, int height, int index)
@@ -336,6 +337,14 @@ namespace CrossEngine.Rendering.Buffers
             }
 
             SetDrawBuffers();
+        }
+
+        public void CopyToScreen()
+        {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, fboid);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+            glBlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height,
+                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
         }
 
         //---

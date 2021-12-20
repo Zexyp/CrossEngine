@@ -24,7 +24,14 @@ namespace CrossEngine.Assets.GC
 
     public static unsafe class GPUGarbageCollector
     {
-        static readonly Dictionary<GPUObjectType, List<uint>> _marked;
+        public static int ClearEveryMiliseconds = 5000;
+
+        static readonly Dictionary<GPUObjectType, List<uint>> _marked = new Dictionary<GPUObjectType, List<uint>>(Array.ConvertAll(
+                                                                                        Enum.GetValues(typeof(GPUObjectType))
+                                                                                            .Cast<int>()
+                                                                                            .Distinct()
+                                                                                            .ToArray(),
+                                                                                        (val) => new KeyValuePair<GPUObjectType, List<uint>>((GPUObjectType)val, new List<uint>())));
         static readonly Dictionary<GPUObjectType, Action<List<uint>>> _handlers = new Dictionary<GPUObjectType, Action<List<uint>>>
         {
             { GPUObjectType.Texture, (list) => {
@@ -62,12 +69,13 @@ namespace CrossEngine.Assets.GC
 
         static GPUGarbageCollector()
         {
-            var values = Enum.GetValues(typeof(GPUObjectType));
-            _marked = new Dictionary<GPUObjectType, List<uint>>(values.Length);
-            for (int i = 0; i < values.Length; i++)
-            {
-                _marked.Add((GPUObjectType)values.GetValue(i), new List<uint>());
-            }
+            EventLoop.CallLater(ClearEveryMiliseconds, ScheduledCollectCallback);
+        }
+
+        private static void ScheduledCollectCallback()
+        {
+            Collect();
+            EventLoop.CallLater(ClearEveryMiliseconds, ScheduledCollectCallback);
         }
 
         internal static void MarkObject(GPUObjectType objectType, uint id)
@@ -75,10 +83,10 @@ namespace CrossEngine.Assets.GC
             if (!_marked[objectType].Contains(id))
             {
                 _marked[objectType].Add(id);
-                Log.Core.Trace($"[GPUGarbageCollector] {objectType} id {id} marked");
+                Log.Core.Trace($"[GPU GC] {objectType} id {id} marked");
             }
             else
-                Log.Core.Error($"[GPUGarbageCollector] {objectType} id {id} already marked!");
+                Log.Core.Error($"[GPU GC] {objectType} id {id} already marked!");
         }
 
         public static void Collect()
@@ -90,11 +98,14 @@ namespace CrossEngine.Assets.GC
             foreach (KeyValuePair<GPUObjectType, List<uint>> pair in _marked)
             {
                 if (pair.Value.Count > 0)
+                {
+                    count += pair.Value.Count;
                     _handlers[pair.Key](pair.Value);
-                count += pair.Value.Count;
+                    pair.Value.Clear();
+                }
             }
 
-            Log.Core.Trace($"[GPUGarbageCollector] cleared {count} objects in {sw.ElapsedMilliseconds} ms");
+            if (count > 0) Log.Core.Trace($"[GPU GC] cleared {count} objects in {sw.ElapsedMilliseconds} ms");
         }
     }
 }

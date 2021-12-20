@@ -9,7 +9,7 @@ using CrossEngine.Profiling;
 
 namespace CrossEngine.Rendering.Passes
 {
-    public class RenderPipeline
+    public class RenderPipeline : IDisposable
     {
         public struct FramebufferStructureIndex
         {
@@ -31,7 +31,29 @@ namespace CrossEngine.Rendering.Passes
 
         public FramebufferStructureIndex FBStructureIndex = FramebufferStructureIndex.Default;
 
+        public Framebuffer Framebuffer;
+
         private List<RenderPass> _passes = new List<RenderPass>();
+
+        public RenderPipeline()
+        {
+            var spec = new FramebufferSpecification();
+            spec.Attachments = new FramebufferAttachmentSpecification(
+                // using floating point colors
+                new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F) { Index = FBStructureIndex.Color },
+                new FramebufferTextureSpecification(TextureFormat.ColorR32I) { Index = FBStructureIndex.ID },
+                new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
+                );
+            spec.Width = 1;
+            spec.Height = 1;
+            Framebuffer = new Framebuffer(spec);
+        }
+
+        public void Dispose()
+        {
+            Framebuffer?.Dispose();
+            Framebuffer = null;
+        }
 
         public void RegisterPass(RenderPass pass)
         {
@@ -50,16 +72,30 @@ namespace CrossEngine.Rendering.Passes
 
         public void RemoveAllPasses() => _passes.Clear();
 
-        public void Render(SceneData sceneData, Framebuffer framebuffer = null)
+        public void Render(SceneData sceneData)
         {
             Profiler.BeginScope("Drawing pipeline");
 
-            framebuffer.Bind();
-            framebuffer.EnableAllColorDrawBuffers(true);
+            Framebuffer.Bind();
+            Framebuffer.EnableAllColorDrawBuffers(true);
+            Profiler.BeginScope("Prepare");
             for (int i = 0; i < _passes.Count; i++)
             {
-                _passes[i].Draw(sceneData.Scene, sceneData.ViewProjectionMatrix, framebuffer);
+                _passes[i].GatherData(sceneData.Scene);
             }
+            Profiler.EndScope();
+            Profiler.BeginScope("Draw");
+            for (int i = 0; i < _passes.Count; i++)
+            {
+                _passes[i].Draw(sceneData.Scene, sceneData.ViewProjectionMatrix, Framebuffer);
+            }
+            Profiler.EndScope();
+            Profiler.BeginScope("Clear");
+            for (int i = 0; i < _passes.Count; i++)
+            {
+                _passes[i].Clear();
+            }
+            Profiler.EndScope();
 
             Profiler.EndScope();
         }

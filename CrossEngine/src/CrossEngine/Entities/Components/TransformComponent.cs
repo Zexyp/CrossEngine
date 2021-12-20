@@ -374,7 +374,7 @@ namespace CrossEngine.Entities.Components
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is LineRenderEvent)
+            if (re is EditorDrawRenderEvent)
             {
                 LineRenderer.DrawAxes(WorldTransformMatrix);
             }

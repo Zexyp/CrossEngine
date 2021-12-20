@@ -21,7 +21,7 @@ namespace CrossEngine.Entities.Components
         public void AddComponent(Component component)
         {
             Type type = component.GetType();
-            if (type == typeof(Component)) type = component.GetType();
+
             if (_registryDict.ContainsKey(type))
             {
                 var list = _registryDict[type];
@@ -45,7 +45,7 @@ namespace CrossEngine.Entities.Components
         public void RemoveComponent(Component component)
         {
             Type type = component.GetType();
-            if (type == typeof(Component)) type = component.GetType();
+
             if (_registryDict.ContainsKey(type))
             {
                 var list = _registryDict[type];
@@ -64,32 +64,96 @@ namespace CrossEngine.Entities.Components
             throw new InvalidOperationException("Component was not added!");
         }
 
-        public ReadOnlyCollection<T> GetComponentsCollection<T>(/*, bool inherit = false*/) where T : Component
+        //public ReadOnlyCollection<T> GetComponentsCollection<T>(/*bool inherit = false*/) where T : Component
+        //{
+        //    Type type = typeof(T);
+        //    if (type == typeof(Component)) throw new InvalidOperationException();
+        //
+        //    if (_registryDict.ContainsKey(type))
+        //        return ((List<T>)_registryDict[type]).AsReadOnly();
+        //
+        //    return null;
+        //}
+
+        public T? Find<T>(Predicate<T> match, bool inherit = false) where T : Component
         {
             Type type = typeof(T);
             if (type == typeof(Component)) throw new InvalidOperationException();
-            if (_registryDict.ContainsKey(type))
-                return ((List<T>)_registryDict[type]).AsReadOnly();
+
+            if (!inherit)
+            {
+                if (_registryDict.ContainsKey(type)) return ((List<T>)_registryDict[type]).Find(match);
+            }
+            else
+            {
+                foreach (var pair in _registryDict)
+                {
+                    if (pair.Key.IsAssignableTo(type)) return ((List<T>)pair.Value).Find(match);
+                }
+            }
 
             return null;
         }
 
-        public ReadOnlyCollection<ComponentGroup<Tmatch, Twith>> GetComponentsGroup<Tmatch, Twith>(ICollection<Twith> collection/*, bool inherit = false*/) where Tmatch : Component where Twith : Component
+        public List<T> FindAll<T>(Predicate<T> match, bool inherit = false) where T : Component
         {
-            if (collection == null) return null;
-            Type searchedType = typeof(Tmatch);
-            if (!_registryDict.ContainsKey(searchedType)) return null;
+            Type type = typeof(T);
+            if (type == typeof(Component)) throw new InvalidOperationException();
 
-            List<ComponentGroup<Tmatch, Twith>> list = new List<ComponentGroup<Tmatch, Twith>>();
-            var matchCol = GetComponentsCollection<Tmatch>();
-            if (matchCol == null) return null;
-
-            foreach (var with in collection)
+            if (!inherit)
             {
-                if (with.Entity.TryGetComponent(out Tmatch match)) list.Add(new ComponentGroup<Tmatch, Twith>(match, with));
+                if (_registryDict.ContainsKey(type)) return ((List<T>)_registryDict[type]).FindAll(match);
+            }
+            else
+            {
+                List<T> list = new List<T>();
+                foreach (var pair in _registryDict)
+                {
+                    if (pair.Key.IsAssignableTo(type)) list.AddRange(((List<T>)pair.Value).FindAll(match));
+                }
+                return list;
             }
 
-            return list.AsReadOnly();
+            return new List<T>();
+        }
+
+        public void GetComponents<T>(List<T> bucket, bool inherit = false) where T : Component
+        {
+            if (bucket == null) throw new ArgumentNullException();
+
+            Type type = typeof(T);
+            if (type == typeof(Component)) throw new InvalidOperationException();
+
+            if (!inherit)
+            {
+                if (_registryDict.ContainsKey(type)) bucket.AddRange((List<T>)_registryDict[type]);
+            }
+            else
+            {
+                foreach (var pair in _registryDict)
+                {
+                    if (pair.Key.IsAssignableTo(type)) bucket.AddRange(pair.Value.Cast<T>());
+                }
+            }
+        }
+
+        public void GetComponentsGroup<Tmatch, Twith>(ICollection<Twith> withCollection, List<ComponentGroup<Tmatch, Twith>> bucket/*, bool inherit = false*/) where Tmatch : Component where Twith : Component
+        {
+            if (bucket == null) throw new ArgumentNullException();
+            if (withCollection == null) throw new ArgumentNullException();
+
+            if (withCollection.Count == 0) return;
+            Type searchedType = typeof(Tmatch);
+            if (!_registryDict.ContainsKey(searchedType)) return;
+
+            List<Tmatch> match = new List<Tmatch>();
+            GetComponents<Tmatch>(match);
+            if (match.Count == 0) return;
+
+            foreach (var with in withCollection)
+            {
+                if (with.Entity.TryGetComponent(out Tmatch matchComp)) bucket.Add(new ComponentGroup<Tmatch, Twith>(matchComp, with));
+            }
         }
 
         public bool ContainsType(Type type, bool inherit = false)

@@ -24,7 +24,7 @@ namespace CrossEngine.Rendering.Display
         }
     }
 
-    internal class Window
+    public class Window
     {
         public delegate void EventCallbackFunction(Event e);
 
@@ -40,7 +40,7 @@ namespace CrossEngine.Rendering.Display
 
         private static int windowCount = 0;
 
-        public GLFW.Window Handle { get; private set; }
+        internal GLFW.Window Handle { get; private set; }
 
         public uint Width { get => data.width; set => Glfw.SetWindowSize(Handle, (int)(data.width = value), (int)data.height); }
         public uint Height { get => data.height; set => Glfw.SetWindowSize(Handle, (int)data.width, (int)(data.height = value)); }
@@ -84,7 +84,7 @@ namespace CrossEngine.Rendering.Display
                     Log.Core.Info("GLFW initialized");
                 else
                 {
-                    Log.Core.Error("GLFW failed to initialize");
+                    Log.Core.Fatal("GLFW failed to initialize");
                     Debug.Assert(false, "GLFW failed to initialize");
                 }
 
@@ -113,7 +113,7 @@ namespace CrossEngine.Rendering.Display
 
             if (Handle == GLFW.Window.None)
             {
-                Log.Core.Error("window creation failed!");
+                Log.Core.Fatal("window creation failed!");
                 Debug.Assert(false, "failed to create window");
                 return;
             }
@@ -241,7 +241,7 @@ namespace CrossEngine.Rendering.Display
             data.EventCallback = callback;
         }
 
-        private void SetVSync(bool enable)
+        public void SetVSync(bool enable)
         {
             if (enable)
             {

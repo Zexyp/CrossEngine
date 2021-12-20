@@ -13,6 +13,22 @@ namespace CrossEngine.Rendering.Passes
 {
     public class Renderer2DPass : RenderPass
     {
+        List<ComponentGroup<TransformComponent, SpriteRendererComponent>> bucket = new List<ComponentGroup<TransformComponent, SpriteRendererComponent>>();
+
+        public override void GatherData(Scene scene)
+        {
+            var registry = scene.Registry;
+
+            var srcCollection = new List<SpriteRendererComponent>();
+            registry.GetComponents(srcCollection);
+            registry.GetComponentsGroup(srcCollection, bucket);
+        }
+
+        public override void Clear()
+        {
+            bucket.Clear();
+        }
+
         public override void Draw(Scene scene, Matrix4x4 viewProjectionMatrix, Framebuffer framebuffer = null)
         {
             if (framebuffer != null)
@@ -23,14 +39,11 @@ namespace CrossEngine.Rendering.Passes
 
             Renderer2D.BeginScene(viewProjectionMatrix);
             {
-                var registry = scene.Registry;
-                var spriteEnts = registry.GetComponentsGroup<TransformComponent, SpriteRendererComponent>(registry.GetComponentsCollection<SpriteRendererComponent>());
-                
-                if (spriteEnts != null) foreach (var spEnt in spriteEnts)
+                if (bucket != null) foreach (var spEnt in bucket)
                 {
                     SpriteRendererComponent src = spEnt.Item2;
                     // check if enabled
-                    if (!src.Enabled || !src.Valid) continue;
+                    if (!src.Usable) continue;
                     TransformComponent trans = spEnt.Item1;
 
                     // forced z index

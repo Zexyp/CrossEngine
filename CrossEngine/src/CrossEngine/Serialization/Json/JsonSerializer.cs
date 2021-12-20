@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Text.Json;
+using System.IO;
 
 namespace CrossEngine.Serialization.Json
 {
@@ -132,6 +133,14 @@ namespace CrossEngine.Serialization.Json
 
         int _depth = 0;
 
+        public void Serialize(object value, Stream stream)
+        {
+            using (Utf8JsonWriter writer = new Utf8JsonWriter(stream, Settings.WriterOptions))
+            {
+                Serialize(writer, value);
+            }
+        }     
+
         public void Serialize(Utf8JsonWriter writer, object value)
         {
             void EndDepth()
@@ -203,6 +212,14 @@ namespace CrossEngine.Serialization.Json
                 }
             }
             if (!(selectedConverter?.Bracketable == false)) writer.WriteEndObject();
+        }
+
+        public object? Deserialize(Stream stream, Type type)
+        {
+            using (JsonDocument document = JsonDocument.Parse(stream))
+            {
+                return Deserialize(document.RootElement, type);
+            }
         }
 
         public object? Deserialize(JsonElement reader, Type inptype)

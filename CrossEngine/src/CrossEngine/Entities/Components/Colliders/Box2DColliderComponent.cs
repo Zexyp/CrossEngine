@@ -44,7 +44,7 @@ namespace CrossEngine.Entities.Components
                 if (NativeShape != null)
                 {
                     NativeShape.Dispose();
-                    NativeShape = new Box2DShape((new Vector3(_size / 2, 1) * Vector3.Abs(Entity.Transform.WorldScale)).ToBullet());
+                    NativeShape = CreateNativeShape();
                 }
             }
         }
@@ -57,16 +57,30 @@ namespace CrossEngine.Entities.Components
         public override void OnAttach()
         {
             Transform = Entity.GetComponent<TransformComponent>();
+            Entity.OnComponentAdded += OnEntityComponentAdded;
+            Entity.OnComponentRemoved += OnEntityComponentRemoved;
         }
 
         public override void OnDetach()
         {
             Transform = null;
+            Entity.OnComponentAdded -= OnEntityComponentAdded;
+            Entity.OnComponentRemoved -= OnEntityComponentRemoved;
+        }
+
+        private void OnEntityComponentAdded(Entity sender, Component component)
+        {
+            if (component.GetType() == typeof(TransformComponent)) Transform = Entity.Transform;
+        }
+
+        private void OnEntityComponentRemoved(Entity sender, Component component)
+        {
+            if (component.GetType() == typeof(TransformComponent)) Transform = Entity.Transform;
         }
 
         private void OnTransformChanged(TransformComponent sender)
         {
-            if (((Box2DShape)NativeShape).HalfExtentsWithMargin.ToNumerics() != new Vector3(_size / 2, 1) * Vector3.Abs(Entity.Transform.WorldScale))
+            if (((Box2DShape)NativeShape).HalfExtentsWithMargin.ToNumerics() != new Vector3(_size / 2, 1) * Vector3.Abs(Transform.WorldScale))
             {
                 NativeShape.Dispose();
                 NativeShape = CreateNativeShape();
@@ -75,15 +89,15 @@ namespace CrossEngine.Entities.Components
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is LineRenderEvent && Entity.Transform != null)
+            if (re is EditorDrawRenderEvent && Transform != null)
             {
-                LineRenderer.DrawSquare(Matrix4x4.CreateScale(new Vector3(Size, 0)) * Entity.Transform.WorldTransformMatrix, ColliderRepresentationColor);
+                LineRenderer.DrawSquare(Matrix4x4.CreateScale(new Vector3(Size, 0)) * Transform.WorldTransformMatrix, ColliderRepresentationColor);
             }
         }
 
         protected override CollisionShape CreateNativeShape()
         {
-            return new Box2DShape((new Vector3(_size / 2, 1) * Vector3.Abs(Entity.Transform.WorldScale)).ToBullet());
+            return new Box2DShape((new Vector3(_size / 2, 1) * Vector3.Abs(Transform.WorldScale)).ToBullet());
         }
 
         public override void OnSerialize(SerializationInfo info)
