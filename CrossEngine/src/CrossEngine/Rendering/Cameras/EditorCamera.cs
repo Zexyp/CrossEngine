@@ -1,5 +1,7 @@
 ﻿using System.Numerics;
 
+using CrossEngine.Utils.Editor;
+
 namespace CrossEngine.Rendering.Cameras
 {
     public class EditorCamera : Camera
@@ -9,6 +11,7 @@ namespace CrossEngine.Rendering.Cameras
         private Quaternion _rotation = Quaternion.Identity;
         private bool _viewDirty = true;
 
+        [EditorVector3Value]
         public Vector3 Position
         {
             get => _position;

@@ -19,7 +19,19 @@ namespace CrossEngine.Serialization
 
         public abstract void AddValue(string name, object? value);
         public abstract object? GetValue(string name, Type typeOfValue);
-        public abstract T GetValue<T>(string name);
         public abstract bool TryGetValue(string name, Type typeOfValue, out object value);
+
+        public object? GetValueOrDefault(string name, Type typeOfValue, object customDefault)
+        {
+            return GetValue(name, typeOfValue) ?? customDefault;
+        }
+        public T? GetValue<T>(string name)
+        {
+            return (T?)GetValue(name, typeof(T));
+        }
+        public T GetValueOrDefault<T>(string name, T customDefault = default)
+        {
+            return (T)GetValue(name, typeof(T)) ?? customDefault;
+        }
     }
 }

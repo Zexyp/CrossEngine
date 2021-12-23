@@ -14,9 +14,9 @@ namespace CrossEngine.Assets
         //              Asset type
         //                  |        Collection
         //                  |            |
-        private Dictionary<Type, AssetCollection> _collections = new Dictionary<Type, AssetCollection>();
+        private Dictionary<Type, IAssetCollection> _collections = new Dictionary<Type, IAssetCollection>();
 
-        string AssembliesListPath = "assemblies.list";
+        //string AssembliesListPath = "assemblies.list";
 
         //public string ResolveRelativePath(string fullpath) => PathUtils.GetRelativePath(Directory, fullpath);
 
@@ -48,10 +48,20 @@ namespace CrossEngine.Assets
         {
             Type assetType = typeof(T);
 
+            if (assetType == typeof(Asset)) throw new InvalidOperationException();
+
             if (!_collections.ContainsKey(assetType))
                 AddCategory<T>();
-            
+
             return (AssetCollection<T>)_collections[assetType];
+        }
+
+        public T? Get<T>(string name) where T : Asset
+        {
+            Type type = typeof(T);
+            if (_collections.ContainsKey(type)) return null;
+
+            return (T)_collections[type][name];
         }
 
         #region ISerializable
@@ -66,7 +76,7 @@ namespace CrossEngine.Assets
 
         public void OnDeserialize(SerializationInfo info)
         {
-            _collections = (Dictionary<Type, AssetCollection>)info.GetValue("Data", typeof(Dictionary<Type, AssetCollection>));
+            _collections = (Dictionary<Type, IAssetCollection>)info.GetValue("Data", typeof(Dictionary<Type, IAssetCollection>));
         }
         #endregion
 

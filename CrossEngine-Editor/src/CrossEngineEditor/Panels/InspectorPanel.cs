@@ -212,7 +212,7 @@ namespace CrossEngineEditor.Panels
 
                     //ImGui.Separator();
 
-                    ImGuiUtils.EndGroupFrame(0xff363636);
+                    ImGuiUtils.EndGroupFrame();
                 }
 
                 if (valcol) ImGui.PopStyleColor(2);

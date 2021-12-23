@@ -18,10 +18,11 @@ namespace CrossEngine.Assets
                 OnNameChanged?.Invoke(this);
             }
         }
+        public AssetPool ParentPool { get; internal set; }
 
         public event Action<Asset> OnNameChanged;
 
-        public abstract bool IsLoaded { get; protected set; }
+        public abstract bool IsLoaded { get; }
 
         internal bool IsValid { get; set; }
 

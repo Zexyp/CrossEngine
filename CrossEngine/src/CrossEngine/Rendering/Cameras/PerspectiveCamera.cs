@@ -22,7 +22,7 @@ namespace CrossEngine.Rendering.Cameras
             set
             {
                 if (_zNear == value) return;
-                _zNear = value;
+                _zNear = Math.Clamp(value, float.Epsilon, BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(_zFar) - 1));
                 MarkProjectionDirty();
             }
         }
@@ -33,7 +33,7 @@ namespace CrossEngine.Rendering.Cameras
             set
             {
                 if (_zFar == value) return;
-                _zFar = value;
+                _zFar = Math.Clamp(value, BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(_zNear) + 1), float.MaxValue);
                 MarkProjectionDirty();
             }
         }
@@ -44,7 +44,7 @@ namespace CrossEngine.Rendering.Cameras
             set
             {
                 if (_fov == value) return;
-                _fov = value;
+                _fov = Math.Clamp(value, float.Epsilon, float.MaxValue);
                 MarkProjectionDirty();
             }
         }

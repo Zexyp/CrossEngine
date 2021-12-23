@@ -46,12 +46,10 @@ namespace CrossEngineEditor.Panels
 
             if (ready = (Context.ActiveEntity != null && Context.ActiveEntity.HasComponentOfType<TransformComponent>()))
             {
-                ImGuizmo.SetOrthographic(true);
-
-                if (EditorLayer.Instance.EditorCamera != null)
+                if (_viewportPanel.CurrentCamera != null)
                 {
-                    cameraView = EditorLayer.Instance.EditorCamera.ViewMatrix;
-                    cameraProjection = EditorLayer.Instance.EditorCamera.ProjectionMatrix;
+                    cameraView = _viewportPanel.CurrentCamera.ViewMatrix;
+                    cameraProjection = _viewportPanel.CurrentCamera.ProjectionMatrix;
 
                     var tc = Context.ActiveEntity.GetComponent<TransformComponent>();
                     transformMat = tc.WorldTransformMatrix;
@@ -78,7 +76,7 @@ namespace CrossEngineEditor.Panels
                             currentGizmoOperation = OPERATION.ROTATE;
                         if (ImGui.RadioButton("Scale", currentGizmoOperation == OPERATION.SCALE))
                             currentGizmoOperation = OPERATION.SCALE;
-                        ImGuiUtils.EndGroupFrame(0xff363636);
+                        ImGuiUtils.EndGroupFrame();
                     }
 
                     //ImGui.Separator();
@@ -113,7 +111,7 @@ namespace CrossEngineEditor.Panels
                             ImGui.SameLine();
                             if (ImGui.RadioButton("World", currentGizmoMode == MODE.WORLD))
                                 currentGizmoMode = MODE.WORLD;
-                            ImGuiUtils.EndGroupFrame(0xff363636);
+                            ImGuiUtils.EndGroupFrame();
                         }
                     }
 
@@ -126,6 +124,8 @@ namespace CrossEngineEditor.Panels
         {
             if (ready)
             {
+                ImGuizmo.SetOrthographic(_viewportPanel.ProjectioMode == ViewportPanel.ViewMode.Orthographic);
+
                 _viewportPanel.EnableSelect = !ImGuizmo.IsOver();
 
                 ImGuizmo.SetRect(_viewportPanel.WindowContentAreaMin.X, _viewportPanel.WindowContentAreaMin.Y, _viewportPanel.WindowContentAreaMax.X - _viewportPanel.WindowContentAreaMin.X, _viewportPanel.WindowContentAreaMax.Y - _viewportPanel.WindowContentAreaMin.Y);

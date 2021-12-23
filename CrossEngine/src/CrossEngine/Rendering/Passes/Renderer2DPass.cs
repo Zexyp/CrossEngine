@@ -33,8 +33,8 @@ namespace CrossEngine.Rendering.Passes
         {
             if (framebuffer != null)
             {
-                framebuffer.EnableColorDrawBuffer(scene.Pipeline.FBStructureIndex.Color, true);
-                framebuffer.EnableColorDrawBuffer(scene.Pipeline.FBStructureIndex.ID, true);
+                framebuffer.EnableColorDrawBuffer(scene.Pipeline.FbStructureIndex.Color, true);
+                framebuffer.EnableColorDrawBuffer(scene.Pipeline.FbStructureIndex.Id, true);
             }
 
             Renderer2D.BeginScene(viewProjectionMatrix);

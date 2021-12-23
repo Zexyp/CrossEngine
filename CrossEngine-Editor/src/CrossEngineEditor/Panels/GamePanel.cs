@@ -83,14 +83,14 @@ namespace CrossEngineEditor.Panels
                 }
 
                 // draw the framebuffer as image
-                ImGui.Image(new IntPtr(pipeline.Framebuffer.ColorAttachments[pipeline.FBStructureIndex.Color]),
+                ImGui.Image(new IntPtr(pipeline.Framebuffer.ColorAttachments[pipeline.FbStructureIndex.Color]),
                     viewportSize,
                     new Vector2(0, 1),
                     new Vector2(1, 0));
 
                 pipeline.Framebuffer.Bind();
                 Renderer.Clear();
-                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FBStructureIndex.ID, 0);
+                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FbStructureIndex.Id, 0);
 
                 // draw
                 Context.Scene.Pipeline = pipeline;

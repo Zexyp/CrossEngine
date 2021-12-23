@@ -12,7 +12,8 @@ namespace CrossEngine.Assets
 {
     public class TextureAsset : Asset
     {
-        public override bool IsLoaded { get; protected set; } = false;
+        private bool _loaded = false;
+        public override bool IsLoaded { get => _loaded; }
 
         public Texture Texture;
 
@@ -30,14 +31,14 @@ namespace CrossEngine.Assets
         public override void Load()
         {
             Texture = AssetLoader.LoadTexture(Path);
-            IsLoaded = true;
+            _loaded = true;
         }
 
         public override void Unload()
         {
             Texture.Dispose();
             Texture = null;
-            IsLoaded = false;
+            _loaded = false;
         }
     }
 }

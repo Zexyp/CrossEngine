@@ -203,13 +203,13 @@ namespace CrossEngineEditor.Utils
 
                 var scene = EditorLayer.Instance.Context.Scene;
                 Asset v = null;
-                AssetCollection assets = null;
+                IAssetCollection assets = null;
                 IReadOnlyCollection<Asset> assetValues = null;
                 int ci = 0;
                 if (scene != null)
                 {
                     v = (Asset)value;
-                    assets = (AssetCollection)typeof(AssetPool).GetMethod(nameof(AssetPool.GetCollection)).MakeGenericMethod(cattribt.Type).Invoke(scene.AssetPool, null);
+                    assets = (IAssetCollection)typeof(AssetPool).GetMethod(nameof(AssetPool.GetCollection)).MakeGenericMethod(cattribt.Type).Invoke(scene.AssetPool, null);
                     assetValues = assets.GetAll();
                     ci = (assetValues != null) ? assetValues.ToList().IndexOf(v) : 0;
                 }
@@ -258,7 +258,7 @@ namespace CrossEngineEditor.Utils
                         case MemberTypes.Property: PropertyDrawer.DrawEditorValue((PropertyInfo)mem, value); break;
                     }
                 }
-                ImGuiUtils.EndGroupFrame(0xff363636);
+                ImGuiUtils.EndGroupFrame();
                 return false;
             } },
         };
@@ -292,6 +292,16 @@ namespace CrossEngineEditor.Utils
                         propertyInfo.SetValue(target, value);
                 }
                 else ImGui.Text(propertyInfo.Name);
+            }
+        }
+
+        public static void DrawEditorValue(MemberInfo memberInfo, object target)
+        {
+            switch (memberInfo.MemberType)
+            {
+                case MemberTypes.Field: DrawEditorValue((FieldInfo)memberInfo, target); break;
+                case MemberTypes.Property: DrawEditorValue((PropertyInfo)memberInfo, target); break;
+                default: throw new InvalidOperationException();
             }
         }
     }

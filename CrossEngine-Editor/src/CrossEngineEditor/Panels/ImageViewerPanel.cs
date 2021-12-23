@@ -21,6 +21,14 @@ namespace CrossEngineEditor.Panels
         }
 
         AssetCollection<TextureAsset> textureAssets = null;
+        AssetCollection<TextureAsset> TextureAssets
+        {
+            set
+            {
+                textureAssets = value;
+                SelectedTextureAsset = null;
+            }
+        }
         [EditorAssetValue(typeof(TextureAsset))]
         public TextureAsset SelectedTextureAsset = null;
         int selectedIndex = 0;
@@ -129,6 +137,26 @@ namespace CrossEngineEditor.Panels
                 if (imageHovered)
                 {
                     MouseMove();
+
+                    //var io = ImGui.GetIO();
+                    //float my_tex_w = SelectedTextureAsset.Texture.Width;
+                    //float my_tex_h = SelectedTextureAsset.Texture.Height;
+                    //Vector2 pos = ImGui.GetCursorScreenPos();
+                    //ImGui.BeginTooltip();
+                    //float region_sz = 32.0f;
+                    //float region_x = io.MousePos.X - pos.X - region_sz * 0.5f;
+                    //float region_y = io.MousePos.Y - pos.Y - region_sz * 0.5f;
+                    //float zoom = 4.0f;
+                    //if (region_x < 0.0f) { region_x = 0.0f; }
+                    //else if (region_x > my_tex_w - region_sz) { region_x = my_tex_w - region_sz; }
+                    //if (region_y < 0.0f) { region_y = 0.0f; }
+                    //else if (region_y > my_tex_h - region_sz) { region_y = my_tex_h - region_sz; }
+                    //ImGui.Text($"Min: ({region_x:F2}, {region_y:F2})");
+                    //ImGui.Text($"Max: ({region_x + region_sz:F2}, {region_y + region_sz:F2})");
+                    //Vector2 uv0 = new Vector2((region_x) / my_tex_w, (region_y) / my_tex_h);
+                    //Vector2 uv1 = new Vector2((region_x + region_sz) / my_tex_w, (region_y + region_sz) / my_tex_h);
+                    //ImGui.Image(new IntPtr(SelectedTextureAsset.Texture.ID), new Vector2(region_sz * zoom, region_sz * zoom), uv0, uv1);
+                    //ImGui.EndTooltip();
                 }
                 else
                 {
@@ -217,22 +245,19 @@ namespace CrossEngineEditor.Panels
         public override void OnAttach()
         {
             Context.OnSceneChanged += OnContextSceneChanged;
+            textureAssets = Context.Scene?.AssetPool.GetCollection<TextureAsset>();
         }
         public override void OnDetach()
         {
             Context.OnSceneChanged -= OnContextSceneChanged;
+            textureAssets = null;
         }
 
         private void OnContextSceneChanged()
         {
-            //if (textureAssets != null) textureAssets.OnAssetAdded -= OnTextureAssetsAdded;
-            //textureAssets = null;
-            //var assetPool = Context.Scene?.AssetPool;
-            //if (assetPool != null)
-            //{
-            //    textureAssets = assetPool.GetCollection<TextureAsset>();
-            //}
-            //if (textureAssets != null) textureAssets.OnAssetAdded += OnTextureAssetsAdded;
+            if (textureAssets != null) textureAssets.OnAssetAdded -= OnTextureAssetsAdded;
+            TextureAssets = Context.Scene?.AssetPool.GetCollection<TextureAsset>();
+            if (textureAssets != null) textureAssets.OnAssetAdded += OnTextureAssetsAdded;
         }
 
         public override void OnOpen()
@@ -246,7 +271,7 @@ namespace CrossEngineEditor.Panels
                 textureAssets.OnAssetAdded -= OnTextureAssetsAdded;
         }
 
-        private void OnTextureAssetsAdded(AssetCollection collection, Asset asset)
+        private void OnTextureAssetsAdded(IAssetCollection collection, Asset asset)
         {
             
         }

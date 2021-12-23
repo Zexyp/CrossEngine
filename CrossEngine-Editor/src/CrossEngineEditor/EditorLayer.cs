@@ -7,6 +7,8 @@ using System.Numerics;
 using System.IO;
 using System.Reflection;
 using System.Linq;
+using System.Threading;
+using System.Globalization;
 
 using CrossEngine;
 using CrossEngine.Entities;
@@ -31,6 +33,11 @@ using CrossEngineEditor.Modals;
 
 namespace CrossEngineEditor
 {
+    static class EditorConfigSections
+    {
+        public static readonly string PanelsOpen = "panels.open";
+    }
+
     public class EditorLayer : Layer
     {
         static public EditorLayer Instance;
@@ -53,6 +60,8 @@ namespace CrossEngineEditor
 
         private Scene workingScene = null;
 
+        readonly internal IniConfig EditorConfig = new IniConfig("editor");
+
         public EditorLayer()
         {
             if (Instance != null)
@@ -69,6 +78,61 @@ namespace CrossEngineEditor
             AddPanel(new GizmoPanel());
             AddPanel(new LagometerPanel());
             AddPanel(new ImageViewerPanel());
+            AddPanel(new ConfigPanel());
+
+            var ci = (CultureInfo)Thread.CurrentThread.CurrentCulture.Clone();
+            ci.NumberFormat.NumberDecimalSeparator = ".";
+            Thread.CurrentThread.CurrentCulture = ci;
+        }
+
+        internal bool LoadConfig(IniConfig config)
+        {
+            bool success = true;
+
+            // panels
+            {
+                bool valid = true;
+                for (int i = 0; i < _panels.Count; i++)
+                {
+                    EditorPanel panel = _panels[i];
+
+                    string stringValue = config.Read(EditorConfigSections.PanelsOpen, panel.GetType().Name);
+
+                    if (String.IsNullOrEmpty(stringValue)) continue;
+
+                    if (bool.TryParse(stringValue, out bool val))
+                    {
+                        panel.Open = val;
+                    }
+                    else if (stringValue == "null")
+                    {
+                        panel.Open = null;
+                    }
+                    else
+                    {
+                        valid = false;
+                        continue;
+                    }
+                }
+
+                if (!valid) EditorApplication.Log.Trace($"invalid config section '{EditorConfigSections.PanelsOpen}'");
+
+                success = success && valid;
+            }
+
+            return success;
+        }
+
+        internal void SaveConfig(IniConfig config)
+        {
+            // panels
+            {
+                for (int i = 0; i < _panels.Count; i++)
+                {
+                    EditorPanel panel = _panels[i];
+                    config.Write(EditorConfigSections.PanelsOpen, panel.GetType().Name, (panel != null) ? panel.Open.ToString() : "null" );
+                }
+            }
         }
 
         public override void OnAttach()
@@ -76,7 +140,8 @@ namespace CrossEngineEditor
             //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());
             //dockspaceIconTexture.SetFilterParameter(Rendering.Textures.FilterParameter.Nearest);
 
-
+            if (!LoadConfig(EditorConfig)) PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+            if (!ImGuiStyleConfig.Load(new IniConfig("style"))) PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
 
             // --- test code
             Context.Scene = new Scene();
@@ -141,7 +206,7 @@ namespace CrossEngineEditor
 
             DrawModals();
 
-            DrawMenuBar();
+            DrawMainMenuBar();
 
             ImGui.ShowDemoWindow(); // purely dev thing
 
@@ -152,7 +217,7 @@ namespace CrossEngineEditor
                 Vector3 gr = (Context.Scene.RigidBodyWorld != null) ? Context.Scene.RigidBodyWorld.Gravity : default;
                 if (ImGui.DragFloat3("gravity", ref gr)) Context.Scene.RigidBodyWorld.Gravity = gr;
                 ImGui.Text("editor camera pos:");
-                ImGui.Text(EditorCamera.Position.ToString("0.00"));
+                if (EditorCamera != null) ImGui.Text(EditorCamera.Position.ToString("0.00"));
                 ImGui.SliderInt("sleep", ref sleep, 0, 1000);
                 if (sleep > 0) System.Threading.Thread.Sleep(sleep);
 
@@ -254,26 +319,26 @@ namespace CrossEngineEditor
             }
         }
 
-        private void DrawMenuBar()
+        private void DrawMainMenuBar()
         {
-            if (ImGui.BeginMenuBar())
+            if (ImGui.BeginMainMenuBar())
             {
                 #region File Menu
                 if (ImGui.BeginMenu("File"))
                 {
                     if (ImGui.MenuItem("New"))
                     {
-                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModalButtonFlags.OKCancel, (flags) =>
+                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ButtonFlags.OKCancel, (flags) =>
                         {
-                            if (flags == ActionModalButtonFlags.OK) FileNewScene();
+                            if (flags == ActionModal.ButtonFlags.OK) FileNewScene();
                         }));
                     }
 
                     if (ImGui.MenuItem("Open..."))
                     {
-                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModalButtonFlags.OKCancel, (flags) =>
+                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ButtonFlags.OKCancel, (flags) =>
                         {
-                            if (flags == ActionModalButtonFlags.OK) FileOpenScene();
+                            if (flags == ActionModal.ButtonFlags.OK) FileOpenScene();
                         }));
                     }
 
@@ -297,6 +362,18 @@ namespace CrossEngineEditor
                     ImGui.EndMenu();
                 }
                 #endregion
+
+                if (ImGui.BeginMenu("Edit"))
+                {
+                    ImGui.Separator();
+
+                    if (ImGui.MenuItem("Config"))
+                    {
+                        GetPanel<ConfigPanel>().Open = true;
+                    }
+
+                    ImGui.EndMenu();
+                }
 
                 if (ImGui.BeginMenu("Window"))
                 {
@@ -430,7 +507,7 @@ namespace CrossEngineEditor
 
                 ImGui.Checkbox("##update", ref EditorLayer.Instance.SceneUpdate);
 
-                ImGui.EndMenuBar();
+                ImGui.BeginMainMenuBar();
             }
         }
 
@@ -568,8 +645,8 @@ namespace CrossEngineEditor
                 if (File.Exists(asmListFile) || File.Exists(sceneFile))
                 {
                     PushModal(new ActionModal("File collison detected!\nOverwrite?",
-                        ActionModalButtonFlags.OKCancel,
-                        (button) => { if (button == ActionModalButtonFlags.OK) FinishSave(); }
+                        ActionModal.ButtonFlags.OKCancel,
+                        (button) => { if (button == ActionModal.ButtonFlags.OK) FinishSave(); }
                         ));
                     return;
                 }

@@ -14,7 +14,7 @@ namespace CrossEngine.Rendering.Passes
         public struct FramebufferStructureIndex
         {
             public int Color;
-            public int ID;
+            public int Id;
 
             public static FramebufferStructureIndex Default
             {
@@ -23,13 +23,13 @@ namespace CrossEngine.Rendering.Passes
                     return new FramebufferStructureIndex()
                     {
                         Color = 0,
-                        ID = 1,
+                        Id = 1,
                     };
                 }
             }
         }
 
-        public FramebufferStructureIndex FBStructureIndex = FramebufferStructureIndex.Default;
+        public FramebufferStructureIndex FbStructureIndex = FramebufferStructureIndex.Default;
 
         public Framebuffer Framebuffer;
 
@@ -40,8 +40,8 @@ namespace CrossEngine.Rendering.Passes
             var spec = new FramebufferSpecification();
             spec.Attachments = new FramebufferAttachmentSpecification(
                 // using floating point colors
-                new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F) { Index = FBStructureIndex.Color },
-                new FramebufferTextureSpecification(TextureFormat.ColorR32I) { Index = FBStructureIndex.ID },
+                new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F) { Index = FbStructureIndex.Color },
+                new FramebufferTextureSpecification(TextureFormat.ColorR32I) { Index = FbStructureIndex.Id },
                 new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
                 );
             spec.Width = 1;

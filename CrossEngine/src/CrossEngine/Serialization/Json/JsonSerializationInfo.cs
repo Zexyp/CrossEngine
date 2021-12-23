@@ -37,13 +37,6 @@ namespace CrossEngine.Serialization.Json
             return serializer.Deserialize(reader.GetProperty(name), typeOfValue);
         }
 
-        public override T GetValue<T>(string name)
-        {
-            if (operation != Operation.Read) throw new InvalidOperationException();
-        
-            return (T)serializer.Deserialize(reader.GetProperty(name), typeof(T));
-        }
-
         public override bool TryGetValue(string name, Type typeOfValue, out object value)
         {
             if (operation != Operation.Read) throw new InvalidOperationException();

@@ -19,7 +19,7 @@ namespace CrossEngineEditor
             get => _open;
             set
             {
-                if (value == _open || !Attached) return;
+                if (value == _open) return;
                 _open = value;
                 if (_open == false) OnClose();
                 else OnOpen();
@@ -44,7 +44,7 @@ namespace CrossEngineEditor
 
         public EditorPanel()
         {
-            this.WindowName = "Panel";
+            this.WindowName = "Unnamed Panel";
         }
 
         public void Draw()

@@ -8,12 +8,21 @@ using CrossEngine.Utils;
 
 namespace CrossEngine.Assets
 {
-    public abstract class AssetCollection : ISerializable/*, ICollection<Asset>*/
+    public interface IAssetCollection : ISerializable
+    {
+        public Asset? this[string name] { get; }
+        public void Load();
+        public void Unload();
+        public void Relativize(string directory);
+        public IReadOnlyCollection<Asset> GetAll();
+    }
+
+    public class AssetCollection<T> : IAssetCollection where T : Asset
     {
         Dictionary<string, Asset> _assets = new Dictionary<string, Asset>();
 
-        public event Action<AssetCollection, Asset> OnAssetAdded;
-        public event Action<AssetCollection, Asset> OnAssetRemoved;
+        public event Action<IAssetCollection, Asset> OnAssetAdded;
+        public event Action<IAssetCollection, Asset> OnAssetRemoved;
 
         // TODO: check if this makes sense
         private bool loaded = false;
@@ -22,12 +31,12 @@ namespace CrossEngine.Assets
 
         public bool IsReadOnly => throw new NotImplementedException();
 
-        public Asset this[string name]
+        public Asset? this[string name]
         {
             get
             {
                 if (_assets.TryGetValue(name, out Asset asset)) return asset;
-                return _assets[name];
+                return null;
             }
         }
 
@@ -42,7 +51,7 @@ namespace CrossEngine.Assets
 
             asset.OnNameChanged += OnAssetNameChanged;
             _assets.Add(asset.Name, asset);
-            
+
             asset.IsValid = true;
 
             if (loaded && !asset.IsLoaded)
@@ -70,7 +79,7 @@ namespace CrossEngine.Assets
 
             while (_assets.Count > 0)
             {
-                var asset = System.Linq.Enumerable.ElementAt(_assets, 0).Value;
+                var asset = System.Linq.Enumerable.First(_assets).Value;
                 Remove(asset);
             }
         }
@@ -118,7 +127,7 @@ namespace CrossEngine.Assets
             }
             _assets.Remove(oldKey);
 
-            if(!CheckNameAvailability(sender.Name, out string nextName))
+            if (!CheckNameAvailability(sender.Name, out string nextName))
             {
                 var existing = _assets[sender.Name];
                 _assets.Remove(sender.Name);
@@ -178,10 +187,5 @@ namespace CrossEngine.Assets
 
         IEnumerator IEnumerable.GetEnumerator() => ((ICollection<Asset>)_assets.Values).GetEnumerator();
         */
-    }
-
-    public class AssetCollection<T> : AssetCollection where T : Asset
-    {
-
     }
 }
