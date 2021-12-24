@@ -62,6 +62,7 @@ namespace CrossEngine.Events
 
         static public void ClearUnusedTypes()
         {
+            throw new NotImplementedException(); // collection cannot change when using foreach
             foreach (KeyValuePair<Type, List<Func<Event, MulticastDelegate>>> pair in eventHandles)
             {
                 if (pair.Value.Count == 0) eventHandles.Remove(pair.Key);

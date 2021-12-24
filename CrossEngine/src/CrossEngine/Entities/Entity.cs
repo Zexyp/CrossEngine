@@ -17,9 +17,8 @@ namespace CrossEngine.Entities
 {
     public class Entity
     {
-        //public uint ID { get; internal set; }
         public Scene Scene { get; private set; } = null;
-        public int UID { get; private set; } = -1;
+        public int UID { get; private set; } = 0;
         private bool Active = false;
         private bool _enabled = true;
 

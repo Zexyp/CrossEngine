@@ -8,11 +8,4 @@ namespace CrossEngine.Rendering.Buffers
         DynamicDraw = GL_DYNAMIC_DRAW,
         StreamDraw = GL_STREAM_DRAW
     }
-
-    //public enum BufferType : int
-    //{
-    //    Vertex = GL_ARRAY_BUFFER,
-    //    Index = GL_ELEMENT_ARRAY_BUFFER,
-    //    Uniform = GL_UNIFORM_BUFFER,
-    //}
 }

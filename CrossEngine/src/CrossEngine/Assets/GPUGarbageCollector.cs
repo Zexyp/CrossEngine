@@ -24,15 +24,7 @@ namespace CrossEngine.Assets.GC
 
     public static unsafe class GPUGarbageCollector
     {
-        public static int ClearEveryMiliseconds = 5000;
-
-        static readonly Dictionary<GPUObjectType, List<uint>> _marked = new Dictionary<GPUObjectType, List<uint>>(Array.ConvertAll(
-                                                                                        Enum.GetValues(typeof(GPUObjectType))
-                                                                                            .Cast<int>()
-                                                                                            .Distinct()
-                                                                                            .ToArray(),
-                                                                                        (val) => new KeyValuePair<GPUObjectType, List<uint>>((GPUObjectType)val, new List<uint>())));
-        static readonly Dictionary<GPUObjectType, Action<List<uint>>> _handlers = new Dictionary<GPUObjectType, Action<List<uint>>>
+        private static readonly Dictionary<GPUObjectType, Action<List<uint>>> Handlers = new Dictionary<GPUObjectType, Action<List<uint>>>
         {
             { GPUObjectType.Texture, (list) => {
                 fixed (uint* p = &list.ToArray()[0])
@@ -66,6 +58,14 @@ namespace CrossEngine.Assets.GC
                     glDeleteRenderbuffers(list.Count, p);
             } },
         };
+        private static readonly Dictionary<GPUObjectType, List<uint>> _marked = new Dictionary<GPUObjectType, List<uint>>(Array.ConvertAll(
+                                                                                        Enum.GetValues(typeof(GPUObjectType))
+                                                                                            .Cast<int>()
+                                                                                            .Distinct()
+                                                                                            .ToArray(),
+                                                                                        (val) => new KeyValuePair<GPUObjectType, List<uint>>((GPUObjectType)val, new List<uint>())));
+
+        public static int ClearEveryMiliseconds = 5000;
 
         static GPUGarbageCollector()
         {
@@ -100,7 +100,7 @@ namespace CrossEngine.Assets.GC
                 if (pair.Value.Count > 0)
                 {
                     count += pair.Value.Count;
-                    _handlers[pair.Key](pair.Value);
+                    Handlers[pair.Key](pair.Value);
                     pair.Value.Clear();
                 }
             }

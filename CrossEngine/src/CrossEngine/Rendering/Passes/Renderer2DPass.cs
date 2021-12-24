@@ -37,6 +37,7 @@ namespace CrossEngine.Rendering.Passes
                 framebuffer.EnableColorDrawBuffer(scene.Pipeline.FbStructureIndex.Id, true);
             }
 
+            // TODO: add transparency
             Renderer2D.BeginScene(viewProjectionMatrix);
             {
                 if (bucket != null) foreach (var spEnt in bucket)

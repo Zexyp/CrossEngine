@@ -22,6 +22,7 @@ namespace CrossEngine
 
         public Application(string title = "Window", int width = 1600, int height = 900)
         {
+            // log needs initialization
             Log.Init();
 
             WindowProperties props;
@@ -38,6 +39,7 @@ namespace CrossEngine
 
             LayerStack = new LayerStack();
 
+            // set the event route
             Window.SetEventCallback(OnEvent);
         }
 

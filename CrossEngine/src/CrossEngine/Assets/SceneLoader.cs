@@ -35,6 +35,7 @@ namespace CrossEngine.Assets
     {
         public static void Save(string path, Scene scene, SceneFileEnvironment sfe)
         {
+            // save all other files
             File.WriteAllText(sfe.AssembliesList, String.Join("\n", AssemblyLoader.LoadedAssemblies.Select(pair => pair.Path)));
             File.WriteAllText(sfe.Scene, SceneSerializer.SertializeJson(scene));
 
@@ -59,19 +60,26 @@ namespace CrossEngine.Assets
 
             string directory = Path.GetDirectoryName(path);
 
-            string[] assembliesPaths = Array.ConvertAll(File.ReadAllText(directory + sfe.AssembliesList)
-                    .Trim('\n', ' ').Split("\n"),
-                    str => str.Trim(' '))
-                .Where(str => !string.IsNullOrWhiteSpace(str))
-                .ToArray();
-            for (int i = 0; i < assembliesPaths.Length; i++)
             {
-                AssemblyLoader.Load(assembliesPaths[i]);
+                string[] assembliesPaths = Array.ConvertAll(File.ReadAllText(directory + sfe.AssembliesList)
+                        .Trim('\n', ' ').Split("\n"),
+                        str => str.Trim(' '))
+                    .Where(str => !string.IsNullOrWhiteSpace(str))
+                    .ToArray();
+                for (int i = 0; i < assembliesPaths.Length; i++)
+                {
+                    AssemblyLoader.Load(assembliesPaths[i]);
+                }
+            }
+
+            Scene scene;
+            {
+                scene = SceneSerializer.DeserializeJson(File.ReadAllText(directory + sfe.Scene));
             }
 
             Log.Core.Info("loaded scene");
 
-            return SceneSerializer.DeserializeJson(File.ReadAllText(directory + sfe.Scene));
+            return scene;
         }
     }
 }

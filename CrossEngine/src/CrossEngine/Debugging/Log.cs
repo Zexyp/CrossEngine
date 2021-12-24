@@ -24,9 +24,9 @@ namespace CrossEngine.Logging
 
     public static class Log
     {
-        public static Logger App { get; private set; }
-        internal static Logger Core { get; private set; }
-        private static Logger GLLog;
+        public static Logger App { get; private set; } // for final application
+        internal static Logger Core { get; private set; } // for engine core
+        private static Logger GLLog; // for GL
 
         private static Dictionary<string, Logger> loggers = new Dictionary<string, Logger>();
         private static Mutex mutex = new Mutex();
@@ -86,18 +86,7 @@ namespace CrossEngine.Logging
             mutex.ReleaseMutex();
         }
 
-        //static public void Communication(string text = "", bool time = false)
-        //{
-        //    if (text == "")
-        //    {
-        //        text = "---";
-        //    }
-        //    if (time)
-        //        text = "[" + DateTime.Now.TimeOfDay.ToString().Split('.')[0] + "] " + text;
-        //
-        //    ColoredConsole.WriteLine("[COMMU]: " + text, ConsoleColor.DarkCyan);
-        //}
-
+        // TODO: consider moving this from Log class
         #region GL Logging
         static public void GLError(string text)
         {
@@ -129,7 +118,7 @@ namespace CrossEngine.Logging
                     break;
                 case GL_DEBUG_SEVERITY_NOTIFICATION:
                     {
-                        GLLog.Info("[notification]: " + text);
+                        GLLog.Trace("[notification]: " + text);
                     }
                     break;
                 default:

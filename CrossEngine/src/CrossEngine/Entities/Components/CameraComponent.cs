@@ -126,7 +126,7 @@ namespace CrossEngine.Entities.Components
 
         public override void OnRender(RenderEvent re)
         {
-            if (re is EditorDrawRenderEvent && Entity.Transform != null)
+            if (re is EditorDrawRenderEvent && Entity.Transform != null && _camera != null)
             {
                 LineRenderer.DrawBox(
                     Matrix4x4.CreateScale(new Vector3(2)) *
@@ -140,12 +140,16 @@ namespace CrossEngine.Entities.Components
         {
             info.AddValue("Type", Type);
             info.AddValue("Camera", Camera);
+            info.AddValue("Primary", Primary);
+            info.AddValue("FixedAspectRatio", FixedAspectRatio);
         }
 
         public override void OnDeserialize(SerializationInfo info)
         {
-            Type = (CameraType)info.GetValue("Type", typeof(CameraType));
-            Camera = (Camera)info.GetValue("Camera", typeof(Camera));
+            Type = info.GetValue<CameraType>("Type");
+            Camera = info.GetValue<Camera>("Camera");
+            Primary = info.GetValue<bool>("Primary");
+            FixedAspectRatio = info.GetValue<bool>("FixedAspectRatio");
         }
 
         public void Resize(float x, float y)

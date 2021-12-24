@@ -39,7 +39,6 @@ namespace CrossEngine.Assets
         private void AddCategory<T>() where T : Asset
         {
             Type type = typeof(T);
-            if (!type.IsAssignableTo(typeof(Asset))) throw new InvalidOperationException($"Can't add type that doesn't implement inteface '{nameof(Asset)}'");
             if (_collections.ContainsKey(type)) throw new InvalidOperationException("There is already a collection of given type");
             _collections.Add(type, new AssetCollection<T>());
         }

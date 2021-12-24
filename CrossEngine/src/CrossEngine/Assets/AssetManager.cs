@@ -77,7 +77,7 @@ namespace CrossEngine.Assets
                     return shaders[vertexPath + fragmentPath];
                 }
 
-                Shader program = new Shader(ReadFileAsString(FileEnvironment.ResourceFolder + vertexPath), ReadFileAsString(FileEnvironment.ResourceFolder + fragmentPath));
+                Shader program = new Shader(ReadFileAsString(vertexPath), ReadFileAsString(fragmentPath));
                 if (program.ID == 0)
                     Log.Core.Error("invalid shader: " + vertexPath + ResourceKeySeparator + fragmentPath);
                 shaders.Add(vertexPath + fragmentPath, program);
@@ -91,7 +91,7 @@ namespace CrossEngine.Assets
                     return shaders[path];
                 }
 
-                string[] result = System.Text.RegularExpressions.Regex.Split(ReadFileAsString(FileEnvironment.ResourceFolder + path), @"#type+[ ]+([a-zA-Z]+)");
+                string[] result = System.Text.RegularExpressions.Regex.Split(ReadFileAsString(path), @"#type+[ ]+([a-zA-Z]+)");
 
                 if (result.Length < 4)
                 {

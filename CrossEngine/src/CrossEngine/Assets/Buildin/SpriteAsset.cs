@@ -28,11 +28,13 @@ namespace CrossEngine.Assets
 
         public SpriteAsset()
         {
-
+            throw new NotImplementedException();
         }
 
         public SpriteAsset(TextureAsset texture)
         {
+            throw new NotImplementedException();
+
             Texture = texture;
             Name = System.IO.Path.GetFileNameWithoutExtension(texture.Path);
         }

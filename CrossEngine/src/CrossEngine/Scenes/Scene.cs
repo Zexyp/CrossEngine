@@ -27,14 +27,12 @@ namespace CrossEngine.Scenes
         // serialized
         public AssetPool AssetPool { get; internal set; } = new AssetPool();
         
-        public readonly ReadOnlyCollection<Entity> Entities;
-
-
         public bool Running { get; private set; } = false;
 
         public readonly ComponentRegistry Registry = new ComponentRegistry();
 
         private readonly List<Entity> _entities = new List<Entity>();
+        public readonly ReadOnlyCollection<Entity> Entities;
         private Dictionary<int, Entity> _uids = new Dictionary<int, Entity>();
 
         public readonly TreeNode<Entity> HierarchyRoot = new TreeNode<Entity>();

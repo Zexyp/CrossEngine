@@ -42,6 +42,7 @@ namespace CrossEngine.Layers
             io.DisplayFramebufferScale = Vector2.One;
             io.DeltaTime = 1.0f / 60.0f;
 
+            // base theme
             //ImGui.StyleColorsClassic();
             //ImGui.StyleColorsLight();
             ImGui.StyleColorsDark();

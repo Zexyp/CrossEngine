@@ -203,11 +203,8 @@ namespace CrossEngineEditor.Panels
                     for (int mi = 0; mi < membs.Length; mi++)
                     {
                         var mem = membs[mi];
-                        switch (mem.MemberType)
-                        {
-                            case MemberTypes.Field:    PropertyDrawer.DrawEditorValue((FieldInfo)mem, component); break;
-                            case MemberTypes.Property: PropertyDrawer.DrawEditorValue((PropertyInfo)mem, component); break;
-                        }
+                        if (mem.MemberType == MemberTypes.Field || mem.MemberType == MemberTypes.Property)
+                            PropertyDrawer.DrawEditorValue(mem, component);
                     }
 
                     //ImGui.Separator();

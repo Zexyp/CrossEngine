@@ -13,11 +13,6 @@ namespace CrossEngine.Entities.Components
     {
         Dictionary<Type, IList> _registryDict = new Dictionary<Type, IList>();
 
-        //public class ComponentAddedEvent<T> : CrossEngine.Events.Event where T : Component
-        //{
-        //
-        //}
-
         public void AddComponent(Component component)
         {
             Type type = component.GetType();

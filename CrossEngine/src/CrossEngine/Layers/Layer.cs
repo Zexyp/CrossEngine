@@ -6,14 +6,6 @@ namespace CrossEngine.Layers
 {
     public abstract class Layer
     {
-#if DEBUG
-        public string debugName = null;
-      
-        public Layer(string debugName = null)
-        {
-            this.debugName = debugName;
-        }
-#endif
         public Layer()
         {
 

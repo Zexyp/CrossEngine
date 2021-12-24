@@ -27,14 +27,6 @@ namespace CrossEngineEditor.Panels
             
         }
 
-        public override void OnAttach()
-        {
-        }
-
-        public override void OnDetach()
-        {
-        }
-
         public override void OnOpen()
         {
             pipeline = new RenderPipeline();
@@ -73,12 +65,7 @@ namespace CrossEngineEditor.Panels
 
                         // notify scene
                         if (Context.Scene.Running) Context.Scene.OnEvent(new WindowResizeEvent((uint)viewportSize.X, (uint)viewportSize.Y));
-
-                        var camcomp = Context.Scene.GetPrimaryCameraComponent();
-                        if (camcomp != null && camcomp.Usable && !camcomp.FixedAspectRatio)
-                        {
-                            camcomp.Resize(viewportSize.X, viewportSize.Y);
-                        }
+                        else ResizePrimaryCamera();
                     }
                 }
 
@@ -129,6 +116,19 @@ namespace CrossEngineEditor.Panels
                 {
                     Context.Scene.OnEvent(e);
                 }
+                else
+                {
+                    Input.ForceReset();
+                }
+            }
+        }
+
+        private void ResizePrimaryCamera()
+        {
+            var camcomp = Context.Scene.GetPrimaryCameraComponent();
+            if (camcomp != null && camcomp.Usable && !camcomp.FixedAspectRatio)
+            {
+                camcomp.Resize(viewportSize.X, viewportSize.Y);
             }
         }
     }

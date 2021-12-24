@@ -37,7 +37,7 @@ namespace CrossEngine.Assemblies
             }
         }
 
-        //                         path          object
+        //                                  path       object
         private static readonly Dictionary<string, AssemblyObject> _assemblies = new Dictionary<string, AssemblyObject>();
 
         public static Type GetType(string typeName)
@@ -72,12 +72,10 @@ namespace CrossEngine.Assemblies
             AssemblyObject assemblyObject = new AssemblyObject(alc, dr, rootAss, path);
             _assemblies.Add(path, assemblyObject);
 
+            var assnArr = rootAss.GetReferencedAssemblies();
+            for (int i = 0; i < assnArr.Length; i++)
             {
-                var assnArr = rootAss.GetReferencedAssemblies();
-                for (int i = 0; i < assnArr.Length; i++)
-                {
-                    LoadDependency(assnArr[i], assemblyObject);
-                }
+                LoadDependency(assnArr[i], assemblyObject);
             }
 
             return rootAss;
@@ -104,6 +102,7 @@ namespace CrossEngine.Assemblies
 
         public static void Reload(string path)
         {
+            // TODO: fix lazyness
             if (!File.Exists(path)) throw new FileNotFoundException();
 
             Unload(path);
@@ -112,6 +111,7 @@ namespace CrossEngine.Assemblies
 
         public static void ReloadAll()
         {
+            // TODO: fix lazyness
             string[] paths = new string[_assemblies.Count];
             _assemblies.Keys.CopyTo(paths, 0);
             for (int i = 0; i < paths.Length; i++)
@@ -154,7 +154,7 @@ namespace CrossEngine.Assemblies
             while (_assemblies.Count > 0) Unload(_assemblies.Keys.First());
         }
 
-        public static Type[] GetSubTypesOf(Type type)
+        public static Type[] GetSubclassesOf(Type type)
         {
             List<Type> foundTypes = new List<Type>();
             foreach (var objs in _assemblies.Values)

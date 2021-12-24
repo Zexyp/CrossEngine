@@ -40,27 +40,31 @@ namespace CrossEngineEditor
 
     public class EditorLayer : Layer
     {
+        // singleton
         static public EditorLayer Instance;
 
         public EditorCamera EditorCamera = new EditorCamera();
         public readonly EditorContext Context = new EditorContext();
+        public bool SceneUpdate = true;
+        private Scene workingScene = null;
 
+        // ui things
         private List<EditorPanel> _panels = new List<EditorPanel>();
         private EditorModal _modal = null;
+        //Texture dockspaceIconTexture;
 
-
+        // components
         public Type[] CoreComponentTypes = Assembly.GetAssembly(typeof(Component)).ExportedTypes.Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract).ToArray();
         
         private readonly List<Type> _componentTypeRegistry = new List<Type>();
         public readonly ReadOnlyCollection<Type> ComponentTypeRegistry;
 
-        //Texture dockspaceIconTexture;
-
-        public bool SceneUpdate = true;
-
-        private Scene workingScene = null;
-
+        // files
         readonly internal IniConfig EditorConfig = new IniConfig("editor");
+
+        // events
+        public event Action PlaymodeStarted;
+        public event Action PlaymodeEnded;
 
         public EditorLayer()
         {
@@ -493,13 +497,19 @@ namespace CrossEngineEditor
                         if (!Context.Scene.Running)
                         {
                             StartPlaymode();
-                            ImGui.SetWindowFocus(GetPanel<GamePanel>().WindowName);
+                            var gamePanel = GetPanel<GamePanel>();
+                            if (gamePanel != null)
+                            {
+                                // initial resize event
+                                Context.Scene.OnEvent(new WindowResizeEvent((uint)gamePanel.WindowSize.X, (uint)gamePanel.WindowSize.Y));
+                                ImGui.SetWindowFocus(gamePanel.WindowName);
+                            }
                         }
                         else
                         {
                             EndPlaymode();
                             SceneUpdate = true;
-                            ImGui.SetWindowFocus(GetPanel<ViewportPanel>().WindowName);
+                            ImGui.SetWindowFocus(GetPanel<ViewportPanel>()?.WindowName);
                         }
                     }
                 }
@@ -712,7 +722,7 @@ namespace CrossEngineEditor
         private void ResetComponentTypeRegistry()
         {
             _componentTypeRegistry.Clear();
-            _componentTypeRegistry.AddRange(AssemblyLoader.GetSubTypesOf(typeof(Component)));
+            _componentTypeRegistry.AddRange(AssemblyLoader.GetSubclassesOf(typeof(Component)));
         }
         #endregion
 

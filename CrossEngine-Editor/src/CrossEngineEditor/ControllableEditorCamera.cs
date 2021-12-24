@@ -12,6 +12,7 @@ namespace CrossEngineEditor
 {
     abstract public class ControllableEditorCamera : EditorCamera
     {
+        // in pixels needed to resolve input amount
         public Vector2 ViewportSize;
         public float AspectRatio = 1;
 
@@ -201,7 +202,7 @@ namespace CrossEngineEditor
             set
             {
                 if (_fov == value) return;
-                _fov = Math.Clamp(value, float.Epsilon, float.MaxValue);
+                _fov = Math.Clamp(value, float.Epsilon, 179.999985f);
                 MarkProjectionDirty();
             }
         }
@@ -229,9 +230,12 @@ namespace CrossEngineEditor
         // (rotate)
         public override void Move(Vector2 delta)
         {
-            if (Math.Abs(rotation.Y) > MathF.PI) delta.X *= -1;
+            // input direction correction
+            if (Math.Abs(rotation.Y) + MathF.PI / 2 > MathF.PI) delta.X *= -1;
+
             rotation += delta / 360 * (MathF.PI / 2);
             rotation = new Vector2(rotation.X % (2*MathF.PI), rotation.Y % (2*MathF.PI));
+
             Rotation = Quaternion.CreateFromYawPitchRoll(
                 ( rotation.X),
                 (-rotation.Y), 0);

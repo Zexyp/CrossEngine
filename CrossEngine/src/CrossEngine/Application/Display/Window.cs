@@ -236,7 +236,7 @@ namespace CrossEngine.Rendering.Display
             Glfw.SwapBuffers(Handle);
         }
 
-        public void SetEventCallback(EventCallbackFunction callback)
+        internal void SetEventCallback(EventCallbackFunction callback)
         {
             data.EventCallback = callback;
         }

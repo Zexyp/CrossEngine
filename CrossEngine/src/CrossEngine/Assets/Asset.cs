@@ -18,7 +18,7 @@ namespace CrossEngine.Assets
                 OnNameChanged?.Invoke(this);
             }
         }
-        public AssetPool ParentPool { get; internal set; }
+        public AssetPool ParentPool { get { throw new NotImplementedException(); }/* internal set;*/ }
 
         public event Action<Asset> OnNameChanged;
 
