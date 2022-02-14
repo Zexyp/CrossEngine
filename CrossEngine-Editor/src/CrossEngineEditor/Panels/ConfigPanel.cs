@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
 
+using CrossEngine.Utils;
+
 using CrossEngineEditor.Panels;
 using CrossEngineEditor.Modals;
 using CrossEngineEditor.Utils;
@@ -32,14 +34,24 @@ namespace CrossEngineEditor.Panels
 
                     if (ImGui.Button("Load"))
                     {
-                        ImGuiStyleConfig.Load(new IniConfig("style"));
+                        if (!ImGuiStyleConfig.Load(new IniFile("style"))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+                    }
+
+                    if (ImGui.Button("Save"))
+                    {
+                        ImGuiStyleConfig.Save(new IniFile("style"));
                     }
 
                     ImGuiUtils.SmartSeparator();
 
-                    if (ImGui.Button("Save"))
+                    if (ImGui.Button("Load From File..."))
                     {
-                        ImGuiStyleConfig.Save(new IniConfig("style"));
+                        if (FileDialog.Open(out string path,
+                            filter: FileDialog.Filters.IniFile +
+                                    FileDialog.Filters.AllFiles))
+                        {
+                            if (!ImGuiStyleConfig.Load(new IniFile(path, true))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+                        }
                     }
 
                     ImGuiUtils.EndGroupFrame();

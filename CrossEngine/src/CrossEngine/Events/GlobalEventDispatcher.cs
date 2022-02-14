@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace CrossEngine.Events
 {
+    [Obsolete("Why am I keeping this here!?")]
     public static class GlobalEventDispatcher
     {
         static Dictionary<Type, List<Func<Event, MulticastDelegate>>> eventHandles = new Dictionary<Type, List<Func<Event, MulticastDelegate>>> { };

@@ -12,19 +12,21 @@ namespace CrossEngineEditor.Modals
 {
     public abstract class EditorModal
     {
-        public string Name = "";
+        public string ModalName = "";
         public bool? Open = true;
+        public ImGuiWindowFlags ModalFlags = ImGuiWindowFlags.AlwaysAutoResize;
 
         public EditorModal(string name)
         {
-            this.Name = name;
+            this.ModalName = name;
         }
 
-        public unsafe bool Draw()
+        public bool Draw()
         {
-            ImGui.OpenPopup(Name);
+            // hot fix
+            ImGui.OpenPopup(ModalName);
 
-            if (ImGuiExtension.BeginPopupModalNullableOpen(Name, ref Open, ImGuiWindowFlags.AlwaysAutoResize))
+            if (ImGuiExtension.BeginPopupModalNullableOpen(ModalName, ref Open, ModalFlags))
             {
                 DrawContents();
 
@@ -36,7 +38,7 @@ namespace CrossEngineEditor.Modals
                 Default();
             }
 
-            return ImGui.IsPopupOpen(Name);
+            return ImGui.IsPopupOpen(ModalName);
         }
 
         protected abstract void DrawContents();

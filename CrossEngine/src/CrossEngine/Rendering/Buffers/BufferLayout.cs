@@ -1,38 +1,32 @@
-﻿using System;
-using static OpenGL.GL;
+﻿using System.Diagnostics;
 
-using System.Collections.Generic;
-using System.Numerics;
-
-using CrossEngine.Logging;
 using CrossEngine.Rendering.Shaders;
 
 namespace CrossEngine.Rendering.Buffers
 {
-    #region Element
     public struct BufferElement
     {
-        public string name;
-        public ShaderDataType type;
-        public uint size;
-        public uint offset;
-        public bool normalized;
-        public uint divisor;
+        public string Name;
+        public ShaderDataType Type;
+        public uint Size;
+        public uint Offset;
+        public bool Normalized;
+        public uint Divisor;
 
         public BufferElement(ShaderDataType type, string name, bool normalized = false, uint divisor = 0)
         {
-            this.name = name;
-            this.type = type;
-            this.size = ShaderDataTypeSize(type);
-            this.offset = 0;
-            this.normalized = normalized;
-            this.divisor = divisor;
+            this.Name = name;
+            this.Type = type;
+            this.Size = ShaderDataTypeSize(type);
+            this.Offset = 0;
+            this.Normalized = normalized;
+            this.Divisor = divisor;
         }
 
         public uint GetComponentCount()
-		{
-			switch (type)
-			{
+        {
+            switch (Type)
+            {
                 case ShaderDataType.Float: return 1;
                 case ShaderDataType.Float2: return 2;
                 case ShaderDataType.Float3: return 3;
@@ -50,57 +44,34 @@ namespace CrossEngine.Rendering.Buffers
                 case ShaderDataType.Bool: return 1;
             }
 
-			Log.Core.Error("unknown shader data type");
-			return 0;
-		}
-
-        private static uint ShaderDataTypeSize(ShaderDataType type)
-        {
-            switch (type)
-            {
-                case ShaderDataType.Float: return 4;
-                case ShaderDataType.Float2: return 4 * 2;
-                case ShaderDataType.Float3: return 4 * 3;
-                case ShaderDataType.Float4: return 4 * 4;
-
-                case ShaderDataType.Mat3: return 4 * 3 * 3;
-                case ShaderDataType.Mat4: return 4 * 4 * 4;
-
-                case ShaderDataType.Int: return 4;
-                case ShaderDataType.Int2: return 4 * 2;
-                case ShaderDataType.Int3: return 4 * 3;
-                case ShaderDataType.Int4: return 4 * 4;
-
-                case ShaderDataType.Bool: return 1;
-            }
-
-            Log.Core.Error("unknown shader data type given to buffer element");
+            Debug.Assert(false, $"Unknown {nameof(ShaderDataType)} value");
             return 0;
         }
 
-        // kinda useless
-        public static int ShaderDataTypeToBaseType(ShaderDataType type)
+        public static uint ShaderDataTypeSize(ShaderDataType type)
         {
             switch (type)
             {
-                case ShaderDataType.Float: return GL_FLOAT;
-                case ShaderDataType.Float2: return GL_FLOAT;
-                case ShaderDataType.Float3: return GL_FLOAT;
-                case ShaderDataType.Float4: return GL_FLOAT;
-                case ShaderDataType.Mat3: return GL_FLOAT;
-                case ShaderDataType.Mat4: return GL_FLOAT;
-                case ShaderDataType.Int: return GL_INT;
-                case ShaderDataType.Int2: return GL_INT;
-                case ShaderDataType.Int3: return GL_INT;
-                case ShaderDataType.Int4: return GL_INT;
-                case ShaderDataType.Bool: return GL_BOOL;
+                case ShaderDataType.Float: return sizeof(float);
+                case ShaderDataType.Float2: return sizeof(float) * 2;
+                case ShaderDataType.Float3: return sizeof(float) * 3;
+                case ShaderDataType.Float4: return sizeof(float) * 4;
+
+                case ShaderDataType.Mat3: return sizeof(float) * 3 * 3;
+                case ShaderDataType.Mat4: return sizeof(float) * 4 * 4;
+
+                case ShaderDataType.Int: return sizeof(int);
+                case ShaderDataType.Int2: return sizeof(int) * 2;
+                case ShaderDataType.Int3: return sizeof(int) * 3;
+                case ShaderDataType.Int4: return sizeof(int) * 4;
+
+                case ShaderDataType.Bool: return sizeof(bool);
             }
 
-            Log.Core.Error("unknown shader data type");
+            Debug.Assert(false, $"Unknown {nameof(ShaderDataType)} value");
             return 0;
         }
     }
-    #endregion
 
     public class BufferLayout
     {
@@ -120,9 +91,9 @@ namespace CrossEngine.Rendering.Buffers
             stride = 0;
             for (int i = 0; i < elements.Length; i++)
             {
-                elements[i].offset = offset;
-                offset += elements[i].size;
-                stride += elements[i].size;
+                elements[i].Offset = offset;
+                offset += elements[i].Size;
+                stride += elements[i].Size;
             }
         }
 

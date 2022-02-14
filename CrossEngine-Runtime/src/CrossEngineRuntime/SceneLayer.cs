@@ -21,6 +21,7 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Scenes;
 using CrossEngine.Entities;
 using CrossEngine.Entities.Components;
+using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Serialization;
 using CrossEngine.Rendering.Lines;
@@ -35,7 +36,15 @@ namespace CrossEngineRuntime
 
         public override void OnAttach()
         {
-            scene = SceneLoader.Load("test scene/scene.json");
+            string scenePath = new IniFile("filesystem", true).Read("files", "InitialScene");
+            if (!File.Exists("filesystem") || String.IsNullOrEmpty(scenePath))
+            {
+                Log.App.Fatal("cannot resolve initial scene");
+                Application.Instance.Window.ShouldClose = true;
+                return;
+            }
+
+            scene = SceneLoader.Load(scenePath);
 
             scene.Pipeline = new RenderPipeline();
             scene.Pipeline.RegisterPass(new Renderer2DPass());
@@ -47,14 +56,21 @@ namespace CrossEngineRuntime
 
         public override void OnDetach()
         {
-            scene.End();
-            scene.Unload();
-            scene.Destroy();
+            if (scene != null)
+            {
+                scene.End();
+                scene.Unload();
+                scene.Destroy();
+                scene = null;
+            }
         }
 
         public override void OnUpdate(float timestep)
         {
-            scene.OnUpdateRuntime(Math.Min(Time.DeltaTimeF, 0.032f));
+            if (scene != null)
+            {
+                scene.OnUpdateRuntime(Math.Min(Time.DeltaTimeF, 0.032f));
+            }
         }
 
         public override void OnRender()
@@ -63,22 +79,29 @@ namespace CrossEngineRuntime
 
             ImGuiLayer.Instance.Begin();
 
-            scene.Pipeline.Framebuffer.Bind();
-            Renderer.Clear();
-            scene.OnRenderRuntime();
-            scene.Pipeline.Framebuffer.CopyToScreen();
-            Framebuffer.Unbind();
-            //ImGui.ShowDemoWindow();
+            if (scene != null)
+            {
+                scene.Pipeline.Framebuffer.Bind();
+                Renderer.Clear();
+                scene.OnRenderRuntime();
+                Framebuffer.Unbind();
+                scene.Pipeline.Framebuffer.CopyToScreen();
+            }
+            ImGui.ShowDemoWindow();
+
             ImGuiLayer.Instance.End();
         }
 
         public override void OnEvent(Event e)
         {
-            scene.OnEvent(e);
-            if (e is WindowResizeEvent)
+            if (scene != null)
             {
-                var wre = (WindowResizeEvent)e;
-                scene.Pipeline.Framebuffer.Resize(wre.Width, wre.Height);
+                scene.OnEvent(e);
+                if (e is WindowResizeEvent)
+                {
+                    var wre = (WindowResizeEvent)e;
+                    scene.Pipeline.Framebuffer.Resize(wre.Width, wre.Height);
+                }
             }
         }
     }

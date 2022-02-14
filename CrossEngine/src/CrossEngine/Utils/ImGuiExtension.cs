@@ -12,7 +12,7 @@ namespace CrossEngine.Utils
     {
         // fixes broken feature
         // issue is how the wrapper is generated
-        public static unsafe bool BeginNullableOpen(string name, ref bool? p_open, ImGuiWindowFlags flags)
+        public static unsafe bool BeginNullableOpen(string name, ref bool? p_open, ImGuiWindowFlags flags = ImGuiWindowFlags.None) 
         {
             byte* native_name;
             int name_byteCount = 0;

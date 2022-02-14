@@ -15,11 +15,11 @@ namespace CrossEngineEditor.Modals
     {
         public enum ButtonFlags
         {
-            None = 0,
-            OK = 1 << 0,
+            None   = 0,
+            OK     = 1 << 0,
             Cancel = 1 << 1,
-            Yes = 1 << 2,
-            No = 1 << 3,
+            Yes    = 1 << 2,
+            No     = 1 << 3,
 
             OKCancel = OK | Cancel,
             YesNo = Yes | No,

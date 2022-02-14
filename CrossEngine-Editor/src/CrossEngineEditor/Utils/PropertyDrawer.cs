@@ -208,7 +208,11 @@ namespace CrossEngineEditor.Utils
                 int ci = 0;
                 if (scene != null)
                 {
-                    v = (Asset)value;
+                    if (value is IAssetHandle)
+                        v = ((IAssetHandle)value).Asset;
+                    else
+                        v = (Asset)value;
+
                     assets = (IAssetCollection)typeof(AssetPool).GetMethod(nameof(AssetPool.GetCollection)).MakeGenericMethod(cattribt.Type).Invoke(scene.AssetPool, null);
                     assetValues = assets.GetAll();
                     ci = (assetValues != null) ? assetValues.ToList().IndexOf(v) : 0;
@@ -240,7 +244,13 @@ namespace CrossEngineEditor.Utils
                 ImGui.SameLine();
                 ImGui.Text(name);
 
-                if (success) value = v;
+                if (success)
+                {
+                    if (value is IAssetHandle)
+                        ((IAssetHandle)value).Asset = v;
+                    else
+                        value = v;
+                }
                 return success;
             } },
 

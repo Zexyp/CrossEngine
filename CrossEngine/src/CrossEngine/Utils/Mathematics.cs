@@ -2,6 +2,7 @@
 
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 using CrossEngine.Logging;
 
@@ -245,17 +246,22 @@ namespace CrossEngine.Utils
             return matrix;
         }
 
+        // System.Matrix4x4.CreatePerspectiveFieldOfView accounts for LH and negative Z
         static public Matrix4x4 Perspective(float fovyRad, float aspect, float zNear, float zFar)
         {
-            if (Math.Abs(aspect - float.Epsilon) <= 0) throw new Exception("invalid aspect");
-            Matrix4x4 projMat = new Matrix4x4();
-            float tanHalfFovy = MathF.Tan(fovyRad / 2);
-            projMat.M11 = 1 / aspect * fovyRad;
-            projMat.M22 = 1 / tanHalfFovy;
-            projMat.M33 = (zFar + zNear) / (zFar - zNear);
-            projMat.M34 = 1.0f;
-            projMat.M43 = (2 * zFar * zNear) / (zFar - zNear);
-            return projMat;
+            Debug.Assert(aspect > 0);
+            Debug.Assert(fovyRad > 0);
+
+            float h = MathF.Cos(0.5f * fovyRad) / MathF.Sin(0.5f * fovyRad);
+            float w = h * 1 / aspect;
+
+            Matrix4x4 result = new Matrix4x4();
+            result.M11 = w;
+            result.M22 = h;
+            result.M33 = (zFar + zNear) / (zFar - zNear);
+            result.M34 = 1;
+            result.M43 = -(2 * zFar * zNear) / (zFar - zNear);
+            return result;
         }
 
         static public Matrix4x4 Invert(Matrix4x4 matrix)

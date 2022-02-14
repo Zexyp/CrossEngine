@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Numerics;
 
+using CrossEngine.Utils;
+
 namespace CrossEngineEditor.Utils
 {
     class ImGuiStyleConfig
@@ -109,7 +111,7 @@ namespace CrossEngineEditor.Utils
             }},
         };
 
-        public static void Save(IniConfig config)
+        public static void Save(IniFile config)
         {
             // colors
             var style = ImGui.GetStyle();
@@ -134,7 +136,7 @@ namespace CrossEngineEditor.Utils
             }
         }
 
-        public static bool Load(IniConfig config)
+        public static bool Load(IniFile config)
         {
             bool success = true;
 

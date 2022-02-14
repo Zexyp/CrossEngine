@@ -12,9 +12,18 @@ namespace CrossEngineEditor
 {
     abstract public class ControllableEditorCamera : EditorCamera
     {
-        // in pixels needed to resolve input amount
+        // in pixels; needed to resolve input amount
         public Vector2 ViewportSize;
-        public float AspectRatio = 1;
+        private float _aspectRatio;
+        public float AspectRatio
+        {
+            get { return _aspectRatio; }
+            set
+            {
+                _aspectRatio = value;
+                if (_aspectRatio <= 0) _aspectRatio = 1;
+            }
+        }
 
         public abstract void Pan(Vector2 delta);
         public abstract void Move(Vector2 delta);
@@ -23,7 +32,7 @@ namespace CrossEngineEditor
         public override void Resize(float width, float height)
         {
             ViewportSize = new Vector2(width, height);
-            AspectRatio = ViewportSize.X / ViewportSize .Y;
+            AspectRatio = ViewportSize.X / ViewportSize.Y;
 
             MarkProjectionDirty();
         }
@@ -94,75 +103,6 @@ namespace CrossEngineEditor
         {
             Move(delta);
         }
-
-        //float pitch = 0.0f, yaw = 0.0f, roll = 0.0f;
-
-        //float cameraTranslationSpeed = 5.0f;
-
-        //public Vector3 GetUpDirection()
-        //{
-        //    return Vector3.Transform(Vector3.UnitY, Camera.Rotation);
-        //}
-        //public Vector3 GetRightDirection()
-        //{
-        //    return Vector3.Transform(Vector3.UnitX, Camera.Rotation);
-        //}
-        //public Vector3 GetForwardDirection()
-        //{
-        //    return Vector3.Transform(Vector3.UnitZ, Camera.Rotation);
-        //}
-
-        //public Quaternion GetOrientation()
-        //{
-        //    // mby negate roll
-        //    return QuaternionExtension.CreateFromXYZRotation(new Vector3(-pitch, -yaw, roll));
-        //}
-
-        //public void OnUpdateX(float timestep)
-        //{
-        //    Vector2 mouse = new Vector2(Input.GetMouseX(), Input.GetMouseY());
-        //    Vector2 delta = (mouse - initialMousePosition) * 0.003f;
-        //    initialMousePosition = mouse;
-        //
-        //    if (Input.IsMouseButtonPressed(Mouse.Middle))
-        //        MousePan(delta);
-        //
-        //    float moveSpeedMultiplier = Input.GetKey(Key.LeftShift) ? 2.0f : (Input.GetKey(Key.LeftControl) ? 0.5f : 1.0f);
-        //    moveSpeedMultiplier *= timestep * cameraTranslationSpeed;
-        //
-        //    if (Input.GetKey(Key.ArrowRight))
-        //    {
-        //        Camera.Position += moveSpeedMultiplier * GetRightDirection();
-        //    }
-        //    if (Input.GetKey(Key.ArrowLeft))
-        //    {
-        //        Camera.Position -= moveSpeedMultiplier * GetRightDirection();
-        //    }
-        //    
-        //    if (Input.GetKey(Key.ArrowUp))
-        //    {
-        //        Camera.Position += moveSpeedMultiplier * GetUpDirection();
-        //    }
-        //    if (Input.GetKey(Key.ArrowDown))
-        //    {
-        //        Camera.Position -= moveSpeedMultiplier * GetUpDirection();
-        //    }
-        //
-        //    cameraTranslationSpeed = zoomLevel;
-        //}
-        //
-        //public void Resize(float width, float height)
-        //{
-        //    aspectRatio = width / height;
-        //    camera.SetProjection(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel);
-        //}
-        //
-        //
-        //void OnWindowResize(WindowResizeEvent e)
-        //{
-        //    if (AutoResize)
-        //        Resize(e.Width, e.Height);
-        //}
     }
 
     public class PerspectiveControllableEditorCamera : ControllableEditorCamera
@@ -220,10 +160,7 @@ namespace CrossEngineEditor
 
         protected override Matrix4x4 CreateProjectionMatrix()
         {
-            return Matrix4x4.CreateTranslation(new Vector3(0, 0, -_zoom)) * Matrix4x4.CreatePerspectiveFieldOfView(
-                MathExtension.ToRadians(_fov),
-                AspectRatio,
-                _zNear, _zFar);
+            return Matrix4x4.CreateTranslation(new Vector3(0, 0, _zoom)) * Matrix4x4Extension.Perspective(MathExtension.ToRadians(_fov), AspectRatio, _zNear, _zFar);
         }
 
 
@@ -233,7 +170,8 @@ namespace CrossEngineEditor
             // input direction correction
             if (Math.Abs(rotation.Y) + MathF.PI / 2 > MathF.PI) delta.X *= -1;
 
-            rotation += delta / 360 * (MathF.PI / 2);
+            //                  magical number
+            rotation -= delta / 360 * (MathF.PI / 2);
             rotation = new Vector2(rotation.X % (2*MathF.PI), rotation.Y % (2*MathF.PI));
 
             Rotation = Quaternion.CreateFromYawPitchRoll(

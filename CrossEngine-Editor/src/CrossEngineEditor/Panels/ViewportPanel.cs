@@ -174,7 +174,7 @@ namespace CrossEngineEditor.Panels
 
                 pipeline.Framebuffer.Bind();
                 Renderer.Clear();
-                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FbStructureIndex.Id, 0);
+                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FbStructureIndex.ID, 0);
 
                 // interaction
                 if (ImGui.IsItemHovered() && Focused)
@@ -199,7 +199,7 @@ namespace CrossEngineEditor.Panels
                     {
                         Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
                         texpos.Y = -texpos.Y;
-                        int result = pipeline.Framebuffer.ReadPixel((uint)Context.Scene.Pipeline.FbStructureIndex.Id, (int)texpos.X, (int)texpos.Y);
+                        int result = pipeline.Framebuffer.ReadPixel((uint)Context.Scene.Pipeline.FbStructureIndex.ID, (int)texpos.X, (int)texpos.Y);
                         EditorApplication.Log.Trace($"selected entity id {result}");
 
                         Context.ActiveEntity = Context.Scene.GetEntity(result);

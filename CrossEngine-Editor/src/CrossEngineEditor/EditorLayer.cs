@@ -40,17 +40,20 @@ namespace CrossEngineEditor
 
     public class EditorLayer : Layer
     {
-        // singleton
+        // instatnce
         static public EditorLayer Instance;
 
+        // contexts
         public EditorCamera EditorCamera = new EditorCamera();
+        
         public readonly EditorContext Context = new EditorContext();
-        public bool SceneUpdate = true;
+
         private Scene workingScene = null;
+        public bool SceneUpdate = true;
 
         // ui things
         private List<EditorPanel> _panels = new List<EditorPanel>();
-        private EditorModal _modal = null;
+        private List<EditorModal> _modals = new List<EditorModal>();
         //Texture dockspaceIconTexture;
 
         // components
@@ -60,7 +63,18 @@ namespace CrossEngineEditor
         public readonly ReadOnlyCollection<Type> ComponentTypeRegistry;
 
         // files
-        readonly internal IniConfig EditorConfig = new IniConfig("editor");
+        readonly internal IniFile EditorConfig = new IniFile("editor");
+        private string _savePath = null;
+        private string SavePath
+        {
+            set
+            {
+                _savePath = value;
+
+                if (_savePath == null) Application.Instance.Window.Title = "CrossEngine Editor";
+                else Application.Instance.Window.Title = $"CrossEngine Editor [{_savePath}]";
+            }
+        }
 
         // events
         public event Action PlaymodeStarted;
@@ -89,7 +103,7 @@ namespace CrossEngineEditor
             Thread.CurrentThread.CurrentCulture = ci;
         }
 
-        internal bool LoadConfig(IniConfig config)
+        private bool LoadConfig(IniFile config)
         {
             bool success = true;
 
@@ -127,7 +141,7 @@ namespace CrossEngineEditor
             return success;
         }
 
-        internal void SaveConfig(IniConfig config)
+        private void SaveConfig(IniFile config)
         {
             // panels
             {
@@ -139,13 +153,15 @@ namespace CrossEngineEditor
             }
         }
 
+        bool corruptedConfig = false;
+
         public override void OnAttach()
         {
             //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());
             //dockspaceIconTexture.SetFilterParameter(Rendering.Textures.FilterParameter.Nearest);
 
-            if (!LoadConfig(EditorConfig)) PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
-            if (!ImGuiStyleConfig.Load(new IniConfig("style"))) PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+            if (!LoadConfig(EditorConfig)) corruptedConfig = true;
+            if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfig = true;
 
             // --- test code
             Context.Scene = new Scene();
@@ -213,6 +229,12 @@ namespace CrossEngineEditor
             DrawMainMenuBar();
 
             ImGui.ShowDemoWindow(); // purely dev thing
+
+            if (corruptedConfig)
+            {
+                PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+                corruptedConfig = false;
+            }
 
             // debug
             ImGui.Begin("Debug");
@@ -397,8 +419,17 @@ namespace CrossEngineEditor
                                 ImGui.MenuItem(_panels[i].WindowName);
                             }
                         }
+
+                        ImGui.Separator();
+
+                        if (ImGui.MenuItem("Save Open States"))
+                        {
+                            SaveConfig(EditorConfig);
+                        }
+
                         ImGui.EndMenu();
                     }
+
                     ImGui.EndMenu();
                 }
 
@@ -558,22 +589,23 @@ namespace CrossEngineEditor
         #region Modal Methods
         private void DrawModals()
         {
-            if (_modal != null)
+            for (int i = 0; i < _modals.Count; i++)
             {
-                if (!_modal.Draw())
-                    _modal = null;
+                if (!_modals[i].Draw())
+                    _modals.RemoveAt(i);
             }
         }
 
         public void PushModal(EditorModal modal)
         {
-            if (_modal != null) throw new Exception("Modal already opened!");
-            _modal = modal;
+            ImGui.OpenPopup(modal.ModalName);
+
+            _modals.Add(modal);
         }
 
         public void PopModal(EditorModal modal)
         {
-            _modal = null;
+            _modals.Remove(modal);
         }
         #endregion
 
@@ -586,17 +618,6 @@ namespace CrossEngineEditor
         #endregion
 
         #region File Menu Actions
-        private string _savePath = null;
-        private string SavePath
-        {
-            set
-            {
-                _savePath = value;
-
-                if (_savePath == null) Application.Instance.Window.Title = "CrossEngine Editor";
-                else Application.Instance.Window.Title = $"CrossEngine Editor [{_savePath}]";
-            }
-        }
         private void FileNewScene()
         {
             Context.Scene?.Unload();
@@ -613,7 +634,7 @@ namespace CrossEngineEditor
         {
             if (FileDialog.Open(out string path,
                                     filter:
-                                    "Scene File Env. JSON (*.sfe.json)\0*.sfe.json\0" +
+                                    "Scene File Env. INI (*.sfe.ini)\0*.sfe.ini\0" +
                                     "All Files (*.*)\0*.*\0"))
             {
                 Context.Scene?.Unload();
@@ -645,7 +666,7 @@ namespace CrossEngineEditor
         {
             if (FileDialog.Save(out string path,
                             filter:
-                            "Scene File Env. JSON (*.sfe.json)\0*.sfe.json\0" +
+                            "Scene File Env. INI (*.sfe.ini)\0*.sfe.ini\0" +
                             "All Files (*.*)\0*.*\0",
                             name: "scene"))
             {

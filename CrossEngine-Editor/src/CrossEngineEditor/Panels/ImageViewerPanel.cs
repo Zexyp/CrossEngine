@@ -221,7 +221,6 @@ namespace CrossEngineEditor.Panels
                 return;
 
             SelectedTextureAsset = new TextureAsset(path);
-            SelectedTextureAsset.Load();
             textureAssets.Add(SelectedTextureAsset);
 
             selectedIndex = textureAssets.GetAll().Count - 1;

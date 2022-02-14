@@ -8,17 +8,8 @@ namespace CrossEngine.Events
 
     abstract public class Event
     {
-        public bool Handled = false;
+        public virtual bool Handled { get; set; } = false;
 
-        public override string ToString()
-        {
-            Type type = this.GetType();
-            return type.Name + ": {" + String.Join("; ", Array.ConvertAll(type.GetFields(), item => item.GetValue(this).ToString())) + "}";
-        }
-    }
-
-    abstract public class RenderEvent
-    {
         public override string ToString()
         {
             Type type = this.GetType();
@@ -27,9 +18,15 @@ namespace CrossEngine.Events
     }
 
     #region Application
+    public class FixedUpdateEvent : Event
+    {
+        public override bool Handled { get => false; set { if (value) throw new InvalidOperationException($"{nameof(FixedUpdateEvent)} cannot be handled"); } }
+    }
+
+
+
     public abstract class ApplicationEvent : Event { }
 
-    #region Update
     public class ApplicationUpdateEvent : ApplicationEvent
     {
         public readonly float Timestep;
@@ -49,9 +46,7 @@ namespace CrossEngine.Events
     {
 
     }
-    #endregion
 
-    #region Render
     public class ApplicationRenderEvent : ApplicationEvent
     {
 
@@ -66,8 +61,6 @@ namespace CrossEngine.Events
     {
 
     }
-    #endregion
-
     #endregion
 
     #region Window

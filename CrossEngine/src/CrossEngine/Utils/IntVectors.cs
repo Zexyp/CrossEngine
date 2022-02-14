@@ -1,8 +1,10 @@
-﻿using System.Numerics;
+﻿using System;
+
+using System.Numerics;
 
 namespace CrossEngine.Utils
 {
-    public struct IntVec2
+    public struct IntVec2 : IEquatable<IntVec2>, IFormattable
     {
         public int X;
         public int Y;
@@ -35,13 +37,13 @@ namespace CrossEngine.Utils
         public static implicit operator Vector2(IntVec2 v) => new Vector2(v.X, v.Y);
         public static explicit operator IntVec2(Vector2 v) => new IntVec2((int)v.X, (int)v.Y);
 
-        public override bool Equals(object obj)
-        {
-            return this == (IntVec2)obj;
-        }
+        public override bool Equals(object obj) => obj is IntVec2 && this == (IntVec2) obj;
+        public bool Equals(IntVec2 other) => this == other;
+
+        public string ToString(string format, IFormatProvider formatProvider) => $"({X.ToString(format, formatProvider)}, {Y.ToString(format, formatProvider)})";
     }
 
-    public struct IntVec3
+    public struct IntVec3 : IEquatable<IntVec3>, IFormattable
     {
         public int X;
         public int Y;
@@ -83,13 +85,45 @@ namespace CrossEngine.Utils
         public static implicit operator Vector3(IntVec3 v) => new Vector3(v.X, v.Y, v.Z);
         public static explicit operator IntVec3(Vector3 v) => new IntVec3((int)v.X, (int)v.Y, (int)v.Z);
 
-        public override bool Equals(object obj)
-        {
-            return this == (IntVec3)obj;
-        }
+        public override bool Equals(object obj) => obj is IntVec3 && this == (IntVec3)obj;
+        public bool Equals(IntVec3 other) => this == other;
+
+        public string ToString(string format, IFormatProvider formatProvider) => $"({X.ToString(format, formatProvider)}, {Y.ToString(format, formatProvider)}, {Z.ToString(format, formatProvider)})";
     }
 
-    public struct BoolVec3
+    public struct BoolVec2 : IEquatable<BoolVec2>
+    {
+        public bool X;
+        public bool Y;
+
+        public BoolVec2(bool x, bool y)
+        {
+            this.X = x;
+            this.Y = y;
+        }
+        public BoolVec2(bool value)
+        {
+            this.X = value;
+            this.Y = value;
+        }
+
+        public static BoolVec2 operator !(BoolVec2 v) => new BoolVec2(!v.X, !v.Y);
+        public static BoolVec2 operator &(BoolVec2 left, BoolVec2 right) => new BoolVec2(left.X && right.X, left.Y && right.Y);
+        public static BoolVec2 operator |(BoolVec2 left, BoolVec2 right) => new BoolVec2(left.X || right.X, left.Y || right.Y);
+        public static bool operator ==(BoolVec2 left, BoolVec2 right) => left.X == right.X && left.Y == right.Y;
+        public static bool operator !=(BoolVec2 left, BoolVec2 right) => !(left.X == right.X && left.Y == right.Y);
+
+        public static implicit operator IntVec2(BoolVec2 v) => new IntVec2(v.X ? 1 : 0, v.Y ? 1 : 0);
+        public static explicit operator BoolVec2(IntVec2 v) => new BoolVec2(v.X != 0, v.Y != 0);
+        public static explicit operator BoolVec2(Vector2 v) => new BoolVec2(v.X != 0, v.Y != 0);
+
+        public override bool Equals(object obj) => obj is BoolVec2 && this == (BoolVec2)obj;
+        public bool Equals(BoolVec2 other) => this == other;
+
+        public string ToString(IFormatProvider formatProvider) => $"({X.ToString(formatProvider)}, {Y.ToString(formatProvider)})";
+    }
+
+    public struct BoolVec3 : IEquatable<BoolVec3>
     {
         public bool X;
         public bool Y;
@@ -108,6 +142,9 @@ namespace CrossEngine.Utils
             this.Z = value;
         }
 
+        public static BoolVec3 operator !(BoolVec3 v) => new BoolVec3(!v.X, !v.Y, !v.Z);
+        public static BoolVec3 operator &(BoolVec3 left, BoolVec3 right) => new BoolVec3(left.X && right.X, left.Y && right.Y, left.Z && right.Z);
+        public static BoolVec3 operator |(BoolVec3 left, BoolVec3 right) => new BoolVec3(left.X || right.X, left.Y || right.Y, left.Z || right.Z);
         public static bool operator ==(BoolVec3 left, BoolVec3 right) => left.X == right.X && left.Y == right.Y && left.Z == right.Z;
         public static bool operator !=(BoolVec3 left, BoolVec3 right) => !(left.X == right.X && left.Y == right.Y && left.Z == right.Z);
 
@@ -115,9 +152,9 @@ namespace CrossEngine.Utils
         public static explicit operator BoolVec3(IntVec3 v) => new BoolVec3(v.X != 0, v.Y != 0, v.Z != 0);
         public static explicit operator BoolVec3(Vector3 v) => new BoolVec3(v.X != 0, v.Y != 0, v.Z != 0);
 
-        public override bool Equals(object obj)
-        {
-            return this == (IntVec3)obj;
-        }
+        public override bool Equals(object obj) => obj is BoolVec3 && this == (BoolVec3)obj;
+        public bool Equals(BoolVec3 other) => this == other;
+
+        public string ToString(IFormatProvider formatProvider) => $"({X.ToString(formatProvider)}, {Y.ToString(formatProvider)}, {Z.ToString(formatProvider)})";
     }
 }

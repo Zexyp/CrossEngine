@@ -77,7 +77,7 @@ namespace CrossEngineEditor.Panels
 
                 pipeline.Framebuffer.Bind();
                 Renderer.Clear();
-                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FbStructureIndex.Id, 0);
+                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FbStructureIndex.ID, 0);
 
                 // draw
                 Context.Scene.Pipeline = pipeline;

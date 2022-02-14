@@ -23,8 +23,11 @@
 
   <ItemGroup>
     <Compile Remove="assets\**" />
+    <Compile Remove="src\CrossEngineEditor\**" />
     <EmbeddedResource Remove="assets\**" />
+    <EmbeddedResource Remove="src\CrossEngineEditor\**" />
     <None Remove="assets\**" />
+    <None Remove="src\CrossEngineEditor\**" />
   </ItemGroup>
 
   <ItemGroup>

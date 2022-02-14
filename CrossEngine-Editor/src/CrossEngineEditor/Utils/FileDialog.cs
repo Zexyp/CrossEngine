@@ -101,6 +101,20 @@ namespace CrossEngineEditor.Utils
 
     public class FileDialog
     {
+        public static class Filters
+        {
+            public const string AllFiles = "All Files (*.*)\0*.*\0";
+            public const string JsonFile = "JSON File (*.json)\0*.json\0";
+            public const string IniFile = "INI File (*.ini)\0*.ini\0";
+            public const string ImageFiles = "All Image Files (*.bmp; *.jpg; *.jpeg; *.png; *.tif; *.tiff)\0*.bmp;*.jpg;*.jpeg;*.png;*.tif;*.tiff\0" +
+                "PNG (*.png)\0*.png\0" +
+                "JPG (*.jpg; *.jpeg)\0*.jpg;*.jpeg\0" +
+                "BMP (*.bmp)\0*.bmp\0" +
+                "GIF (*.gif)\0*.gif\0" +
+                "TIFF (*.tif; *.tiff)\0*.tif;*.tiff\0" +
+                "EXIF (*.exif)\0*.exif\0";
+        }
+
         public static bool Open(out string filepath, 
             string initialDir = null,
             string title = null,
