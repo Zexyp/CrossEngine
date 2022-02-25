@@ -14,11 +14,12 @@ using System.Numerics;
 using CrossEngine.ECS;
 using CrossEngine.Components;
 using CrossEngine.Logging;
-using CrossEngine.Utils.Bullet;
 using CrossEngine.Events;
 using CrossEngine.Physics;
 using CrossEngine.Rendering;
 using CrossEngine.Profiling;
+using CrossEngine.Utils.Bullet;
+using CrossEngine.Utils;
 
 namespace CrossEngine.ComponentSystems
 {
@@ -43,8 +44,7 @@ namespace CrossEngine.ComponentSystems
     {
         static readonly Dictionary<Type, Func<ColliderComponent, CollisionShape>> ShapeConvertors = new Dictionary<Type, Func<ColliderComponent, CollisionShape>>()
         {
-            { typeof(BoxColliderComponent), (collider) =>
-            {
+            { typeof(BoxColliderComponent), (collider) => {
                 var corrcoll = (BoxColliderComponent)collider;
                 return new BoxShape((corrcoll.Size / 2).ToBullet());
             } }
@@ -123,8 +123,7 @@ namespace CrossEngine.ComponentSystems
                 _colliders[component] = (true, _colliders[component].Shape);
 
                 _shapeDirty = true;
-
-                Log.Core.Debug("TODO: add overlapping pair cache removal and activation");
+                Log.Core.Debug("TODO: add removal from overlapping pairs");
 
                 OnUpdateRequired?.Invoke(this);
             }
@@ -132,6 +131,8 @@ namespace CrossEngine.ComponentSystems
             private void Transform_OnTransformChanged(TransformComponent component)
             {
                 _updateMotion = true;
+
+                Log.Core.Debug("TODO: collider scaling");
 
                 OnUpdateRequired?.Invoke(this);
             }
@@ -160,7 +161,7 @@ namespace CrossEngine.ComponentSystems
                 _colliders.Remove(component);
             }
 
-            public void Activate(RigidBodyWorld rbWorld)
+            public void Activate()
             {
                 _shape = new CompoundShape();
 
@@ -177,12 +178,12 @@ namespace CrossEngine.ComponentSystems
                 _body = CreateBody(_rigidBody, _transform, _shape);
                 _motionState = _body.MotionState;
 
-                rbWorld.AddRigidBody(_body);
+                PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
             }
 
-            public void Deactivate(RigidBodyWorld rbWorld)
+            public void Deactivate()
             {
-                rbWorld.RemoveRigidBody(_body);
+                PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
 
                 _body.MotionState = null;
                 _body.Dispose();
@@ -217,6 +218,9 @@ namespace CrossEngine.ComponentSystems
                         _colliders[key] = (false, newshape);
                         _shape.AddChildShape(key.LocalOffset.ToBullet(), newshape);
                     }
+
+                    _shape.CalculateLocalInertia(_rigidBody.Static ? 0 : _rigidBody.Mass, out var inertia);
+                    _body.SetMassProps(_rigidBody.Static ? 0 : _rigidBody.Mass, inertia);
 
                     _body.UpdateInertiaTensor();
 
@@ -258,14 +262,39 @@ namespace CrossEngine.ComponentSystems
 
                     if ((_dirtyProperties | RigidBodyPropertyFlags.Static) != 0)
                     {
-                        throw new NotImplementedException();
-                        if (_rigidBody.Static)
+                        if (!_rigidBody.Static)
                         {
+                            PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
 
+                            _body.CollisionShape.CalculateLocalInertia(_rigidBody.Mass, out var inertia);
+                            _body.ActivationState = ActivationState.DisableDeactivation;
+                            _body.SetMassProps(_rigidBody.Mass, inertia);
+                            _body.LinearFactor = _rigidBody.LinearFactor.ToBullet();
+                            _body.AngularFactor =  _rigidBody.AngularFactor.ToBullet();
+                            _body.UpdateInertiaTensor();
+                            _body.ClearForces();
+                            //_body.WorldTransform = _transform.WorldTransformMatrix;
+
+                            PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
                         }
                         else
                         {
+                            PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
 
+                            _body.CollisionShape.CalculateLocalInertia(0, out var inertia);
+                            _body.CollisionFlags = CollisionFlags.StaticObject;
+                            _body.SetMassProps(0, inertia);
+                            _body.LinearFactor = BulletVector3.Zero;
+                            _body.AngularFactor = BulletVector3.Zero;
+                            _body.Gravity = BulletVector3.Zero;
+                            _body.UpdateInertiaTensor();
+                            _body.LinearVelocity = BulletVector3.Zero;
+                            _body.AngularVelocity = BulletVector3.Zero;
+                            _body.ClearForces();
+                            _body.ActivationState = ActivationState.WantsDeactivation;
+                            //_body.WorldTransform = _transform.WorldTransformMatrix;
+
+                            PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
                         }
                     }
 
@@ -277,6 +306,8 @@ namespace CrossEngine.ComponentSystems
 
             public void UpdataTransform()
             {
+                // TODO: consider interpolation
+
                 if (_transform != null)
                 {
                     _transform.OnTransformChanged -= Transform_OnTransformChanged;
@@ -290,22 +321,6 @@ namespace CrossEngine.ComponentSystems
                 _rigidBody.OnPropertyChanged += RigidBody_OnPropertyChanged;
             }
 
-            //private static CollisionShape CreateShape(IList<ColliderComponent> colliders)
-            //{
-            //    if (Colliders.Count <= 0) return null;
-            //    //if (Colliders.Count == 1) return ShapeConvertors[Colliders[0].Component.GetType()](Colliders[0].Component);
-            //    //else
-            //    {
-            //        var compShape = new CompoundShape();
-            //        for (int i = 0; i < Colliders.Count; i++)
-            //        {
-            //            var component = Colliders[i].Component;
-            //            compShape.AddChildShape(component.LocalOffset.ToBullet(), ShapeConvertors[component.GetType()](component));
-            //        }
-            //        return compShape;
-            //    }
-            //}
-
             private static RigidBody CreateBody(RigidBodyComponent rigidBody, TransformComponent transform, CollisionShape shape)
             {
                 MotionState motion;
@@ -318,10 +333,10 @@ namespace CrossEngine.ComponentSystems
                 if (shape != null)
                 {
                     BulletVector3 localInertia = shape.CalculateLocalInertia(rigidBody.Mass);
-                    bodyctorinfo = new RigidBodyConstructionInfo(rigidBody.Mass, motion, shape, localInertia);
+                    bodyctorinfo = new RigidBodyConstructionInfo(rigidBody.Static ? 0 : rigidBody.Mass, motion, shape, localInertia);
                 }
                 else
-                    bodyctorinfo = new RigidBodyConstructionInfo(rigidBody.Mass, motion, shape);
+                    bodyctorinfo = new RigidBodyConstructionInfo(rigidBody.Static ? 0 : rigidBody.Mass, motion, shape);
 
                 var body = new RigidBody(bodyctorinfo)
                 {
@@ -332,8 +347,6 @@ namespace CrossEngine.ComponentSystems
                 };
 
                 bodyctorinfo.Dispose();
-
-                //rigidBodyWorld.AddRigidBody(body);
 
                 return body;
             }
@@ -365,7 +378,7 @@ namespace CrossEngine.ComponentSystems
 
             foreach (var item in _pairs)
             {
-                item.Value.Activate(rigidBodyWorld);
+                item.Value.Activate();
             }
         }
 
@@ -373,7 +386,7 @@ namespace CrossEngine.ComponentSystems
         {
             foreach (var item in _pairs)
             {
-                item.Value.Deactivate(rigidBodyWorld);
+                item.Value.Deactivate();
             }
 
             rigidBodyWorld.Dispose();
@@ -390,7 +403,7 @@ namespace CrossEngine.ComponentSystems
                 rbdata.Update();
             }
 
-            rigidBodyWorld.Simulate(Time.DeltaTimeF, 0, (float)Time.FixedDeltaTime);
+            rigidBodyWorld.Simulate(Time.DeltaTimeF, 5, (float)Time.FixedDeltaTime);
 
             foreach (var item in _pairs.Values)
             {
@@ -406,7 +419,7 @@ namespace CrossEngine.ComponentSystems
 
             if (rigidBodyWorld != null)
             {
-                rbdata.Activate(rigidBodyWorld);
+                rbdata.Activate();
             }
         }
 
@@ -414,7 +427,7 @@ namespace CrossEngine.ComponentSystems
         {
             if (rigidBodyWorld != null)
             {
-                _pairs[component].Deactivate(rigidBodyWorld);
+                _pairs[component].Deactivate();
             }
 
             DestroyRBData(component);

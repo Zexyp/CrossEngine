@@ -42,12 +42,12 @@ namespace CrossEngine.ComponentSystems
             
         }
 
-        public void RegisterCameraComponent(CameraComponent component)
+        public void RegisterCamera(CameraComponent component)
         {
             _cameras.Add(component);
         }
 
-        public void UnregisterCameraComponent(CameraComponent component)
+        public void UnregisterCamera(CameraComponent component)
         {
             _cameras.Remove(component);
         }
