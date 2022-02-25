@@ -179,13 +179,6 @@ namespace CrossEngine.Utils
                 return mirror;
             }
         }
-        public static Matrix4x4 MirrorAll
-        {
-            get
-            {
-                return MirrorZ * MirrorY * MirrorX;
-            }
-        }
 
         //public static Matrix4x4 ClearTranslation(Matrix4x4 matrix)
         //{
@@ -272,7 +265,7 @@ namespace CrossEngine.Utils
                 throw new InvalidOperationException("The matrix is not invertible.");
         }
 
-        static public void SimpleDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, Matrix4x4 matrix)
+        static public void EulerDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, Matrix4x4 matrix)
         {
             Vector4 matvright = new Vector4(matrix.M11, matrix.M12, matrix.M13, matrix.M14);
             Vector4 matvup = new Vector4(matrix.M21, matrix.M22, matrix.M23, matrix.M34);
@@ -299,7 +292,7 @@ namespace CrossEngine.Utils
 
         public static bool HasNaNElement(Matrix4x4 matrix)
         {
-            // faster
+            // faster than using pointer in loop
             return
                 matrix.M11 is float.NaN ||
                 matrix.M12 is float.NaN ||

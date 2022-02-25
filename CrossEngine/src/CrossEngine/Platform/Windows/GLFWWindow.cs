@@ -12,8 +12,19 @@ namespace CrossEngine.Platform.Windows
 
     class GLFWWindow : CrossEngine.Display.Window
     {
+        private bool _vsync;
+
         public override double Time => Glfw.Time;
         public override bool ShouldClose => Glfw.WindowShouldClose(Handle);
+        public override bool VSync
+        {
+            get => _vsync;
+            set
+            {
+                _vsync = value;
+                Glfw.SwapInterval(_vsync ? 1 : 0);
+            }
+        }
 
         internal WindowHandle Handle { get; private set; } = WindowHandle.None;
 
@@ -42,7 +53,7 @@ namespace CrossEngine.Platform.Windows
 
             SetupCallbacks();
 
-            Glfw.SwapInterval(0);
+            VSync = true;
         }
 
         protected internal override void DestroyWindow()

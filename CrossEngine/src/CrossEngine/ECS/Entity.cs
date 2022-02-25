@@ -11,10 +11,10 @@ namespace CrossEngine.ECS
     {
         public int Id { get; internal set; }
 
-        private List<Component> _components = new List<Component>();
+        private readonly List<Component> _components = new List<Component>();
+        private readonly List<Entity> _children = new List<Entity>();
 
         private Entity _parent;
-        private readonly List<Entity> _children = new List<Entity>();
         public Entity Parent
         {
             get => _parent;
@@ -35,13 +35,19 @@ namespace CrossEngine.ECS
                 OnParentChanged?.Invoke(this);
             }
         }
+
         public readonly ReadOnlyCollection<Entity> Children;
+        public readonly ReadOnlyCollection<Component> Components;
+        
         public event Action<Entity> OnParentChanged;
         public event Action<Entity, Entity> OnChildAdded;
         public event Action<Entity, Entity> OnChildRemoved;
+        public event Action<Entity, Component> OnComponentAdded;
+        public event Action<Entity, Component> OnComponentRemoved;
 
         public Entity()
         {
+            Components = _components.AsReadOnly();
             Children = _children.AsReadOnly();
         }
 
@@ -52,6 +58,8 @@ namespace CrossEngine.ECS
             component.Entity = this;
 
             component.Attach();
+
+            OnComponentAdded?.Invoke(this, component);
 
             return component;
         }
@@ -71,6 +79,8 @@ namespace CrossEngine.ECS
         #region Remove
         public void RemoveComponent(Component component)
         {
+            OnComponentRemoved?.Invoke(this, component);
+
             component.Detach();
 
             component.Entity = null;
@@ -104,6 +114,19 @@ namespace CrossEngine.ECS
                 }
             }
             return null;
+        }
+
+        public T[] GetAllComponents<T>() where T : Component
+        {
+            List<T> found = new List<T>();
+            for (int i = 0; i < _components.Count; i++)
+            {
+                if (_components[i] is T)
+                {
+                    found.Add((T)_components[i]);
+                }
+            }
+            return found.ToArray();
         }
 
         public bool TryGetComponent<T>(out T component) where T : Component

@@ -1,8 +1,8 @@
-﻿//#define BULLET_SINGLE_PRECISION
+﻿#define BULLET_SINGLE_PRECISION
 
 using System.Runtime.CompilerServices;
 
-namespace CrossEngine.Utils
+namespace CrossEngine.Utils.Bullet
 {
     public static class BulletMathConversion
     {

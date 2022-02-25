@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngine", "CrossEngine\CrossEngine.csproj", "{628A44C5-59D0-41B1-8B13-4547F9DB8023}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "Sandbox\Sandbox.csproj", "{7AD8E82C-FB93-4983-8367-694E63577360}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngine-Sandbox", "CrossEngine-Sandbox\CrossEngine-Sandbox.csproj", "{7AD8E82C-FB93-4983-8367-694E63577360}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngine-Editor", "CrossEngine-Editor\CrossEngine-Editor.csproj", "{D6CB77AE-1080-4D2F-B540-1BEF0FBCF655}"
 EndProject

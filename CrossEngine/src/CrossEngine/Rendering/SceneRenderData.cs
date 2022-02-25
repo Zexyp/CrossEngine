@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
+
+using CrossEngine.Rendering.Cameras;
 
 namespace CrossEngine.Rendering
 {
@@ -14,6 +17,7 @@ namespace CrossEngine.Rendering
 
     public class SceneLayerRenderData
     {
-        public Dictionary<Renderable, List<IObjectRenderData>> Objects = new Dictionary<Renderable, List<IObjectRenderData>>();
+        public Matrix4x4 ProjectionViewMatrix = Matrix4x4.Identity;
+        public List<(IRenderable Renderable, IList Objects)> Data = new List<(IRenderable, IList)>();
     }
 }

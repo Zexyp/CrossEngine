@@ -2,10 +2,10 @@
 {
     public static class Time
     {
-        public static double TimeScale { get; private set; } = 1;
+        public static double TimeScale { get; set; } = 1;
         public static double DeltaTime { get; private set; }
         public static double UnscaledDeltaTime { get; private set; }
-        public static double FixedDeltaTime { get; private set; } = 1d / 60;
+        public static double FixedDeltaTime { get; set; } = 1d / 15;
         public static double ElapsedTime { get; private set; }
 
         // TODO: consider usefulness

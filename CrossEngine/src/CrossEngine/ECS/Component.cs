@@ -9,6 +9,26 @@ namespace CrossEngine.ECS
     public abstract class Component
     {
         public Entity Entity { get; internal set; }
+        private bool _enabled = true;
+        public bool Enabled
+        {
+            get => _enabled;
+            set
+            {
+                if (value == _enabled) return;
+
+                _enabled = value;
+
+                if (_enabled) Enable();
+                else Disable();
+
+                OnEnabledChanged?.Invoke(this);
+            }
+        }
+        public event Action<Component> OnEnabledChanged;
+
+        public virtual void Enable() { }
+        public virtual void Disable() { }
 
         public virtual void Attach() { }
         public virtual void Detach() { }
@@ -16,8 +36,20 @@ namespace CrossEngine.ECS
         public virtual void Update() { }
     }
 
-    class AllowSingleComponentAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    class AllowSingleComponentPerEntityAttribute : Attribute
     {
 
+    }
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class RequireComponentAttribute : Attribute
+    {
+        public readonly Type RequiredComponentType;
+        public RequireComponentAttribute(Type componentType)
+        {
+            if (!componentType.IsSubclassOf(typeof(Component))) throw new InvalidOperationException($"Given type '{componentType.Name}' is not '{nameof(Component)}'.");
+            RequiredComponentType = componentType;
+        }
     }
 }

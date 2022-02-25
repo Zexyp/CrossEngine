@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Diagnostics;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
@@ -102,14 +103,14 @@ namespace CrossEngine
                     for (int layerIndex = 0; layerIndex < sceneData.Layers.Count; layerIndex++)
                     {
                         SceneLayerRenderData layerData = sceneData.Layers[layerIndex];
-                        foreach (KeyValuePair<Renderable, List<IObjectRenderData>> item in layerData.Objects)
+                        foreach ((IRenderable Renderable, IList Objects) item in layerData.Data)
                         {
-                            var rndbl = item.Key;
-                            var objs = item.Value;
-                            rndbl.Begin();
+                            var rndbl = item.Renderable;
+                            var objs = item.Objects;
+                            rndbl.Begin(layerData.ProjectionViewMatrix);
                             for (int objectIndex = 0; objectIndex < objs.Count; objectIndex++)
                             {
-                                rndbl.Submit(objs[objectIndex]);
+                                rndbl.Submit((IObjectRenderData)objs[objectIndex]);
                             }
                             rndbl.End();
                         }
@@ -128,6 +129,8 @@ namespace CrossEngine
 
         public void SubmitData(SceneRenderData data)
         {
+            Debug.Assert(data != null);
+
             Profiler.Function();
 
             _renderData.Enqueue(data);

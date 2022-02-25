@@ -421,6 +421,48 @@ namespace CrossEngine.Rendering
             data.quads.Stats.ItemCount++;
         }
 
+        public static unsafe void DrawTexturedQuad(Matrix4x4 transform, Ref<Texture> texture, Vector4 tintColor, Vector4 texOffsets, int entityId = 0)
+        {
+            if (data.quads.IndexCount >= Renderer2DData.MaxQuadIndices)
+                NextQuadsBatch();
+
+            float textureIndex = 0.0f;
+            for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
+            {
+                if (((Texture)data.quads.TextureSlots[i]) == ((Texture)texture))
+                {
+                    textureIndex = i;
+                    break;
+                }
+            }
+
+            if (textureIndex == 0.0f)
+            {
+                if (data.quads.TextureSlotIndex >= Renderer2DData.MaxTextureSlots)
+                    NextQuadsBatch();
+
+                textureIndex = data.quads.TextureSlotIndex;
+                data.quads.TextureSlots[data.quads.TextureSlotIndex] = texture;
+                data.quads.TextureSlotIndex++;
+            }
+
+            Vector2 texOff = new Vector2(texOffsets.X, texOffsets.Y);
+            Vector2 texMult = new Vector2(texOffsets.Z, texOffsets.W);
+            for (uint i = 0; i < quadVertexPositions.Length; i++)
+            {
+                data.quads.VertexBufferPtr->position = Vector3.Transform(quadVertexPositions[i], transform);
+                data.quads.VertexBufferPtr->color = tintColor;
+                data.quads.VertexBufferPtr->texCoord = quadTextureCoords[i] * texMult + texOff;
+                data.quads.VertexBufferPtr->texIndex = textureIndex;
+                data.quads.VertexBufferPtr->entityId = entityId;
+                data.quads.VertexBufferPtr++;
+            }
+
+            data.quads.IndexCount += 6;
+
+            data.quads.Stats.ItemCount++;
+        }
+
         public static unsafe void DrawTri(Vector3 p1, Vector3 p2, Vector3 p3, Vector4 color, int entityID = 0)
         {
             if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
@@ -474,6 +516,50 @@ namespace CrossEngine.Rendering
             {
                 data.tris.VertexBufferPtr->color = tintColor;
                 data.tris.VertexBufferPtr->texCoord = triTextureCoords[i];
+                data.tris.VertexBufferPtr->texIndex = textureIndex;
+                data.tris.VertexBufferPtr->entityId = entityId;
+                data.tris.VertexBufferPtr++;
+            }
+
+            data.tris.IndexCount += 3;
+
+            data.tris.Stats.ItemCount++;
+        }
+
+        public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, Ref<Texture> texture, Vector4 tintColor, Vector2 uv1, Vector2 uv2, Vector2 uv3, int entityId = 0)
+        {
+            if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
+                NextTrisBatch();
+
+            float textureIndex = 0.0f;
+            for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
+            {
+                if (((Texture)data.tris.TextureSlots[i]) == ((Texture)texture))
+                {
+                    textureIndex = i;
+                    break;
+                }
+            }
+
+            if (textureIndex == 0.0f)
+            {
+                if (data.tris.TextureSlotIndex >= Renderer2DData.MaxTextureSlots)
+                    NextTrisBatch();
+
+                textureIndex = data.tris.TextureSlotIndex;
+                data.tris.TextureSlots[data.tris.TextureSlotIndex] = texture;
+                data.tris.TextureSlotIndex++;
+            }
+
+            (data.tris.VertexBufferPtr + 0)->position = p1;
+            (data.tris.VertexBufferPtr + 1)->position = p2;
+            (data.tris.VertexBufferPtr + 2)->position = p3;
+            (data.tris.VertexBufferPtr + 0)->texCoord = uv1;
+            (data.tris.VertexBufferPtr + 1)->texCoord = uv2;
+            (data.tris.VertexBufferPtr + 2)->texCoord = uv3;
+            for (uint i = 0; i < 3; i++)
+            {
+                data.tris.VertexBufferPtr->color = tintColor;
                 data.tris.VertexBufferPtr->texIndex = textureIndex;
                 data.tris.VertexBufferPtr->entityId = entityId;
                 data.tris.VertexBufferPtr++;

@@ -11,10 +11,8 @@ using CrossEngine.ComponentSystems;
 
 namespace CrossEngine.Components
 {
-    using ECSComponent = Component;
-
-    [AllowSingleComponent]
-    public class TransformComponent : ECSComponent
+    [AllowSingleComponentPerEntity]
+    public class TransformComponent : Component
     {
         // TODO: consider adding rotation mode
 
@@ -244,7 +242,7 @@ namespace CrossEngine.Components
 
         public void SetTransformUseEuler(Matrix4x4 matrix)
         {
-            Matrix4x4Extension.SimpleDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, matrix);
+            Matrix4x4Extension.EulerDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, matrix);
 
             _position = translation;
             EulerAngles = rotation; // ! TODO: this causes two dirty updates

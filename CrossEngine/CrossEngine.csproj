@@ -49,16 +49,25 @@
 
   <ItemGroup>
     <Compile Remove="unused\**" />
+    <Compile Remove="vendor\BulletSharpPInvoke\BulletSharp\demos\**" />
+    <Compile Remove="vendor\BulletSharpPInvoke\BulletSharp\Properties\**" />
+    <Compile Remove="vendor\BulletSharpPInvoke\BulletSharp\test\**" />
     <Compile Remove="vendor\glfw-net\Examples\**" />
     <Compile Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
     <Compile Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
     <Compile Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram\**" />
     <EmbeddedResource Remove="unused\**" />
+    <EmbeddedResource Remove="vendor\BulletSharpPInvoke\BulletSharp\demos\**" />
+    <EmbeddedResource Remove="vendor\BulletSharpPInvoke\BulletSharp\Properties\**" />
+    <EmbeddedResource Remove="vendor\BulletSharpPInvoke\BulletSharp\test\**" />
     <EmbeddedResource Remove="vendor\glfw-net\Examples\**" />
     <EmbeddedResource Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
     <EmbeddedResource Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
     <EmbeddedResource Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram\**" />
     <None Remove="unused\**" />
+    <None Remove="vendor\BulletSharpPInvoke\BulletSharp\demos\**" />
+    <None Remove="vendor\BulletSharpPInvoke\BulletSharp\Properties\**" />
+    <None Remove="vendor\BulletSharpPInvoke\BulletSharp\test\**" />
     <None Remove="vendor\glfw-net\Examples\**" />
     <None Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
     <None Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
@@ -66,7 +75,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BulletSharp.x64" Version="0.12.0" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
   </ItemGroup>
@@ -99,10 +107,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>cimguizmo.dll</TargetPath>
     </ContentWithTargetPath>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="src\CrossEngine\ECS\Components\" />
-    <Folder Include="unused\" />
+    <ContentWithTargetPath Include="vendor\lib\bullet\libbulletc.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>libbulletc.dll</TargetPath>
+    </ContentWithTargetPath>
   </ItemGroup>
 </Project>

@@ -8,19 +8,16 @@ namespace CrossEngine.Utils
 {
     public class Ref<T>
     {
-        public T Value;
+        public T? Value;
 
-        public Ref(T value)
+        public Ref(T? value)
         {
             Value = value;
         }
 
-        public static explicit operator Ref<T>(T value) => new Ref<T>(value);
-        public static explicit operator T(Ref<T> value) => value.Value;
+        public static explicit operator Ref<T>(T? value) => new Ref<T>(value);
+        public static explicit operator T?(Ref<T> value) => value.Value;
 
-        [Obsolete("Consider comparing actual values")]
-        public static bool operator ==(Ref<T> left, Ref<T> right) => left == right;
-        [Obsolete("Consider comparing actual values")]
-        public static bool operator !=(Ref<T> left, Ref<T> right) => left != right;
+        public static bool IsNull<T>(Ref<T> value) => value == null || value.Value == null;
     }
 }

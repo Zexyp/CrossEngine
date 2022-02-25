@@ -42,7 +42,7 @@ namespace CrossEngine.Display
 
         public abstract double Time { get; }
         public abstract bool ShouldClose { get; }
-
+        public abstract bool VSync { get; set; }
 
 
         //public abstract void SetIcon(System.Drawing.Image image);
