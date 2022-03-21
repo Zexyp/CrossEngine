@@ -47,7 +47,7 @@ namespace CrossEngine.Scenes
 
             _ecsWorld.RegisterSystem(new ScriptableSystem());
             _ecsWorld.RegisterSystem(new SpriteRendererSystem(_worldLayer));
-            _ecsWorld.RegisterSystem(new PhysicsSysten());
+            _ecsWorld.RegisterSystem(new PhysicsSysten(_worldLayer));
             _ecsWorld.RegisterSystem(new TransformSystem());
             _ecsWorld.RegisterSystem(new RendererSystem());
 

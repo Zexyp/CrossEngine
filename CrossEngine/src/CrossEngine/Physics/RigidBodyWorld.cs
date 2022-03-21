@@ -14,7 +14,7 @@ namespace CrossEngine.Physics
     using Vector3 = System.Numerics.Vector3;
     using Vector4 = System.Numerics.Vector4;
 
-    class RigidBodyWorld : IDisposable
+    class RigidBodyWorld : IDisposable, IObjectRenderData
     {
         CollisionConfiguration _collisionConfiguration;
         CollisionDispatcher _dispatcher;

@@ -32,6 +32,16 @@ namespace CrossEngine.Components
             }
         }
 
+        public CameraComponent()
+        {
+
+        }
+
+        public CameraComponent(Camera camera)
+        {
+            Camera = camera;
+        }
+
         public override void Attach()
         {
             RendererSystem.Instance.RegisterCamera(this);

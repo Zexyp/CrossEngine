@@ -8,27 +8,15 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Numerics;
 
-using CrossEngine.Entities;
-using CrossEngine.Entities.Components;
+using CrossEngine.ECS;
 using CrossEngine.Utils.Editor;
-using CrossEngine.Assets;
 
 using CrossEngineEditor.Utils;
 
 namespace CrossEngineEditor.Panels
 {
-    class InspectorPanel : EditorPanel
+    public class InspectorPanel : EditorPanel
     {
-        //static readonly List<Type> ComponentTypes = new List<Type>()
-        //{
-        //    typeof(TransformComponent),
-        //    typeof(TagComponent),
-        //    typeof(SpriteRendererComponent),
-        //    typeof(CameraComponent),
-        //    typeof(RigidBodyComponent),
-        //    typeof(Box2DColliderComponent),
-        //};
-
         public InspectorPanel() : base("Inspector")
         {
             WindowFlags = ImGuiWindowFlags.MenuBar;
@@ -40,26 +28,26 @@ namespace CrossEngineEditor.Panels
             {
                 if (ImGui.BeginMenu("Edit", Context.ActiveEntity != null))
                 {
-                    if (ImGui.BeginMenu("Add Component"))
-                    {
-                        for (int i = 0; i < EditorLayer.Instance.CoreComponentTypes.Length; i++)
-                        {
-                            if (ImGui.MenuItem(EditorLayer.Instance.CoreComponentTypes[i].Name))
-                            {
-                                Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.CoreComponentTypes[i]));
-                            }
-                        }
-                        ImGui.Separator();
-                        for (int i = 0; i < EditorLayer.Instance.ComponentTypeRegistry.Count; i++)
-                        {
-                            if (ImGui.MenuItem(EditorLayer.Instance.ComponentTypeRegistry[i].Name))
-                            {
-                                Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.ComponentTypeRegistry[i]));
-                            }
-                        }
-                        ImGui.EndMenu();
-                    }
-                    ImGui.Separator();
+                    //if (ImGui.BeginMenu("Add Component"))
+                    //{
+                    //    for (int i = 0; i < EditorLayer.Instance.CoreComponentTypes.Length; i++)
+                    //    {
+                    //        if (ImGui.MenuItem(EditorLayer.Instance.CoreComponentTypes[i].Name))
+                    //        {
+                    //            Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.CoreComponentTypes[i]));
+                    //        }
+                    //    }
+                    //    ImGui.Separator();
+                    //    for (int i = 0; i < EditorLayer.Instance.ComponentTypeRegistry.Count; i++)
+                    //    {
+                    //        if (ImGui.MenuItem(EditorLayer.Instance.ComponentTypeRegistry[i].Name))
+                    //        {
+                    //            Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.ComponentTypeRegistry[i]));
+                    //        }
+                    //    }
+                    //    ImGui.EndMenu();
+                    //}
+                    //ImGui.Separator();
                     if (ImGui.BeginMenu("Remove Component"))
                     {
                         var components = Context.ActiveEntity.Components;
@@ -87,9 +75,9 @@ namespace CrossEngineEditor.Panels
         private void DrawComponents(Entity context)
         {
             // TODO: fix
-            bool entityEnabled = context.Enabled;
-            if (ImGui.Checkbox("Enabled", ref entityEnabled)) 
-                context.Enabled = entityEnabled;
+            //bool entityEnabled = context.Enabled;
+            //if (ImGui.Checkbox("Enabled", ref entityEnabled)) 
+            //    context.Enabled = entityEnabled;
 
             var components = context.Components;
 
@@ -103,12 +91,13 @@ namespace CrossEngineEditor.Panels
 
                 ImGui.PushID(componentType.Name + compi);
 
-                bool valcol = !component.Valid;
-                if (valcol)
-                {
-                    ImGui.PushStyleColor(ImGuiCol.Header, new Vector4(0.412f, 0.118f, 0.118f, 1.0f));
-                    ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.729f, 0.208f, 0.208f, 1.0f));
-                }
+                // validity indication
+                //bool valcol = !component.Valid;
+                //if (valcol)
+                //{
+                //    ImGui.PushStyleColor(ImGuiCol.Header, new Vector4(0.412f, 0.118f, 0.118f, 1.0f));
+                //    ImGui.PushStyleColor(ImGuiCol.HeaderHovered, new Vector4(0.729f, 0.208f, 0.208f, 1.0f));
+                //}
 
                 // item shifting drop
                 unsafe
@@ -126,9 +115,9 @@ namespace CrossEngineEditor.Panels
                         var payload = ImGui.AcceptDragDropPayload("_COMPONENT");
                         if (payload.NativePtr != null && selectedDragNDropComponent != null)
                         {
-                            int tci = Context.ActiveEntity.GetComponentIndex(targetedComponent);
-                            if (tci > Context.ActiveEntity.GetComponentIndex(selectedDragNDropComponent)) tci--;
-                            Context.ActiveEntity.ShiftComponent(selectedDragNDropComponent, tci);
+                            int tci = context.GetComponentIndex(targetedComponent);
+                            if (tci > context.GetComponentIndex(selectedDragNDropComponent)) tci--;
+                            context.ShiftComponent(selectedDragNDropComponent, tci);
 
                             selectedDragNDropComponent = null;
                             targetedComponent = null;
@@ -173,7 +162,7 @@ namespace CrossEngineEditor.Panels
                         ImGui.Separator();
                         if (ImGui.MenuItem("Remove"))
                         {
-                            Context.ActiveEntity.RemoveComponent(component);
+                            context.RemoveComponent(component);
                         }
 
                         ImGui.EndPopup();
@@ -212,13 +201,13 @@ namespace CrossEngineEditor.Panels
                     ImGuiUtils.EndGroupFrame();
                 }
 
-                if (valcol) ImGui.PopStyleColor(2);
+                //if (valcol) ImGui.PopStyleColor(2);
 
                 ImGui.PopID();
 
                 if (!stay)
                 {
-                    Context.ActiveEntity.RemoveComponent(component);
+                    context.RemoveComponent(component);
                 }
             }
         }

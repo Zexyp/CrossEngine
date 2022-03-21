@@ -8,7 +8,6 @@ using System.Numerics;
 using System.Reflection;
 
 using CrossEngine.Utils.Editor;
-using CrossEngine.Assets;
 
 using CrossEngineEditor.Utils;
 
@@ -17,8 +16,236 @@ namespace CrossEngineEditor.Utils
     public class PropertyDrawer
     {
         delegate bool EditorValueRepresentationFunction(EditorValueAttribute attribute, string name, ref object value);
-        static readonly Dictionary<Type, EditorValueRepresentationFunction> AttributeHandlers = new Dictionary<Type, EditorValueRepresentationFunction>
+        delegate bool EditorValueFunction(string name, ref object value);
+        delegate bool EditorRangeFunction(IRangeValue range, string name, ref object value);
+        delegate bool EditorDragFunction(ISteppedRangeValue range, string name, ref object value);
+        delegate bool EditorSliderFunction(IRangeValue range, string name, ref object value);
+
+        private static void PrintInvalidUI(string name)
         {
+            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, 0, 0, 1));
+            ImGui.Text($"{name} invalid UI");
+            ImGui.PopStyleColor();
+        }
+
+        static readonly Dictionary<Type, EditorValueFunction> ValueHandlers = new Dictionary<Type, EditorValueFunction>()
+        {
+            { typeof(int), (string name, ref object value) => {
+                int v = (int)value;
+                bool success;
+                success = ImGui.InputInt(name, ref v);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(float), (string name, ref object value) => {
+                float v = (float)value;
+                bool success;
+                success = ImGui.InputFloat(name, ref v);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector2), (string name, ref object value) => {
+                Vector2 v = (Vector2)value;
+                bool success;
+                success = ImGui.InputFloat2(name, ref v);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector3), (string name, ref object value) => {
+                Vector3 v = (Vector3)value;
+                bool success;
+                success = ImGui.InputFloat3(name, ref v);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector4), (string name, ref object value) => {
+                Vector4 v = (Vector4)value;
+                bool success;
+                success = ImGui.InputFloat4(name, ref v);
+                if (success) value = v;
+                return success;
+            } },
+        };
+        static readonly Dictionary<Type, EditorRangeFunction> RangeHandlers = new Dictionary<Type, EditorRangeFunction>()
+        {
+            { typeof(int), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<int>)range;
+                int v = (int)value;
+                bool success;
+                success = ImGui.InputInt(name, ref v);
+                if (success) value = Math.Clamp(v, crange.Min, crange.Max);
+                return success;
+            } },
+            { typeof(float), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<float>)range;
+                float v = (float)value;
+                bool success;
+                success = ImGui.InputFloat(name, ref v);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector2), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<float>)range;
+                Vector2 v = (Vector2)value;
+                bool success;
+                success = ImGui.InputFloat2(name, ref v);
+                if (success) value = Vector2.Clamp(v, new Vector2(crange.Min), new Vector2(crange.Max));
+                return success;
+            } },
+            { typeof(Vector3), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<float>)range;
+                Vector3 v = (Vector3)value;
+                bool success;
+                success = ImGui.InputFloat3(name, ref v);
+                if (success) value = Vector3.Clamp(v, new Vector3(crange.Min), new Vector3(crange.Max));
+                return success;
+            } },
+            { typeof(Vector4), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<float>)range;
+                Vector4 v = (Vector4)value;
+                bool success;
+                success = ImGui.InputFloat4(name, ref v);
+                if (success) value = Vector4.Clamp(v, new Vector4(crange.Min), new Vector4(crange.Max));
+                return success;
+            } },
+        };
+        static readonly Dictionary<Type, EditorSliderFunction> SliderHandlers = new Dictionary<Type, EditorSliderFunction>()
+        {
+            { typeof(int), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<int>)range;
+                int v = (int)value;
+                bool success;
+                success = ImGui.SliderInt(name, ref v, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(float), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<float>)range;
+                float v = (float)value;
+                bool success;
+                success = ImGui.SliderFloat(name, ref v, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector2), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<float>)range;
+                Vector2 v = (Vector2)value;
+                bool success;
+                success = ImGui.SliderFloat2(name, ref v, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector3), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<float>)range;
+                Vector3 v = (Vector3)value;
+                bool success;
+                success = ImGui.SliderFloat3(name, ref v, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector4), (IRangeValue range, string name, ref object value) => {
+                var crange = (IRangeValue<float>)range;
+                Vector4 v = (Vector4)value;
+                bool success;
+                success = ImGui.SliderFloat4(name, ref v, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+        };
+        static readonly Dictionary<Type, EditorDragFunction> DragHandlers = new Dictionary<Type, EditorDragFunction>()
+        {
+            { typeof(int), (ISteppedRangeValue range, string name, ref object value) => {
+                var crange = (ISteppedRangeValue<int>)range;
+                int v = (int)value;
+                bool success;
+                success = ImGui.DragInt(name, ref v, crange.Step, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(float), (ISteppedRangeValue range, string name, ref object value) => {
+                var crange = (ISteppedRangeValue<float>)range;
+                float v = (float)value;
+                bool success;
+                success = ImGui.DragFloat(name, ref v, crange.Step, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector2), (ISteppedRangeValue range, string name, ref object value) => {
+                var crange = (ISteppedRangeValue<float>)range;
+                Vector2 v = (Vector2)value;
+                bool success;
+                success = ImGui.DragFloat2(name, ref v, crange.Step, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector3), (ISteppedRangeValue range, string name, ref object value) => {
+                var crange = (ISteppedRangeValue<float>)range;
+                Vector3 v = (Vector3)value;
+                bool success;
+                success = ImGui.DragFloat3(name, ref v, crange.Step, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+            { typeof(Vector4), (ISteppedRangeValue range, string name, ref object value) => {
+                var crange = (ISteppedRangeValue<float>)range;
+                Vector4 v = (Vector4)value;
+                bool success;
+                success = ImGui.DragFloat4(name, ref v, crange.Step, crange.Min, crange.Max);
+                if (success) value = v;
+                return success;
+            } },
+        };
+
+
+
+        static readonly Dictionary<Type, EditorValueRepresentationFunction> AttributeHandlers = new Dictionary<Type, EditorValueRepresentationFunction>()
+        {
+            { typeof(EditorValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                if (ValueHandlers.ContainsKey(value.GetType()))
+                    return ValueHandlers[value.GetType()](name, ref value);
+                else
+                {
+                    PrintInvalidUI(name);
+                    return false;
+                }
+            } },
+            { typeof(EditorRangeAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                var cattribt = (EditorRangeAttribute)attribute;
+                if (RangeHandlers.ContainsKey(value.GetType()))
+                    return RangeHandlers[value.GetType()](cattribt, name, ref value);
+                else
+                {
+                    PrintInvalidUI(name);
+                    return false;
+                }
+            } },
+            { typeof(EditorSliderAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                var cattribt = (EditorSliderAttribute)attribute;
+                if (SliderHandlers.ContainsKey(value.GetType()))
+                    return SliderHandlers[value.GetType()](cattribt, name, ref value);
+                else
+                {
+                    PrintInvalidUI(name);
+                    return false;
+                }
+            } },
+            { typeof(EditorDragAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                var cattribt = (EditorDragAttribute)attribute;
+                if (DragHandlers.ContainsKey(value.GetType()))
+                    return DragHandlers[value.GetType()](cattribt, name, ref value);
+                else
+                {
+                    PrintInvalidUI(name);
+                    return false;
+                }
+            } },
+            { typeof(EditorSectionAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                ImGui.Text(attribute.Name);
+                ImGui.SameLine();
+                ImGui.Separator();
+                return false;
+            } },
+
             #region Primitives
             #region Number
             { typeof(EditorInt32ValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
@@ -184,7 +411,7 @@ namespace CrossEngineEditor.Utils
                 return success;
             } },
             #endregion
-
+            /*
             { typeof(EditorEnumValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 var cattribt = (EditorEnumValueAttribute)attribute;
                 bool success;
@@ -271,12 +498,12 @@ namespace CrossEngineEditor.Utils
                 ImGuiUtils.EndGroupFrame();
                 return false;
             } },
+            */
         };
 
         public static void DrawEditorValue(FieldInfo fieldInfo, object target)
         {
-            EditorValueAttribute attrib = fieldInfo.GetCustomAttribute<EditorValueAttribute>(true);
-            if (attrib != null)
+            foreach (var attrib in fieldInfo.GetCustomAttributes<EditorValueAttribute>(true))
             {
                 Type attribType = attrib.GetType();
                 if (AttributeHandlers.ContainsKey(attribType))
@@ -285,14 +512,16 @@ namespace CrossEngineEditor.Utils
                     if (AttributeHandlers[attribType](attrib, (attrib.Name != null) ? attrib.Name : fieldInfo.Name, ref value))
                         fieldInfo.SetValue(target, value);
                 }
-                else ImGui.Text(fieldInfo.Name);
+                else
+                {
+                    PrintInvalidUI((attrib.Name != null) ? attrib.Name : fieldInfo.Name);
+                }
             }
         }
 
         public static void DrawEditorValue(PropertyInfo propertyInfo, object target)
         {
-            EditorValueAttribute attrib = propertyInfo.GetCustomAttribute<EditorValueAttribute>(true);
-            if (attrib != null)
+            foreach (var attrib in propertyInfo.GetCustomAttributes<EditorValueAttribute>(true))
             {
                 Type attribType = attrib.GetType();
                 if (AttributeHandlers.ContainsKey(attribType))
@@ -301,7 +530,10 @@ namespace CrossEngineEditor.Utils
                     if (AttributeHandlers[attribType](attrib, (attrib.Name != null) ? attrib.Name : propertyInfo.Name, ref value))
                         propertyInfo.SetValue(target, value);
                 }
-                else ImGui.Text(propertyInfo.Name);
+                else
+                {
+                    PrintInvalidUI((attrib.Name != null) ? attrib.Name : propertyInfo.Name);
+                }
             }
         }
 

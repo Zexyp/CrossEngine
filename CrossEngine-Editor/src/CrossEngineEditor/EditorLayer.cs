@@ -11,8 +11,7 @@ using System.Threading;
 using System.Globalization;
 
 using CrossEngine;
-using CrossEngine.Entities;
-using CrossEngine.Entities.Components;
+using CrossEngine.ECS;
 using CrossEngine.Events;
 using CrossEngine.Layers;
 using CrossEngine.Logging;
@@ -20,12 +19,12 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
-using CrossEngine.Assets;
 using CrossEngine.Physics;
-using CrossEngine.Serialization;
+//using CrossEngine.Serialization;
 using CrossEngine.Profiling;
-using CrossEngine.Assemblies;
+//using CrossEngine.Assemblies;
 using CrossEngine.Inputs;
+using CrossEngine.Components;
 
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Panels;
@@ -71,8 +70,9 @@ namespace CrossEngineEditor
             {
                 _savePath = value;
 
-                if (_savePath == null) Application.Instance.Window.Title = "CrossEngine Editor";
-                else Application.Instance.Window.Title = $"CrossEngine Editor [{_savePath}]";
+                var window = Application.Instance.GetWindow();
+                if (_savePath == null) window.Title = "CrossEngine Editor";
+                else window.Title = $"CrossEngine Editor [{_savePath}]";
             }
         }
 
@@ -170,14 +170,14 @@ namespace CrossEngineEditor
                 if (i == 0)
                 {
                     Entity okl = Context.Scene.CreateEntity();
-                    okl.Transform.WorldPosition = new Vector3(i, 0, 0);
+                    okl.GetComponent<TransformComponent>().WorldPosition = new Vector3(i, 0, 0);
                     okl.AddComponent(new TagComponent("Main"));
                     okl.AddComponent(new SpriteRendererComponent() { Color = new Vector4(0, 1, 0, 1)});
                     okl.AddComponent(new CameraComponent(new OrthographicCamera() { OrthographicSize = 10 }));
                     continue;
                 }
                 Entity ent = Context.Scene.CreateEntity();
-                ent.Transform.WorldPosition = new Vector3(i, 0, 0);
+                ent.GetComponent<TransformComponent>().WorldPosition = new Vector3(i, 0, 0);
                 ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
                 ent.AddComponent(new TagComponent("asd" + i));
                 ent.AddComponent(new RigidBodyComponent() { LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
@@ -185,8 +185,8 @@ namespace CrossEngineEditor
             }
             
             Entity ground = Context.Scene.CreateEntity();
-            ground.Transform.Scale = new Vector3(10, 1, 1);
-            ground.Transform.Position = new Vector3(0, -5, 0);
+            ground.GetComponent<TransformComponent>().Scale = new Vector3(10, 1, 1);
+            ground.GetComponent<TransformComponent>().Position = new Vector3(0, -5, 0);
             ground.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
             ground.AddComponent(new RigidBodyComponent() { Mass = 0, Static = true, LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
             ground.AddComponent(new Box2DColliderComponent());
@@ -197,8 +197,6 @@ namespace CrossEngineEditor
             //Log.App.Debug(json);
             //CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
             //Scene = (Scene)deserializer.Deserialize(json, typeof(Scene));
-            
-            Application.Instance.Window.SetVSync(false);
             
             // ---
         }
@@ -217,8 +215,6 @@ namespace CrossEngineEditor
         public unsafe override void OnRender()
         {
             Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.OnRender)}");
-
-            Renderer.Clear();
 
             ImGuiLayer.Instance.Begin();
 

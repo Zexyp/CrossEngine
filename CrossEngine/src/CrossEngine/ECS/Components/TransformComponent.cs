@@ -42,7 +42,7 @@ namespace CrossEngine.Components
         public event Action<TransformComponent> OnTransformChanged;
 
         #region Properties
-        [EditorVector3Value]
+        [EditorDrag]
         public Vector3 Position
         {
             get
@@ -74,7 +74,7 @@ namespace CrossEngine.Components
                 }
             }
         }
-        [EditorVector3Value]
+        [EditorDrag]
         public Vector3 EulerAngles
         {
             get
@@ -91,7 +91,7 @@ namespace CrossEngine.Components
                 }
             }
         }
-        [EditorVector3Value]
+        [EditorDrag]
         public Vector3 Scale
         {
             get

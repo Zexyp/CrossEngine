@@ -280,7 +280,7 @@ namespace CrossEngine.Utils
 
         #region OpenGL3
         static uint glVersion = 0;
-        static string glslVersionString = "                                ";
+        static string glslVersionString = new string(' ', 32);
         //static bool hasClipOrigin;
 
         static uint shaderHandle;

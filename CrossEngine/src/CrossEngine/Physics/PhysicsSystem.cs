@@ -260,6 +260,7 @@ namespace CrossEngine.ComponentSystems
                         _body.UpdateInertiaTensor();
                     }
 
+                    // change of static state
                     if ((_dirtyProperties | RigidBodyPropertyFlags.Static) != 0)
                     {
                         if (!_rigidBody.Static)
@@ -273,7 +274,7 @@ namespace CrossEngine.ComponentSystems
                             _body.AngularFactor =  _rigidBody.AngularFactor.ToBullet();
                             _body.UpdateInertiaTensor();
                             _body.ClearForces();
-                            //_body.WorldTransform = _transform.WorldTransformMatrix;
+                            _body.WorldTransform = _transform.WorldTransformMatrix.ToBullet();
 
                             PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
                         }
@@ -292,7 +293,7 @@ namespace CrossEngine.ComponentSystems
                             _body.AngularVelocity = BulletVector3.Zero;
                             _body.ClearForces();
                             _body.ActivationState = ActivationState.WantsDeactivation;
-                            //_body.WorldTransform = _transform.WorldTransformMatrix;
+                            _body.WorldTransform = _transform.WorldTransformMatrix.ToBullet();
 
                             PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
                         }
@@ -363,11 +364,37 @@ namespace CrossEngine.ComponentSystems
 
         RigidBodyWorld rigidBodyWorld;
 
-        public PhysicsSysten()
+        class RigidBodyWorldDebugRenderable : Renderable<RigidBodyWorld>
+        {
+            // TODO: add drawer context
+
+            public override void Begin(Matrix4x4 viewProjectionMatrix)
+            {
+                LineRenderer.BeginScene(viewProjectionMatrix);
+            }
+
+            public override void End()
+            {
+                LineRenderer.EndScene();
+            }
+
+            public override void Submit(RigidBodyWorld data)
+            {
+                for (int i = 0; i < data.World.CollisionObjectArray.Count; i++)
+                {
+                    data.World.DebugDrawObject(data.World.CollisionObjectArray[i].WorldTransform, data.World.CollisionObjectArray[i].CollisionShape, new Vector3(0, 1, 1).ToBullet());
+                }
+            }
+        }
+        List<RigidBodyWorld> _debugDrawData = new List<RigidBodyWorld>();
+
+        public PhysicsSysten(SceneLayerRenderData sceneLayerRenderData)
         {
             Debug.Assert(Instance == null);
 
             Instance = this;
+
+            sceneLayerRenderData.Data.Add((new RigidBodyWorldDebugRenderable(), _debugDrawData));
         }
 
         public void Init()
@@ -375,6 +402,8 @@ namespace CrossEngine.ComponentSystems
             rigidBodyWorld = new RigidBodyWorld();
 
             Physics.Physics.SetContext(rigidBodyWorld);
+
+            _debugDrawData.Add(rigidBodyWorld);
 
             foreach (var item in _pairs)
             {
@@ -388,6 +417,8 @@ namespace CrossEngine.ComponentSystems
             {
                 item.Value.Deactivate();
             }
+
+            _debugDrawData.Remove(rigidBodyWorld);
 
             rigidBodyWorld.Dispose();
 

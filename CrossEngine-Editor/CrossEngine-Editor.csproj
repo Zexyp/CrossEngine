@@ -31,6 +31,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="src\CrossEngineEditor\EditorContext.cs" />
+    <Compile Include="src\CrossEngineEditor\EditorPanel.cs" />
+    <Compile Include="src\CrossEngineEditor\Panels\InspectorPanel.cs" />
+    <Compile Include="src\CrossEngineEditor\Utils\ImGuiUtils.cs" />
+    <Compile Include="src\CrossEngineEditor\Utils\PropertyDrawer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
   </ItemGroup>
 

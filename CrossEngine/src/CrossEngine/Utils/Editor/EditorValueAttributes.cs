@@ -5,6 +5,92 @@ using System.Numerics;
 
 namespace CrossEngine.Utils.Editor
 {
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorValueAttribute : Attribute
+    {
+        public string? Name = null;
+
+        public EditorValueAttribute()
+        {
+
+        }
+
+        public EditorValueAttribute(string? name)
+        {
+            Name = name;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorSectionAttribute : EditorValueAttribute
+    {
+        public EditorSectionAttribute(string name)
+        {
+            Name = name;
+        }
+    }
+
+    public interface IRangeValue
+    {
+
+    }
+
+    public interface IRangeValue<T> : IRangeValue where T : IComparable<T>, IComparable
+    {
+        public T Min { get; set; }
+        public T Max { get; set; }
+    }
+
+    public interface ISteppedRangeValue
+    {
+
+    }
+
+    public interface ISteppedRangeValue<TRange> : ISteppedRangeValue, IRangeValue<TRange> where TRange : IComparable<TRange>, IComparable
+    {
+        public float Step { get; set; }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorRangeAttribute : EditorValueAttribute, IRangeValue<float>
+    {
+        public float Min { get; set; } = float.MinValue;
+        public float Max { get; set; } = float.MaxValue;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorIntRangeAttribute : EditorValueAttribute, IRangeValue<int>
+    {
+        public int Min { get; set; } = int.MinValue;
+        public int Max { get; set; } = int.MaxValue;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorDragAttribute : EditorRangeAttribute, ISteppedRangeValue<float>
+    {
+        public float Step { get; set; } = 0.1f;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorSliderAttribute : EditorRangeAttribute, IRangeValue<float>
+    {
+        //public float Step { get; set; } = 0.1f;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorIntDragAttribute : EditorIntRangeAttribute, ISteppedRangeValue<int>
+    {
+        public float Step { get; set; } = 0.1f;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorIntSliderAttribute : EditorIntRangeAttribute, IRangeValue<int>
+    {
+        //public int Step { get; set; } = 1;
+    }
+
+
+
     public enum NumberInputType
     {
         Drag,
@@ -16,22 +102,6 @@ namespace CrossEngine.Utils.Editor
     public class EditorDrawableAttribute : Attribute
     {
 
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorValueAttribute : Attribute
-    {
-        public string Name = null;
-
-        public EditorValueAttribute()
-        {
-
-        }
-
-        public EditorValueAttribute(string name)
-        {
-            Name = name;
-        }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -136,6 +206,8 @@ namespace CrossEngine.Utils.Editor
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorColor3ValueAttribute : EditorValueAttribute
     {
+        public bool HDR = true;
+
         public EditorColor3ValueAttribute() { }
         public EditorColor3ValueAttribute(string name) : base(name) { }
     }
@@ -143,6 +215,8 @@ namespace CrossEngine.Utils.Editor
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorColor4ValueAttribute : EditorValueAttribute
     {
+        public bool HDR = true;
+
         public EditorColor4ValueAttribute() { }
         public EditorColor4ValueAttribute(string name) : base(name) { }
     }

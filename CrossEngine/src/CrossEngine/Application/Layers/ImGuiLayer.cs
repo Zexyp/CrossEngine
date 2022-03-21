@@ -10,6 +10,11 @@ using CrossEngine.Logging;
 
 namespace CrossEngine.Layers
 {
+    public class ImGuiRenderEvent : Event
+    {
+
+    }
+
     public class ImGuiLayer : Layer
     {
         public ImGuiLayer()
@@ -87,6 +92,13 @@ namespace CrossEngine.Layers
             //
         }
 
+        public override void OnRender()
+        {
+            Begin();
+            Application.Instance.OnEvent(new ImGuiRenderEvent());
+            End();
+        }
+
         public override void OnDetach()
         {
             ThreadManager.ExecuteOnRenderThread(() =>
@@ -111,7 +123,7 @@ namespace CrossEngine.Layers
             }
         }
 
-        public void Begin()
+        void Begin()
         {
             ImGuiController.ImGui_ImplOpenGL3_NewFrame();
             ImGuiController.ImGui_ImplGlfw_NewFrame();
@@ -119,7 +131,7 @@ namespace CrossEngine.Layers
             ImGuizmo.BeginFrame();
         }
 
-        public void End()
+        void End()
         {
             ImGuiIOPtr io = ImGui.GetIO();
             Application app = Application.Instance;

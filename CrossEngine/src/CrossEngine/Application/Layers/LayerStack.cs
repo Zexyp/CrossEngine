@@ -13,6 +13,11 @@ namespace CrossEngine.Layers
 
         int lastLayerIndex = 0;
 
+        public LayerStack()
+        {
+            Layers = _layers.AsReadOnly();
+        }
+
         public void PushLayer(Layer layer)
         {
             _layers.Insert(lastLayerIndex, layer);
@@ -49,6 +54,6 @@ namespace CrossEngine.Layers
             lastLayerIndex = 0;
         }
 
-        public ReadOnlyCollection<Layer> GetLayers() => _layers.AsReadOnly();
+        public ReadOnlyCollection<Layer> Layers;
     }
 }

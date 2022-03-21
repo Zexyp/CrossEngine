@@ -310,7 +310,7 @@ namespace CrossEngine.Rendering
             }
 
             data.currentShader.Use();
-            Application.Instance.renderThread.rapi.DrawIndexed(data.quads.VertexArray, data.quads.IndexCount/*, DrawMode.Traingles*/);
+            Application.Instance.RenderThread.rapi.DrawIndexed(data.quads.VertexArray, data.quads.IndexCount/*, DrawMode.Traingles*/);
 
             data.quads.Stats.DrawCalls++;
         }
@@ -343,7 +343,7 @@ namespace CrossEngine.Rendering
             }
 
             data.currentShader.Use();
-            Application.Instance.renderThread.rapi.DrawArray(data.tris.VertexArray, data.tris.IndexCount/*, DrawMode.Traingles*/);
+            Application.Instance.RenderThread.rapi.DrawArray(data.tris.VertexArray, data.tris.IndexCount/*, DrawMode.Traingles*/);
 
             data.tris.Stats.DrawCalls++;
         }

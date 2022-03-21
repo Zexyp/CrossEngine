@@ -12,6 +12,11 @@ namespace CrossEngine.Rendering
 {
     public class SceneRenderData
     {
+        public struct SceneData
+        {
+            public Vector4? ClearColor;
+        }
+
         public List<SceneLayerRenderData> Layers = new List<SceneLayerRenderData>();
     }
 

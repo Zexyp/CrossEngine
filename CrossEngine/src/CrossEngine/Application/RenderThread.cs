@@ -14,10 +14,16 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Logging;
+using CrossEngine.Layers;
 
 namespace CrossEngine
 {
     using ThreadingThreadState = System.Threading.ThreadState;
+
+    public class EventThread
+    {
+
+    }
 
     public class RenderThread
     {
@@ -33,7 +39,7 @@ namespace CrossEngine
 
         public RendererAPI rapi;
 
-        ConcurrentQueue<SceneRenderData> _renderData = new ConcurrentQueue<SceneRenderData>();
+        IReadOnlyCollection<Layer> _renderLayers = null;
 
         public RenderThread()
         {
@@ -97,25 +103,7 @@ namespace CrossEngine
                 rapi.Clear();
 
                 while (ThreadManager.RenderThreadActionQueue.TryDequeue(out Action action)) action.Invoke();
-                // draw
-                while (_renderData.TryDequeue(out SceneRenderData sceneData))
-                {
-                    for (int layerIndex = 0; layerIndex < sceneData.Layers.Count; layerIndex++)
-                    {
-                        SceneLayerRenderData layerData = sceneData.Layers[layerIndex];
-                        foreach ((IRenderable Renderable, IList Objects) item in layerData.Data)
-                        {
-                            var rndbl = item.Renderable;
-                            var objs = item.Objects;
-                            rndbl.Begin(layerData.ProjectionViewMatrix);
-                            for (int objectIndex = 0; objectIndex < objs.Count; objectIndex++)
-                            {
-                                rndbl.Submit((IObjectRenderData)objs[objectIndex]);
-                            }
-                            rndbl.End();
-                        }
-                    }
-                }
+                Application.Instance.Render();
 
                 Profiler.EndScope();
             } while (!_shouldStop);
@@ -125,15 +113,6 @@ namespace CrossEngine
             Profiler.EndScope();
 
             _joinHandle.Set();
-        }
-
-        public void SubmitData(SceneRenderData data)
-        {
-            Debug.Assert(data != null);
-
-            Profiler.Function();
-
-            _renderData.Enqueue(data);
         }
 
         private void OnWindowEvent(Event e)

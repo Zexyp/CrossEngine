@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 using CrossEngine.Scenes;
-using CrossEngine.Entities;
+using CrossEngine.ECS;
 
 namespace CrossEngineEditor
 {

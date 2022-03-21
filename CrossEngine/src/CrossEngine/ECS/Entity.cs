@@ -143,5 +143,16 @@ namespace CrossEngine.ECS
             return false;
         }
         #endregion
+
+        public void ShiftComponent(Component component, int destinationIndex)
+        {
+            if (!_components.Contains(component)) throw new InvalidOperationException("Entity does not contain component!");
+            if (destinationIndex < 0 || destinationIndex > _components.Count - 1) throw new InvalidOperationException("Invalid index!");
+
+            _components.Remove(component);
+            _components.Insert(destinationIndex, component);
+        }
+
+        public int GetComponentIndex(Component component) => _components.IndexOf(component);
     }
 }
