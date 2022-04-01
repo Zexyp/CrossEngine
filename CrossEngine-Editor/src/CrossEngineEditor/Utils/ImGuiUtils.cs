@@ -24,7 +24,7 @@ namespace CrossEngineEditor.Utils
             ImGui.EndGroup();
             ImGui.GetWindowDrawList().AddRect(
                 ImGui.GetItemRectMin(),
-                new Vector2(ImGui.GetColumnWidth() + style.FramePadding.X + ImGui.GetWindowPos().X, ImGui.GetItemRectMax().Y),
+                new Vector2(ImGui.GetColumnWidth() + style.FramePadding.X * 2 + ImGui.GetWindowPos().X, ImGui.GetItemRectMax().Y),
                 ImGui.ColorConvertFloat4ToU32(style.Colors[(int)ImGuiCol.Separator]), style.FrameRounding, ImDrawFlags.None, 1.5f);
         }
 

@@ -4,12 +4,14 @@ using System.Collections.ObjectModel;
 using System.Text;
 
 using CrossEngine.Events;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Layers
 {
     public class LayerStack
     {
         private readonly List<Layer> _layers = new List<Layer>();
+        public ReadOnlyCollection<Layer> Layers;
 
         int lastLayerIndex = 0;
 
@@ -23,25 +25,37 @@ namespace CrossEngine.Layers
             _layers.Insert(lastLayerIndex, layer);
             layer.OnAttach();
             lastLayerIndex++;
+            layer.Attached = true;
+
+            Log.Core.Trace($"pushed layer ('{layer.GetType().Name}')");
         }
 
         public void PushOverlay(Layer overlay)
         {
             _layers.Add(overlay);
             overlay.OnAttach();
+            overlay.Attached = true;
+
+            Log.Core.Trace($"pushed overlay ('{overlay.GetType().Name}')");
         }
 
         public void PopLayer(Layer layer)
         {
             layer.OnDetach();
+            layer.Attached = false;
             _layers.Remove(layer);
             lastLayerIndex--;
+
+            Log.Core.Trace($"poped layer ('{layer.GetType().Name}')");
         }
 
         public void PopOverlay(Layer overlay)
         {
             overlay.OnDetach();
+            overlay.Attached = false;
             _layers.Remove(overlay);
+
+            Log.Core.Trace($"poped overlay ('{overlay.GetType().Name}')");
         }
 
         public void PopAll()
@@ -49,11 +63,12 @@ namespace CrossEngine.Layers
             for (int i = 0; i < _layers.Count; i++)
             {
                 _layers[i].OnDetach();
+                _layers[i].Attached = false;
+
+                Log.Core.Trace($"poped layer/overlay ('{_layers[i].GetType().Name}')");
             }
             _layers.Clear();
             lastLayerIndex = 0;
         }
-
-        public ReadOnlyCollection<Layer> Layers;
     }
 }

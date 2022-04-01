@@ -38,7 +38,7 @@ namespace CrossEngine.Layers
 
                 Application app = Application.Instance;
 
-                var window = app.GetWindow();
+                var window = app.Window;
                 if (!(window is CrossEngine.Platform.Windows.GLFWWindow)) throw new NotImplementedException();
 
                 GLFW.Window windowHandle = ((CrossEngine.Platform.Windows.GLFWWindow)window).Handle;
@@ -135,7 +135,7 @@ namespace CrossEngine.Layers
         {
             ImGuiIOPtr io = ImGui.GetIO();
             Application app = Application.Instance;
-            var window = app.GetWindow();
+            var window = app.Window;
             io.DisplaySize = new Vector2((float)window.Width, (float)window.Height);
 
             // Rendering

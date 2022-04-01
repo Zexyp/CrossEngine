@@ -164,7 +164,7 @@ namespace CrossEngine.Physics
 
         public override void DrawLine(ref BulletVector3 from, ref BulletVector3 to, ref BulletVector3 color)
         {
-            LineRenderer.DrawLine(from.ToNumerics(), to.ToNumerics(), new Vector4(color.ToNumerics(), 0.0f));
+            LineRenderer.DrawLine(from.ToNumerics(), to.ToNumerics(), new Vector4(color.ToNumerics(), 1.0f));
         }
 
         public override void ReportErrorWarning(string warningString)

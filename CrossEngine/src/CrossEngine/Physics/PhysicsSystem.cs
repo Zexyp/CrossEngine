@@ -1,29 +1,20 @@
-﻿using System;
-
-using BulletSharp;
-using BulletSharp.Math;
-
+﻿using BulletSharp;
+using CrossEngine.Components;
+using CrossEngine.ECS;
+using CrossEngine.Physics;
+using CrossEngine.Profiling;
+using CrossEngine.Rendering;
+using CrossEngine.Utils.Bullet;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 
-using CrossEngine.ECS;
-using CrossEngine.Components;
-using CrossEngine.Logging;
-using CrossEngine.Events;
-using CrossEngine.Physics;
-using CrossEngine.Rendering;
-using CrossEngine.Profiling;
-using CrossEngine.Utils.Bullet;
 using CrossEngine.Utils;
 
 namespace CrossEngine.ComponentSystems
 {
-    using BulletVector4 = BulletSharp.Math.Vector4;
     using BulletVector3 = BulletSharp.Math.Vector3;
     using Vector3 = System.Numerics.Vector3;
     using Vector4 = System.Numerics.Vector4;
@@ -40,6 +31,14 @@ namespace CrossEngine.ComponentSystems
         AngularFactor   = 1 << 5,
     }
 
+    [Flags]
+    enum ColliderPropertyFlags
+    {
+        None = 0,
+        Shape = 1 << 0,
+        LocalOffsets = 1 << 1,
+    }
+
     class PhysicsSysten : ISystem
     {
         static readonly Dictionary<Type, Func<ColliderComponent, CollisionShape>> ShapeConvertors = new Dictionary<Type, Func<ColliderComponent, CollisionShape>>()
@@ -47,23 +46,38 @@ namespace CrossEngine.ComponentSystems
             { typeof(BoxColliderComponent), (collider) => {
                 var corrcoll = (BoxColliderComponent)collider;
                 return new BoxShape((corrcoll.Size / 2).ToBullet());
-            } }
+            } },
+            { typeof(Box2DColliderComponent), (collider) => {
+                var corrcoll = (Box2DColliderComponent)collider;
+                return new Box2DShape(new Vector3(corrcoll.Size / 2, 1).ToBullet());
+            } },
+            { typeof(SphereColliderComponent), (collider) => {
+                var corrcoll = (SphereColliderComponent)collider;
+                return new SphereShape(corrcoll.Radius);
+            } },
         };
 
         class SyncedRBData
         {
+            class ColliderData
+            {
+                public CollisionShape Shape;
+                public ColliderPropertyFlags Dirt;
+            }
+
             Entity _entity;
 
             RigidBodyComponent _rigidBody;
             TransformComponent _transform;
-            readonly Dictionary<ColliderComponent, (bool Dirty, CollisionShape Shape)> _colliders = new Dictionary<ColliderComponent, (bool, CollisionShape)>();
+            readonly Dictionary<ColliderComponent, ColliderData> _colliders = new Dictionary<ColliderComponent, ColliderData>();
 
             RigidBody _body;
             RigidBodyPropertyFlags _dirtyProperties;
             MotionState _motionState;
-            bool _updateMotion = true;
             CompoundShape _shape;
+            bool _updateMotion = true;
             bool _shapeDirty = true;
+            public bool Active { get; private set; }
 
             public event Action<SyncedRBData> OnUpdateRequired;
 
@@ -94,7 +108,7 @@ namespace CrossEngine.ComponentSystems
 
             private void Entity_OnComponentAdded(Entity sender, Component component)
             {
-                if (component is RigidBodyComponent) throw new InvalidOperationException();
+                //if (component is RigidBodyComponent) throw new InvalidOperationException();
                 if (component is TransformComponent)
                 {
                     Transform = (TransformComponent)component;
@@ -107,7 +121,7 @@ namespace CrossEngine.ComponentSystems
 
             private void Entity_OnComponentRemoved(Entity sender, Component component)
             {
-                if (component is RigidBodyComponent) throw new InvalidOperationException();
+                //if (component is RigidBodyComponent) throw new InvalidOperationException();
                 if (component is TransformComponent)
                 {
                     Transform = null;
@@ -118,12 +132,11 @@ namespace CrossEngine.ComponentSystems
                 }
             }
 
-            private void Collider_OnShapeChanged(ColliderComponent component)
+            private void Collider_OnPropertyChanged(ColliderComponent component, ColliderPropertyFlags flags)
             {
-                _colliders[component] = (true, _colliders[component].Shape);
-
+                Debug.Assert(flags != ColliderPropertyFlags.None);
+                _colliders[component].Dirt |= flags;
                 _shapeDirty = true;
-                Log.Core.Debug("TODO: add removal from overlapping pairs");
 
                 OnUpdateRequired?.Invoke(this);
             }
@@ -131,8 +144,6 @@ namespace CrossEngine.ComponentSystems
             private void Transform_OnTransformChanged(TransformComponent component)
             {
                 _updateMotion = true;
-
-                Log.Core.Debug("TODO: collider scaling");
 
                 OnUpdateRequired?.Invoke(this);
             }
@@ -147,14 +158,14 @@ namespace CrossEngine.ComponentSystems
 
             private void AddCollider(ColliderComponent component)
             {
-                component.OnShapeChanged += Collider_OnShapeChanged;
-                _colliders.Add(component, (true, null));
-                Collider_OnShapeChanged(component);
+                component.OnPropertyChanged += Collider_OnPropertyChanged;
+
+                _colliders.Add(component, new ColliderData() { Dirt = ColliderPropertyFlags.Shape });
             }
 
             private void RemoveCollider(ColliderComponent component)
             {
-                component.OnShapeChanged -= Collider_OnShapeChanged;
+                component.OnPropertyChanged -= Collider_OnPropertyChanged;
 
                 if (_colliders[component].Shape != null) _shape.RemoveChildShape(_colliders[component].Shape);
                 _colliders[component].Shape.Dispose();
@@ -163,6 +174,8 @@ namespace CrossEngine.ComponentSystems
 
             public void Activate()
             {
+                Active = true;
+
                 _shape = new CompoundShape();
 
                 _entity.OnComponentAdded += Entity_OnComponentAdded;
@@ -202,21 +215,44 @@ namespace CrossEngine.ComponentSystems
 
                 _entity.OnComponentAdded -= Entity_OnComponentAdded;
                 _entity.OnComponentRemoved -= Entity_OnComponentRemoved;
+
+                Active = false;
             }
 
             public void Update()
             {
                 if (_shapeDirty)
                 {
-                    foreach (var key in _colliders.Keys)
-                    {
-                        if (!_colliders[key].Dirty) continue;
+                    //PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
 
-                        if (_colliders[key].Shape != null) _shape.RemoveChildShape(_colliders[key].Shape);
-                        _colliders[key].Shape?.Dispose();
-                        var newshape = ShapeConvertors[key.GetType()](key);
-                        _colliders[key] = (false, newshape);
-                        _shape.AddChildShape(key.LocalOffset.ToBullet(), newshape);
+                    foreach (var item in _colliders)
+                    {
+                        var colliderData = item.Value;
+                        var colliderComponent = item.Key;
+                        if (!((colliderData.Dirt & ColliderPropertyFlags.Shape) != 0))
+                        {
+                            if ((colliderData.Dirt & ColliderPropertyFlags.LocalOffsets) != 0)
+                            {
+                                _shape.RemoveChildShape(colliderData.Shape);
+                                _shape.AddChildShape(colliderComponent.OffsetMatrix.ToBullet(), colliderData.Shape);
+                            }
+
+                            colliderData.Dirt = ColliderPropertyFlags.None;
+                            continue;
+                        }
+
+                        // remove old
+                        if (colliderData.Shape != null) _shape.RemoveChildShape(colliderData.Shape);
+                        colliderData.Shape?.Dispose();
+
+                        Debug.Assert(ShapeConvertors.ContainsKey(colliderComponent.GetType()));
+
+                        // add new
+                        colliderData.Shape = CreateShape(colliderComponent);
+
+                        _shape.AddChildShape(colliderComponent.OffsetMatrix.ToBullet(), colliderData.Shape);
+
+                        colliderData.Dirt = ColliderPropertyFlags.None;
                     }
 
                     _shape.CalculateLocalInertia(_rigidBody.Static ? 0 : _rigidBody.Mass, out var inertia);
@@ -224,15 +260,24 @@ namespace CrossEngine.ComponentSystems
 
                     _body.UpdateInertiaTensor();
 
-                    _body.Activate();
+                    //Instance.rigidBodyWorld.CleanFromProxyPairs(_body);
+                    //PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
+
+                    _shapeDirty = false;
                 }
 
                 if (_updateMotion)
                 {
-                    var worldMat = _transform.WorldTransformMatrix.ToBullet();
-                    _motionState.SetWorldTransform(ref worldMat);
+                    var worldMat = (Matrix4x4.CreateFromQuaternion(_transform.WorldRotation) * Matrix4x4.CreateTranslation(_transform.WorldPosition)).ToBullet();
+                    
+                    _motionState.WorldTransform = worldMat;
+                    _body.WorldTransform = worldMat;
+                    //                    sus fix
+                    _shape.LocalScaling = Vector3.Max(new Vector3(0.0001f, 0.0001f, 0.0001f), _transform.Scale).ToBullet();
 
-                    _body.Activate();
+                    Instance.rigidBodyWorld.CleanFromProxyPairs(_body);
+
+                    _updateMotion = false;
                 }
 
                 if (_dirtyProperties != RigidBodyPropertyFlags.None)
@@ -263,10 +308,10 @@ namespace CrossEngine.ComponentSystems
                     // change of static state
                     if ((_dirtyProperties | RigidBodyPropertyFlags.Static) != 0)
                     {
+                        PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
+
                         if (!_rigidBody.Static)
                         {
-                            PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
-
                             _body.CollisionShape.CalculateLocalInertia(_rigidBody.Mass, out var inertia);
                             _body.ActivationState = ActivationState.DisableDeactivation;
                             _body.SetMassProps(_rigidBody.Mass, inertia);
@@ -275,13 +320,9 @@ namespace CrossEngine.ComponentSystems
                             _body.UpdateInertiaTensor();
                             _body.ClearForces();
                             _body.WorldTransform = _transform.WorldTransformMatrix.ToBullet();
-
-                            PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
                         }
                         else
                         {
-                            PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
-
                             _body.CollisionShape.CalculateLocalInertia(0, out var inertia);
                             _body.CollisionFlags = CollisionFlags.StaticObject;
                             _body.SetMassProps(0, inertia);
@@ -294,15 +335,15 @@ namespace CrossEngine.ComponentSystems
                             _body.ClearForces();
                             _body.ActivationState = ActivationState.WantsDeactivation;
                             _body.WorldTransform = _transform.WorldTransformMatrix.ToBullet();
-
-                            PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
                         }
+
+                        PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
                     }
 
                     _dirtyProperties = RigidBodyPropertyFlags.None;
-
-                    _body.Activate();
                 }
+
+                _body.Activate();
             }
 
             public void UpdataTransform()
@@ -312,7 +353,7 @@ namespace CrossEngine.ComponentSystems
                 if (_transform != null)
                 {
                     _transform.OnTransformChanged -= Transform_OnTransformChanged;
-                    _transform.SetTransform(_motionState.WorldTransform.ToNumerics());
+                    _transform.SetWorldTranslationRotation(_motionState.WorldTransform.ToNumerics());
                     _transform.OnTransformChanged += Transform_OnTransformChanged;
                 }
 
@@ -349,9 +390,20 @@ namespace CrossEngine.ComponentSystems
 
                 bodyctorinfo.Dispose();
 
+                body.ActivationState = ActivationState.DisableDeactivation;
+
                 return body;
             }
+
+            private static CollisionShape CreateShape(ColliderComponent collider)
+            {
+                var shape = ShapeConvertors[collider.GetType()](collider);
+
+                return shape;
+            }
         }
+
+        public SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 
         public static PhysicsSysten Instance;
 
@@ -364,6 +416,7 @@ namespace CrossEngine.ComponentSystems
 
         RigidBodyWorld rigidBodyWorld;
 
+        // note: 2d colliders are kinda not drawing...
         class RigidBodyWorldDebugRenderable : Renderable<RigidBodyWorld>
         {
             // TODO: add drawer context
@@ -371,11 +424,13 @@ namespace CrossEngine.ComponentSystems
             public override void Begin(Matrix4x4 viewProjectionMatrix)
             {
                 LineRenderer.BeginScene(viewProjectionMatrix);
+                Renderer2D.BeginScene(viewProjectionMatrix);
             }
 
             public override void End()
             {
                 LineRenderer.EndScene();
+                Renderer2D.EndScene();
             }
 
             public override void Submit(RigidBodyWorld data)
@@ -431,7 +486,7 @@ namespace CrossEngine.ComponentSystems
 
             while (_changed.TryDequeue(out SyncedRBData rbdata))
             {
-                rbdata.Update();
+                if (rbdata.Active) rbdata.Update();
             }
 
             rigidBodyWorld.Simulate(Time.DeltaTimeF, 5, (float)Time.FixedDeltaTime);

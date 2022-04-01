@@ -6,8 +6,8 @@ namespace CrossEngineEditor
     {
         static void Main(string[] args)
         {
-            //var app = new EditorApplication();
-            //app.Run();
+            var app = new EditorApplication();
+            app.Run();
         }
     }
 }

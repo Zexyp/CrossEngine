@@ -33,7 +33,7 @@ namespace CrossEngine.Rendering
             "layout(location = 1) in vec4 aColor;\n" +
             "layout(location = 2) in vec2 aTexCoord;\n" +
             "layout(location = 3) in float aTexIndex;\n" +
-            "layout(location = 5) in int aEntityID;\n" +
+            "layout(location = 4) in int aEntityID;\n" +
             "\n" +
             "uniform mat4 uViewProjection = mat4(1);\n" +
             "\n" +
@@ -120,6 +120,8 @@ namespace CrossEngine.Rendering
             public const uint MaxTris = 1024;
             public const uint MaxTriVertices = MaxTris * 3;
 
+            public const uint MaxPointVertices = 1024;
+
             public const uint MaxTextureSlots = 32;
 
             public ShaderProgram currentShader;
@@ -167,10 +169,10 @@ namespace CrossEngine.Rendering
                 new Vector3(-0.5f,  0.5f,  0.0f),
             };
         static readonly Vector2[] quadTextureCoords = new Vector2[4] {
-                new Vector2(0.0f, 0.0f),
-                new Vector2(1.0f, 0.0f),
-                new Vector2(1.0f, 1.0f),
                 new Vector2(0.0f, 1.0f),
+                new Vector2(1.0f, 1.0f),
+                new Vector2(1.0f, 0.0f),
+                new Vector2(0.0f, 0.0f),
             };
 
         static readonly Vector2[] triTextureCoords = new Vector2[3] {
@@ -190,7 +192,7 @@ namespace CrossEngine.Rendering
             fragment.Dispose();
             fragmentDiscarding.Dispose();
 
-            data.whiteTexture = Texture.Create(1, 1, ColorChannelFormat.QuadrupleRGBA);
+            data.whiteTexture = Texture.Create(1, 1, ColorFormat.RGBA);
             uint whiteCol = 0xffffffff;
             ((Texture)data.whiteTexture).SetData(&whiteCol, sizeof(uint));
 
@@ -252,9 +254,6 @@ namespace CrossEngine.Rendering
                 data.tris.VertexBufferBase = new PrimitiveVertex[Renderer2DData.MaxTriVertices];
                 data.tris.TextureSlots = new Ref<Texture>[Renderer2DData.MaxTextureSlots];
 
-                data.tris.VertexBufferBase = new PrimitiveVertex[Renderer2DData.MaxTriVertices];
-                data.tris.TextureSlots = new Ref<Texture>[Renderer2DData.MaxTextureSlots];
-
                 data.tris.VertexBuffer = VertexBuffer.Create(null, (uint)(Renderer2DData.MaxTriVertices * sizeof(PrimitiveVertex)), BufferUsageHint.DynamicDraw);
                 ((VertexBuffer)data.tris.VertexBuffer).SetLayout(layout);
 
@@ -287,6 +286,7 @@ namespace CrossEngine.Rendering
         }
 
         #region Batch
+        #region Quads
         static unsafe void StartQuadsBatch()
         {
             data.quads.IndexCount = 0;
@@ -306,11 +306,11 @@ namespace CrossEngine.Rendering
             // bind textures
             for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
             {
-                ((Texture)data.quads.TextureSlots[i]).Bind(i);
+                if (!Ref.IsNull(data.quads.TextureSlots[i])) ((Texture)data.quads.TextureSlots[i]).Bind(i);
             }
 
             data.currentShader.Use();
-            Application.Instance.RenderThread.rapi.DrawIndexed(data.quads.VertexArray, data.quads.IndexCount/*, DrawMode.Traingles*/);
+            Application.Instance.RendererAPI.DrawIndexed(data.quads.VertexArray, data.quads.IndexCount/*, DrawMode.Traingles*/);
 
             data.quads.Stats.DrawCalls++;
         }
@@ -319,7 +319,9 @@ namespace CrossEngine.Rendering
             FlushQuads();
             StartQuadsBatch();
         }
+        #endregion
 
+        #region Tris
         static unsafe void StartTrisBatch()
         {
             data.tris.IndexCount = 0;
@@ -339,11 +341,11 @@ namespace CrossEngine.Rendering
             // bind textures
             for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
             {
-                ((Texture)data.tris.TextureSlots[i]).Bind(i);
+                if (!Ref.IsNull(data.tris.TextureSlots[i])) ((Texture)data.tris.TextureSlots[i]).Bind(i);
             }
 
             data.currentShader.Use();
-            Application.Instance.RenderThread.rapi.DrawArray(data.tris.VertexArray, data.tris.IndexCount/*, DrawMode.Traingles*/);
+            Application.Instance.RendererAPI.DrawArray(data.tris.VertexArray, data.tris.IndexCount/*, DrawMode.Traingles*/);
 
             data.tris.Stats.DrawCalls++;
         }
@@ -352,6 +354,7 @@ namespace CrossEngine.Rendering
             FlushTris();
             StartTrisBatch();
         }
+        #endregion
         #endregion
 
         public static void EnableDiscardingTransparency(bool enable)

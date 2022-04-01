@@ -12,7 +12,7 @@ using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
-using CrossEngine.Rendering.Passes;
+using CrossEngine.Rendering;
 using CrossEngine.Inputs;
 
 namespace CrossEngineEditor.Panels
@@ -20,7 +20,6 @@ namespace CrossEngineEditor.Panels
     class GamePanel : EditorPanel
     {
         Vector2 viewportSize;
-        RenderPipeline pipeline;
 
         public GamePanel() : base("Game")
         {
@@ -29,15 +28,12 @@ namespace CrossEngineEditor.Panels
 
         public override void OnOpen()
         {
-            pipeline = new RenderPipeline();
-            pipeline.RegisterPass(new Renderer2DPass());
-            pipeline.RegisterPass(new LineRenderPass());
+            
         }
 
         public override void OnClose()
         {
-            pipeline.Dispose();
-            pipeline = null;
+            
         }
 
         protected override void PrepareWindow()

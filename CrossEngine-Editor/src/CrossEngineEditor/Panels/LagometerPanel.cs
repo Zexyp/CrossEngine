@@ -69,9 +69,9 @@ namespace CrossEngineEditor.Panels
             }
 
             {
-                if (Time.TotalElapsedSecondsF - memoryLastUpdated >= memoryUpdateEvery)
+                if (Time.ElapsedTimeF - memoryLastUpdated >= memoryUpdateEvery)
                 {
-                    memoryLastUpdated = Time.TotalElapsedSecondsF;
+                    memoryLastUpdated = Time.ElapsedTimeF;
                     using (System.Diagnostics.Process proc = System.Diagnostics.Process.GetCurrentProcess())
                         memoryMegabytes = (proc.PrivateMemorySize64 / (1024 * 1024));
                 }

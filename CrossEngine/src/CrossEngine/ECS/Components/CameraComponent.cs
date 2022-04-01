@@ -51,5 +51,11 @@ namespace CrossEngine.Components
         {
             RendererSystem.Instance.UnregisterCamera(this);
         }
+
+        public override object Clone()
+        {
+            Logging.Log.Core.Debug("CameraComponent says: panic");
+            throw new NotImplementedException();
+        }
     }
 }

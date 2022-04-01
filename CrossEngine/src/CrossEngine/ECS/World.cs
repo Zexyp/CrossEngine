@@ -33,8 +33,17 @@ namespace CrossEngine.ECS
         {
             for (int i = 0; i < _systems.Count; i++)
             {
-                _systems[i].Update();
+                if (_systems[i].ThreadMode == SystemThreadMode.Async)
+                    Task.Run(() => _systems[i].Update());
             }
+
+            for (int i = 0; i < _systems.Count; i++)
+            {
+                if (_systems[i].ThreadMode == SystemThreadMode.Sync)
+                    _systems[i].Update();
+            }
+
+            Task.WaitAll();
         }
 
         public void RegisterSystem(ISystem system)

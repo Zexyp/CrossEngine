@@ -30,6 +30,13 @@ namespace CrossEngineEditor.Utils
 
         static readonly Dictionary<Type, EditorValueFunction> ValueHandlers = new Dictionary<Type, EditorValueFunction>()
         {
+            { typeof(bool), (string name, ref object value) => {
+                bool v = (bool)value;
+                bool success;
+                success = ImGui.Checkbox(name, ref v);
+                if (success) value = v;
+                return success;
+            } },
             { typeof(int), (string name, ref object value) => {
                 int v = (int)value;
                 bool success;
@@ -242,7 +249,7 @@ namespace CrossEngineEditor.Utils
             { typeof(EditorSectionAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 ImGui.Text(attribute.Name);
                 ImGui.SameLine();
-                ImGui.Separator();
+                ImGuiUtils.SmartSeparator(3);
                 return false;
             } },
 
@@ -480,6 +487,7 @@ namespace CrossEngineEditor.Utils
                 }
                 return success;
             } },
+            */
 
             { typeof(EditorInnerValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 var cattribt = (EditorInnerValueAttribute)attribute;
@@ -498,12 +506,12 @@ namespace CrossEngineEditor.Utils
                 ImGuiUtils.EndGroupFrame();
                 return false;
             } },
-            */
         };
 
         public static void DrawEditorValue(FieldInfo fieldInfo, object target)
         {
-            foreach (var attrib in fieldInfo.GetCustomAttributes<EditorValueAttribute>(true))
+            foreach (var attrib in fieldInfo.GetCustomAttributes<EditorValueAttribute>(true).
+                OrderByDescending(a => a.Type))
             {
                 Type attribType = attrib.GetType();
                 if (AttributeHandlers.ContainsKey(attribType))
@@ -521,7 +529,8 @@ namespace CrossEngineEditor.Utils
 
         public static void DrawEditorValue(PropertyInfo propertyInfo, object target)
         {
-            foreach (var attrib in propertyInfo.GetCustomAttributes<EditorValueAttribute>(true))
+            foreach (var attrib in propertyInfo.GetCustomAttributes<EditorValueAttribute>(true).
+                OrderByDescending(a => a.Type))
             {
                 Type attribType = attrib.GetType();
                 if (AttributeHandlers.ContainsKey(attribType))

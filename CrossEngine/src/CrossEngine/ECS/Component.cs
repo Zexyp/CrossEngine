@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.ECS
 {
-    public abstract class Component
+    public abstract class Component : ICloneable
     {
         public Entity Entity { get; internal set; }
         private bool _enabled = true;
+
         public bool Enabled
         {
             get => _enabled;
@@ -27,16 +28,22 @@ namespace CrossEngine.ECS
         }
         public event Action<Component> OnEnabledChanged;
 
-        public virtual void Enable() { }
-        public virtual void Disable() { }
+        protected virtual void Enable() { }
+        protected virtual void Disable() { }
 
         public virtual void Attach() { }
         public virtual void Detach() { }
 
         public virtual void Update() { }
+
+        public virtual object Clone()
+        {
+            Logging.Log.Core.Info("using default constructor for cloning component");
+            return Activator.CreateInstance(this.GetType());
+        }
     }
 
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     class AllowSingleComponentPerEntityAttribute : Attribute
     {
 

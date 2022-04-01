@@ -51,6 +51,7 @@ namespace CrossEngine.ECS
             Children = _children.AsReadOnly();
         }
 
+        #region Component Methods
         #region Add
         public Component AddComponent(Component component)
         {
@@ -147,12 +148,33 @@ namespace CrossEngine.ECS
         public void ShiftComponent(Component component, int destinationIndex)
         {
             if (!_components.Contains(component)) throw new InvalidOperationException("Entity does not contain component!");
-            if (destinationIndex < 0 || destinationIndex > _components.Count - 1) throw new InvalidOperationException("Invalid index!");
+            if (destinationIndex < 0 || destinationIndex > _components.Count - 1) throw new IndexOutOfRangeException("Invalid index!");
 
             _components.Remove(component);
             _components.Insert(destinationIndex, component);
         }
 
         public int GetComponentIndex(Component component) => _components.IndexOf(component);
+        #endregion
+
+        #region Hierarchy Methods
+        public void ShiftChild(Entity child, int destinationIndex)
+        {
+            if (!_children.Contains(child)) throw new InvalidOperationException("Entity does not contain child!");
+            if (destinationIndex < 0 || destinationIndex > _children.Count - 1) throw new IndexOutOfRangeException("Invalid index!");
+
+            _children.Remove(child);
+            _children.Insert(destinationIndex, child);
+        }
+
+        public int GetChildIndex(Entity child) => _children.IndexOf(child);
+
+        public bool IsParentedBy(Entity potpar)
+        {
+            if (this.Parent == null) return false;
+            if (this.Parent == potpar) return true;
+            return this.Parent.IsParentedBy(potpar);
+        }
+        #endregion
     }
 }

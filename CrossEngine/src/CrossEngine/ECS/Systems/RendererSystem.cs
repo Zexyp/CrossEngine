@@ -14,6 +14,8 @@ namespace CrossEngine.ComponentSystems
 {
     class RendererSystem : ISystem
     {
+        public SystemThreadMode ThreadMode => SystemThreadMode.Sync;
+
         public static RendererSystem Instance;
 
         List<CameraComponent> _cameras = new List<CameraComponent>();

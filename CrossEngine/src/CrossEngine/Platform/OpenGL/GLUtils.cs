@@ -68,6 +68,7 @@ namespace CrossEngine.Platform.OpenGL
             {
                 case DrawMode.Lines: return GL_LINES;
                 case DrawMode.Traingles: return GL_TRIANGLES;
+                case DrawMode.Points: return GL_POINTS;
             }
 
             Debug.Assert(false, $"Unknown {nameof(DrawMode)} value");
@@ -166,22 +167,36 @@ namespace CrossEngine.Platform.OpenGL
             return 0;
         }
 
-        public static int ToGLColorChannelFormat(ColorChannelFormat format)
+        public static int ToGLColorFormat(ColorFormat format)
         {
             switch (format)
             {
-                case ColorChannelFormat.SingleR: return GL_RED;
-                case ColorChannelFormat.SingleG: throw new NotImplementedException();
-                case ColorChannelFormat.SingleB: throw new NotImplementedException();
-                case ColorChannelFormat.SingleA: throw new NotImplementedException();
-                case ColorChannelFormat.DoubleRG: return GL_RG;
-                case ColorChannelFormat.TripleRGB: return GL_RGB;
-                case ColorChannelFormat.TripleBGR: return GL_BGR;
-                case ColorChannelFormat.QuadrupleRGBA: return GL_RGBA;
-                case ColorChannelFormat.QuadrupleBGRA: return GL_BGRA;
+                //case ColorFormat.SingleR: return GL_RED;
+                //case ColorFormat.SingleG: throw new NotImplementedException();
+                //case ColorFormat.SingleB: throw new NotImplementedException();
+                //case ColorFormat.SingleA: throw new NotImplementedException();
+                //case ColorFormat.DoubleRG: return GL_RG;
+                case ColorFormat.RGB: return GL_RGB;
+                case ColorFormat.BGR: return GL_BGR;
+                case ColorFormat.RGBA: return GL_RGBA;
+                case ColorFormat.BGRA: return GL_BGRA;
             }
 
-            Debug.Assert(false, $"Unknown {nameof(ColorChannelFormat)} value");
+            Debug.Assert(false, $"Unknown {nameof(ColorFormat)} value");
+            return 0;
+        }
+
+        public static int ToGLTextureFormat(TextureFormat format)
+        {
+            switch (format)
+            {
+                case TextureFormat.ColorRGBA8: return GL_RGB8;
+                case TextureFormat.ColorR32I: return GL_R32I;
+                case TextureFormat.ColorRGBA32F: return GL_RGBA32F;
+                case TextureFormat.Depth24Stencil8: return GL_DEPTH24_STENCIL8;
+            }
+
+            Debug.Assert(false, $"Unknown {nameof(TextureFormat)} value");
             return 0;
         }
     }

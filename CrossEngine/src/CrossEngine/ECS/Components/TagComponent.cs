@@ -21,5 +21,10 @@ namespace CrossEngine.Components
         {
             Tag = tag;
         }
+
+        public override object Clone()
+        {
+            return new TagComponent(Tag);
+        }
     }
 }

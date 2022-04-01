@@ -13,7 +13,7 @@ using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
-using CrossEngine.Rendering.Passes;
+using CrossEngine.Components;
 
 using CrossEngineEditor.Utils;
 
@@ -22,7 +22,8 @@ namespace CrossEngineEditor.Panels
     class ViewportPanel : EditorPanel
     {
         Vector2 viewportSize;
-        RenderPipeline pipeline;
+
+        private Ref<Framebuffer> _framebuffer;
 
         private ControllableEditorCamera _currentCamera;
 
@@ -93,16 +94,29 @@ namespace CrossEngineEditor.Panels
 
         public override void OnOpen()
         {
-            pipeline = new RenderPipeline();
-            pipeline.RegisterPass(new Renderer2DPass());
-            pipeline.RegisterPass(new LineRenderPass());
-            pipeline.RegisterPass(new EditorDrawPass());
+            var spec = new FramebufferSpecification();
+            spec.Attachments = new FramebufferAttachmentSpecification(
+                // using floating point colors
+                new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F),
+                new FramebufferTextureSpecification(TextureFormat.ColorR32I),
+                new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
+                );
+            spec.Width = 1;
+            spec.Height = 1;
+
+            ThreadManager.ExecuteOnRenderThread(() =>
+            {
+                _framebuffer = Framebuffer.Create(ref spec);
+                Context.Scene.SetOutput(_framebuffer);
+            });
         }
 
         public override void OnClose()
         {
-            pipeline.Dispose();
-            pipeline = null;
+            ThreadManager.ExecuteOnRenderThread(() =>
+            {
+                ((Framebuffer?)_framebuffer).Dispose();
+            });
         }
 
         protected override void PrepareWindow()
@@ -135,7 +149,8 @@ namespace CrossEngineEditor.Panels
 
                     if (ImGui.MenuItem("Focus"))
                     {
-                        if (Context.ActiveEntity?.Transform != null) CurrentCamera.Position = Context.ActiveEntity.Transform.Position;
+                        TransformComponent transform = null;
+                        if (Context.ActiveEntity?.TryGetComponent(out transform) == true) CurrentCamera.Position = transform.Position;
                     }
 
                     ImGui.Separator();
@@ -160,21 +175,19 @@ namespace CrossEngineEditor.Panels
                     {
                         viewportSize = viewportPanelSize;
 
-                        pipeline.Framebuffer.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
+                        ((Framebuffer?)_framebuffer).Resize((uint)viewportSize.X, (uint)viewportSize.Y);
 
                         CurrentCamera.Resize(viewportSize.X, viewportSize.Y);
                     }
                 }
 
+                Context.Scene.SetEditorCamera(_currentCamera);
+
                 // draw the framebuffer as image
-                ImGui.Image(new IntPtr(pipeline.Framebuffer.ColorAttachments[pipeline.FbStructureIndex.Color]),
+                ImGui.Image(new IntPtr(((Framebuffer?)_framebuffer).GetColorAttachmentRendererID(0)),
                     viewportSize,
                     new Vector2(0, 1),
                     new Vector2(1, 0));
-
-                pipeline.Framebuffer.Bind();
-                Renderer.Clear();
-                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FbStructureIndex.ID, 0);
 
                 // interaction
                 if (ImGui.IsItemHovered() && Focused)
@@ -199,18 +212,20 @@ namespace CrossEngineEditor.Panels
                     {
                         Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
                         texpos.Y = -texpos.Y;
-                        int result = pipeline.Framebuffer.ReadPixel((uint)Context.Scene.Pipeline.FbStructureIndex.ID, (int)texpos.X, (int)texpos.Y);
+
+                        int result = ((Framebuffer?)_framebuffer).ReadPixel(1, (uint)texpos.X, (uint)texpos.Y);
+                        ((Framebuffer?)_framebuffer).Unbind();
                         EditorApplication.Log.Trace($"selected entity id {result}");
 
-                        Context.ActiveEntity = Context.Scene.GetEntity(result);
+                        Context.ActiveEntity = Context.Scene.GetEntityById(result);
                     }
                 }
 
                 // draw
-                Context.Scene.Pipeline = pipeline;
-                if (CurrentCamera != null) Context.Scene.OnRenderEditor(CurrentCamera.ViewProjectionMatrix);
+                //Context.Scene.Pipeline = pipeline;
+                //if (CurrentCamera != null) Context.Scene.OnRenderEditor(CurrentCamera.ViewProjectionMatrix);
 
-                Framebuffer.Unbind();
+                //Framebuffer.Unbind();
             }
         }
     }

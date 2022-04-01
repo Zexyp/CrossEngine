@@ -1,10 +1,14 @@
 ﻿using System.Numerics;
 
+using CrossEngine.Utils.Editor;
+
 namespace CrossEngine.Components
 {
-    public class CircleColliderComponent : ColliderComponent
+    public class SphereColliderComponent : ColliderComponent
     {
         float _radius = 1;
+        
+        [EditorDrag(Min = float.Epsilon)]
         public float Radius
         {
             get => _radius;
@@ -15,6 +19,11 @@ namespace CrossEngine.Components
 
                 InvokeShapeChangedEvent();
             }
+        }
+
+        public override object Clone()
+        {
+            return new SphereColliderComponent() { Radius = this.Radius };
         }
     }
 }

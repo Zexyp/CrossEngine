@@ -131,7 +131,7 @@ namespace CrossEngine.Rendering
             }
 
             data.lineShader.Use();
-            Application.Instance.RenderThread.rapi.DrawArray(data.lineVertexArray, data.lineCount * 2, DrawMode.Lines);
+            Application.Instance.RendererAPI.DrawArray(data.lineVertexArray, data.lineCount * 2, DrawMode.Lines);
 
             data.stats.DrawCalls++;
         }

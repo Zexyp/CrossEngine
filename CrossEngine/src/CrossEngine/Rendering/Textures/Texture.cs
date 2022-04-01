@@ -7,7 +7,7 @@ using CrossEngine.Platform.OpenGL;
 
 namespace CrossEngine.Rendering.Textures
 {
-    public abstract class Texture
+    public abstract class Texture : IDisposable
     {
         public bool Disposed { get; protected set; } = false;
 
@@ -40,6 +40,8 @@ namespace CrossEngine.Rendering.Textures
         public TextureTarget Target { get; protected set; }
 
         public abstract uint RendererId { get; }
+        public abstract uint Width { get; }
+        public abstract uint Height { get; }
 
         public abstract void Bind(uint slot = 0);
         public abstract void Unbind();
@@ -49,7 +51,7 @@ namespace CrossEngine.Rendering.Textures
         public abstract void SetFilterParameter(FilterParameter filter);
         public abstract void SetWrapParameter(WrapParameter wrap);
 
-        public static Ref<Texture> Create(uint width, uint height, ColorChannelFormat internalFormat)
+        public static Ref<Texture> Create(uint width, uint height, ColorFormat internalFormat)
         {
             switch (RendererAPI.GetAPI())
             {
@@ -68,6 +70,8 @@ namespace CrossEngine.Rendering.Textures
 
         Linear,
         Nearest,
+
+        Default = Linear,
     }
 
     public enum WrapParameter
@@ -78,6 +82,8 @@ namespace CrossEngine.Rendering.Textures
         MirroredRepeat,
         ClampToEdge, // tex coords clamped
         ClampToBorder, // tex coords outside have user specified color
+
+        Default = Repeat,
     }
 
     public enum TextureTarget
@@ -98,25 +104,26 @@ namespace CrossEngine.Rendering.Textures
         //TextureCubeMapNegativeZ = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
     }
 
-    public enum ColorChannelFormat
+    public enum ColorFormat
     {
         None = 0,
 
-        SingleR,
-        SingleG,
-        SingleB,
-        SingleA,
+        //SingleR,
+        //SingleG,
+        //SingleB,
+        //SingleA,
+        //
+        //DoubleRG,
 
-        DoubleRG,
+        RGB,
+        BGR,
 
-        TripleRGB,
-        TripleBGR,
+        RGBA,
+        BGRA,
 
-        QuadrupleRGBA,
-        QuadrupleBGRA,
+        Luminance,
 
         // GL_COLOR_INDEX
-        // GL_LUMINANCE
         // GL_LUMINANCE_ALPHA
     }
 }

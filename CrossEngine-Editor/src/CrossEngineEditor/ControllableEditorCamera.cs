@@ -44,7 +44,7 @@ namespace CrossEngineEditor
         private float _zNear = -1.0f;
         private float _zFar = 1.0f;
 
-        [EditorSingleValue]
+        [EditorDrag]
         public float OrthographicSize
         {
             get => _orthographicSize;
@@ -55,7 +55,7 @@ namespace CrossEngineEditor
                 MarkProjectionDirty();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZNear
         {
             get => _zNear;
@@ -66,7 +66,7 @@ namespace CrossEngineEditor
                 MarkProjectionDirty();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZFar
         {
             get => _zFar;
@@ -113,7 +113,7 @@ namespace CrossEngineEditor
         private float _zoom = 10f;
         Vector2 rotation;
 
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZNear
         {
             get => _zNear;
@@ -124,7 +124,7 @@ namespace CrossEngineEditor
                 MarkProjectionDirty();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZFar
         {
             get => _zFar;
@@ -135,7 +135,7 @@ namespace CrossEngineEditor
                 MarkProjectionDirty();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float FOV
         {
             get => _fov;
@@ -146,7 +146,7 @@ namespace CrossEngineEditor
                 MarkProjectionDirty();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZoomDistance
         {
             get => _zoom;

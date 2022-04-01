@@ -35,6 +35,7 @@ namespace CrossEngine.Components
         private Vector3 _linearFactor = Vector3.One;
         private Vector3 _angularFactor = Vector3.One;
         #region Properties
+        [EditorValue]
         public bool Static
         {
             get => _static;
@@ -47,6 +48,7 @@ namespace CrossEngine.Components
             }
         }
 
+        [EditorDrag(Min = float.Epsilon)]
         public float Mass
         {
             get => _mass;
@@ -61,6 +63,8 @@ namespace CrossEngine.Components
             }
         }
 
+        [EditorSection("Velocities")]
+        [EditorDrag]
         public Vector3 Velocity
         {
             get => _velocity;
@@ -73,6 +77,7 @@ namespace CrossEngine.Components
             }
         }
 
+        [EditorDrag]
         public Vector3 AngularVelocity
         {
             get => _angularVelocity;
@@ -85,6 +90,7 @@ namespace CrossEngine.Components
             }
         }
 
+        [EditorDrag]
         public Vector3 LinearFactor
         {
             get => _linearFactor;
@@ -97,6 +103,7 @@ namespace CrossEngine.Components
             }
         }
 
+        [EditorDrag]
         public Vector3 AngularFactor
         {
             get => _angularFactor;
@@ -121,6 +128,21 @@ namespace CrossEngine.Components
         public override void Detach()
         {
             PhysicsSysten.Instance.UnregisterRigidBody(this);
+        }
+
+        public override object Clone()
+        {
+            var rb = new RigidBodyComponent();
+            rb.Enabled = this.Enabled;
+
+            rb.Mass = this.Mass;
+            rb.Static = this.Static;
+            rb.Velocity = this.Velocity;
+            rb.AngularVelocity = this.AngularVelocity;
+            rb.LinearFactor = this.LinearFactor;
+            rb.AngularFactor = this.AngularFactor;
+            
+            return rb;
         }
     }
 }

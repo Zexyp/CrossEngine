@@ -9,11 +9,11 @@ using CrossEngine.ComponentSystems;
 
 namespace CrossEngine.Components
 {
-    class ScriptableComponent : Component
+    public abstract class ScriptableComponent : Component
     {
         public override void Attach()
         {
-            ScriptableSystem.Instance.Register(this); 
+            ScriptableSystem.Instance.Register(this);
         }
 
         public override void Detach()

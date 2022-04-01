@@ -5,10 +5,20 @@ using System.Numerics;
 
 namespace CrossEngine.Utils.Editor
 {
+    // used for ordering
+    public enum EditorAttributeType
+    {
+        None = 0,
+        Edit,
+        Decor,
+    }
+
+
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorValueAttribute : Attribute
     {
         public string? Name = null;
+        public virtual EditorAttributeType Type => EditorAttributeType.Edit;
 
         public EditorValueAttribute()
         {
@@ -24,6 +34,8 @@ namespace CrossEngine.Utils.Editor
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorSectionAttribute : EditorValueAttribute
     {
+        public override EditorAttributeType Type => EditorAttributeType.Decor;
+
         public EditorSectionAttribute(string name)
         {
             Name = name;

@@ -59,6 +59,7 @@ namespace CrossEngine.Rendering
 
         Lines,
         Traingles,
+        Points,
     }
 
     public enum BlendFunc

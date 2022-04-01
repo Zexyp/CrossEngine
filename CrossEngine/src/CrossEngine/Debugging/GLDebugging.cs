@@ -45,7 +45,7 @@ namespace OpenGL.Extensions
 
 namespace CrossEngine.Debugging
 {
-    static class GLDebugging
+    public static class GLDebugging
     {
         static Logger GLLog;
 

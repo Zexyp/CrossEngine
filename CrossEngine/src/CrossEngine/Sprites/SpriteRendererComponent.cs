@@ -82,8 +82,13 @@ namespace CrossEngine.Components
             }
         }
 
+
+
         // RIP OnRender method... you were good one... maybe, but you will be remembered
         // update: he is back xDDD
+        // second update: he is no longer among us
+        // 21.3.2022 - after movement of scene rendering code to separate layer and later SRC component review,
+        //             it was concluded that he is useless and has no good power
 
         //public override void OnRender(RenderEvent re)
         //{
@@ -123,5 +128,17 @@ namespace CrossEngine.Components
         //
         //    TextureAsset = (TextureAsset)info.GetValue("TextureAsset", typeof(TextureAsset));
         //}
+
+        public override object Clone()
+        {
+            var sr = new SpriteRendererComponent();
+            sr.Enabled = this.Enabled;
+
+            sr.DrawOffsets = this.DrawOffsets;
+            sr.TextureOffsets = this.TextureOffsets;
+            sr.Color = this.Color;
+
+            return sr;
+        }
     }
 }

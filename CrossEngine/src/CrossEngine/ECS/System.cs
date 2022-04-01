@@ -9,16 +9,25 @@ using CrossEngine.Events;
 
 namespace CrossEngine.ECS
 {
+    enum SystemThreadMode
+    {
+        None = default,
+        Sync,
+        Async,
+    }
+
     interface ISystem
     {
+        SystemThreadMode ThreadMode { get; }
         void Init();
         void Shutdown();
         void Update();
-        static ISystem Instance;
     }
 
     abstract class System<T> : ISystem where T : Component
     {
+        public virtual SystemThreadMode ThreadMode => SystemThreadMode.Sync;
+
         public static System<T> Instance { get; protected set; }
 
         protected readonly List<T> Components = new List<T>();

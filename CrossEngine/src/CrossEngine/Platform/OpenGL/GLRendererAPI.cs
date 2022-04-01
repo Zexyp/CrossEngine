@@ -16,7 +16,7 @@ namespace CrossEngine.Platform.OpenGL
     {
         public override void Init()
         {
-            var window = Application.Instance.GetWindow();
+            var window = Application.Instance.Window;
             if (window is GLFWWindow)
                 Import(Glfw.GetProcAddress);
             else

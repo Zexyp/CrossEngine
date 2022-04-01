@@ -17,12 +17,12 @@ namespace CrossEngine.Components
         // TODO: consider adding rotation mode
 
         // local
-        private Vector3 _position = Vector3.Zero;
+        private Vector3 _translation = Vector3.Zero;
         private Quaternion _rotation = Quaternion.Identity;
         private Vector3 _scale = Vector3.One;
 
         // world
-        private Vector3 _worldPostiton;
+        private Vector3 _worldTranslation;
         private Quaternion _worldRotation;
         private Vector3 _worldScale;
 
@@ -47,15 +47,14 @@ namespace CrossEngine.Components
         {
             get
             {
-                return _position;
+                return _translation;
             }
             set
             {
-                if (_position != value)
-                {
-                    _position = value;
-                    MarkForUpdate();
-                }
+                if (_translation == value) return;
+
+                _translation = value;
+                MarkForUpdate();
             }
         }
         public Quaternion Rotation
@@ -66,16 +65,15 @@ namespace CrossEngine.Components
             }
             set
             {
-                if (_rotation != value)
-                {
-                    _rotation = value;
-                    _eulerAngles = QuaternionExtension.ToEuler(value);
-                    MarkForUpdate();
-                }
+                if (_rotation == value) return;
+
+                _rotation = value;
+                _eulerAngles = QuaternionExtension.ToEuler(value);
+                MarkForUpdate();
             }
         }
         [EditorDrag]
-        public Vector3 EulerAngles
+        public Vector3 EulerRotation
         {
             get
             {
@@ -83,12 +81,11 @@ namespace CrossEngine.Components
             }
             set
             {
-                if (_eulerAngles != value)
-                {
-                    _eulerAngles = value;
-                    _rotation = QuaternionExtension.CreateFromXYZRotation(_eulerAngles.X, _eulerAngles.Y, _eulerAngles.Z);
-                    MarkForUpdate();
-                }
+                if (_eulerAngles == value) return;
+                
+                _eulerAngles = value;
+                _rotation = QuaternionExtension.CreateFromXYZRotation(_eulerAngles.X, _eulerAngles.Y, _eulerAngles.Z);
+                MarkForUpdate();
             }
         }
         [EditorDrag]
@@ -100,11 +97,10 @@ namespace CrossEngine.Components
             }
             set
             {
-                if (_scale != value)
-                {
-                    _scale = value;
-                    MarkForUpdate();
-                }
+                if (_scale == value) return;
+
+                _scale = value;
+                MarkForUpdate();
             }
         }
 
@@ -129,7 +125,7 @@ namespace CrossEngine.Components
                     UpdateWorldTransform();
                 }
 
-                return _worldPostiton;
+                return _worldTranslation;
             }
             set
             {
@@ -199,10 +195,11 @@ namespace CrossEngine.Components
         #region Transform things
         private void MarkForUpdate()
         {
-            if (_dirty)
-            {
-                return;
-            }
+            //// ! this might break things by not calling OnTransformChanged every time
+            //if (_dirty)
+            //{
+            //    return;
+            //}
 
             _dirty = true;
             for (int i = 0; i < _children.Count; i++)
@@ -220,14 +217,14 @@ namespace CrossEngine.Components
             if (_parent == null)
             {
                 _worldTransformMatrix = transform;
-                _worldPostiton = _position;
+                _worldTranslation = _translation;
                 _worldRotation = _rotation;
                 _worldScale = _scale;
             }
             else
             {
                 _worldTransformMatrix = transform * _parent.WorldTransformMatrix;
-                _worldPostiton = new Vector3(_worldTransformMatrix.M41, _worldTransformMatrix.M42, _worldTransformMatrix.M43);
+                _worldTranslation = new Vector3(_worldTransformMatrix.M41, _worldTransformMatrix.M42, _worldTransformMatrix.M43);
                 _worldRotation = _parent.WorldRotation * _rotation;
                 _worldScale = _parent.WorldScale * _scale;
             }
@@ -237,15 +234,15 @@ namespace CrossEngine.Components
 
         private Matrix4x4 CalculateLocalTransform()
         {
-            return Matrix4x4.CreateScale(_scale) * Matrix4x4.CreateFromQuaternion(_rotation) * Matrix4x4.CreateTranslation(_position);
+            return Matrix4x4.CreateScale(_scale) * Matrix4x4.CreateFromQuaternion(_rotation) * Matrix4x4.CreateTranslation(_translation);
         }
 
         public void SetTransformUseEuler(Matrix4x4 matrix)
         {
             Matrix4x4Extension.EulerDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, matrix);
 
-            _position = translation;
-            EulerAngles = rotation; // ! TODO: this causes two dirty updates
+            _translation = translation;
+            EulerRotation = rotation; // ! TODO: this causes two dirty updates
             _scale = scale;
 
             //Log.Core.Debug("tr: {0}; rt: {1}; sc: {2}", _position, _eulerAngles, _scale);
@@ -258,7 +255,7 @@ namespace CrossEngine.Components
 
             _scale = scale;
             Rotation = rotation; // ! TODO: this causes two dirty updates
-            _position = translation;
+            _translation = translation;
 
             MarkForUpdate();
         }
@@ -280,7 +277,7 @@ namespace CrossEngine.Components
             Matrix4x4.Decompose(matrix, out _, out Quaternion rotation, out Vector3 translation);
 
             Rotation = rotation; // ! TODO: this causes two dirty updates
-            _position = translation;
+            _translation = translation;
 
             MarkForUpdate();
         }
@@ -337,11 +334,8 @@ namespace CrossEngine.Components
                 if (this._parent != null) this._parent._children.Remove(this);
                 this._parent = value;
                 if (this._parent != null) this._parent._children.Add(this);
-                else
-                {
-                    SetTransform(WorldTransformMatrix);
-                }
 
+                MarkForUpdate();
                 OnParentChanged?.Invoke(this);
             }
         }
@@ -355,39 +349,40 @@ namespace CrossEngine.Components
 
             this.Parent = sender.Parent?.GetComponent<TransformComponent>();
 
-            if (this.Parent != null)
-            {
-                WorldPosition = Position;
-                WorldRotation = Rotation;
-                WorldScale = Scale;
-            }
-            else
-            {
-                Position = WorldPosition;
-                Rotation = WorldRotation;
-                Scale = WorldScale; 
-            }
+            // we don't want this
+            //if (this.Parent != null)
+            //{
+            //    WorldPosition = Position;
+            //    WorldRotation = Rotation;
+            //    WorldScale = Scale;
+            //}
+            //else
+            //{
+            //    Position = WorldPosition;
+            //    Rotation = WorldRotation;
+            //    Scale = WorldScale; 
+            //}
         }
 
-        private void Entity_OnChildAdded(Entity sender, Entity child)
-        {
-            Debug.Assert(Entity == sender);
-
-            if (child.TryGetComponent(out TransformComponent c))
-            {
-                c.Parent = this;
-            }
-        }
-        
-        private void Entity_OnChildRemoved(Entity sender, Entity child)
-        {
-            Debug.Assert(Entity == sender);
-
-            if (child.TryGetComponent(out TransformComponent c))
-            {
-                child.Parent = null;
-            }
-        }
+        //private void Entity_OnChildAdded(Entity sender, Entity child)
+        //{
+        //    Debug.Assert(Entity == sender);
+        //
+        //    if (child.TryGetComponent(out TransformComponent c))
+        //    {
+        //        c.Parent = this;
+        //    }
+        //}
+        //
+        //private void Entity_OnChildRemoved(Entity sender, Entity child)
+        //{
+        //    Debug.Assert(Entity == sender);
+        //
+        //    if (child.TryGetComponent(out TransformComponent c))
+        //    {
+        //        c.Parent = null;
+        //    }
+        //}
         #endregion
 
         public override void Attach()
@@ -404,8 +399,8 @@ namespace CrossEngine.Components
             }
 
             Entity.OnParentChanged += Entity_OnParentChanged;
-            Entity.OnChildAdded += Entity_OnChildAdded;
-            Entity.OnChildRemoved += Entity_OnChildRemoved;
+            //Entity.OnChildAdded += Entity_OnChildAdded;
+            //Entity.OnChildRemoved += Entity_OnChildRemoved;
 
             TransformSystem.Instance.Register(this);
         }
@@ -413,8 +408,8 @@ namespace CrossEngine.Components
         public override void Detach()
         {
             Entity.OnParentChanged -= Entity_OnParentChanged;
-            Entity.OnChildAdded -= Entity_OnChildAdded;
-            Entity.OnChildRemoved -= Entity_OnChildRemoved;
+            //Entity.OnChildAdded -= Entity_OnChildAdded;
+            //Entity.OnChildRemoved -= Entity_OnChildRemoved;
 
             // ! should be handled by Entity_OnChildRemoved
             // remove the connection
@@ -435,6 +430,19 @@ namespace CrossEngine.Components
             {
                 UpdateWorldTransform();
             }
+        }
+
+        public override object Clone()
+        {
+            var trans = new TransformComponent();
+            // questionable
+            trans.Enabled = this.Enabled;
+
+            trans.Position = this.Position;
+            trans.Scale = this.Scale;
+            trans.Rotation = this.Rotation;
+
+            return trans;
         }
 
         //public override void OnRender(RenderEvent re)

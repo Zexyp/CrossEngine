@@ -11,6 +11,8 @@ namespace CrossEngine.Layers
 
         }
 
+        public bool Attached { get; internal set; } = false;
+
         public virtual void OnAttach() { }
         public virtual void OnDetach() { }
         public virtual void OnJoinedUpdate() { }

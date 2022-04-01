@@ -95,8 +95,6 @@ namespace CrossEngine
                 _waitHandle.WaitOne();
                 _joinHandle.Reset();
 
-                Profiler.BeginScope("Render loop");
-
                 Window.PollWindowEvents();
                 Window.UpdateWindow();
 
@@ -104,8 +102,6 @@ namespace CrossEngine
 
                 while (ThreadManager.RenderThreadActionQueue.TryDequeue(out Action action)) action.Invoke();
                 Application.Instance.Render();
-
-                Profiler.EndScope();
             } while (!_shouldStop);
 
             Profiler.BeginScope($"{nameof(RenderThread)}.{nameof(RenderThread.Destroy)}");

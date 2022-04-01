@@ -10,12 +10,19 @@ using System.Threading.Tasks;
 using CrossEngine.Rendering;
 using CrossEngine.Scenes;
 using CrossEngine.Profiling;
+using CrossEngine.Rendering.Buffers;
 
 namespace CrossEngine.Layers
 {
     public class SceneLayer : Layer
     {
-        List<Scene> _scenes = new List<Scene>();
+        private class SceneData
+        {
+            public bool updateEnabled = true;
+            public bool renderEnabled = true;
+        }
+
+        Dictionary<Scene, SceneData> _scenes = new Dictionary<Scene, SceneData>();
 
         EventWaitHandle _waitHandle;
 
@@ -28,20 +35,32 @@ namespace CrossEngine.Layers
         {
             _waitHandle.WaitOne();
             _waitHandle.Reset();
+            Profiler.BeginScope();
 
             // draw
-            for (int sceneIndex = 0; sceneIndex < _scenes.Count; sceneIndex++)
+            foreach (var scenePair in _scenes)
             {
-                var sceneData = _scenes[sceneIndex].GetRenderData();
-                
-                for (int layerIndex = 0; layerIndex < sceneData.Layers.Count; layerIndex++)
+                Scene scene = scenePair.Key;
+                SceneData sceneData = scenePair.Value;
+                if (!sceneData.renderEnabled) continue;
+                var scenRendereData = scene.GetRenderData();
+                if (scenRendereData == null) continue;
+
+                ((Framebuffer?)scenRendereData.Output)?.Bind();
+                if (scenRendereData.ClearColor != null)
                 {
-                    SceneLayerRenderData layerData = sceneData.Layers[layerIndex];
+                    Application.Instance.RendererAPI.SetClearColor(scenRendereData.ClearColor.Value);
+                    Application.Instance.RendererAPI.Clear();
+                }
+
+                for (int layerIndex = 0; layerIndex < scenRendereData.Layers.Count; layerIndex++)
+                {
+                    SceneLayerRenderData layerData = scenRendereData.Layers[layerIndex];
                     foreach ((IRenderable Renderable, IList Objects) item in layerData.Data)
                     {
                         var rndbl = item.Renderable;
                         var objs = item.Objects;
-                        rndbl.Begin(layerData.ProjectionViewMatrix);
+                        rndbl.Begin(layerData.Camera.ViewProjectionMatrix);
                         for (int objectIndex = 0; objectIndex < objs.Count; objectIndex++)
                         {
                             rndbl.Submit((IObjectRenderData)objs[objectIndex]);
@@ -49,16 +68,20 @@ namespace CrossEngine.Layers
                         rndbl.End();
                     }
                 }
+
+                ((Framebuffer?)scenRendereData.Output)?.Unbind();
             }
 
+            Profiler.EndScope();
             _waitHandle.Set();
         }
 
         public override void OnUpdate()
         {
-            for (int i = 0; i < _scenes.Count; i++)
+            foreach (var scenePair in _scenes)
             {
-                _scenes[i].Update();
+                if (scenePair.Value.updateEnabled)
+                    scenePair.Key.Update();
             }
         }
 
@@ -69,7 +92,7 @@ namespace CrossEngine.Layers
             _waitHandle.WaitOne();
             _waitHandle.Reset();
 
-            _scenes.Add(scene);
+            _scenes.Add(scene, new SceneData());
 
             _waitHandle.Set();
 
@@ -89,7 +112,5 @@ namespace CrossEngine.Layers
 
             Profiler.EndScope();
         }
-
-
     }
 }

@@ -38,6 +38,11 @@ namespace CrossEngine.Profiling
                 ThreadID = tid;
                 Start = start;
             }
+
+            public override string ToString()
+            {
+                return $"ThreadID: {ThreadID}; Name: {Name}";
+            }
         }
         #endregion
 
@@ -65,7 +70,7 @@ namespace CrossEngine.Profiling
 
             try
             {
-                outputStream = File.Open(filepath, FileMode.Create);
+                outputStream = File.Open(filepath, FileMode.Create, FileAccess.Write, FileShare.Read);
             }
             catch (IOException)
             {

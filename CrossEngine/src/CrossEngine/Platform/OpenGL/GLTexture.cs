@@ -15,6 +15,10 @@ namespace CrossEngine.Platform.OpenGL
         private uint _width, _height;
         private int _internalFormat, _dataFormat;
 
+        public override uint RendererId => _rendererId;
+        public override uint Width => _width;
+        public override uint Height => _height;
+
         unsafe GLTexture()
         {
             Profiler.Function();
@@ -23,7 +27,7 @@ namespace CrossEngine.Platform.OpenGL
                 glGenTextures(1, p);
         }
 
-        public unsafe GLTexture(uint width, uint height, ColorChannelFormat internalFormat) : this()
+        public unsafe GLTexture(uint width, uint height, ColorFormat internalFormat) : this()
         {
             SetData(null, width, height, internalFormat, internalFormat);
         }
@@ -46,8 +50,6 @@ namespace CrossEngine.Platform.OpenGL
 
             Disposed = true;
         }
-
-        public override uint RendererId => throw new NotImplementedException();
 
         public override void Bind(uint slot = 0)
         {
@@ -75,7 +77,7 @@ namespace CrossEngine.Platform.OpenGL
             glTexSubImage2D(gltarg, 0, 0, 0, (int)_width, (int)_height, _dataFormat, GL_UNSIGNED_BYTE, data);
         }
 
-        public unsafe void SetData(byte* data, uint width, uint height, ColorChannelFormat suppliedFormat, ColorChannelFormat internalFormat)
+        public unsafe void SetData(void* data, uint width, uint height, ColorFormat suppliedFormat, ColorFormat internalFormat)
         {
             Target = TextureTarget.Texture2D;
             int gltarg = GLUtils.ToGLTextureTarget(Target);
@@ -83,10 +85,11 @@ namespace CrossEngine.Platform.OpenGL
             glBindTexture(gltarg, _rendererId);
 
             // TODO: add data type
-            _internalFormat = GLUtils.ToGLColorChannelFormat(internalFormat);
-            _dataFormat = GLUtils.ToGLColorChannelFormat(suppliedFormat);
+            _internalFormat = GLUtils.ToGLColorFormat(internalFormat);
+            _dataFormat = GLUtils.ToGLColorFormat(suppliedFormat);
             glTexImage2D(gltarg, 0, _internalFormat, (int)width, (int)height, 0, _dataFormat, GL_UNSIGNED_BYTE, data);
 
+            // ! this should be used
             //if (generateMipmaps) glGenerateMipmap((int)_target);
 
             // parameters need to be set

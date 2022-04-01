@@ -23,19 +23,14 @@
 
   <ItemGroup>
     <Compile Remove="assets\**" />
-    <Compile Remove="src\CrossEngineEditor\**" />
     <EmbeddedResource Remove="assets\**" />
-    <EmbeddedResource Remove="src\CrossEngineEditor\**" />
     <None Remove="assets\**" />
-    <None Remove="src\CrossEngineEditor\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="src\CrossEngineEditor\EditorContext.cs" />
-    <Compile Include="src\CrossEngineEditor\EditorPanel.cs" />
-    <Compile Include="src\CrossEngineEditor\Panels\InspectorPanel.cs" />
-    <Compile Include="src\CrossEngineEditor\Utils\ImGuiUtils.cs" />
-    <Compile Include="src\CrossEngineEditor\Utils\PropertyDrawer.cs" />
+    <Compile Remove="src\CrossEngineEditor\Panels\GamePanel.cs" />
+    <Compile Remove="src\CrossEngineEditor\Panels\GizmoPanel.cs" />
+    <Compile Remove="src\CrossEngineEditor\Panels\ImageViewerPanel.cs" />
   </ItemGroup>
 
   <ItemGroup>
