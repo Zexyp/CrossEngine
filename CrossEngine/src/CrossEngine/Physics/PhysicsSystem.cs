@@ -456,7 +456,7 @@ namespace CrossEngine.ComponentSystems
         {
             rigidBodyWorld = new RigidBodyWorld();
 
-            Physics.Physics.SetContext(rigidBodyWorld);
+            Physics.PhysicsInterface.SetContext(rigidBodyWorld);
 
             _debugDrawData.Add(rigidBodyWorld);
 

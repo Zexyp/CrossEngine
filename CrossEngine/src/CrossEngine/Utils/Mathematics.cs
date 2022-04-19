@@ -81,20 +81,13 @@ namespace CrossEngine.Utils
         {
             return MathExtension.Compare(a.X, b.X, precision) && MathExtension.Compare(a.Y, b.Y, precision);
         }
-
-        //public static Vector2 FromSizeF(SizeF size)
-        //{
-        //    return new Vector2(size.Width, size.Height);
-        //}
-
-        //public static Vector3 XYZ(this Vector2 v, float z)
-        //{
-        //    return new Vector3(v.X, v.Y, z);
-        //}
     }
 
     public static class Vector3Extension
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 XY(this Vector3 v) => new Vector2(v.X, v.Y);
+
         static Random random = new Random();
 
         public static Vector3 RandomNormalized()
@@ -111,19 +104,12 @@ namespace CrossEngine.Utils
         {
             return new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) - new Vector3(0.5f);
         }
-
-        //public static Vector2 XY(this Vector3 v)
-        //{
-        //    return new Vector2(v.X, v.Y);
-        //}
     }
 
     static class Vector4Extension
     {
-        //public static Vector3 XYZ(this Vector4 v)
-        //{
-        //    return new Vector3(v.X, v.Y, v.Z);
-        //}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 XYZ(this Vector4 v) => new Vector3(v.X, v.Y, v.Z);
 
         public static Vector4 FromColor(System.Drawing.Color color)
         {
@@ -150,40 +136,6 @@ namespace CrossEngine.Utils
         //    Matrix4x4 shear = Matrix4x4.Identity;
         //    shear.M23 = value;
         //    return shear;
-        //}
-
-        public static Matrix4x4 MirrorX
-        {
-            get
-            {
-                Matrix4x4 mirror = Matrix4x4.Identity;
-                mirror.M11 = -1;
-                return mirror;
-            }
-        }
-        public static Matrix4x4 MirrorY
-        {
-            get
-            {
-                Matrix4x4 mirror = Matrix4x4.Identity;
-                mirror.M22 = -1;
-                return mirror;
-            }
-        }
-        public static Matrix4x4 MirrorZ
-        {
-            get
-            {
-                Matrix4x4 mirror = Matrix4x4.Identity;
-                mirror.M33 = -1;
-                return mirror;
-            }
-        }
-
-        //public static Matrix4x4 ClearTranslation(Matrix4x4 matrix)
-        //{
-        //    matrix.Translation = Vector3.Zero;
-        //    return matrix;
         //}
 
         public static Matrix4x4 CreateBillboard(Vector3 right, Vector3 up, Vector3 look, Vector3 pos)
@@ -629,24 +581,24 @@ namespace CrossEngine.Utils
 
         public static Quaternion RotateX(float angle)
         {
-            return Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), angle);
+            return Quaternion.CreateFromAxisAngle(Vector3.UnitX, angle);
         }
         public static Quaternion RotateY(float angle)
         {
-            return Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), angle);
+            return Quaternion.CreateFromAxisAngle(Vector3.UnitY, angle);
         }
         public static Quaternion RotateZ(float angle)
         {
-            return Quaternion.CreateFromAxisAngle(new Vector3(0, 0, 1), angle);
+            return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, angle);
         }
 
-        public static Quaternion CreateFromXYZRotation(float x, float y, float z)
+        public static Quaternion RotateXYZ(float x, float y, float z)
         {
             // pitch yaw roll
             return RotateX(x) * RotateY(y) * RotateZ(z);
         }
 
-        public static Quaternion CreateFromXYZRotation(Vector3 vec)
+        public static Quaternion RotateXYZ(Vector3 vec)
         {
             return RotateX(vec.X) * RotateY(vec.Y) * RotateZ(vec.Z);
         }
@@ -654,15 +606,15 @@ namespace CrossEngine.Utils
 
     public static class Color
     {
-        public static Vector3 RGBFromUInt(uint color)
-        {
-            return new Vector3((float)(byte)color / 255, (float)(byte)(color >> 8) / 255, (float)(byte)(color >> 16) / 255);
-        }
-
-        public static Vector4 RGBAFromUInt(uint color)
-        {
-            return new Vector4((float)(byte)color / 255, (float)(byte)(color >> 8) / 255, (float)(byte)(color >> 16) / 255, (float)(byte)(color >> 24) / 255);
-        }
+        //public static Vector3 RGBFromUInt(uint color)
+        //{
+        //    return new Vector3((float)(byte)color / 255, (float)(byte)(color >> 8) / 255, (float)(byte)(color >> 16) / 255);
+        //}
+        //
+        //public static Vector4 RGBAFromUInt(uint color)
+        //{
+        //    return new Vector4((float)(byte)color / 255, (float)(byte)(color >> 8) / 255, (float)(byte)(color >> 16) / 255, (float)(byte)(color >> 24) / 255);
+        //}
 
         public static Vector3 HSVToRGB(Vector3 hsvColor)
         {

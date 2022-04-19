@@ -16,6 +16,21 @@ namespace CrossEngine.Physics
 
     class RigidBodyWorld : IDisposable, IObjectRenderData
     {
+        public Vector3 Gravity
+        {
+            get => World.Gravity.ToNumerics();
+            set
+            {
+                World.Gravity = value.ToBullet();
+                for (int i = 0; i < World.CollisionObjectArray.Count; i++)
+                {
+                    var collisionObject = World.CollisionObjectArray[i];
+                    if (!collisionObject.IsStaticObject)
+                        collisionObject.Activate();
+                }
+            }
+        }
+
         CollisionConfiguration _collisionConfiguration;
         CollisionDispatcher _dispatcher;
         internal BroadphaseInterface Broadphase { get; private set; }

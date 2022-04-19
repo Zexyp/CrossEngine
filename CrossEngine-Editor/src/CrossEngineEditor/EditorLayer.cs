@@ -149,7 +149,7 @@ namespace CrossEngineEditor
                 for (int i = 0; i < _panels.Count; i++)
                 {
                     EditorPanel panel = _panels[i];
-                    config.Write(EditorConfigSections.PanelsOpen, panel.GetType().Name, (panel != null) ? panel.Open.ToString() : "null" );
+                    config.Write(EditorConfigSections.PanelsOpen, panel.GetType().Name, (panel.Open != null) ? panel.Open.ToString() : "null" );
                 }
             }
         }
@@ -184,6 +184,7 @@ namespace CrossEngineEditor
                     okl.AddComponent(new TagComponent("Main"));
                     okl.AddComponent(new SpriteRendererComponent() { Color = new Vector4(0, 1, 0, 1)});
                     okl.AddComponent(new CameraComponent(new OrthographicCamera() { OrthographicSize = 10 }) { Primary = true });
+                    okl.AddComponent<ParticleSystemComponent>().ParticleSystem = new CrossEngine.FX.Particles.ParticleSystem(drawIn2D: true);
                     continue;
                 }
                 Entity ent = Context.Scene.CreateEntity();

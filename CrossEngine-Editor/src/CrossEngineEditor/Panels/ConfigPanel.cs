@@ -56,8 +56,8 @@ namespace CrossEngineEditor.Panels
 
                     ImGuiUtils.EndGroupFrame();
 
+                    ImGui.EndChild();
                 }
-                ImGui.EndChild();
             }
 
             ImGui.SameLine();
@@ -71,7 +71,6 @@ namespace CrossEngineEditor.Panels
 
                     ImGui.EndChild();
                 }
-                ImGui.EndChild();
             }
         }
     }

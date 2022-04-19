@@ -84,7 +84,7 @@ namespace CrossEngine.Components
                 if (_eulerAngles == value) return;
                 
                 _eulerAngles = value;
-                _rotation = QuaternionExtension.CreateFromXYZRotation(_eulerAngles.X, _eulerAngles.Y, _eulerAngles.Z);
+                _rotation = QuaternionExtension.RotateXYZ(_eulerAngles);
                 MarkForUpdate();
             }
         }

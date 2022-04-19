@@ -58,7 +58,7 @@ namespace CrossEngine.Components
             set
             {
                 var transtlation = _localOffsets.Translation;
-                _localOffsets = Matrix4x4.CreateFromQuaternion(QuaternionExtension.CreateFromXYZRotation(value.X, value.Y, value.Z));
+                _localOffsets = Matrix4x4.CreateFromQuaternion(QuaternionExtension.RotateXYZ(value));
                 _localOffsets.Translation = transtlation;
                 OnPropertyChanged?.Invoke(this, ColliderPropertyFlags.LocalOffsets);
             }

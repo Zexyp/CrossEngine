@@ -1,9 +1,16 @@
-﻿using System;
+﻿#define TRANSFORM_CACHE
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
+
+#if TRANSFORM_CACHE
+using CrossEngine.Components;
+#endif
 
 namespace CrossEngine.ECS
 {
@@ -13,6 +20,10 @@ namespace CrossEngine.ECS
 
         private readonly List<Component> _components = new List<Component>();
         private readonly List<Entity> _children = new List<Entity>();
+
+#if TRANSFORM_CACHE
+        public TransformComponent Transform { get; private set; }
+#endif
 
         private Entity _parent;
         public Entity Parent
@@ -55,6 +66,14 @@ namespace CrossEngine.ECS
         #region Add
         public Component AddComponent(Component component)
         {
+#if TRANSFORM_CACHE
+            if (component is TransformComponent)
+            {
+                Debug.Assert(Transform == null);
+                Transform = (TransformComponent)component;
+            }
+#endif
+
             _components.Add(component);
             component.Entity = this;
 
@@ -67,7 +86,6 @@ namespace CrossEngine.ECS
 
         public T AddComponent<T>(T component) where T : Component
         {
-            
             return (T)AddComponent((Component)component);
         }
 
@@ -86,6 +104,14 @@ namespace CrossEngine.ECS
 
             component.Entity = null;
             _components.Remove(component);
+
+#if TRANSFORM_CACHE
+            if (component is TransformComponent)
+            {
+                Debug.Assert(Transform == component);
+                Transform = null;
+            }
+#endif
         }
 
         public void RemoveComponent<T>() where T : Component

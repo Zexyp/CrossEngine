@@ -32,13 +32,17 @@ namespace CrossEngine.Physics
         }
     }
 
-    public class Physics
+    public static class PhysicsInterface
     {
+        public static Vector3 Gravity { get => _context.Gravity; set => _context.Gravity = value; }
+
+        private static RigidBodyWorld _context;
         private static DynamicsWorld _dynamicsWorld;
 
         internal static void SetContext(RigidBodyWorld context)
         {
-            _dynamicsWorld = context.World;
+            _context = context;
+            _dynamicsWorld = _context?.World;
         }
 
         public static bool Raycast(Vector3 source, Vector3 destination, out RaycastHitInfo info)
@@ -73,6 +77,12 @@ namespace CrossEngine.Physics
 
         public static bool Raycast(Vector3 source, Vector3 direction, float maxDistance, out RaycastHitInfo info)
         {
+            if (_dynamicsWorld == null)
+            {
+                Log.Core.Error("raycast attempted without world context!");
+                throw new InvalidOperationException("Raycast attempted without world context.");
+            }
+
             BulletVector3 Bdestination = (source + (direction * maxDistance)).ToBullet();
 
             BulletVector3 Bsource = source.ToBullet();
