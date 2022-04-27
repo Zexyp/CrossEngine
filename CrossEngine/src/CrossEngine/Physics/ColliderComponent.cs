@@ -81,12 +81,12 @@ namespace CrossEngine.Components
             OnPropertyChanged?.Invoke(this, ColliderPropertyFlags.Shape);
         }
 
-        public override void Attach()
+        protected internal override void Attach()
         {
             PhysicsSysten.Instance.RegisterCollider(this);
         }
 
-        public override void Detach()
+        protected internal override void Detach()
         {
             PhysicsSysten.Instance.UnregisterCollider(this);
         }

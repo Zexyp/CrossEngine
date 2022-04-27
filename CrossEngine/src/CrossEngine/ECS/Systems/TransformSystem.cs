@@ -65,5 +65,13 @@ namespace CrossEngine.ComponentSystems
 
             Profiler.EndScope();
         }
+
+        public override void Render()
+        {
+            for (int i = 0; i < Components.Count; i++)
+            {
+                Rendering.LineRenderer.DrawAxies(Components[i].WorldTransformMatrix);
+            }
+        }
     }
 }

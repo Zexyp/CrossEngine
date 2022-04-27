@@ -23,7 +23,7 @@ namespace CrossEngine.Components
         //    Blending = 2
         //}
 
-        [EditorVector4Value]
+        [EditorDrag]
         public Vector4 DrawOffsets
         {
             get => _drawOffsets;
@@ -34,10 +34,10 @@ namespace CrossEngine.Components
                 _localOffsetMatrixDirty = true;
             }
         }
-        [EditorVector4Value]
+        [EditorDrag]
         public Vector4 TextureOffsets = new Vector4(0f, 0f, 1f, 1f);
 
-        [EditorColor4Value]
+        [EditorColorEdit]
         public Vector4 Color = Vector4.One; // also used for tinting; chooses transparency median
         //[EditorEnumValue]
         //public TransparencyMode TranspMode;
@@ -62,17 +62,17 @@ namespace CrossEngine.Components
             
         }
 
-        public override void Attach()
+        internal protected override void Attach()
         {
             SpriteRendererSystem.Instance.Register(this);
         }
 
-        public override void Detach()
+        internal protected override void Detach()
         {
             SpriteRendererSystem.Instance.Unregister(this);
         }
 
-        public override void Update()
+        internal protected override void Update()
         {
             if (_localOffsetMatrixDirty)
             {

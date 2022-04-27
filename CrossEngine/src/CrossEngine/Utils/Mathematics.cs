@@ -16,25 +16,25 @@ namespace CrossEngine.Utils
         public const double ToRadConst = MathF.PI / 180.0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static public double ToRadians(double degrees)
-        {
-            return ToRadConst * degrees;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public float ToRadians(float degrees)
         {
             return ToRadConstF * degrees;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static public double ToDegrees(double radians)
-        {
-            return ToDegConst * radians;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static public float ToDegrees(float radians)
         {
             return ToDegConstF * radians;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static public double ToRadians(double degrees)
+        {
+            return ToRadConst * degrees;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static public double ToDegrees(double radians)
+        {
+            return ToDegConst * radians;
         }
 
         public static float Lerp(float first, float second, float amount)
@@ -90,19 +90,26 @@ namespace CrossEngine.Utils
 
         static Random random = new Random();
 
-        public static Vector3 RandomNormalized()
+        // vectors between 1 and -1;
+
+        public static Vector3 RandomSphere()
         {
             return Vector3.Normalize(new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) - new Vector3(0.5f)); 
         }
 
-        public static Vector3 RandomSphere()
+        public static Vector3 RandomSphereVolume()
         {
             return Vector3.Normalize(new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) - new Vector3(0.5f)) * (float)random.NextDouble();
         }
 
         public static Vector3 RandomCube()
         {
-            return new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) - new Vector3(0.5f);
+            return (new Vector3(random.Next(0, 2), random.Next(0, 2), random.Next(0, 2)) - new Vector3(0.5f)) * 2;
+        }
+
+        public static Vector3 RandomCubeVolume()
+        {
+            return (new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) - new Vector3(0.5f)) * 2;
         }
     }
 

@@ -279,6 +279,12 @@ namespace CrossEngine.Rendering
             StartTrisBatch();
         }
 
+        public static void Flush()
+        {
+            FlushQuads();
+            FlushTris();
+        }
+
         public static void EndScene()
         {
             FlushQuads();

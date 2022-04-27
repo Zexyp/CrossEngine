@@ -17,7 +17,7 @@ namespace CrossEngine
         }
         public static void ExecuteOnMianThread(Action action)
         {
-            throw new NotImplementedException();
+            MainThreadActionQueue.Enqueue(action);
         }
     }
 }

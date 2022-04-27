@@ -48,5 +48,7 @@ namespace CrossEngine.Platform.OpenGL
         public override void SetPolygonMode(PolygonMode mode) => glPolygonMode(GL_FRONT_AND_BACK, GLUtils.ToGLPolygonMode(mode));
 
         public override void SetDepthFunc(DepthFunc func) => throw new NotImplementedException();
+
+        public override void SetLineWidth(float width) => glLineWidth(width);
     }
 }

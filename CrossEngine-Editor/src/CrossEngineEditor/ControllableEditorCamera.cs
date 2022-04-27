@@ -28,6 +28,7 @@ namespace CrossEngineEditor
         public abstract void Pan(Vector2 delta);
         public abstract void Move(Vector2 delta);
         public abstract void Zoom(float delta);
+        public abstract void Fly(Vector3 delta, Vector2 mouse);
 
         public override void Resize(float width, float height)
         {
@@ -44,6 +45,7 @@ namespace CrossEngineEditor
         private float _zNear = -1.0f;
         private float _zFar = 1.0f;
 
+        #region Properies
         [EditorDrag]
         public float OrthographicSize
         {
@@ -77,6 +79,7 @@ namespace CrossEngineEditor
                 MarkProjectionDirty();
             }
         }
+        #endregion
 
         protected override Matrix4x4 CreateProjectionMatrix()
         {
@@ -103,6 +106,12 @@ namespace CrossEngineEditor
         {
             Move(delta);
         }
+
+        public override void Fly(Vector3 delta, Vector2 mouse)
+        {
+            Position += new Vector3(delta.X, delta.Z, delta.Y) * OrthographicSize;
+            Zoom(mouse.X * 0.05f);
+        }
     }
 
     public class PerspectiveControllableEditorCamera : ControllableEditorCamera
@@ -113,6 +122,7 @@ namespace CrossEngineEditor
         private float _zoom = 10f;
         Vector2 rotation;
 
+        #region Properies
         [EditorDrag]
         public float ZNear
         {
@@ -135,7 +145,7 @@ namespace CrossEngineEditor
                 MarkProjectionDirty();
             }
         }
-        [EditorDrag]
+        [EditorDrag()]
         public float FOV
         {
             get => _fov;
@@ -157,6 +167,7 @@ namespace CrossEngineEditor
                 MarkProjectionDirty();
             }
         }
+        #endregion
 
         protected override Matrix4x4 CreateProjectionMatrix()
         {
@@ -190,6 +201,17 @@ namespace CrossEngineEditor
             ZoomDistance -= delta * 0.25f / (1 / _zoom * 4);
 
             MarkProjectionDirty();
+        }
+
+        public override void Fly(Vector3 delta, Vector2 mouse)
+        {
+            Vector3 rotated = Vector3.Transform(delta, Rotation);
+            Position += rotated * _zoom;
+            Position -= Vector3.Transform(Vector3.UnitZ, Rotation) * _zoom;
+
+            Move(-mouse * new Vector2(1, -1) / 2);
+
+            Position += Vector3.Transform(Vector3.UnitZ, Rotation) * _zoom;
         }
     }
 }

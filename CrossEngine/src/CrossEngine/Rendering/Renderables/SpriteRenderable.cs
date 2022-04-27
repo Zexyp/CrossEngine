@@ -21,16 +21,6 @@ namespace CrossEngine.Rendering.Renderables
 
     class SpriteRenderable : Renderable<ISpriteRenderData>
     {
-        public override void Begin(Matrix4x4 viewProjectionMatrix)
-        {
-            Renderer2D.BeginScene(viewProjectionMatrix);
-        }
-
-        public override void End()
-        {
-            Renderer2D.EndScene();
-        }
-
         public override void Submit(ISpriteRenderData data)
         {
             if (data == null) Logging.Log.Core.Error("something went wrong, again...");

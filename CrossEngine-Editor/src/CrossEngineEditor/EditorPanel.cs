@@ -21,8 +21,7 @@ namespace CrossEngineEditor
             {
                 if (value == _open) return;
                 _open = value;
-                if (_open == false) OnClose();
-                else OnOpen();
+                UpdateOpenState();
             }
         }
 
@@ -55,6 +54,7 @@ namespace CrossEngineEditor
 
             PrepareWindow();
 
+            var lastOpen = _open;
             if (!ImGuiExtension.BeginNullableOpen(WindowName, ref _open, WindowFlags))
             {
                 EndPrepareWindow();
@@ -84,9 +84,13 @@ namespace CrossEngineEditor
 
                 ImGui.End();
             }
+            if (lastOpen != _open)
+                UpdateOpenState();
 
             ImGui.PopID();
         }
+
+        public bool IsOpen => _open == null || (bool)_open;
 
         protected virtual void PrepareWindow() { }
         protected virtual void EndPrepareWindow() { }
@@ -97,6 +101,10 @@ namespace CrossEngineEditor
         public virtual void OnOpen() { }
         public virtual void OnClose() { }
 
-        public bool IsOpen() => _open == null || (bool)_open;
+        private void UpdateOpenState()
+        {
+            if (_open == false) OnClose();
+            else if (_open == true) OnOpen();
+        }
     }
 }

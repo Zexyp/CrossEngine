@@ -11,7 +11,14 @@ using CrossEngine.ComponentSystems;
 
 namespace CrossEngine.Components
 {
-    [AllowSingleComponentPerEntity]
+    interface ITransform
+    {
+        Vector3 Position { get; }
+        Quaternion Rotation { get; }
+        Vector3 Scale { get; }
+    }
+
+    [AllowSinglePerEntity]
     public class TransformComponent : Component
     {
         // TODO: consider adding rotation mode
@@ -27,7 +34,7 @@ namespace CrossEngine.Components
         private Vector3 _worldScale;
 
         // matrices
-        //private Matrix4x4 _transformMatrix;
+        //private Matrix4x4 _transformMatrix; // TODO: conmsider local matrix cache
         private Matrix4x4 _worldTransformMatrix;
 
         bool _dirty = true;
@@ -385,7 +392,7 @@ namespace CrossEngine.Components
         //}
         #endregion
 
-        public override void Attach()
+        protected internal override void Attach()
         {
             Debug.Assert(Entity.GetComponent<TransformComponent>() != null);
 
@@ -405,7 +412,7 @@ namespace CrossEngine.Components
             TransformSystem.Instance.Register(this);
         }
 
-        public override void Detach()
+        protected internal override void Detach()
         {
             Entity.OnParentChanged -= Entity_OnParentChanged;
             //Entity.OnChildAdded -= Entity_OnChildAdded;
@@ -424,7 +431,7 @@ namespace CrossEngine.Components
             TransformSystem.Instance.Unregister(this);
         }
 
-        public override void Update()
+        protected internal override void Update()
         {
             if (_dirty)
             {

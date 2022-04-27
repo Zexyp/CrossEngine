@@ -11,12 +11,12 @@ namespace CrossEngine.Components
 {
     public abstract class ScriptableComponent : Component
     {
-        public override void Attach()
+        internal protected override void Attach()
         {
             ScriptableSystem.Instance.Register(this);
         }
 
-        public override void Detach()
+        internal protected override void Detach()
         {
             ScriptableSystem.Instance.Unregister(this);
         }

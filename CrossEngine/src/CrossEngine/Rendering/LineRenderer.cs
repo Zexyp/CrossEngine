@@ -98,6 +98,8 @@ namespace CrossEngine.Rendering
             throw new NotImplementedException();
         }
 
+        public static void SetLineWidth(float width) => Application.Instance.RendererAPI.SetLineWidth(width);
+
         public static unsafe void BeginScene(Matrix4x4 viewProjectionMatrix)
         {
             data.lineShader.Use();
@@ -118,7 +120,7 @@ namespace CrossEngine.Rendering
                 data.lineVertexBufferPtr = p;
         }
 
-        static unsafe void Flush()
+        public static unsafe void Flush()
         {
             if (data.lineCount == 0)
                 return;
@@ -181,6 +183,11 @@ namespace CrossEngine.Rendering
             new Vector3(-0.5f,  0.5f, -0.5f),
         };
 
+        /// <summary>
+        /// Draws a 1×1 square.
+        /// </summary>
+        /// <param name="matrix"></param>
+        /// <param name="color"></param>
         static public void DrawSquare(Matrix4x4 matrix, Vector4 color)
         {
             Vector3[] points = new Vector3[squareVertices.Length];
@@ -194,14 +201,11 @@ namespace CrossEngine.Rendering
             DrawLine(points[3], points[0], color);
         }
 
-        static public void DrawSquare(Vector3 center, Vector2 size, Vector4 color, Quaternion? rotation = null)
-        {
-            if (rotation != null)
-                DrawSquare(Matrix4x4.CreateScale(new Vector3(size, 0.0f)) * Matrix4x4.CreateFromQuaternion((Quaternion)rotation) * Matrix4x4.CreateTranslation(center), color);
-            else
-                DrawSquare(Matrix4x4.CreateScale(new Vector3(size, 0.0f)) * Matrix4x4.CreateTranslation(center), color);
-        }
-
+        /// <summary>
+        /// Draws a 1×1×1 cube.
+        /// </summary>
+        /// <param name="matrix"></param>
+        /// <param name="color"></param>
         public static void DrawBox(Matrix4x4 matrix, Vector4 color)
         {
             Vector3[] points = new Vector3[boxVertices.Length];
@@ -227,14 +231,6 @@ namespace CrossEngine.Rendering
             DrawLine(points[3], points[7], color);
         }
 
-        static public void DrawBox(Vector3 center, Vector3 size, Vector4 color, Quaternion? rotation = null)
-        {
-            if (rotation != null)
-                DrawBox(Matrix4x4.CreateScale(size) * Matrix4x4.CreateFromQuaternion((Quaternion)rotation) * Matrix4x4.CreateTranslation(center), color);
-            else
-                DrawBox(Matrix4x4.CreateScale(size) * Matrix4x4.CreateTranslation(center), color);
-        }
-
         static public void DrawCircle(Matrix4x4 matrix, Vector4 color, int segments = 16, float radius = 1.0f)
         {
             Vector3[] points = new Vector3[segments];
@@ -255,34 +251,23 @@ namespace CrossEngine.Rendering
             DrawLine(points[points.Length - 1], points[0], color);
         }
 
-        static public void DrawCircle(Vector3 center, float radius, Vector4 color, Quaternion? rotation = null, int segments = 16)
-        {
-            Vector3[] points = new Vector3[segments];
-            float increment = MathF.PI * 2 / points.Length;
-            float currentAngle = 0;
-
-            for (int i = 0; i < points.Length; i++)
-            {
-                if (rotation != null)
-                    points[i] = center + Vector3.Transform(new Vector3(0, radius, 0), Matrix4x4.CreateRotationZ(currentAngle) * Matrix4x4.CreateFromQuaternion((Quaternion)rotation));
-                else
-                    points[i] = center + Vector3.Transform(new Vector3(0, radius, 0), Matrix4x4.CreateRotationZ(currentAngle));
-
-                if (i > 0)
-                {
-                    DrawLine(points[i - 1], points[i], color);
-                }
-
-                currentAngle += increment;
-            }
-            DrawLine(points[points.Length - 1], points[0], color);
-        }
-
-        public static void DrawAxes(Matrix4x4 matrix, float len = 1.0f)
+        /// <summary>
+        /// Draws lines in X, Y, Z direction with matching colors.
+        /// </summary>
+        /// <param name="matrix"></param>
+        /// <param name="len"></param>
+        public static void DrawAxies(Matrix4x4 matrix, float len = 1.0f)
         {
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(len, 0, 0), matrix), new Vector4(1, 0, 0, 1));
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(0, len, 0), matrix), new Vector4(0, 1, 0, 1));
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(0, 0, len), matrix), new Vector4(0, 0, 1, 1));
+        }
+
+        static public void DrawSphere(Matrix4x4 matrix, Vector4 color, int segments = 16, float radius = 1.0f)
+        {
+            DrawCircle(Matrix4x4.CreateRotationX(MathF.PI / 2) * matrix, color, segments, radius);
+            DrawCircle(Matrix4x4.CreateRotationY(MathF.PI / 2) * matrix, color, segments, radius);
+            DrawCircle(Matrix4x4.CreateRotationZ(MathF.PI / 2) * matrix, color, segments, radius);
         }
         #endregion
     }

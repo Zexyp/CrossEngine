@@ -12,6 +12,7 @@ using CrossEngine.ECS;
 using CrossEngine.Utils.Editor;
 
 using CrossEngineEditor.Utils;
+using CrossEngineEditor.Modals;
 
 namespace CrossEngineEditor.Panels
 {
@@ -182,6 +183,14 @@ namespace CrossEngineEditor.Panels
                 if (ImGui.ArrowButton("down", ImGuiDir.Down))
                     context.ShiftComponent(component, Math.Min(components.Count - 1, compi + 1));
 
+                void UIError(MemberInfo mi, Exception ex, Component component)
+                {
+                    ImGui.GetStateStorage().SetInt(ImGui.GetID(componentType.Name), 0);
+                    EditorLayer.Instance.PushModal(
+                        new ActionModal($"UI threw an exception at '{mi.DeclaringType.Name}.{mi.Name}':\n{ex.Message}\n\nDo you want to remove problematic component?",
+                            "UI Error")
+                        { Color = ActionModal.TextColor.Error });
+                }
 
                 if (collapsingHeader)
                 {
@@ -193,7 +202,9 @@ namespace CrossEngineEditor.Panels
                     {
                         var mem = membs[mi];
                         if (mem.MemberType == MemberTypes.Field || mem.MemberType == MemberTypes.Property)
-                            PropertyDrawer.DrawEditorValue(mem, component);
+                            PropertyDrawer.DrawEditorValue(mem, component,
+                                (ex) => UIError(mem, ex, component)
+                                );
                     }
 
                     //ImGui.Separator();

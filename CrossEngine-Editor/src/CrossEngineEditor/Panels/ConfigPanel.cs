@@ -12,6 +12,7 @@ using CrossEngine.Utils;
 using CrossEngineEditor.Panels;
 using CrossEngineEditor.Modals;
 using CrossEngineEditor.Utils;
+using CrossEngineEditor.Utils.Gui;
 
 namespace CrossEngineEditor.Panels
 {
@@ -34,7 +35,7 @@ namespace CrossEngineEditor.Panels
 
                     if (ImGui.Button("Load"))
                     {
-                        if (!ImGuiStyleConfig.Load(new IniFile("style"))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+                        if (!ImGuiStyleConfig.Load(new IniFile("style"))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
                     }
 
                     if (ImGui.Button("Save"))
@@ -50,7 +51,7 @@ namespace CrossEngineEditor.Panels
                             filter: FileDialog.Filters.IniFile +
                                     FileDialog.Filters.AllFiles))
                         {
-                            if (!ImGuiStyleConfig.Load(new IniFile(path, true))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+                            if (!ImGuiStyleConfig.Load(new IniFile(path, true))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
                         }
                     }
 

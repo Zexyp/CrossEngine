@@ -22,6 +22,7 @@ namespace CrossEngine.ECS
         void Init();
         void Shutdown();
         void Update();
+        virtual void Render() { }
     }
 
     abstract class System<T> : ISystem where T : Component
@@ -53,8 +54,9 @@ namespace CrossEngine.ECS
             Components.Remove(component);
         }
 
-        virtual public void Init() { }
-        virtual public void Shutdown() { }
-        virtual public void Update() { }
+        public virtual void Init() { }
+        public virtual void Shutdown() { }
+        public virtual void Update() { }
+        public virtual void Render() { }
     }
 }

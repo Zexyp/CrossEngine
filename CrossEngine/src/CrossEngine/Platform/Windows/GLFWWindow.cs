@@ -77,6 +77,12 @@ namespace CrossEngine.Platform.Windows
             Glfw.PollEvents();
         }
 
+        protected internal override unsafe void SetIcon(void* data, uint width, uint height)
+        {
+            GLFW.Image iconImage = new GLFW.Image((int)width, (int)height, new IntPtr(data));
+            Glfw.SetWindowIcon(Handle, 1, new GLFW.Image[] { iconImage });
+        }
+
         protected override void UpdateWindowSize()
         {
             if (Handle != WindowHandle.None) Glfw.SetWindowSize(Handle, (int)Data.Width, (int)Data.Height);

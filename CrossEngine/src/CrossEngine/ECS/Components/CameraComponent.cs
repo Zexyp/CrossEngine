@@ -42,12 +42,12 @@ namespace CrossEngine.Components
             Camera = camera;
         }
 
-        public override void Attach()
+        protected internal override void Attach()
         {
             RendererSystem.Instance.RegisterCamera(this);
         }
 
-        public override void Detach()
+        protected internal override void Detach()
         {
             RendererSystem.Instance.UnregisterCamera(this);
         }

@@ -50,6 +50,7 @@ namespace CrossEngine.Display
         protected internal abstract void DestroyWindow();
         protected internal abstract void UpdateWindow();
         protected internal abstract void PollWindowEvents();
+        protected internal abstract unsafe void SetIcon(void* data, uint width, uint height);
 
         protected abstract void UpdateWindowSize();
         protected abstract void UpdateWindowTitle();

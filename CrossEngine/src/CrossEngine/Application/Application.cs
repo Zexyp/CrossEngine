@@ -71,6 +71,7 @@ namespace CrossEngine
 
                 RenderThread.Run();
 
+                while (ThreadManager.MainThreadActionQueue.TryDequeue(out Action action)) action.Invoke();
                 Update();
 
                 //EventLoop.Update();

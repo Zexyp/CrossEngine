@@ -120,12 +120,12 @@ namespace CrossEngine.Components
 
         internal event Action<RigidBodyComponent, RigidBodyPropertyFlags> OnPropertyChanged;
 
-        public override void Attach()
+        internal protected override void Attach()
         {
             PhysicsSysten.Instance.RegisterRigidBody(this);
         }
 
-        public override void Detach()
+        internal protected override void Detach()
         {
             PhysicsSysten.Instance.UnregisterRigidBody(this);
         }

@@ -38,6 +38,8 @@ namespace CrossEngine.Rendering
         public abstract void SetPolygonMode(PolygonMode mode);
         public abstract void SetDepthFunc(DepthFunc func);
 
+        public abstract void SetLineWidth(float width);
+
         public abstract void Clear();
 
         public abstract void DrawIndexed(Ref<VertexArray> vertexArray, uint indexCount = 0/*, DrawMode mode*/);

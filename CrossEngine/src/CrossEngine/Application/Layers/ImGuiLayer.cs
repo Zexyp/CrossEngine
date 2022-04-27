@@ -189,6 +189,7 @@ namespace CrossEngine.Layers
             style.TabRounding = 4f;
             style.FrameRounding = 4f;
             style.GrabRounding = 4f;
+            style.WindowRounding = 4f;
             style.WindowMenuButtonPosition = ImGuiDir.Right;
 
             ImGui.SetColorEditOptions(ImGuiColorEditFlags.Float | ImGuiColorEditFlags.HDR);

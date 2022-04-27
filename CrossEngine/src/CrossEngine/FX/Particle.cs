@@ -24,7 +24,7 @@ namespace CrossEngine.FX.Particles
     // scale -- gradiented
     // scale variation
 
-    struct Particle
+    public struct Particle
     {
         public bool active;
         public float life;

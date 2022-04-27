@@ -24,17 +24,8 @@ namespace CrossEngine.Layers
 
         Dictionary<Scene, SceneData> _scenes = new Dictionary<Scene, SceneData>();
 
-        EventWaitHandle _waitHandle;
-
-        public SceneLayer()
-        {
-            _waitHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
-        }
-
         public override void OnRender()
         {
-            _waitHandle.WaitOne();
-            _waitHandle.Reset();
             Profiler.BeginScope();
 
             // draw
@@ -56,24 +47,36 @@ namespace CrossEngine.Layers
                 for (int layerIndex = 0; layerIndex < scenRendereData.Layers.Count; layerIndex++)
                 {
                     SceneLayerRenderData layerData = scenRendereData.Layers[layerIndex];
+
+                    Renderer2D.BeginScene(layerData.Camera.ViewProjectionMatrix);
+                    LineRenderer.BeginScene(layerData.Camera.ViewProjectionMatrix);
+                    
                     foreach ((IRenderable Renderable, IList Objects) item in layerData.Data)
                     {
                         var rndbl = item.Renderable;
                         var objs = item.Objects;
-                        rndbl.Begin(layerData.Camera.ViewProjectionMatrix);
+                        rndbl.Begin(layerData.Camera);
                         for (int objectIndex = 0; objectIndex < objs.Count; objectIndex++)
                         {
                             rndbl.Submit((IObjectRenderData)objs[objectIndex]);
                         }
                         rndbl.End();
+
+                        Renderer2D.Flush();
+                        LineRenderer.Flush();
                     }
+
                 }
+
+                scene.Render();
+
+                Renderer2D.EndScene();
+                LineRenderer.EndScene();
 
                 ((Framebuffer?)scenRendereData.Output)?.Unbind();
             }
 
             Profiler.EndScope();
-            _waitHandle.Set();
         }
 
         public override void OnUpdate()
@@ -89,12 +92,7 @@ namespace CrossEngine.Layers
         {
             Profiler.BeginScope();
 
-            _waitHandle.WaitOne();
-            _waitHandle.Reset();
-
             _scenes.Add(scene, new SceneData());
-
-            _waitHandle.Set();
 
             Profiler.EndScope();
         }
@@ -103,12 +101,7 @@ namespace CrossEngine.Layers
         {
             Profiler.BeginScope();
 
-            _waitHandle.WaitOne();
-            _waitHandle.Reset();
-
             _scenes.Remove(scene);
-
-            _waitHandle.Set();
 
             Profiler.EndScope();
         }

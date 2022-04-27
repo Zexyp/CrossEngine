@@ -28,13 +28,13 @@ namespace CrossEngine.ECS
         }
         public event Action<Component> OnEnabledChanged;
 
-        protected virtual void Enable() { }
-        protected virtual void Disable() { }
+        protected internal virtual void Enable() { }
+        protected internal virtual void Disable() { }
 
-        public virtual void Attach() { }
-        public virtual void Detach() { }
+        protected internal virtual void Attach() { }
+        protected internal virtual void Detach() { }
 
-        public virtual void Update() { }
+        protected internal virtual void Update() { }
 
         public virtual object Clone()
         {
@@ -44,7 +44,7 @@ namespace CrossEngine.ECS
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    class AllowSingleComponentPerEntityAttribute : Attribute
+    class AllowSinglePerEntityAttribute : Attribute
     {
 
     }
@@ -55,8 +55,11 @@ namespace CrossEngine.ECS
         public readonly Type RequiredComponentType;
         public RequireComponentAttribute(Type componentType)
         {
-            if (!componentType.IsSubclassOf(typeof(Component))) throw new InvalidOperationException($"Given type '{componentType.Name}' is not '{nameof(Component)}'.");
+            if (!componentType.IsSubclassOf(typeof(Component))) throw new InvalidOperationException($"Given type '{componentType.Name}' is not a subclass of '{nameof(Component)}'.");
+            
             RequiredComponentType = componentType;
+
+            throw new NotImplementedException("sry");
         }
     }
 }

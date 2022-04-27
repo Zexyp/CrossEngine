@@ -46,7 +46,7 @@ namespace CrossEngineEditor.Panels
                 var ents = Context.Scene.HierarchyRoot;
                 for (int i = 0; i < ents.Count; i++)
                 {
-                    DrawEntityNode(ents[i], "");
+                    DrawEntityNode(ents[i], i.ToString());
                 }
             }
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Numerics;
 using System.Diagnostics;
@@ -54,18 +55,17 @@ namespace CrossEngine.Utils
         public Gradient()
         {
             var type = typeof(T);
-            if (type != typeof(float) &&
-                type != typeof(Vector2) &&
-                type != typeof(Vector3) &&
-                type != typeof(Vector4))
+            if (!Lerps.ContainsKey(type))
             {
                 throw new ArgumentException($"Disallowed type ('{type.Name}') in creation of {typeof(Gradient<>).Name}");
             }
 
             Type = type;
+            Elements = elements.AsReadOnly();
         }
 
-        List<GradientElement<T>> elements = new List<GradientElement<T>>();
+        private readonly List<GradientElement<T>> elements = new List<GradientElement<T>>();
+        public readonly ReadOnlyCollection<GradientElement<T>> Elements;
 
         public int ElementCount { get { return elements.Count; } }
 
@@ -83,7 +83,7 @@ namespace CrossEngine.Utils
         {
             elements.Reverse();
 
-            GradientElement<T> el; // positions need to be reversed
+            GradientElement<T> el;
             for (int i = 0; i < elements.Count; i++)
             {
                 el = elements[i];
@@ -139,9 +139,9 @@ namespace CrossEngine.Utils
             if (elements.Count == 0)
                 return default;
 
-            if (elements[0].position > position)
+            if (elements[0].position >= position)
                 return elements[0].value;
-            if (elements[elements.Count - 1].position < position)
+            if (elements[elements.Count - 1].position <= position)
                 return elements[elements.Count - 1].value;
 
             GradientElement<T> firstElement = elements[0];
@@ -149,7 +149,7 @@ namespace CrossEngine.Utils
             {
                 GradientElement<T> secondElement = elements[i];
 
-                if (position == secondElement.position) // small check
+                if (position == secondElement.position)
                     return secondElement.value;
 
                 if (firstElement.position < position && secondElement.position > position)

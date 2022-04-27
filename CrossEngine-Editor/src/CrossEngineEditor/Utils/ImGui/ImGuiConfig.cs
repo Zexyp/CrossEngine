@@ -10,7 +10,7 @@ using System.Numerics;
 
 using CrossEngine.Utils;
 
-namespace CrossEngineEditor.Utils
+namespace CrossEngineEditor.Utils.Gui
 {
     class ImGuiStyleConfig
     {

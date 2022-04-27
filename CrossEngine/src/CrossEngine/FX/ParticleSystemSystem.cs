@@ -9,6 +9,7 @@ using CrossEngine.ECS;
 using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.FX.Particles;
+using CrossEngine.Rendering.Cameras;
 
 namespace CrossEngine.ComponentSystems
 {
@@ -28,7 +29,7 @@ namespace CrossEngine.ComponentSystems
         {
             Profiler.BeginScope($"{nameof(ParticleSystemSystem)}.{nameof(ParticleSystemSystem.Update)}(Prlllsm:{_parallelOptions.MaxDegreeOfParallelism})");
 
-            Parallel.ForEach(Components, _parallelOptions, (component) => component.Update());
+            Parallel.ForEach(Components, _parallelOptions, (component) => { if (component.Enabled) component.Update(); });
 
             Profiler.EndScope();
         }
@@ -39,24 +40,22 @@ namespace CrossEngine.FX.Particles
 {
     interface IParticleSystemRenderData : IObjectRenderData
     {
-        ParticleSystem ParticleSystem { get; }
+        void Render(Matrix4x4 viewMatrix);
     }
 
     class ParticleSystemRenderable : Renderable<IParticleSystemRenderData>
     {
-        public override void Begin(Matrix4x4 viewProjectionMatrix)
+        Camera camera;
+        public override void Begin(Camera camera)
         {
-            Renderer2D.BeginScene(viewProjectionMatrix);
-        }
-
-        public override void End()
-        {
-            Renderer2D.EndScene();
+            this.camera = camera;
         }
 
         public override void Submit(IParticleSystemRenderData data)
         {
-            data.ParticleSystem.Render();
+            if (!((ParticleSystemComponent)data).Enabled) return;
+
+            data.Render(camera.ViewMatrix);
         }
     }
 }

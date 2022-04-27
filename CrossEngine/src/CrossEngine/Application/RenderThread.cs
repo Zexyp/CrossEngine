@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 
 using CrossEngine.Platform.Windows;
 using CrossEngine.Events;
-using CrossEngine.Utils;
+using CrossEngine.Utils.Imaging;
 using CrossEngine.Display;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
@@ -123,10 +123,17 @@ namespace CrossEngine
             _events.Enqueue(e);
         }
 
-        private void Init()
+        private unsafe void Init()
         {
             Window.SetEventCallback(OnWindowEvent);
             Window.CreateWindow();
+
+            var icon = Properties.Resources.DefaultWindowIcon.ToBitmap();
+            ImageUtils.SwapChannels(icon, ImageUtils.ColorChannel.Red, ImageUtils.ColorChannel.Blue); // this will come and bite later :D
+            System.Drawing.Imaging.BitmapData bitmapData = icon.LockBits(new System.Drawing.Rectangle(0, 0, icon.Width, icon.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, icon.PixelFormat);
+            Window.SetIcon((void*)bitmapData.Scan0, (uint)bitmapData.Width, (uint)bitmapData.Height);
+            icon.UnlockBits(bitmapData);
+            icon.Dispose();
 
             rapi = RendererAPI.Create();
             rapi.Init();

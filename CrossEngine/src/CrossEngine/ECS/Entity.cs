@@ -66,6 +66,13 @@ namespace CrossEngine.ECS
         #region Add
         public Component AddComponent(Component component)
         {
+            var componentType = component.GetType();
+            if (Attribute.GetCustomAttribute(componentType, typeof(AllowSinglePerEntityAttribute)) != null)
+            {
+                if (GetComponent(componentType) != null)
+                    throw new InvalidOperationException($"Entity already has component of type '{componentType}'");
+            }
+
 #if TRANSFORM_CACHE
             if (component is TransformComponent)
             {
@@ -138,6 +145,18 @@ namespace CrossEngine.ECS
                 if (_components[i] is T)
                 {
                     return (T)_components[i];
+                }
+            }
+            return null;
+        }
+
+        public Component GetComponent(Type type)
+        {
+            for (int i = 0; i < _components.Count; i++)
+            {
+                if (_components[i].GetType() == type)
+                {
+                    return _components[i];
                 }
             }
             return null;

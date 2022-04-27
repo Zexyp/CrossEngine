@@ -46,6 +46,14 @@ namespace CrossEngine.ECS
             Task.WaitAll();
         }
 
+        public void Render()
+        {
+            for (int i = 0; i < _systems.Count; i++)
+            {
+                _systems[i].Render();
+            }
+        }
+
         public void RegisterSystem(ISystem system)
         {
             _systems.Add(system);

@@ -5,11 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
 
+using CrossEngine.Rendering.Cameras;
+
 namespace CrossEngine.Rendering
 {
     public interface IRenderable
     {
-        virtual void Begin(Matrix4x4 viewProjectionMatrix) { }
+        virtual void Begin(Camera camera) { }
         virtual void End() { }
 
         void Submit(IObjectRenderData data);
@@ -17,7 +19,7 @@ namespace CrossEngine.Rendering
 
     public abstract class Renderable<T> : IRenderable where T : IObjectRenderData
     {
-        public virtual void Begin(Matrix4x4 viewProjectionMatrix) { }
+        public virtual void Begin(Camera camera) { }
         public virtual void End() { }
 
         public abstract void Submit(T data);

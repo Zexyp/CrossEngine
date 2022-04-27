@@ -28,6 +28,7 @@ using CrossEngine.Components;
 using CrossEngine.Debugging;
 
 using CrossEngineEditor.Utils;
+using CrossEngineEditor.Utils.Gui;
 using CrossEngineEditor.Panels;
 using CrossEngineEditor.Modals;
 
@@ -160,8 +161,8 @@ namespace CrossEngineEditor
         {
             ThreadManager.ExecuteOnRenderThread(() =>
             {
-                LineRenderer.Init();
                 Renderer2D.Init();
+                LineRenderer.Init();
                 GLDebugging.EnableGLDebugging(LogLevel.Warn);
             });
 
@@ -184,7 +185,7 @@ namespace CrossEngineEditor
                     okl.AddComponent(new TagComponent("Main"));
                     okl.AddComponent(new SpriteRendererComponent() { Color = new Vector4(0, 1, 0, 1)});
                     okl.AddComponent(new CameraComponent(new OrthographicCamera() { OrthographicSize = 10 }) { Primary = true });
-                    okl.AddComponent<ParticleSystemComponent>().ParticleSystem = new CrossEngine.FX.Particles.ParticleSystem(drawIn2D: true);
+                    okl.AddComponent<ParticleSystemComponent>();
                     continue;
                 }
                 Entity ent = Context.Scene.CreateEntity();
@@ -224,10 +225,11 @@ namespace CrossEngineEditor
         }
 
         // test pcode
-        int sleep = 0;
+        int updSleep = 0;
+        int rndSleep = 0;
 
         int profFrames = 0;
-        public unsafe override void OnRender()
+        public override void OnUpdate()
         {
             if (profFrames > 0)
             {
@@ -240,11 +242,6 @@ namespace CrossEngineEditor
                 Application.Instance.StartProfiler();
             }
         }
-
-        //public override void OnUpdate(float timestep)
-        //{
-        //    if (Context.Scene?.Running == true && SceneUpdate) Context.Scene.OnUpdateRuntime(Time.DeltaTimeF);
-        //}
 
         public override void OnEvent(Event e)
         {
@@ -273,35 +270,35 @@ namespace CrossEngineEditor
 
             if (corruptedConfig)
             {
-                PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+                PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
                 corruptedConfig = false;
             }
 
             // debug
-            //ImGui.Begin("Debug");
-            //if (Context.Scene != null)
-            //{
-            //    Vector3 gr = (Context.Scene.RigidBodyWorld != null) ? Context.Scene.RigidBodyWorld.Gravity : default;
-            //    if (ImGui.DragFloat3("gravity", ref gr)) Context.Scene.RigidBodyWorld.Gravity = gr;
-            //    ImGui.Text("editor camera pos:");
-            //    if (EditorCamera != null) ImGui.Text(EditorCamera.Position.ToString("0.00"));
-            //    ImGui.SliderInt("sleep", ref sleep, 0, 1000);
-            //    if (sleep > 0) System.Threading.Thread.Sleep(sleep);
+            ImGui.Begin("Debug");
+            if (Context.Scene != null)
+            {
+                ImGui.SliderInt("upd sleep", ref updSleep, 0, 1000);
+                ImGui.SliderInt("rnd sleep", ref rndSleep, 0, 1000);
+                if (updSleep > 0) ThreadManager.ExecuteOnMianThread(() => Thread.Sleep(updSleep));
+                if (rndSleep > 0) ThreadManager.ExecuteOnRenderThread(() => Thread.Sleep(rndSleep));
 
-            //    // test seri
-            //    if (ImGui.Button("seri test"))
-            //    {
-            //        string json;
-            //        json = SceneSerializer.SertializeJson(Context.Scene);
-            //        Log.App.Debug(json);
+                ImGradient.DrawMarker(new Vector2(0), new Vector2(10), 0xff0000ff, true);
 
-            //        Context.Scene.Unload();
-            //        ClearContext();
-            //        Context.Scene = SceneSerializer.DeserializeJson(json);
-            //        Context.Scene.Load();
-            //    }
-            //}
-            //ImGui.End();
+                // test seri
+                //if (ImGui.Button("seri test"))
+                //{
+                //    string json;
+                //    json = SceneSerializer.SertializeJson(Context.Scene);
+                //    Log.App.Debug(json);
+                //
+                //    Context.Scene.Unload();
+                //    ClearContext();
+                //    Context.Scene = SceneSerializer.DeserializeJson(json);
+                //    Context.Scene.Load();
+                //}
+            }
+            ImGui.End();
 
 
             Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.DrawPanels)}");

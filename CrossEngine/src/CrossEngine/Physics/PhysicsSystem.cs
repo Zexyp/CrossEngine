@@ -421,18 +421,6 @@ namespace CrossEngine.ComponentSystems
         {
             // TODO: add drawer context
 
-            public override void Begin(Matrix4x4 viewProjectionMatrix)
-            {
-                LineRenderer.BeginScene(viewProjectionMatrix);
-                Renderer2D.BeginScene(viewProjectionMatrix);
-            }
-
-            public override void End()
-            {
-                LineRenderer.EndScene();
-                Renderer2D.EndScene();
-            }
-
             public override void Submit(RigidBodyWorld data)
             {
                 for (int i = 0; i < data.World.CollisionObjectArray.Count; i++)
