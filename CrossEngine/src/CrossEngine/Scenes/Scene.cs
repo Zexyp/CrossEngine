@@ -22,6 +22,7 @@ namespace CrossEngine.Scenes
     public class Scene
     {
         readonly List<Entity> _entities = new List<Entity>();
+        public readonly ReadOnlyCollection<Entity> Entities;
         Dictionary<int, Entity> _entityIds = new Dictionary<int, Entity>();
         ECSWorld _ecsWorld = new ECSWorld();
         int lastId;
@@ -35,6 +36,7 @@ namespace CrossEngine.Scenes
         public Scene()
         {
             HierarchyRoot = _roots.AsReadOnly();
+            Entities = _entities.AsReadOnly();
         }
 
         public SceneRenderData GetRenderData()

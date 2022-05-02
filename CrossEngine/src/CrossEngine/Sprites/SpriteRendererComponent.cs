@@ -10,6 +10,7 @@ using CrossEngine.ECS;
 using CrossEngine.Utils.Editor;
 using CrossEngine.ComponentSystems;
 using CrossEngine.Rendering.Renderables;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
@@ -129,16 +130,27 @@ namespace CrossEngine.Components
         //    TextureAsset = (TextureAsset)info.GetValue("TextureAsset", typeof(TextureAsset));
         //}
 
-        public override object Clone()
+        protected override Component CreateClone()
         {
             var sr = new SpriteRendererComponent();
-            sr.Enabled = this.Enabled;
 
             sr.DrawOffsets = this.DrawOffsets;
             sr.TextureOffsets = this.TextureOffsets;
             sr.Color = this.Color;
 
             return sr;
+        }
+
+        protected internal override void Serialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+        }
+
+        protected internal override void Deserialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
         }
     }
 }

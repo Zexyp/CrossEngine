@@ -1,15 +1,16 @@
 ﻿using System.Numerics;
 
 using CrossEngine.Utils.Editor;
+using CrossEngine.ECS;
 
 namespace CrossEngine.Components
 {
-    public class Box2DColliderComponent : ColliderComponent
+    public class BoxColliderComponent : ColliderComponent
     {
-        Vector2 _size = Vector2.One;
+        Vector3 _size = Vector3.One;
 
         [EditorDrag(Min = float.Epsilon)]
-        public Vector2 Size
+        public Vector3 Size
         {
             get => _size;
             set
@@ -17,13 +18,13 @@ namespace CrossEngine.Components
                 if (value == _size) return;
                 _size = value;
 
-                InvokeShapeChangedEvent();
+                NotifyShapeChangedEvent();
             }
         }
 
-        public override object Clone()
+        protected override Component CreateClone()
         {
-            return new Box2DColliderComponent() { Size = this.Size };
+            return new BoxColliderComponent() { Size = this.Size };
         }
     }
 }

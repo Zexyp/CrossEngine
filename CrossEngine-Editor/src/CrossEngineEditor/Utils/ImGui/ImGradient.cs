@@ -1,15 +1,79 @@
 ﻿using ImGuiNET;
 using System;
+
 using System.Numerics;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Diagnostics;
+
+using CrossEngine.Utils;
+using CrossEngineEditor.Utils.Gui;
 
 namespace CrossEngineEditor.Utils.Gui
 {
     class ImGradient
     {
-        public static void DrawMarker(Vector2 pmin, Vector2 pmax, uint color, bool isSelected)
+        private enum MarkerDirection
+        {
+            Unknown,
+            ToLower,
+            ToUpper,
+        }
+
+        private static Vector4 GetVector4(object val)
+        {
+            if (val is Vector4)
+                return (Vector4)val;
+            if (val is Vector3)
+            {
+                var cval = (Vector3)val;
+                return new Vector4(cval, 1);
+            }
+            if (val is Vector2)
+            {
+                var cval = (Vector2)val;
+                return new Vector4(cval, 0, 1);
+            }
+            if (val is float)
+            {
+                var cval = (float)val;
+                return new Vector4(cval, cval, cval, 1);
+            }
+
+            Debug.Assert(false);
+            return default;
+        }
+
+        private static void EditColor(IGradient gradient, int index)
+        {
+            if (gradient is Gradient<Vector4>)
+            {
+                var markerCol = ((Gradient<Vector4>)gradient).Elements[index].value;
+                if (ImGui.ColorEdit4("value", ref markerCol))
+                    gradient.SetElementValue(index, markerCol);
+            }
+            if (gradient is Gradient<Vector3>)
+            {
+                var markerCol = ((Gradient<Vector3>)gradient).Elements[index].value;
+                if (ImGui.ColorEdit3("value", ref markerCol))
+                    gradient.SetElementValue(index, markerCol);
+            }
+            if (gradient is Gradient<Vector2>)
+            {
+                var markerCol = ((Gradient<Vector2>)gradient).Elements[index].value;
+                if (ImGui.DragFloat2("value", ref markerCol, 0.01f))
+                    gradient.SetElementValue(index, markerCol);
+            }
+            if (gradient is Gradient<float>)
+            {
+                var markerCol = ((Gradient<float>)gradient).Elements[index].value;
+                if (ImGui.DragFloat("value", ref markerCol, 0.01f))
+                    gradient.SetElementValue(index, markerCol);
+            }
+        }
+
+        private static unsafe void DrawMarker(Vector2 pmin, Vector2 pmax, uint color, bool isSelected)
         {
             var drawList = ImGui.GetWindowDrawList();
             var w = pmax.X - pmin.X;
@@ -18,9 +82,11 @@ namespace CrossEngineEditor.Utils.Gui
 
             var margin = 2;
             var marginh = margin * sign;
+            var selectedCol = *ImGui.GetStyleColorVec4(ImGuiCol.TextSelectedBg);
+            selectedCol.W = 1;
             var outlineColor = isSelected ?
-                ImGui.ColorConvertFloat4ToU32(new Vector4(0.0f, 0.0f, 1.0f, 1.0f)) :
-                ImGui.ColorConvertFloat4ToU32(new Vector4(0.2f, 0.2f, 0.2f, 1.0f));
+                ImGui.ColorConvertFloat4ToU32(selectedCol) :
+                0xff323232;
 
             drawList.AddTriangleFilled(
                 new Vector2(pmin.X + w / 2, pmin.Y),
@@ -44,315 +110,87 @@ namespace CrossEngineEditor.Utils.Gui
                 new Vector2(pmin.X + w - margin, pmin.Y + h - marginh),
                 color);
         }
-    }
-}
-        /*
-        enum MarkerDirection
-        {
-            ToUpper,
-            ToLower,
-        }
 
-        bool ImGradient(int gradientID, ref ImGradientHDRState state, ref ImGradientHDRTemporaryState temporaryState)
+        private static bool UpdateMarkers<T>(
+            Gradient<T> markerArray,
+            string keyStr,
+            Vector2 originPos,
+            float width,
+            float markerWidth,
+            float markerHeight,
+            MarkerDirection markerDir,
+            ref int selectedIndex,
+            ref int draggingIndex,
+            out bool markerInteracted) where T : struct
         {
+            markerInteracted = false;
+
             bool changed = false;
 
-            ImGui.PushID(gradientID);
+	        for (int i = 0; i < markerArray.Elements.Count ; i++)
+	        {
+		        var x = (int)(markerArray.Elements[i].position * width);
+		        ImGui.SetCursorScreenPos(new(originPos.X + x - 5, originPos.Y));
 
-            var originPos = ImGui.GetCursorScreenPos();
-
-            var drawList = ImGui.GetWindowDrawList();
-
-            var margin = 5;
-
-            var width = ImGui.GetContentRegionAvail().x - margin * 2;
-            var barHeight = 20;
-            var markerWidth = 10;
-            var markerHeight = 15;
-
-            changed |= UpdateMarker(state.Alphas, state.AlphaCount, temporaryState, ImGradientHDRMarkerType.Alpha, "a", originPos, width, markerWidth, markerHeight, MarkerDirection.ToLower);
-
-            if (temporaryState.draggingMarkerType == ImGradientHDRMarkerType::Alpha)
-            {
-                SortMarkers(state.Alphas, state.AlphaCount, temporaryState.selectedIndex, temporaryState.draggingIndex);
-            }
-
-            ImGui.SetCursorScreenPos(originPos);
-
-            ImGui.InvisibleButton("AlphaArea", {width, static_cast<float>(markerHeight)});
-
-            if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(0))
-            {
-                float x = (ImGui.GetIO().MousePos.X - originPos.X) / width;
-                var alpha = state.GetAlpha(x);
-                changed |= state.AddAlphaMarker(x, alpha);
-            }
-
-            originPos = ImGui.GetCursorScreenPos();
-
-            ImGui.InvisibleButton("BarArea", new (width, barHeight));
-
-            int gridSize = 10;
-
-            drawList.AddRectFilled(new Vector2(originPos.X - 2, originPos.Y - 2),
-                                   new Vector2(originPos.X + width + 2, originPos.Y + barHeight + 2),
-                                   0x646464ff));
-
-            for (int y = 0; y * gridSize < barHeight; y += 1)
-            {
-                for (int x = 0; x * gridSize < width; x += 1)
+                var markerCol = GetVector4(markerArray.Elements[i].value);
+                markerCol.W = 1;
+                if (markerDir == MarkerDirection.ToLower)
                 {
-                    int wgrid = Math.Min(gridSize, (int)(width) - x * gridSize);
-                    int hgrid = Math.Min(gridSize, barHeight - y * gridSize);
-                    uint color = 0x646464ff;
+                    DrawMarker(
+                        new(originPos.X + x - 5, originPos.Y + markerHeight),
+                        new(originPos.X + x + 5, originPos.Y + 0),
+                        ImGui.ColorConvertFloat4ToU32(markerCol),
+                        selectedIndex == i);
+                }
+                else if (markerDir == MarkerDirection.ToUpper)
+                {
+                    DrawMarker(
+                        new(originPos.X + x - 5, originPos.Y + 0),
+                        new(originPos.X + x + 5, originPos.Y + markerHeight),
+                        ImGui.ColorConvertFloat4ToU32(markerCol),
+                        selectedIndex == i);
+                }
+                else Debug.Assert(false);
 
-                    if ((x + y) % 2 == 0)
+		        ImGui.InvisibleButton(keyStr + i.ToString(), new(markerWidth, markerHeight));
+
+		        if (draggingIndex == -1 && ImGui.IsItemHovered() && ImGui.IsMouseDown(0))
+		        {
+                    selectedIndex = i;
+                    draggingIndex = i;
+		        }
+
+		        if (!ImGui.IsMouseDown(0))
+		        {
+                    draggingIndex = -1;
+		        }
+
+                if (draggingIndex == i && ImGui.IsMouseDragging(0))
+                {
+                    var diff = ImGui.GetIO().MouseDelta.X / width;
+                    if (diff != 0.0f)
                     {
-                        color = 0x646464ff;
+                        int ind = markerArray.SetElementPosition(i, Math.Max(Math.Min(markerArray.Elements[i].position + diff, 1.0f), 0.0f));
+
+                        selectedIndex = ind;
+                        draggingIndex = ind;
+
+                        changed |= true;
                     }
-
-                    drawList.AddRectFilled(new Vector2(originPos.X + x * gridSize, originPos.Y + y * gridSize),
-                                           new Vector2(originPos.X + x * gridSize + wgrid, originPos.Y + y * gridSize + hgrid),
-                                           color);
-                }
-            }
-
-            {
-                List<float> xkeys = new List<float>(16);
-
-                for (int i = 0; i < state.ColorCount; i++)
-                {
-                    xkeys.Add(state.Colors[i].Position);
-                }
-
-                for (int i = 0; i < state.AlphaCount; i++)
-                {
-                    xkeys.Add(state.Alphas[i].Position);
-                }
-
-                xkeys.Add(0.0f);
-                xkeys.Add(1.0f);
-
-                auto result = std::unique(xkeys.begin(), xkeys.end());
-                xkeys.erase(result, xkeys.end());
-
-                xkeys.Sort();
-
-                for (int i = 0; i < xkeys.Count - 1; i++)
-                {
-                    var c1 = state.GetCombinedColor(xkeys[i]);
-                    var c2 = state.GetCombinedColor(xkeys[i + 1]);
-                    
-                    var colorAU32 = ImGui.ColorConvertFloat4ToU32(new Vector4(c1[0], c1[1], c1[2], c1[3]));
-                    var colorBU32 = ImGui.ColorConvertFloat4ToU32(new Vector4(c2[0], c2[1], c2[2], c2[3]));
-
-                    drawList.AddRectFilledMultiColor(new Vector2(originPos.X + xkeys[i] * width, originPos.y),
-                                                     new Vector2(originPos.X + xkeys[i + 1] * width, originPos.y + barHeight),
-                                                     colorAU32,
-                                                     colorBU32,
-                                                     colorBU32,
-                                                     colorAU32);
-                }
-            }
-
-            originPos = ImGui.GetCursorScreenPos();
-
-            changed |= UpdateMarker(state.Colors, state.ColorCount, temporaryState, ImGradientHDRMarkerType.Color, "c", originPos, width, markerWidth, markerHeight, MarkerDirection.ToUpper);
-
-            if (temporaryState.draggingMarkerType == ImGradientHDRMarkerType.Color)
-            {
-                SortMarkers(state.Colors, state.ColorCount, temporaryState.selectedIndex, temporaryState.draggingIndex);
-            }
-
-            ImGui.SetCursorScreenPos(originPos);
-
-            ImGui.InvisibleButton("ColorArea", new (width, markerHeight));
-
-            if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(0))
-            {
-                float x = (ImGui.GetIO().MousePos.x - originPos.x) / width;
-                var c = state.GetColorAndIntensity(x);
-                changed |= state.AddColorMarker(x, {c[0], c[1], c[2]}, c[3]);
-            }
-
-            ImGui.PopID();
+                    markerInteracted = true; ;
+		        }
+	        }
 
             return changed;
         }
 
-std::array<float, 4> ImGradientHDRState::GetColorAndIntensity(float x) const
-{
-    if (ColorCount == 0)
-    {
-        return std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f};
-    }
-
-    if (x < Colors[0].Position)
-    {
-        const auto c = Colors[0].Color;
-        return {c[0], c[1], c[2], Colors[0].Intensity};
-    }
-
-    if (Colors[ColorCount - 1].Position <= x)
-    {
-        const auto c = Colors[ColorCount - 1].Color;
-        return {c[0], c[1], c[2], Colors[ColorCount - 1].Intensity};
-    }
-
-    auto key = ColorMarker();
-    key.Position = x;
-
-    auto it = std::lower_bound(Colors.begin(), Colors.begin() + ColorCount, key, [](const ColorMarker& a, const ColorMarker& b)
-                               { return a.Position < b.Position; });
-    auto ind = static_cast<int32_t>(std::distance(Colors.begin(), it));
-
-    {
-        if (Colors[ind].Position != x)
-        {
-            ind--;
-        }
-
-        if (Colors[ind].Position <= x && x <= Colors[ind + 1].Position)
-        {
-            const auto area = Colors[ind + 1].Position - Colors[ind].Position;
-            if (area == 0)
-            {
-                return std::array<float, 4>{Colors[ind].Color[0], Colors[ind].Color[1], Colors[ind].Color[2], Colors[ind].Intensity};
-            }
-
-            const auto alpha = (x - Colors[ind].Position) / area;
-            const auto r = Colors[ind + 1].Color[0] * alpha + Colors[ind].Color[0] * (1.0f - alpha);
-            const auto g = Colors[ind + 1].Color[1] * alpha + Colors[ind].Color[1] * (1.0f - alpha);
-            const auto b = Colors[ind + 1].Color[2] * alpha + Colors[ind].Color[2] * (1.0f - alpha);
-            const auto intensity = Colors[ind + 1].Intensity * alpha + Colors[ind].Intensity * (1.0f - alpha);
-            return std::array<float, 4>{r, g, b, intensity};
-        }
-        else
-        {
-            assert(0);
-        }
-    }
-
-    return std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f};
-}
-
-float ImGradientHDRState::GetAlpha(float x) const
-{
-    if (AlphaCount == 0)
-    {
-        return 1.0f;
-    }
-
-    if (x < Alphas[0].Position)
-    {
-        return Alphas[0].Alpha;
-    }
-
-    if (Alphas[AlphaCount - 1].Position <= x)
-    {
-        return Alphas[AlphaCount - 1].Alpha;
-    }
-
-    auto key = AlphaMarker();
-    key.Position = x;
-
-    auto it = std::lower_bound(Alphas.begin(), Alphas.begin() + AlphaCount, key, [](const AlphaMarker& a, const AlphaMarker& b)
-                               { return a.Position < b.Position; });
-    auto ind = static_cast<int32_t>(std::distance(Alphas.begin(), it));
-
-    {
-        if (Alphas[ind].Position != x)
-        {
-            ind--;
-        }
-
-        if (Alphas[ind].Position <= x && x <= Alphas[ind + 1].Position)
-        {
-            const auto area = Alphas[ind + 1].Position - Alphas[ind].Position;
-            if (area == 0)
-            {
-                return Alphas[ind].Alpha;
-            }
-
-            const auto alpha = (x - Alphas[ind].Position) / area;
-            return Alphas[ind + 1].Alpha * alpha + Alphas[ind].Alpha * (1.0f - alpha);
-        }
-        else
-        {
-            assert(0);
-        }
-    }
-
-    return 1.0f;
-}
-
-
-}
-
-struct ImGradientHDRState
-    {
-        struct ColorMarker
-        {
-            float Position;
-            Vector3 Color;
-            float Intensity;
-        };
-
-        struct AlphaMarker
-        {
-            float Position;
-            float Alpha;
-        };
-
-        int ColorCount;
-        int AlphaCount;
-        List<ColorMarker> Colors;
-        List<AlphaMarker> Alphas;
-
-        ref ColorMarker GetColorMarker(int index);
-
-        ref AlphaMarker GetAlphaMarker(int index);
-
-        bool AddColorMarker(float x, Vector3 color, float intensity);
-
-        bool AddAlphaMarker(float x, float alpha);
-
-        bool RemoveColorMarker(int32_t index);
-
-        bool RemoveAlphaMarker(int32_t index);
-
-        std::array<float, 4> GetCombinedColor(float x) const;
-
-        std::array<float, 4> GetColorAndIntensity(float x) const;
-
-        float GetAlpha(float x) const;
-    };
-
-    enum ImGradientHDRMarkerType
-    {
-        Unknown = default,
-        Color,
-        Alpha,
-    };
-
-    struct ImGradientHDRTemporaryState
-    {
-        ImGradientHDRMarkerType selectedMarkerType;
-        int selectedIndex = -1;
-
-        ImGradientHDRMarkerType draggingMarkerType;
-        int draggingIndex = -1;
-    };
-
-    class ImGradient
-    {
-        
-
-        public static bool Draw(int gradientID, ref ImGradientHDRState state, ref ImGradientHDRTemporaryState temporaryState)
+        public static bool Manipulate<T>(Gradient<T> state) where T : struct
         {
             bool changed = false;
 
-            ImGui.PushID(gradientID);
+            ImGui.PushID(state.GetHashCode());
+
+            ImGuiUtils.BeginGroupFrame();
 
             var originPos = ImGui.GetCursorScreenPos();
 
@@ -365,90 +203,170 @@ struct ImGradientHDRState
             var markerWidth = 10;
             var markerHeight = 15;
 
-            changed |= UpdateMarker(state.Alphas, state.AlphaCount, temporaryState, ImGradiengMarkerType.Alpha, "a", originPos, width, markerWidth, markerHeight, MarkerDirection::ToLower);
+            //changed |= UpdateMarker(state, "a", originPos, width, markerWidth, markerHeight, MarkerDirection.ToLower);
+            //
+            //ImGui.SetCursorScreenPos(originPos);
+            //
+            //ImGui.InvisibleButton("AlphaArea", new(width, markerHeight));
+            //
+            //if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(0))
+            //{
+            //    float x = (ImGui.GetIO().MousePos.X - originPos.X) / width;
+            //    var alpha = state.Sample(x);
+            //    /*changed |= */state.AddElement(x, alpha);
+            //}
 
-            if (temporaryState.draggingMarkerType == ImGradientHDRMarkerType::Alpha)
-            {
-                SortMarkers(state.Alphas, state.AlphaCount, temporaryState.selectedIndex, temporaryState.draggingIndex);
-            }
+            originPos = ImGui.GetCursorScreenPos();
 
-            ImGui::SetCursorScreenPos(originPos);
+            ImGui.InvisibleButton("BarArea", new(width, barHeight));
 
-            ImGui::InvisibleButton("AlphaArea", { width, static_cast<float>(markerHeight)});
+            int gridSize = 10;
 
-            if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0))
-            {
-                float x = (ImGui::GetIO().MousePos.x - originPos.x) / width;
-                const auto alpha = state.GetAlpha(x);
-                changed |= state.AddAlphaMarker(x, alpha);
-            }
-
-            originPos = ImGui::GetCursorScreenPos();
-
-            ImGui::InvisibleButton("BarArea", { width, static_cast<float>(barHeight)});
-
-            const int32_t gridSize = 10;
-
-            drawList->AddRectFilled(ImVec2(originPos.x - 2, originPos.y - 2),
-                                    ImVec2(originPos.x + width + 2, originPos.y + barHeight + 2),
-                                    IM_COL32(100, 100, 100, 255));
+            drawList.AddRectFilled(new Vector2(originPos.X - 2, originPos.Y - 2),
+                                   new Vector2(originPos.X + width + 2, originPos.Y + barHeight + 2),
+                                   0xff646464);
 
             for (int y = 0; y * gridSize < barHeight; y += 1)
             {
                 for (int x = 0; x * gridSize < width; x += 1)
                 {
-                    int wgrid = std::min(gridSize, static_cast<int>(width) - x * gridSize);
-                    int hgrid = std::min(gridSize, barHeight - y * gridSize);
-                    ImU32 color = IM_COL32(100, 100, 100, 255);
+                    int wgrid = Math.Min(gridSize, ((int)width) - x * gridSize);
+                    int hgrid = Math.Min(gridSize, barHeight - y * gridSize);
+                    uint color = 0xff646464;
 
                     if ((x + y) % 2 == 0)
                     {
-                        color = IM_COL32(50, 50, 50, 255);
+                        color = 0xff323232;
                     }
 
-                    drawList->AddRectFilled(ImVec2(originPos.x + x * gridSize, originPos.y + y * gridSize),
-                                            ImVec2(originPos.x + x * gridSize + wgrid, originPos.y + y * gridSize + hgrid),
-                                            color);
+                    drawList.AddRectFilled(new Vector2(originPos.X + x * gridSize, originPos.Y + y * gridSize),
+                                           new Vector2(originPos.X + x * gridSize + wgrid, originPos.Y + y * gridSize + hgrid),
+                                           color);
                 }
             }
 
             {
-                std::vector<float> xkeys;
-                xkeys.reserve(16);
+                List<float> xkeys = new List<float>(state.Elements.Select(el => el.position).Where(v => v >= 0 && v <= 1));
 
-                for (int32_t i = 0; i < state.ColorCount; i++)
+                for (int i = 0; i < state.Elements.Count; i++)
                 {
-                    xkeys.emplace_back(state.Colors[i].Position);
+                    xkeys.Add(state.Elements[i].position);
                 }
 
-                for (int32_t i = 0; i < state.AlphaCount; i++)
+                if (!xkeys.Contains(0.0f)) xkeys.Add(0.0f);
+                if (!xkeys.Contains(1.0f)) xkeys.Add(1.0f);
+                
+                xkeys.Sort();
+
+                for (int i = 0; i < xkeys.Count - 1; i++)
                 {
-                    xkeys.emplace_back(state.Alphas[i].Position);
+                    var c1 = GetVector4(state.Sample(xkeys[i]));
+                    var c2 = GetVector4(state.Sample(xkeys[i + 1]));
+
+                    var colorAU32 = ImGui.ColorConvertFloat4ToU32(c1);
+                    var colorBU32 = ImGui.ColorConvertFloat4ToU32(c2);
+
+                    drawList.AddRectFilledMultiColor(new Vector2(originPos.X + xkeys[i] * width, originPos.Y),
+                                                     new Vector2(originPos.X + xkeys[i + 1] * width, originPos.Y + barHeight),
+                                                     colorAU32,
+                                                     colorBU32,
+                                                     colorBU32,
+                                                     colorAU32);
                 }
-
-                xkeys.emplace_back(0.0f);
-                xkeys.emplace_back(1.0f);
-
-                auto result = std::unique(xkeys.begin(), xkeys.end());
-                xkeys.erase(result, xkeys.end());
-
-                std::sort(xkeys.begin(), xkeys.end());
-
-                for (size_t i = 0; i < xkeys.size() - 1; i++)
-                {
-                    const auto c1 = state.GetCombinedColor(xkeys[i]);
-                    const auto c2 = state.GetCombinedColor(xkeys[i + 1]);
-
-                    const auto colorAU32 = ImGui::ColorConvertFloat4ToU32({ c1[0], c1[1], c1[2], c1[3]});
-                const auto colorBU32 = ImGui::ColorConvertFloat4ToU32({ c2[0], c2[1], c2[2], c2[3]});
-
-                drawList->AddRectFilledMultiColor(ImVec2(originPos.x + xkeys[i] * width, originPos.y),
-                                                  ImVec2(originPos.x + xkeys[i + 1] * width, originPos.y + barHeight),
-                                                  colorAU32,
-                                                  colorBU32,
-                                                  colorBU32,
-                                                  colorAU32);
             }
+
+            originPos = ImGui.GetCursorScreenPos();
+
+            // get state
+            var stateStorage = ImGui.GetStateStorage();
+            int selectedIndex = stateStorage.GetInt(ImGui.GetID("gradientState.selectedIndex"));
+            int draggingIndex = stateStorage.GetInt(ImGui.GetID("gradientState.draggingIndex"));
+
+            changed |= UpdateMarkers(state,
+                                     "marker",
+                                     originPos,
+                                     width,
+                                     markerWidth,
+                                     markerHeight,
+                                     MarkerDirection.ToUpper,
+                                     ref selectedIndex,
+                                     ref draggingIndex,
+                                     out var markerInteracted
+                                     );
+
+            ImGui.SetCursorScreenPos(originPos);
+
+            ImGui.InvisibleButton("ColorArea", new(width, markerHeight));
+
+            if (!markerInteracted && ImGui.IsItemHovered() && ImGui.IsMouseClicked(0))
+            {
+                float x = (ImGui.GetIO().MousePos.X - originPos.X) / width;
+                var c = state.Sample(x);
+                /*changed |= */state.AddElement(x, c);
+            }
+
+            var availWidth = ImGui.GetContentRegionAvail().X;
+            ImGui.SetNextItemWidth(availWidth / 4);
+            ImGui.DragInt("##selected_index", ref selectedIndex, 0.1f, 0, state.ElementCount - 1);
+            ImGui.SameLine();
+            if (ImGui.ArrowButton("##add_index", ImGuiDir.Left)) selectedIndex--;
+            ImGui.SameLine();
+            if (ImGui.ArrowButton("##dec_index", ImGuiDir.Right)) selectedIndex++;
+
+            originPos = ImGui.GetCursorPos();
+
+            var style = ImGui.GetStyle();
+            var font = ImGui.GetFont();
+            ImGui.SetCursorPosX(availWidth - (style.FramePadding.X * 2 + font.FontSize * font.Scale));
+            ImGui.SameLine();
+            if (ImGuiUtils.SquareButton("+"))
+            {
+                if (state.ElementCount == 0)
+                {
+                    selectedIndex = state.AddElement(0.5f, default);
+                }
+                else if (state.ElementCount == 1)
+                {
+                    selectedIndex = state.AddElement(0.5f, state.Elements[0].value);
+                }
+                else if (selectedIndex == state.ElementCount - 1)
+                {
+                    selectedIndex = state.AddElement(0.5f, state.Elements[selectedIndex].value);
+                }
+                else
+                {
+                    float x = (state.Elements[selectedIndex].position + state.Elements[selectedIndex + 1].position) / 2;
+                    var c = state.Sample(x);
+                    selectedIndex = state.AddElement(x, c);
+                }
+            }
+            ImGui.SameLine();
+            if (ImGuiUtils.SquareButton("-") && state.ElementCount > 0)
+            {
+                state.RemoveElement(selectedIndex);
+                if (state.ElementCount > 0)
+                    selectedIndex = Math.Clamp(selectedIndex, 0, state.ElementCount - 1);
+            }
+            
+            ImGui.SetCursorPos(originPos);
+            
+            if (state.ElementCount > 0)
+            {
+                float pos = state.Elements[selectedIndex].position;
+                EditColor(state, selectedIndex);
+                if (ImGui.DragFloat("pos", ref pos, 0.01f, 0, 1))
+                    selectedIndex = state.SetElementPosition(selectedIndex, pos);
+            }
+
+            // set state
+            stateStorage.SetInt(ImGui.GetID("gradientState.selectedIndex"), Math.Clamp(selectedIndex, 0, Math.Max(state.ElementCount - 1, 0)));
+            stateStorage.SetInt(ImGui.GetID("gradientState.draggingIndex"), Math.Clamp(draggingIndex, -1, state.ElementCount - 1));
+
+            ImGuiUtils.EndGroupFrame();
+
+            ImGui.PopID();
+
+            return changed;
         }
     }
-*/
+}

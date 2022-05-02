@@ -8,8 +8,11 @@ using System.Numerics;
 using System.Reflection;
 
 using CrossEngine.Utils.Editor;
+using CrossEngine.Utils;
+using CrossEngine;
 
 using CrossEngineEditor.Utils;
+using CrossEngineEditor.Utils.Gui;
 
 namespace CrossEngineEditor.Utils
 {
@@ -305,7 +308,7 @@ namespace CrossEngineEditor.Utils
             } },
 
             { typeof(EditorSectionAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                ImGui.Text(attribute.Name);
+                ImGui.Text(name);
                 ImGui.SameLine();
                 ImGuiUtils.SmartSeparator(3);
                 return false;
@@ -331,6 +334,19 @@ namespace CrossEngineEditor.Utils
                     PrintInvalidUI(name);
                     return false;
                 }
+            } },
+
+            { typeof(EditorGradientAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                ImGui.Text(name);
+                if (value is Gradient<Vector4>) ImGradient.Manipulate((Gradient<Vector4>)value);
+                else if (value is Gradient<Vector3>) ImGradient.Manipulate((Gradient<Vector3>)value);
+                else if (value is Gradient<Vector2>) ImGradient.Manipulate((Gradient<Vector2>)value);
+                else if (value is Gradient<float>) ImGradient.Manipulate((Gradient<float>)value);
+                else
+                {
+                    PrintInvalidUI(name);
+                }
+                return false;
             } },
 
             #region Primitives
@@ -473,8 +489,8 @@ namespace CrossEngineEditor.Utils
                 if (success) value = v;
                 return success;
             } },
-            { typeof(EditorStringValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorStringValueAttribute)attribute;
+            { typeof(EditorStringAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                var cattribt = (EditorStringAttribute)attribute;
                 byte[] v = new byte[cattribt.MaxLength];
                 Encoding.UTF8.GetBytes((string)value).CopyTo(v, 0);
                 bool success = ImGui.InputText(name, v, cattribt.MaxLength);

@@ -6,14 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
 
-//using CrossEngine.Events;
-//using CrossEngine.Physics;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Utils.Bullet;
-//using CrossEngine.Serialization.Json;
-//using CrossEngine.Rendering;
-//using CrossEngine.Rendering.Lines;
-//using CrossEngine.Serialization;
+using CrossEngine.Serialization;
 using CrossEngine.ECS;
 using CrossEngine.ComponentSystems;
 
@@ -130,10 +125,9 @@ namespace CrossEngine.Components
             PhysicsSysten.Instance.UnregisterRigidBody(this);
         }
 
-        public override object Clone()
+        protected override Component CreateClone()
         {
             var rb = new RigidBodyComponent();
-            rb.Enabled = this.Enabled;
 
             rb.Mass = this.Mass;
             rb.Static = this.Static;
@@ -143,6 +137,18 @@ namespace CrossEngine.Components
             rb.AngularFactor = this.AngularFactor;
             
             return rb;
+        }
+
+        protected internal override void Serialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+        }
+
+        protected internal override void Deserialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
         }
     }
 }

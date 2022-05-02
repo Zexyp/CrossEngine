@@ -148,6 +148,13 @@ namespace CrossEngine.Utils.Editor
         public EditorInnerDrawAttribute(string name) : base(name) { }
     }
 
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorGradientAttribute : EditorValueAttribute
+    {
+        public EditorGradientAttribute() { }
+        public EditorGradientAttribute(string name) : base(name) { }
+    }
+
 
 
     public enum NumberInputType
@@ -255,17 +262,17 @@ namespace CrossEngine.Utils.Editor
     #endregion
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorStringValueAttribute : EditorValueAttribute
+    public class EditorStringAttribute : EditorValueAttribute
     {
-        public EditorStringValueAttribute() { }
-        public EditorStringValueAttribute(string name) : base(name) { }
+        public EditorStringAttribute() { }
+        public EditorStringAttribute(string name) : base(name) { }
 
-        public EditorStringValueAttribute(string name, uint maxLength) : base(name)
+        public EditorStringAttribute(string name, uint maxLength) : base(name)
         {
             MaxLength = maxLength;
         }
 
-        public EditorStringValueAttribute(uint maxLength)
+        public EditorStringAttribute(uint maxLength)
         {
             MaxLength = maxLength;
         }

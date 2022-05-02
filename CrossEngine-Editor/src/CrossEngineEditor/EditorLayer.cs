@@ -20,7 +20,7 @@ using CrossEngine.Rendering.Cameras;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Physics;
-//using CrossEngine.Serialization;
+using CrossEngine.Serialization;
 using CrossEngine.Profiling;
 //using CrossEngine.Assemblies;
 using CrossEngine.Inputs;
@@ -57,12 +57,6 @@ namespace CrossEngineEditor
         private List<EditorModal> _modals = new List<EditorModal>();
         //Texture dockspaceIconTexture;
 
-        // components
-        public Type[] CoreComponentTypes = Assembly.GetAssembly(typeof(Component)).ExportedTypes.Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract).ToArray();
-        
-        private readonly List<Type> _componentTypeRegistry = new List<Type>();
-        public readonly ReadOnlyCollection<Type> ComponentTypeRegistry;
-
         // files
         readonly internal IniFile EditorConfig = new IniFile("editor");
         private string _savePath = null;
@@ -88,8 +82,6 @@ namespace CrossEngineEditor
                 Log.App.Warn("there should be only one editor layer");
 
             Instance = this;
-
-            ComponentTypeRegistry = _componentTypeRegistry.AsReadOnly();
 
             AddPanel(new InspectorPanel());
             AddPanel(new HierarchyPanel());
@@ -205,15 +197,8 @@ namespace CrossEngineEditor
 
             Context.Scene.Start();
 
-            //ground.AddComponent(new ExcComponent());
-
-            //CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
-            //string json = serializer.Serialize(Scene);
-            //Log.App.Debug(json);
-            //CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
-            //Scene = (Scene)deserializer.Deserialize(json, typeof(Scene));
-            
-            // ---
+            gre.AddElement(0, Vector4.Zero);
+            gre.AddElement(1, Vector4.One);
         }
 
         public override void OnDetach()
@@ -227,6 +212,7 @@ namespace CrossEngineEditor
         // test pcode
         int updSleep = 0;
         int rndSleep = 0;
+        Gradient<Vector4> gre = new Gradient<Vector4>();
 
         int profFrames = 0;
         public override void OnUpdate()
@@ -283,20 +269,20 @@ namespace CrossEngineEditor
                 if (updSleep > 0) ThreadManager.ExecuteOnMianThread(() => Thread.Sleep(updSleep));
                 if (rndSleep > 0) ThreadManager.ExecuteOnRenderThread(() => Thread.Sleep(rndSleep));
 
-                ImGradient.DrawMarker(new Vector2(0), new Vector2(10), 0xff0000ff, true);
+                ImGradient.Manipulate(gre);
 
                 // test seri
-                //if (ImGui.Button("seri test"))
-                //{
-                //    string json;
-                //    json = SceneSerializer.SertializeJson(Context.Scene);
-                //    Log.App.Debug(json);
-                //
-                //    Context.Scene.Unload();
-                //    ClearContext();
-                //    Context.Scene = SceneSerializer.DeserializeJson(json);
-                //    Context.Scene.Load();
-                //}
+                if (ImGui.Button("seri test"))
+                {
+                    string json;
+                    json = SceneSerializer.SertializeJson(Context.Scene);
+                    Log.App.Debug(json);
+                
+                    //Context.Scene.Unload();
+                    //ClearContext();
+                    //Context.Scene = SceneSerializer.DeserializeJson(json);
+                    //Context.Scene.Load();
+                }
             }
             ImGui.End();
 

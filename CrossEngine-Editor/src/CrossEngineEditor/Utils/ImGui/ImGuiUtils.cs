@@ -2,6 +2,7 @@
 using ImGuiNET;
 
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace CrossEngineEditor.Utils
 {
@@ -28,11 +29,22 @@ namespace CrossEngineEditor.Utils
                 ImGui.ColorConvertFloat4ToU32(style.Colors[(int)ImGuiCol.Separator]), style.FrameRounding, ImDrawFlags.None, 1.5f);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SmartSeparator(float thickness = 1.5f)
         {
+            var colwidth = ImGui.GetColumnWidth();
+            ImGui.Dummy(new Vector2(colwidth, thickness));
             Vector2 p = ImGui.GetCursorScreenPos();
-            ImGui.GetWindowDrawList().AddLine(new Vector2(p.X, p.Y), new Vector2(p.X + ImGui.GetColumnWidth(), p.Y), ImGui.GetColorU32(ImGuiCol.Separator), thickness);
-            ImGui.Dummy(new Vector2(ImGui.GetColumnWidth(), thickness));
+            ImGui.GetWindowDrawList().AddLine(new Vector2(p.X, p.Y), new Vector2(p.X + colwidth, p.Y), ImGui.GetColorU32(ImGuiCol.Separator), thickness);
+            ImGui.Dummy(new Vector2(colwidth, thickness));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool SquareButton(string text)
+        {
+            var style = ImGui.GetStyle();
+            var font = ImGui.GetFont();
+            return ImGui.Button(text, new(style.FramePadding.Y * 2 + font.FontSize * font.Scale));
         }
     }
 }

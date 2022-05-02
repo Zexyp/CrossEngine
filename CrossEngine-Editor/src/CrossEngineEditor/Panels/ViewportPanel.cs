@@ -297,7 +297,7 @@ namespace CrossEngineEditor.Panels
                     {
                         move += Vector3.UnitX;
                     }
-                    if (ImGui.IsKeyDown('A') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.UpArrow)))
+                    if (ImGui.IsKeyDown('A') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.LeftArrow)))
                     {
                         move -= Vector3.UnitX;
                     }

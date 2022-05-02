@@ -8,17 +8,17 @@ using System.Diagnostics;
 
 namespace CrossEngine.Utils
 {
-    interface IGradient
+    public interface IGradient
     {
         int ElementCount { get; }
         Type Type { get; }
     
         void AddElement(float position, object element);
         void RemoveElement(int index);
-        void SetElementValue(int index, object value);
         void ClearElements();
-        void Reverse();
         object Sample(float position);
+        void SetElementValue(int index, object value);
+        int SetElementPosition(int index, float position);
     }
 
     /// <summary>
@@ -27,7 +27,7 @@ namespace CrossEngine.Utils
     /// <typeparam name="T"></typeparam>
     public class Gradient<T> : IGradient where T : struct
     {
-        public struct GradientElement<T> where T : struct
+        public struct GradientElement
         {
             public float position;
             public T value;
@@ -57,15 +57,15 @@ namespace CrossEngine.Utils
             var type = typeof(T);
             if (!Lerps.ContainsKey(type))
             {
-                throw new ArgumentException($"Disallowed type ('{type.Name}') in creation of {typeof(Gradient<>).Name}");
+                throw new ArgumentException($"Disallowed type ('{type.Name}').");
             }
 
             Type = type;
             Elements = elements.AsReadOnly();
         }
 
-        private readonly List<GradientElement<T>> elements = new List<GradientElement<T>>();
-        public readonly ReadOnlyCollection<GradientElement<T>> Elements;
+        private readonly List<GradientElement> elements = new List<GradientElement>();
+        public readonly ReadOnlyCollection<GradientElement> Elements;
 
         public int ElementCount { get { return elements.Count; } }
 
@@ -79,59 +79,44 @@ namespace CrossEngine.Utils
         {
             elements.Clear();
         }
-        public void Reverse()
-        {
-            elements.Reverse();
 
-            GradientElement<T> el;
-            for (int i = 0; i < elements.Count; i++)
-            {
-                el = elements[i];
-                el.position = -el.position + 1;
-                elements[i] = el;
-            }
-        }
-
-        public void AddElement(float position, T value)
+        public int AddElement(float position, T value)
         {
             if (elements.Count == 0)
             {
-                elements.Add(new GradientElement<T>(position, value));
-                return;
+                elements.Add(new GradientElement(position, value));
+                return 0;
             }
 
-            if (elements[0].position > position)
+            if (elements[0].position >= position)
             {
-                elements.Insert(0, new GradientElement<T>(position, value));
-                return;
+                elements.Insert(0, new GradientElement(position, value));
+                return 0;
             }
-            if (elements[elements.Count - 1].position < position)
+            if (elements[elements.Count - 1].position <= position)
             {
-                elements.Add(new GradientElement<T>(position, value));
-                return;
+                elements.Add(new GradientElement(position, value));
+                return elements.Count - 1;
             }
 
             for (int i = 0; i < elements.Count; i++)
             {
-                if (elements[i].position < position && elements[i + 1].position > position)
+                if (elements[i].position < position && elements[i + 1].position >= position)
                 {
-                    elements.Insert(i + 1, new GradientElement<T>(position, value));
-                    return;
+                    elements.Insert(i + 1, new GradientElement(position, value));
+                    return i + 1;
                 }
             }
 
             Debug.Assert(false, "unexpected end of a method!");
+            return default;
         }
 
-        public bool SetElementValue(int index, T value)
+        public void SetElementValue(int index, T value)
         {
-            if (index > elements.Count - 1 || index < 0)
-                return false;
-
-            GradientElement<T> el = elements[index];
+            GradientElement el = elements[index];
             el.value = value;
             elements[index] = el;
-            return true;
         }
 
         public T Sample(float position)
@@ -144,10 +129,10 @@ namespace CrossEngine.Utils
             if (elements[elements.Count - 1].position <= position)
                 return elements[elements.Count - 1].value;
 
-            GradientElement<T> firstElement = elements[0];
+            GradientElement firstElement = elements[0];
             for (int i = 1; i < elements.Count; i++)
             {
-                GradientElement<T> secondElement = elements[i];
+                GradientElement secondElement = elements[i];
 
                 if (position == secondElement.position)
                     return secondElement.value;
@@ -161,7 +146,7 @@ namespace CrossEngine.Utils
                 firstElement = secondElement;
             }
 
-            Debug.Assert(false, "unexpected end of method!");
+            Debug.Assert(false, "unexpected end of a method!");
             return default;
         }
 
@@ -170,5 +155,39 @@ namespace CrossEngine.Utils
         object IGradient.Sample(float position) => Sample(position);
 
         public void SetElementValue(int index, object value) => SetElementValue(index, (T)value);
+        public int SetElementPosition(int index, float position)
+        {
+            GradientElement el = elements[index];
+            elements.RemoveAt(index);
+
+            if (elements.Count == 0)
+            {
+                elements.Add(new GradientElement(position, el.value));
+                return 0;
+            }
+
+            if (elements[0].position >= position)
+            {
+                elements.Insert(0, new GradientElement(position, el.value));
+                return 0;
+            }
+            if (elements[elements.Count - 1].position <= position)
+            {
+                elements.Add(new GradientElement(position, el.value));
+                return elements.Count - 1;
+            }
+
+            for (int i = 0; i < elements.Count; i++)
+            {
+                if (elements[i].position < position && elements[i + 1].position >= position)
+                {
+                    elements.Insert(i + 1, new GradientElement(position, el.value));
+                    return i + 1;
+                }
+            }
+
+            Debug.Assert(false, "unexpected end of a method!");
+            return default;
+        }
     }
 }

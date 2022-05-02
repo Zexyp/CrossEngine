@@ -8,6 +8,7 @@ using System.Numerics;
 using CrossEngine.ECS;
 using CrossEngine.ComponentSystems;
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
@@ -31,7 +32,7 @@ namespace CrossEngine.Components
                 return null;
             }
         }
-
+        
         public CameraComponent()
         {
 
@@ -52,10 +53,24 @@ namespace CrossEngine.Components
             RendererSystem.Instance.UnregisterCamera(this);
         }
 
-        public override object Clone()
+        protected override Component CreateClone()
         {
-            Logging.Log.Core.Debug("CameraComponent says: panic");
+            Logging.Log.Core.Debug("CameraComponent says: 'panic!'");
             throw new NotImplementedException();
+        }
+
+        protected internal override void Serialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+            Logging.Log.Core.Debug("CameraComponent says: 'panic!'");
+        }
+
+        protected internal override void Deserialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+            Logging.Log.Core.Debug("CameraComponent says: 'panic!'");
         }
     }
 }

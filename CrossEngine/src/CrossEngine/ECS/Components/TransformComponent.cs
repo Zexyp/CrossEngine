@@ -8,6 +8,7 @@ using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using CrossEngine.ECS;
 using CrossEngine.ComponentSystems;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
@@ -439,11 +440,9 @@ namespace CrossEngine.Components
             }
         }
 
-        public override object Clone()
+        protected override Component CreateClone()
         {
             var trans = new TransformComponent();
-            // questionable
-            trans.Enabled = this.Enabled;
 
             trans.Position = this.Position;
             trans.Scale = this.Scale;
@@ -460,22 +459,18 @@ namespace CrossEngine.Components
         //    }
         //}
 
-        //public override void OnSerialize(SerializationInfo info)
-        //{
-        //    info.AddValue("Position", Position);
-        //    info.AddValue("Rotation", Rotation);
-        //    info.AddValue("Scale", Scale);
-        //    //info.AddRefValue("Parent", Parent);
-        //}
-        //
-        //public override void OnDeserialize(SerializationInfo info)
-        //{
-        //    Position = (Vector3)info.GetValue("Position", typeof(Vector3));
-        //    Rotation = (Quaternion)info.GetValue("Rotation", typeof(Quaternion));
-        //    Scale = (Vector3)info.GetValue("Scale", typeof(Vector3));
-        //    // this will break things!
-        //    // TODO: fix it
-        //    //Parent = (TransformComponent)info.GetRefValue("Parent", typeof(TransformComponent), typeof(TransformComponent).GetMember(nameof(Parent))[0], this);
-        //}
+        protected internal override void Serialize(SerializationInfo info)
+        {
+            info.AddValue(nameof(Position), Position);
+            info.AddValue(nameof(Rotation), Rotation);
+            info.AddValue(nameof(Scale), Scale);
+        }
+
+        protected internal override void Deserialize(SerializationInfo info)
+        {
+            Position = info.GetValue(nameof(Position), Vector3.Zero);
+            Rotation = info.GetValue(nameof(Rotation), Quaternion.Identity);
+            Scale = info.GetValue(nameof(Scale), Vector3.One);
+        }
     }
 }

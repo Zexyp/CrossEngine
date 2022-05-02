@@ -14,6 +14,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Physics;
 using CrossEngine.Logging;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
@@ -90,8 +91,9 @@ namespace CrossEngine.Components
         private Particle[] _particlePool;
         private uint _poolIndex = 0;
 
-        private TextureAtlas textureAtlas;
+        //private TextureAtlas textureAtlas;
         //public bool animated
+        //public func BlendMode
 
         public ParticleSystemComponent()
         {
@@ -248,7 +250,7 @@ namespace CrossEngine.Components
             return particle;
         }
 
-        //public uint[] SortMeDaPizza(Vector3 position) // returns count of active paricles
+        //public uint[] SortMeDaPizza(Particle[] particles, Vector3 position) // returns count of active paricles
         //{
         //    uint[] particleIndices = new uint[maxParticleBuffer];
         //    for (uint i = 0; i < particleIndices.Length; i++)
@@ -266,5 +268,17 @@ namespace CrossEngine.Components
         //    });
         //    return particleIndices;
         //}
+
+        protected internal override void Serialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+        }
+
+        protected internal override void Deserialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+        }
     }
 }

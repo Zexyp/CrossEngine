@@ -6,6 +6,7 @@ using CrossEngine.ECS;
 using CrossEngine.ComponentSystems;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Utils;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
@@ -76,7 +77,7 @@ namespace CrossEngine.Components
             }
         }
 
-        protected void InvokeShapeChangedEvent()
+        protected void NotifyShapeChangedEvent()
         {
             OnPropertyChanged?.Invoke(this, ColliderPropertyFlags.Shape);
         }
@@ -89,6 +90,18 @@ namespace CrossEngine.Components
         protected internal override void Detach()
         {
             PhysicsSysten.Instance.UnregisterCollider(this);
+        }
+
+        protected internal override void Serialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+        }
+
+        protected internal override void Deserialize(SerializationInfo info)
+        {
+            var sussy = new System.Diagnostics.StackFrame();
+            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
         }
     }
 }

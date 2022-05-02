@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 
 using CrossEngine.Utils.Editor;
+using CrossEngine.ECS;
 
 namespace CrossEngine.Components
 {
@@ -17,11 +18,11 @@ namespace CrossEngine.Components
                 if (value == _radius) return;
                 _radius = value;
 
-                InvokeShapeChangedEvent();
+                NotifyShapeChangedEvent();
             }
         }
 
-        public override object Clone()
+        protected override Component CreateClone()
         {
             return new SphereColliderComponent() { Radius = this.Radius };
         }

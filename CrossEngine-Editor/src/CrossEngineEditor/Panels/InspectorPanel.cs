@@ -18,9 +18,14 @@ namespace CrossEngineEditor.Panels
 {
     public class InspectorPanel : EditorPanel
     {
+        private readonly Type[] _coreComponents;
+
         public InspectorPanel() : base("Inspector")
         {
             WindowFlags = ImGuiWindowFlags.MenuBar;
+            _coreComponents = Assembly.GetAssembly(typeof(Component)).ExportedTypes.
+                Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract).
+                ToArray();
         }
 
         protected override void DrawWindowContent()
@@ -29,26 +34,26 @@ namespace CrossEngineEditor.Panels
             {
                 if (ImGui.BeginMenu("Edit", Context.ActiveEntity != null))
                 {
-                    //if (ImGui.BeginMenu("Add Component"))
-                    //{
-                    //    for (int i = 0; i < EditorLayer.Instance.CoreComponentTypes.Length; i++)
-                    //    {
-                    //        if (ImGui.MenuItem(EditorLayer.Instance.CoreComponentTypes[i].Name))
-                    //        {
-                    //            Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.CoreComponentTypes[i]));
-                    //        }
-                    //    }
-                    //    ImGui.Separator();
-                    //    for (int i = 0; i < EditorLayer.Instance.ComponentTypeRegistry.Count; i++)
-                    //    {
-                    //        if (ImGui.MenuItem(EditorLayer.Instance.ComponentTypeRegistry[i].Name))
-                    //        {
-                    //            Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.ComponentTypeRegistry[i]));
-                    //        }
-                    //    }
-                    //    ImGui.EndMenu();
-                    //}
-                    //ImGui.Separator();
+                    if (ImGui.BeginMenu("Add Component"))
+                    {
+                        for (int i = 0; i < _coreComponents.Length; i++)
+                        {
+                            if (ImGui.MenuItem(_coreComponents[i].Name))
+                            {
+                                Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(_coreComponents[i]));
+                            }
+                        }
+                        //ImGui.Separator();
+                        //for (int i = 0; i < EditorLayer.Instance.ComponentTypeRegistry.Count; i++)
+                        //{
+                        //    if (ImGui.MenuItem(EditorLayer.Instance.ComponentTypeRegistry[i].Name))
+                        //    {
+                        //        Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.ComponentTypeRegistry[i]));
+                        //    }
+                        //}
+                        ImGui.EndMenu();
+                    }
+                    ImGui.Separator();
                     if (ImGui.BeginMenu("Remove Component"))
                     {
                         var components = Context.ActiveEntity.Components;
@@ -90,7 +95,7 @@ namespace CrossEngineEditor.Panels
 
                 bool stay = true;
 
-                ImGui.PushID(componentType.Name + compi);
+                ImGui.PushID(component.GetHashCode());
 
                 // validity indication
                 //bool valcol = !component.Valid;
@@ -187,8 +192,8 @@ namespace CrossEngineEditor.Panels
                 {
                     ImGui.GetStateStorage().SetInt(ImGui.GetID(componentType.Name), 0);
                     EditorLayer.Instance.PushModal(
-                        new ActionModal($"UI threw an exception at '{mi.DeclaringType.Name}.{mi.Name}':\n{ex.Message}\n\nDo you want to remove problematic component?",
-                            "UI Error")
+                        new ActionModal($"UI threw an exception at '{mi.DeclaringType.Name}.{mi.Name}':\n{ex.Message}",
+                            "UI Error", ActionModal.ButtonFlags.OK)
                         { Color = ActionModal.TextColor.Error });
                 }
 

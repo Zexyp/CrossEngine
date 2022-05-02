@@ -207,11 +207,13 @@ namespace CrossEngine.FX.Particles
         public float gravityEffect;
 
         [EditorSection("Color")]
+        [EditorGradient]
         public Gradient<Vector4> colorGradient = new Gradient<Vector4>();
         [EditorDrag]
         public Vector3 colorVariation; // hsv
 
         [EditorSection("Size")]
+        [EditorGradient]
         public Gradient<float> sizeGradient = new Gradient<float>();
         [EditorDrag]
         public float sizeVariation;
