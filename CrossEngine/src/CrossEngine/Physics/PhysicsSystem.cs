@@ -141,6 +141,13 @@ namespace CrossEngine.ComponentSystems
                 OnUpdateRequired?.Invoke(this);
             }
 
+            private void Collider_OnEnabledChanged(Component component)
+            {
+                _colliders[(ColliderComponent)component].Dirt |= ColliderPropertyFlags.LocalOffsets;
+                _shapeDirty = true;
+                OnUpdateRequired?.Invoke(this);
+            }
+
             private void Transform_OnTransformChanged(TransformComponent component)
             {
                 _updateMotion = true;
@@ -156,19 +163,30 @@ namespace CrossEngine.ComponentSystems
                 OnUpdateRequired?.Invoke(this);
             }
 
+            private void RigidBody_OnEnabledChanged(Component component)
+            {
+                if (!component.Enabled) PhysicsSysten.Instance.rigidBodyWorld.RemoveRigidBody(_body);
+                else PhysicsSysten.Instance.rigidBodyWorld.AddRigidBody(_body);
+            }
+
             private void AddCollider(ColliderComponent component)
             {
                 component.OnPropertyChanged += Collider_OnPropertyChanged;
+                component.OnEnabledChanged += Collider_OnEnabledChanged;
 
-                _colliders.Add(component, new ColliderData() { Dirt = ColliderPropertyFlags.Shape });
+                _colliders.Add(component, new ColliderData());
+                Collider_OnPropertyChanged(component,
+                    ColliderPropertyFlags.Shape |
+                    ColliderPropertyFlags.LocalOffsets);
             }
 
             private void RemoveCollider(ColliderComponent component)
             {
+                component.OnEnabledChanged -= Collider_OnEnabledChanged;
                 component.OnPropertyChanged -= Collider_OnPropertyChanged;
 
                 if (_colliders[component].Shape != null) _shape.RemoveChildShape(_colliders[component].Shape);
-                _colliders[component].Shape.Dispose();
+                _colliders[component].Shape?.Dispose();
                 _colliders.Remove(component);
             }
 
@@ -182,6 +200,7 @@ namespace CrossEngine.ComponentSystems
                 _entity.OnComponentRemoved += Entity_OnComponentRemoved;
 
                 _rigidBody.OnPropertyChanged += RigidBody_OnPropertyChanged;
+                _rigidBody.OnEnabledChanged += RigidBody_OnEnabledChanged;
 
                 Transform = _entity.GetComponent<TransformComponent>();
 
@@ -191,12 +210,12 @@ namespace CrossEngine.ComponentSystems
                 _body = CreateBody(_rigidBody, _transform, _shape);
                 _motionState = _body.MotionState;
 
-                PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
+                if (_rigidBody.Enabled) PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
             }
 
             public void Deactivate()
             {
-                PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
+                if (_rigidBody.Enabled) PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
 
                 _body.MotionState = null;
                 _body.Dispose();
@@ -211,6 +230,7 @@ namespace CrossEngine.ComponentSystems
                 
                 Transform = null;
 
+                _rigidBody.OnEnabledChanged -= RigidBody_OnEnabledChanged;
                 _rigidBody.OnPropertyChanged -= RigidBody_OnPropertyChanged;
 
                 _entity.OnComponentAdded -= Entity_OnComponentAdded;
@@ -221,6 +241,7 @@ namespace CrossEngine.ComponentSystems
 
             public void Update()
             {
+                #region Shape
                 if (_shapeDirty)
                 {
                     //PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
@@ -229,12 +250,14 @@ namespace CrossEngine.ComponentSystems
                     {
                         var colliderData = item.Value;
                         var colliderComponent = item.Key;
+
                         if (!((colliderData.Dirt & ColliderPropertyFlags.Shape) != 0))
                         {
                             if ((colliderData.Dirt & ColliderPropertyFlags.LocalOffsets) != 0)
                             {
                                 _shape.RemoveChildShape(colliderData.Shape);
-                                _shape.AddChildShape(colliderComponent.OffsetMatrix.ToBullet(), colliderData.Shape);
+                                // ! this is odd
+                                if (colliderComponent.Enabled) _shape.AddChildShape(colliderComponent.OffsetMatrix.ToBullet(), colliderData.Shape);
                             }
 
                             colliderData.Dirt = ColliderPropertyFlags.None;
@@ -265,7 +288,9 @@ namespace CrossEngine.ComponentSystems
 
                     _shapeDirty = false;
                 }
+                #endregion
 
+                #region Motion
                 if (_updateMotion)
                 {
                     var worldMat = (Matrix4x4.CreateFromQuaternion(_transform.WorldRotation) * Matrix4x4.CreateTranslation(_transform.WorldPosition)).ToBullet();
@@ -275,11 +300,13 @@ namespace CrossEngine.ComponentSystems
                     //                    sus fix
                     _shape.LocalScaling = Vector3.Max(new Vector3(0.0001f, 0.0001f, 0.0001f), _transform.Scale).ToBullet();
 
-                    Instance.rigidBodyWorld.CleanFromProxyPairs(_body);
+                    if (_rigidBody.Enabled) Instance.rigidBodyWorld.CleanFromProxyPairs(_body);
 
                     _updateMotion = false;
                 }
+                #endregion
 
+                #region Body
                 if (_dirtyProperties != RigidBodyPropertyFlags.None)
                 {
                     if ((_dirtyProperties | RigidBodyPropertyFlags.LinearVelocity) != 0)
@@ -342,12 +369,15 @@ namespace CrossEngine.ComponentSystems
 
                     _dirtyProperties = RigidBodyPropertyFlags.None;
                 }
+                #endregion
 
                 _body.Activate();
             }
 
             public void UpdataTransform()
             {
+                if (!_rigidBody.Enabled) return;
+
                 // TODO: consider interpolation
 
                 if (_transform != null)
@@ -444,7 +474,7 @@ namespace CrossEngine.ComponentSystems
         {
             rigidBodyWorld = new RigidBodyWorld();
 
-            Physics.PhysicsInterface.SetContext(rigidBodyWorld);
+            PhysicsInterface.SetContext(rigidBodyWorld);
 
             _debugDrawData.Add(rigidBodyWorld);
 

@@ -201,7 +201,9 @@ namespace CrossEngineEditor.Panels
                 {
                     ImGuiUtils.BeginGroupFrame();
 
-                    MemberInfo[] membs = componentType.GetMembers();
+                    MemberInfo[] membs = componentType.GetMembers().
+                        Where(m => m.IsDefined(typeof(EditorValueAttribute), true)).
+                        ToArray();
 
                     for (int mi = 0; mi < membs.Length; mi++)
                     {

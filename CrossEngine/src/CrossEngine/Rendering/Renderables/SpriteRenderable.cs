@@ -8,6 +8,7 @@ using System.Numerics;
 using CrossEngine.Components;
 using CrossEngine.Utils;
 using CrossEngine.Rendering.Textures;
+using CrossEngine.Rendering.Cameras;
 
 namespace CrossEngine.Rendering.Renderables
 {
@@ -21,9 +22,14 @@ namespace CrossEngine.Rendering.Renderables
 
     class SpriteRenderable : Renderable<ISpriteRenderData>
     {
+        public override void Begin(Camera camera)
+        {
+            Renderer2D.Flush();
+            Application.Instance.RendererAPI.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
+        }
+
         public override void Submit(ISpriteRenderData data)
         {
-            if (data == null) Logging.Log.Core.Error("something went wrong, again...");
             if (data.Texture == null)
                 Renderer2D.DrawQuad(data.Transform, data.Color, data.EntityId);
             else

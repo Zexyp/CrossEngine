@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 using CrossEngine.Rendering;
 using CrossEngine.Scenes;
@@ -58,6 +59,7 @@ namespace CrossEngine.Layers
                         rndbl.Begin(layerData.Camera);
                         for (int objectIndex = 0; objectIndex < objs.Count; objectIndex++)
                         {
+                            Debug.Assert(objs[objectIndex] != null);
                             rndbl.Submit((IObjectRenderData)objs[objectIndex]);
                         }
                         rndbl.End();

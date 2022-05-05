@@ -75,6 +75,36 @@ namespace CrossEngine.Platform.OpenGL
             return 0;
         }
 
+        public static int ToGLBlendFunc(BlendFunc func)
+        {
+            switch (func)
+            {
+                case BlendFunc.OneMinusSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
+                case BlendFunc.One: return GL_ONE;
+            }
+
+            Debug.Assert(false, $"Unknown {nameof(BlendFunc)} value");
+            return 0;
+        }
+
+        public static int ToGLDepthFunc(DepthFunc func)
+        {
+            switch (func)
+            {
+                case DepthFunc.Never: return GL_NEVER;
+                case DepthFunc.Less: return GL_LESS;
+                case DepthFunc.Equal: return GL_EQUAL;
+                case DepthFunc.LessEqual: return GL_LEQUAL;
+                case DepthFunc.Greater: return GL_GREATER;
+                case DepthFunc.NotEqual: return GL_NOTEQUAL;
+                case DepthFunc.GreaterEqual: return GL_GEQUAL;
+                case DepthFunc.Always: return GL_ALWAYS;
+            }
+
+            Debug.Assert(false, $"Unknown {nameof(DepthFunc)} value");
+            return 0;
+        }
+
         public static int ToGLFilterParameter(FilterParameter filter)
         {
             switch (filter)

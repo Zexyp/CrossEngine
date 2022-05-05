@@ -571,8 +571,8 @@ namespace CrossEngineEditor.Utils
 
             { typeof(EditorInnerDrawAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 var cattribt = (EditorInnerDrawAttribute)attribute;
-                if (!string.IsNullOrEmpty(attribute.Name))
-                    ImGui.Text(attribute.Name);
+                if (name != null)
+                    ImGui.Text(name);
                 Type valtype = value.GetType();
                 MemberInfo[] membs = valtype.GetMembers();
                 ImGuiUtils.BeginGroupFrame();

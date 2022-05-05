@@ -153,9 +153,11 @@ namespace CrossEngineEditor
         {
             ThreadManager.ExecuteOnRenderThread(() =>
             {
+                GLDebugging.EnableGLDebugging(LogLevel.Warn);
                 Renderer2D.Init();
                 LineRenderer.Init();
-                GLDebugging.EnableGLDebugging(LogLevel.Warn);
+                Application.Instance.RendererAPI.SetDepthFunc(DepthFunc.Default);
+                Application.Instance.RendererAPI.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
             });
 
             //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());

@@ -37,6 +37,7 @@ namespace CrossEngine.Rendering
         public abstract void SetClearColor(Vector4 color);
         public abstract void SetPolygonMode(PolygonMode mode);
         public abstract void SetDepthFunc(DepthFunc func);
+        public abstract void SetBlendFunc(BlendFunc func);
 
         public abstract void SetLineWidth(float width);
 
@@ -48,7 +49,7 @@ namespace CrossEngine.Rendering
 
     public enum PolygonMode
     {
-        None = 0,
+        None = default,
 
         Fill,
         Line,
@@ -57,7 +58,7 @@ namespace CrossEngine.Rendering
 
     public enum DrawMode
     {
-        None = 0,
+        None = default,
 
         Lines,
         Traingles,
@@ -66,9 +67,10 @@ namespace CrossEngine.Rendering
 
     public enum BlendFunc
     {
-        None = 0,
+        None = default,
 
         OneMinusSrcAlpha,
+        One,
     }
 
     public enum DepthFunc

@@ -34,6 +34,14 @@ namespace CrossEngine.Components
 
         private uint _particlePoolSize = 1000;
 
+        private ParticleEmitterType _emitterType;
+
+        private Particle[] _particlePool;
+        private uint _poolIndex = 0;
+
+        private bool _enableEmit = true;
+        private float _emitAggregate = 0;
+
         [EditorDragInt(Min = 1)]
         public uint ParticlePoolSize
         {
@@ -50,10 +58,24 @@ namespace CrossEngine.Components
             }
         }
 
-        private ParticleEmitterType _emitterType;
-
         [EditorEnum]
-        public ParticleSpace Space = ParticleSpace.Global;
+        public ParticleSpace Space { get; set; } = ParticleSpace.Global;
+
+        [EditorSection("Emission")]
+        [EditorValue]
+        public bool EnableEmit
+        {
+            get => _enableEmit;
+            set
+            {
+                _enableEmit = value;
+                _emitAggregate = 0;
+            }
+        }
+        [EditorDragInt(Min = 0)]
+        public int EmitCount = 1;
+        [EditorDrag(Min = 0)]
+        public float EmitEvery = 0.1f;
 
         [EditorEnum]
         public ParticleEmitterType EmitterType
@@ -72,10 +94,10 @@ namespace CrossEngine.Components
             }
         }
 
-        [EditorInnerDraw("Properties")]
+        [EditorInnerDraw]
         public ParticleProperties Properties = ParticleProperties.CreateSimple();
         private ParticleEmitter _emitter;
-        [EditorInnerDraw("Emitter")]
+        [EditorInnerDraw]
         public ParticleEmitter Emitter
         {
             get => _emitter;
@@ -88,12 +110,10 @@ namespace CrossEngine.Components
             }
         }
 
-        private Particle[] _particlePool;
-        private uint _poolIndex = 0;
-
         //private TextureAtlas textureAtlas;
         //public bool animated
-        //public func BlendMode
+        [EditorEnum]
+        public BlendFunc BlendMode { get; set; }
 
         public ParticleSystemComponent()
         {
@@ -115,7 +135,15 @@ namespace CrossEngine.Components
 
         protected internal override void Update()
         {
-            Emit();
+            if (EnableEmit)
+            {
+                _emitAggregate += Time.DeltaTimeF;
+                if (_emitAggregate >= EmitEvery)
+                {
+                    _emitAggregate = 0;
+                    Emit(EmitCount);
+                }
+            }
             Update(Time.DeltaTimeF);
         }
 
@@ -180,6 +208,7 @@ namespace CrossEngine.Components
             var cameraRight = Vector3.Transform(Vector3.UnitX, viewMatrix);
             var cameraUp = Vector3.Transform(Vector3.UnitY, viewMatrix);
             var cameraLook = Entity.Transform.Position;
+            var matrixLocal = Matrix4x4.CreateScale(Entity.Transform.Scale) * Matrix4x4.CreateTranslation(Entity.Transform.Position);
 
             for (int i = 0; i < _particlePool.Length; i++)
             {
@@ -206,7 +235,7 @@ namespace CrossEngine.Components
                 Matrix4x4 matrix = Matrix4x4.CreateScale(size);
                 matrix *= Matrix4x4.CreateRotationZ(particle.rotation) * Matrix4x4Extension.CreateBillboard(cameraRight, cameraUp, cameraLook, particle.position);
                 if (Space == ParticleSpace.Local)
-                    matrix *= Entity.Transform.WorldTransformMatrix;
+                    matrix *= matrixLocal;
                 Renderer2D.DrawQuad(matrix, color, Entity.Id);
             }
 
@@ -220,6 +249,10 @@ namespace CrossEngine.Components
 
             particle.active = true;
 
+            // life
+            float randomLife = (float)random.NextDouble() * Properties.lifeTimeVariation * Properties.lifeTime;
+            particle.life = Properties.lifeTime - randomLife;
+            particle.lifeRemaining = particle.life;
             // gravity
             particle.gravityEffect = Properties.gravityEffect;
             // size
@@ -242,10 +275,6 @@ namespace CrossEngine.Components
             // rotation
             particle.rotation = ((float)random.NextDouble() * 2.0f - 1.0f) * (float)Math.PI * Properties.rotationVariation + Properties.rotation;
             particle.rotationVelocity = ((float)random.NextDouble() * 2.0f - 1.0f) * Properties.rotationVelocityVariation + Properties.rotationVelocity;
-            // life
-            float randomLife = (float)random.NextDouble() * Properties.lifeTimeVariation * Properties.lifeTime;
-            particle.life = Properties.lifeTime - randomLife;
-            particle.lifeRemaining = particle.life;
 
             return particle;
         }

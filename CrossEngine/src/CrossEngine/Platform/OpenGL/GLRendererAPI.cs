@@ -39,7 +39,7 @@ namespace CrossEngine.Platform.OpenGL
             // TODO: consider unbinding to keep the vertex array state safe
         }
 
-        public override void Clear() => glClear(GL_COLOR_BUFFER_BIT);
+        public override void Clear() => glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         public override void SetViewport(uint x, uint y, uint width, uint height) => glViewport((int)x, (int)y, (int)width, (int)height);
 
@@ -47,7 +47,29 @@ namespace CrossEngine.Platform.OpenGL
 
         public override void SetPolygonMode(PolygonMode mode) => glPolygonMode(GL_FRONT_AND_BACK, GLUtils.ToGLPolygonMode(mode));
 
-        public override void SetDepthFunc(DepthFunc func) => throw new NotImplementedException();
+        public override void SetDepthFunc(DepthFunc func)
+        {
+            if (func == DepthFunc.None)
+            {
+                glDisable(GL_DEPTH_TEST);
+                return;
+            }
+
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GLUtils.ToGLDepthFunc(func));
+        }
+
+        public override void SetBlendFunc(BlendFunc func)
+        {
+            if (func == BlendFunc.None)
+            {
+                glDisable(GL_BLEND);
+                return;
+            }
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GLUtils.ToGLBlendFunc(func));
+        }
 
         public override void SetLineWidth(float width) => glLineWidth(width);
     }

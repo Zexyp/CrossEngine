@@ -41,6 +41,7 @@ namespace CrossEngine.FX.Particles
     interface IParticleSystemRenderData : IObjectRenderData
     {
         void Render(Matrix4x4 viewMatrix);
+        BlendFunc BlendMode { get; }
     }
 
     class ParticleSystemRenderable : Renderable<IParticleSystemRenderData>
@@ -49,13 +50,16 @@ namespace CrossEngine.FX.Particles
         public override void Begin(Camera camera)
         {
             this.camera = camera;
+            Renderer2D.Flush();
         }
 
         public override void Submit(IParticleSystemRenderData data)
         {
             if (!((ParticleSystemComponent)data).Enabled) return;
 
+            Application.Instance.RendererAPI.SetBlendFunc(data.BlendMode);
             data.Render(camera.ViewMatrix);
+            Renderer2D.Flush();
         }
     }
 }
