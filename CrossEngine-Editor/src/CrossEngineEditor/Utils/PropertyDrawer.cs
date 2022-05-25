@@ -9,6 +9,7 @@ using System.Reflection;
 
 using CrossEngine.Utils.Editor;
 using CrossEngine.Utils;
+using CrossEngine.Assets;
 using CrossEngine;
 
 using CrossEngineEditor.Utils;
@@ -315,12 +316,28 @@ namespace CrossEngineEditor.Utils
             } },
             { typeof(EditorEnumAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 var cattribt = (EditorEnumAttribute)attribute;
-                bool success;
+                bool success = false;
                 int v = (int)value;
-                string[] items = Enum.GetValues(value.GetType()).OfType<object>().Select(o => o.ToString()).ToArray();
+                (int Value, string Name)[] items = Enum.GetValues(value.GetType()).OfType<object>().Select(o => ((int)o, o.ToString())).ToArray();
+                
                 ImGui.PushID(name);
-                success = ImGui.Combo(name, ref v, items, items.Length);
+                if (ImGui.BeginCombo(name, value.ToString()))
+                {
+                    foreach (var item in items)
+                    {
+                        bool sel = item.Value == v;
+                        if (ImGui.Selectable(item.Name, sel))
+                        {
+                            success = true;
+                            v = item.Value;
+                        }
+                        if (sel)
+                            ImGui.SetItemDefaultFocus();
+                    }
+                    ImGui.EndCombo();
+                }
                 ImGui.PopID();
+                
                 if (success) value = v;
                 return success;
             } },
@@ -347,6 +364,44 @@ namespace CrossEngineEditor.Utils
                     PrintInvalidUI(name);
                 }
                 return false;
+            } },
+
+            { typeof(EditorAssetAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                var cattribt = (EditorAssetAttribute)attribute;
+                bool success = false;
+
+                var registry = EditorLayer.Instance.Context.Scene?.AssetRegistry;
+                AssetInfo v = (AssetInfo)value;
+                IAssetCollection assets = registry?.GetCollection(cattribt.AssetType);
+
+                ImGui.PushID(name);
+                if (ImGui.BeginCombo("", v != null ? v.RelativePath : "null"))
+                {
+                    if (assets != null) foreach (var item in assets)
+                    {
+                        bool sel = item == v;
+                        if (ImGui.Selectable(item.RelativePath, sel))
+                        {
+                            success = true;
+                            v = item;
+                        }
+                        if (sel)
+                            ImGui.SetItemDefaultFocus();
+                    }
+                    ImGui.EndCombo();
+                }
+                ImGui.PopID();
+                ImGui.SameLine();
+                if (ImGuiUtils.SquareButton("×"))
+                {
+                    v = null;
+                    success = true;
+                }
+                ImGui.SameLine();
+                ImGui.Text(name);
+
+                if (success) value = v;
+                return success;
             } },
 
             #region Primitives
@@ -510,63 +565,6 @@ namespace CrossEngineEditor.Utils
                 if (success) value = v;
                 return success;
             } },
-
-            { typeof(EditorAssetValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorAssetValueAttribute)attribute;
-                bool success = false;
-
-                var scene = EditorLayer.Instance.Context.Scene;
-                Asset v = null;
-                IAssetCollection assets = null;
-                IReadOnlyCollection<Asset> assetValues = null;
-                int ci = 0;
-                if (scene != null)
-                {
-                    if (value is IAssetHandle)
-                        v = ((IAssetHandle)value).Asset;
-                    else
-                        v = (Asset)value;
-
-                    assets = (IAssetCollection)typeof(AssetPool).GetMethod(nameof(AssetPool.GetCollection)).MakeGenericMethod(cattribt.Type).Invoke(scene.AssetPool, null);
-                    assetValues = assets.GetAll();
-                    ci = (assetValues != null) ? assetValues.ToList().IndexOf(v) : 0;
-                }
-
-                ImGui.PushID(name);
-                if (ImGui.BeginCombo("", (v != null) ? v.Name : ""))
-                {
-                    if (assetValues != null) foreach (var item in assetValues)
-                    {
-                        bool sel = item == v;
-                        if (ImGui.Selectable(item.Name, sel))
-                        {
-                            success = true;
-                            v = item;
-                        }
-                        if (sel)
-                            ImGui.SetItemDefaultFocus();
-                    }
-                    ImGui.EndCombo();
-                }
-                ImGui.PopID();
-                ImGui.SameLine();
-                if (ImGui.Button("×"))
-                {
-                    v = null;
-                    success = true;
-                }
-                ImGui.SameLine();
-                ImGui.Text(name);
-
-                if (success)
-                {
-                    if (value is IAssetHandle)
-                        ((IAssetHandle)value).Asset = v;
-                    else
-                        value = v;
-                }
-                return success;
-            } },
             */
 
             { typeof(EditorInnerDrawAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
@@ -601,7 +599,7 @@ namespace CrossEngineEditor.Utils
             try
             {
                 foreach (var attrib in fieldInfo.GetCustomAttributes<EditorValueAttribute>(true).
-                    OrderByDescending(a => a.Type))
+                    OrderByDescending(a => a.Kind))
                 {
                     Type attribType = attrib.GetType();
                     if (AttributeHandlers.ContainsKey(attribType))
@@ -633,7 +631,7 @@ namespace CrossEngineEditor.Utils
             try
             {
                 foreach (var attrib in propertyInfo.GetCustomAttributes<EditorValueAttribute>(true).
-                    OrderByDescending(a => a.Type))
+                    OrderByDescending(a => a.Kind))
                 {
                     Type attribType = attrib.GetType();
                     if (AttributeHandlers.ContainsKey(attribType))

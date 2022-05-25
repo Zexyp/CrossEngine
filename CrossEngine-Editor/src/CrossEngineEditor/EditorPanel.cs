@@ -75,7 +75,10 @@ namespace CrossEngineEditor
                 WindowContentAreaMin += WindowPos;
                 WindowContentAreaMax += WindowPos;
 
-                if (ImGui.IsWindowHovered()) ImGui.SetWindowFocus();
+                if (ImGui.IsWindowHovered() &&
+                    !ImGui.IsMouseDragging(ImGuiMouseButton.Left) &&
+                    !ImGui.IsMouseDragging(ImGuiMouseButton.Right) &&
+                    !ImGui.IsMouseDragging(ImGuiMouseButton.Middle)) ImGui.SetWindowFocus();
                 Focused = ImGui.IsWindowFocused();
 
                 InnerBeforeDrawCallback?.Invoke(this);

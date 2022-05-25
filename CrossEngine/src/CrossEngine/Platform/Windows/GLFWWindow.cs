@@ -15,7 +15,7 @@ namespace CrossEngine.Platform.Windows
         private bool _vsync;
 
         public override double Time => Glfw.Time;
-        public override bool ShouldClose => Glfw.WindowShouldClose(Handle);
+        public override bool ShouldClose { get => Glfw.WindowShouldClose(Handle); set => Glfw.SetWindowShouldClose(Handle, value); }
         public override bool VSync
         {
             get => _vsync;

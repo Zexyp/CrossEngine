@@ -42,6 +42,7 @@ namespace CrossEngine.Rendering.Textures
         public abstract uint RendererId { get; }
         public abstract uint Width { get; }
         public abstract uint Height { get; }
+        public IntVec2 Size => new IntVec2((int)Width, (int)Height);
 
         public abstract void Bind(uint slot = 0);
         public abstract void Unbind();

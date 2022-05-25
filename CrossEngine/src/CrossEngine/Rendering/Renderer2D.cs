@@ -169,10 +169,10 @@ namespace CrossEngine.Rendering
                 new Vector3(-0.5f,  0.5f,  0.0f),
             };
         static readonly Vector2[] quadTextureCoords = new Vector2[4] {
-                new Vector2(0.0f, 1.0f),
-                new Vector2(1.0f, 1.0f),
-                new Vector2(1.0f, 0.0f),
                 new Vector2(0.0f, 0.0f),
+                new Vector2(1.0f, 0.0f),
+                new Vector2(1.0f, 1.0f),
+                new Vector2(0.0f, 1.0f),
             };
 
         static readonly Vector2[] triTextureCoords = new Vector2[3] {

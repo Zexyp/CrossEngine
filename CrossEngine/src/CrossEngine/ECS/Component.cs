@@ -33,8 +33,8 @@ namespace CrossEngine.ECS
         protected internal virtual void Enable() { }
         protected internal virtual void Disable() { }
 
-        protected internal virtual void Attach() { }
-        protected internal virtual void Detach() { }
+        protected internal virtual void Attach(World world) { }
+        protected internal virtual void Detach(World world) { }
 
         protected internal virtual void Update() { }
 

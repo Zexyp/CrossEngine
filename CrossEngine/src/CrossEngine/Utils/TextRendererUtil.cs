@@ -23,11 +23,11 @@ namespace CrossEngine.Utils
             {
                 textTexture = TextureLoader.LoadTexture(Properties.Resources.DebugFontAtlas);
                 textTexture.Value.SetFilterParameter(FilterParameter.Nearest);
-                textAtlas = new TextureAtlas(textTexture, 16, 16, SymbolsCount);
+                textAtlas = new TextureAtlas(textTexture.Value.Size, 16, 16, SymbolsCount);
             });
         }
 
-        public static void Draw(Matrix4x4 transform, string text)
+        public static void DrawText(Matrix4x4 transform, string text, Vector4 color)
         {
             int line = 0;
             for (int i = 0; i < text.Length; i++)
@@ -47,8 +47,8 @@ namespace CrossEngine.Utils
 
                 Renderer2D.DrawTexturedQuad(matrix,
                                             textTexture,
-                                            Vector4.One,
-                                            textAtlas != null ? textAtlas.GetTextureOffsets(chord) : new Vector4(0, 0, 1, 1));
+                                            color,
+                                            textAtlas?.GetTextureOffsets(chord) ?? new Vector4(0, 0, 1, 1));
             }
         }
     }

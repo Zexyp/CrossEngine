@@ -78,6 +78,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="src\CrossEngine\Rendering\Cameras\OrthograficCamera.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Cameras\PerspectiveCamera.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
   </ItemGroup>
@@ -114,6 +119,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>cimguizmo.dll</TargetPath>
     </ContentWithTargetPath>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="src\CrossEngine\UI\Components\" />
   </ItemGroup>
   
 </Project>

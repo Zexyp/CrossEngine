@@ -6,9 +6,11 @@ using System.Linq;
 using System.Numerics;
 using System.Diagnostics;
 
+using CrossEngine.Serialization;
+
 namespace CrossEngine.Utils
 {
-    public interface IGradient
+    public interface IGradient : ISerializable
     {
         int ElementCount { get; }
         Type Type { get; }
@@ -27,7 +29,7 @@ namespace CrossEngine.Utils
     /// <typeparam name="T"></typeparam>
     public class Gradient<T> : IGradient where T : struct
     {
-        public struct GradientElement
+        public struct GradientElement : ISerializable
         {
             public float position;
             public T value;
@@ -41,6 +43,18 @@ namespace CrossEngine.Utils
             public override string ToString()
             {
                 return "position: " + position + "; value: " + value;
+            }
+
+            public void GetObjectData(SerializationInfo info)
+            {
+                info.AddValue(nameof(position), position);
+                info.AddValue(nameof(value), value);
+            }
+
+            public void SetObjectData(SerializationInfo info)
+            {
+                position = info.GetValue<float>(nameof(position));
+                value = info.GetValue<T>(nameof(value));
             }
         }
 
@@ -188,6 +202,22 @@ namespace CrossEngine.Utils
 
             Debug.Assert(false, "unexpected end of a method!");
             return default;
+        }
+
+        public void GetObjectData(SerializationInfo info)
+        {
+            info.AddValue(nameof(Elements), elements);
+        }
+
+        public void SetObjectData(SerializationInfo info)
+        {
+            var els = info.GetValue<List<GradientElement>>(nameof(Elements));
+
+            elements.Clear();
+            for (int i = 0; i < els.Count; i++)
+            {
+                AddElement(els[i].position, els[i].value);
+            }
         }
     }
 }

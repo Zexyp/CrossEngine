@@ -33,9 +33,10 @@ namespace CrossEngineEditor
             }
         }
 
+        // will we ever get here??
         public readonly List<Entity> SelectedEntities = new List<Entity>();
 
-        // no sender parameter since editor context is read-only
+        // no sender parameter since editor context is read-only and only one
         public event Action OnActiveEntityChanged;
         public event Action OnSceneChanged;
     }

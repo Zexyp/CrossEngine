@@ -393,7 +393,7 @@ namespace CrossEngine.Components
         //}
         #endregion
 
-        protected internal override void Attach()
+        protected internal override void Attach(World world)
         {
             Debug.Assert(Entity.GetComponent<TransformComponent>() != null);
 
@@ -410,10 +410,10 @@ namespace CrossEngine.Components
             //Entity.OnChildAdded += Entity_OnChildAdded;
             //Entity.OnChildRemoved += Entity_OnChildRemoved;
 
-            TransformSystem.Instance.Register(this);
+            world.GetSystem<TransformSystem>().Register(this);
         }
 
-        protected internal override void Detach()
+        protected internal override void Detach(World world)
         {
             Entity.OnParentChanged -= Entity_OnParentChanged;
             //Entity.OnChildAdded -= Entity_OnChildAdded;
@@ -429,7 +429,7 @@ namespace CrossEngine.Components
 
             this.Parent = null;
 
-            TransformSystem.Instance.Unregister(this);
+            world.GetSystem<TransformSystem>().Unregister(this);
         }
 
         protected internal override void Update()

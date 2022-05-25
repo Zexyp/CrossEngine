@@ -1,57 +1,36 @@
 ﻿using System.Numerics;
 
 using CrossEngine.Utils.Editor;
-//using CrossEngine.Serialization;
+using CrossEngine.Serialization;
+using CrossEngine.Rendering.Culling;
 
 namespace CrossEngine.Rendering.Cameras
 {
-    public class Camera/* : ISerializable*/
+    public class Camera : ISerializable
     {
         //_viewMatrix = Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
-        private bool _projectionDirty { get; set; } = true;
-        private Matrix4x4 _projectionMatrix = Matrix4x4.Identity;
-        public virtual Matrix4x4 ViewMatrix { get; set; }
-        public Matrix4x4 ProjectionMatrix
-        {
-            get
-            {
-                if (_projectionDirty)
-                {
-                    _projectionMatrix = CreateProjectionMatrix();
-                    _projectionDirty = false;
-                }
-                return _projectionMatrix;
-            }
-            set => _projectionMatrix = value;
-        }
+        public virtual Matrix4x4 ViewMatrix { get; set; } = Matrix4x4.Identity;
+        public virtual Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.Identity;
         public Matrix4x4 ViewProjectionMatrix { get => ViewMatrix * ProjectionMatrix; }
+        public Frustum Frustum;
 
         public Camera()
         {
 
         }
 
-        protected void MarkProjectionDirty() => _projectionDirty = true;
+        public void PrepareFrustum() => Frustum = new Frustum(ProjectionMatrix, ViewMatrix);
 
-        public virtual void Resize(float width, float height)
+        public virtual void Resize(float width, float height) { }
+
+        public virtual void GetObjectData(SerializationInfo info)
         {
+            info.AddValue("ProjectionMatrix", ProjectionMatrix);
         }
-
-        protected virtual Matrix4x4 CreateProjectionMatrix()
+        
+        public virtual void SetObjectData(SerializationInfo info)
         {
-            return _projectionMatrix;
+            ProjectionMatrix = (Matrix4x4)info.GetValue("ProjectionMatrix", typeof(Matrix4x4));
         }
-
-        //#region ISerializable
-        //public virtual void OnSerialize(SerializationInfo info)
-        //{
-        //    info.AddValue("ProjectionMatrix", ProjectionMatrix);
-        //}
-        //
-        //public virtual void OnDeserialize(SerializationInfo info)
-        //{
-        //    ProjectionMatrix = (Matrix4x4)info.GetValue("ProjectionMatrix", typeof(Matrix4x4));
-        //}
-        //#endregion
     }
 }

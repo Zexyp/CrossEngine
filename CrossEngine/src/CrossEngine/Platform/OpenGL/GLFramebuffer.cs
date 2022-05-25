@@ -57,7 +57,7 @@ namespace CrossEngine.Platform.OpenGL
             }
         }
 
-        private uint _rendererId = 0;
+        internal uint _rendererId = 0;
         //uint rboid = 0;
 
         public uint Width => specification.Width;

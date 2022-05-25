@@ -15,6 +15,7 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Physics;
 using CrossEngine.Logging;
 using CrossEngine.Serialization;
+using CrossEngine.Rendering.Culling;
 
 namespace CrossEngine.Components
 {
@@ -41,6 +42,8 @@ namespace CrossEngine.Components
 
         private bool _enableEmit = true;
         private float _emitAggregate = 0;
+
+        AABox IParticleSystemRenderData.Bounds => AABox.CreateFromExtents(min, max);
 
         [EditorDragInt(Min = 1)]
         public uint ParticlePoolSize
@@ -123,14 +126,14 @@ namespace CrossEngine.Components
             Emitter = new BoxParticleEmitter();
         }
 
-        protected internal override void Attach()
+        protected internal override void Attach(World world)
         {
-            ParticleSystemSystem.Instance.Register(this);
+            world.GetSystem<ParticleSystemSystem>().Register(this);
         }
 
-        protected internal override void Detach()
+        protected internal override void Detach(World world)
         {
-            ParticleSystemSystem.Instance.Unregister(this);
+            world.GetSystem<ParticleSystemSystem>().Unregister(this);
         }
 
         protected internal override void Update()
@@ -163,7 +166,7 @@ namespace CrossEngine.Components
                 Emitter.Emit(ref particle);
                 particle.active = true;
                 if (Space == ParticleSpace.Global)
-                    particle.position = Vector3.Transform(particle.position, Entity.Transform.WorldTransformMatrix);
+                    particle.position = Vector3.Transform(particle.position, Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity);
                 _particlePool[_poolIndex] = particle;
 
                 // decides the way of 'sorting'
@@ -177,15 +180,23 @@ namespace CrossEngine.Components
             }
         }
 
+        Vector3 min;
+        Vector3 max;
+
         void Update(float timestep)
         {
+            min = new Vector3(float.MaxValue);
+            max = new Vector3(float.MinValue);
+
             var gravity = PhysicsInterface.Gravity;
-            if (Space == ParticleSpace.Local)
-                gravity = Vector3.Transform(gravity, Quaternion.Inverse(Entity.Transform.Rotation));
+            if (Space == ParticleSpace.Local && Entity.Transform != null)
+                gravity = Vector3.Transform(gravity, Quaternion.Inverse(Entity.Transform.WorldRotation));
             for (int i = 0; i < _particlePool.Length; i++)
             {
                 if (!_particlePool[i].active)
                     continue;
+
+                _particlePool[i].lifeRemaining -= timestep;
 
                 if (_particlePool[i].lifeRemaining <= 0.0f)
                 {
@@ -193,22 +204,24 @@ namespace CrossEngine.Components
                     continue;
                 }
 
-                _particlePool[i].lifeRemaining -= timestep;
-
                 _particlePool[i].velocity += gravity * _particlePool[i].gravityEffect * timestep;
                 _particlePool[i].position += _particlePool[i].velocity * timestep;
                 _particlePool[i].rotation += _particlePool[i].rotationVelocity * timestep; // can be changed
+
+                min = Vector3.Min(min, _particlePool[i].position);
+                max = Vector3.Max(max, _particlePool[i].position);
             }
         }
 
         void IParticleSystemRenderData.Render(Matrix4x4 viewMatrix)
         {
+            var tr = Entity.Transform;
             viewMatrix.Translation = Vector3.Zero;
             viewMatrix = Matrix4x4Extension.Invert(viewMatrix);
             var cameraRight = Vector3.Transform(Vector3.UnitX, viewMatrix);
             var cameraUp = Vector3.Transform(Vector3.UnitY, viewMatrix);
-            var cameraLook = Entity.Transform.Position;
-            var matrixLocal = Matrix4x4.CreateScale(Entity.Transform.Scale) * Matrix4x4.CreateTranslation(Entity.Transform.Position);
+            var cameraLook = tr?.WorldPosition ?? Vector3.Zero;
+            var matrixLocal = (tr != null) ? Matrix4x4.CreateScale(tr.WorldScale) * Matrix4x4.CreateTranslation(tr.WorldPosition) : Matrix4x4.Identity;
 
             for (int i = 0; i < _particlePool.Length; i++)
             {
@@ -239,7 +252,9 @@ namespace CrossEngine.Components
                 Renderer2D.DrawQuad(matrix, color, Entity.Id);
             }
 
-            Emitter?.DebugDraw(Entity.Transform.WorldTransformMatrix);
+            Emitter?.DebugDraw(tr?.WorldTransformMatrix ?? Matrix4x4.Identity);
+
+            LineRenderer.DrawBox(min, max, new Vector4(1, .2f, .2f, 1));
         }
 
         private Random random = new Random();
@@ -300,14 +315,24 @@ namespace CrossEngine.Components
 
         protected internal override void Serialize(SerializationInfo info)
         {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+            info.AddValue(nameof(ParticlePoolSize), ParticlePoolSize);
+            info.AddValue(nameof(Space), Space);
+            info.AddValue(nameof(EnableEmit), EnableEmit);
+            info.AddValue(nameof(EmitCount), EmitCount);
+            info.AddValue(nameof(EmitEvery), EmitEvery);
+            info.AddValue(nameof(Emitter), Emitter);
+            info.AddValue(nameof(Properties), Properties);
         }
 
         protected internal override void Deserialize(SerializationInfo info)
         {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+            ParticlePoolSize = info.GetValue<uint>(nameof(ParticlePoolSize));
+            Space = info.GetValue<ParticleSpace>(nameof(Space));
+            EnableEmit = info.GetValue<bool>(nameof(EnableEmit));
+            EmitCount = info.GetValue<int>(nameof(EmitCount));
+            EmitEvery = info.GetValue<float>(nameof(EmitEvery));
+            Emitter = info.GetValue<ParticleEmitter>(nameof(Emitter));
+            Properties = info.GetValue<ParticleProperties>(nameof(Properties));
         }
     }
 }

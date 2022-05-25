@@ -8,6 +8,7 @@ using System.Security;
 using System.Text;
 
 using CrossEngine.Logging;
+using CrossEngine.Platform.OpenGL;
 
 namespace OpenGL.Extensions
 {
@@ -17,6 +18,8 @@ namespace OpenGL.Extensions
 
     static unsafe class Debug
     {
+        const string ExtensionName = "GL_KHR_debug";
+
         public static void glDebugMessageCallback(GLDEBUGPROC callback, /*const*/ void* userParam) => _glDebugMessageCallback(DebugMessageCallbackHolder = callback, userParam);
 
         public const int GL_DEBUG_OUTPUT = 0x92E0;
@@ -38,6 +41,7 @@ namespace OpenGL.Extensions
 
         public static void Import(GetProcAddressHandler loader)
         {
+            GLExtensions.CheckExtension(ExtensionName);
             _glDebugMessageCallback = Marshal.GetDelegateForFunctionPointer<PFNGLDEBUGMESSAGECALLBACKPROC>(loader.Invoke("glDebugMessageCallback"));
         }
     }

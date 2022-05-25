@@ -121,7 +121,7 @@ namespace CrossEngineEditor.Panels
             
             if (node == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
 
-            string label = "uid: " + node.Id.ToString();
+            string label = node.TryGetComponent(out TagComponent tagcomp) ? tagcomp.Tag : $"Entity (UID: {node.Id})";
             
             bool opened = ImGui.TreeNodeEx(id + i.ToString(), flags, label);
             

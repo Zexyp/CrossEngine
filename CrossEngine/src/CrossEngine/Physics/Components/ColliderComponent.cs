@@ -82,26 +82,24 @@ namespace CrossEngine.Components
             OnPropertyChanged?.Invoke(this, ColliderPropertyFlags.Shape);
         }
 
-        protected internal override void Attach()
+        protected internal override void Attach(World world)
         {
-            PhysicsSysten.Instance.RegisterCollider(this);
+            world.GetSystem<PhysicsSystem>().RegisterCollider(this);
         }
 
-        protected internal override void Detach()
+        protected internal override void Detach(World world)
         {
-            PhysicsSysten.Instance.UnregisterCollider(this);
+            world.GetSystem<PhysicsSystem>().UnregisterCollider(this);
         }
 
         protected internal override void Serialize(SerializationInfo info)
         {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+            info.AddValue(nameof(OffsetMatrix), OffsetMatrix);
         }
 
         protected internal override void Deserialize(SerializationInfo info)
         {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+            OffsetMatrix = info.GetValue(nameof(OffsetMatrix), OffsetMatrix);
         }
     }
 }

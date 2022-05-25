@@ -2,6 +2,7 @@
 
 using CrossEngine.Utils.Editor;
 using CrossEngine.ECS;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
@@ -25,6 +26,18 @@ namespace CrossEngine.Components
         protected override Component CreateClone()
         {
             return new BoxColliderComponent() { Size = this.Size };
+        }
+
+        protected internal override void Serialize(SerializationInfo info)
+        {
+            base.Serialize(info);
+            info.AddValue(nameof(Size), Size);
+        }
+
+        protected internal override void Deserialize(SerializationInfo info)
+        {
+            base.Deserialize(info);
+            Size = info.GetValue(nameof(Size), Vector3.One);
         }
     }
 }

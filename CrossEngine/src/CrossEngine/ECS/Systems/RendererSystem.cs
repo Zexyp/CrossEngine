@@ -16,18 +16,9 @@ namespace CrossEngine.ComponentSystems
     {
         public SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 
-        public static RendererSystem Instance;
-
         List<CameraComponent> _cameras = new List<CameraComponent>();
 
         public CameraComponent Primary;
-
-        public RendererSystem()
-        {
-            Debug.Assert(Instance == null);
-
-            Instance = this;
-        }
 
         public void Init()
         {
@@ -52,6 +43,8 @@ namespace CrossEngine.ComponentSystems
         public void UnregisterCamera(CameraComponent component)
         {
             _cameras.Remove(component);
+            if (Primary == component)
+                Primary = null;
         }
     }
 }

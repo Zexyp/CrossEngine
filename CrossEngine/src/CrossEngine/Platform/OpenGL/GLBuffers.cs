@@ -13,7 +13,7 @@ namespace CrossEngine.Platform.OpenGL
 {
     class GLVertexBuffer : VertexBuffer
     {
-        private uint _rendererId;
+        internal uint _rendererId;
 
         private BufferUsageHint _bufferUsage;
 
@@ -82,7 +82,7 @@ namespace CrossEngine.Platform.OpenGL
 
     class GLIndexBuffer : IndexBuffer
     {
-        private uint _rendererId;
+        internal uint _rendererId;
 
         private BufferUsageHint _bufferUsage;
 
@@ -161,7 +161,7 @@ namespace CrossEngine.Platform.OpenGL
 
     class GLVertexArray : VertexArray
     {
-        private uint _rendererId;
+        internal uint _rendererId;
         private uint _vertexBufferIndex;
         private Ref<IndexBuffer> _indexBuffer;
         private List<VertexBuffer> _vertexBuffers = new List<VertexBuffer>();

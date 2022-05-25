@@ -8,6 +8,7 @@ using System.Numerics;
 using CrossEngine.ECS;
 using CrossEngine.ComponentSystems;
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Utils.Editor;
 using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
@@ -17,11 +18,14 @@ namespace CrossEngine.Components
         public Camera Camera;
 
         private bool _primary;
+        [EditorValue]
         public bool Primary
         {
-            get => this == RendererSystem.Instance.Primary;
-            set => RendererSystem.Instance.Primary = value ? this : null;
+            get => this == _boundTo.Primary;
+            set => _boundTo.Primary = value ? this : null;
         }
+
+        private RendererSystem _boundTo;
 
         public Matrix4x4? ViewMatrix
         {
@@ -35,22 +39,19 @@ namespace CrossEngine.Components
         
         public CameraComponent()
         {
-
+            Camera = new Camera();
         }
 
-        public CameraComponent(Camera camera)
+        protected internal override void Attach(World world)
         {
-            Camera = camera;
+            world.GetSystem<RendererSystem>().RegisterCamera(this);
+            _boundTo = world.GetSystem<RendererSystem>();
         }
 
-        protected internal override void Attach()
+        protected internal override void Detach(World world)
         {
-            RendererSystem.Instance.RegisterCamera(this);
-        }
-
-        protected internal override void Detach()
-        {
-            RendererSystem.Instance.UnregisterCamera(this);
+            world.GetSystem<RendererSystem>().UnregisterCamera(this);
+            _boundTo = null;
         }
 
         protected override Component CreateClone()

@@ -110,13 +110,14 @@ namespace CrossEngineEditor.Panels
         public ViewportPanel() : base("Viewport")
         {
             WindowFlags |= ImGuiWindowFlags.MenuBar;
+
+            orthographicCamera = new OrthographicControllableEditorCamera();
+            perspectiveCamera = new PerspectiveControllableEditorCamera();
+            ProjectioMode = ProjectionMode.Orthographic;
         }
 
         public override void OnAttach()
         {
-            orthographicCamera = new OrthographicControllableEditorCamera();
-            perspectiveCamera = new PerspectiveControllableEditorCamera();
-            ProjectioMode = ProjectionMode.Orthographic;
         }
 
         public override void OnDetach()
@@ -140,7 +141,7 @@ namespace CrossEngineEditor.Panels
             ThreadManager.ExecuteOnRenderThread(() =>
             {
                 _framebuffer = Framebuffer.Create(ref spec);
-                Context.Scene.SetOutput(_framebuffer);
+                Context.Scene._renderData.Output = (_framebuffer);
             });
         }
 
@@ -149,7 +150,7 @@ namespace CrossEngineEditor.Panels
             ThreadManager.ExecuteOnRenderThread(() =>
             {
                 ((Framebuffer?)_framebuffer).Dispose();
-                Context.Scene.SetOutput(null);
+                Context.Scene._renderData.Output = (null);
                 _framebuffer = null;
             });
         }
@@ -166,6 +167,7 @@ namespace CrossEngineEditor.Panels
 
         protected override void DrawWindowContent()
         {
+            #region MenuBar
             if (ImGui.BeginMenuBar())
             {
                 if (ImGui.BeginMenu("Gizmo"))
@@ -202,11 +204,13 @@ namespace CrossEngineEditor.Panels
 
                 ImGui.EndMenuBar();
             }
+            #endregion
 
             // return if there is nothing to do
             if (Context.Scene == null || _currentCamera == null || _framebuffer == null)
                 return;
 
+            #region Framebuffer
             // resize check
             {
                 Vector2 viewportPanelSize = ImGui.GetContentRegionAvail();
@@ -220,20 +224,19 @@ namespace CrossEngineEditor.Panels
                 }
             }
 
-            Context.Scene.SetEditorCamera(_currentCamera);
+            Context.Scene._overrideEditorCamera = (_currentCamera);
 
             // draw the framebuffer as image
             ImGui.Image(new IntPtr(((Framebuffer?)_framebuffer).GetColorAttachmentRendererID(0)),
                 _viewportSize,
                 new Vector2(0, 1),
                 new Vector2(1, 0));
+            #endregion
 
-            bool enableSelect = true;
-            if (Context.ActiveEntity != null)
+            bool disableSelect = false;
+            if (Context.ActiveEntity?.Transform != null)
             {
                 ImGuizmo.SetOrthographic(ProjectioMode == ViewportPanel.ProjectionMode.Orthographic);
-
-                enableSelect = !ImGuizmo.IsOver();
 
                 ImGuizmo.SetRect(WindowContentAreaMin.X,
                                     WindowContentAreaMin.Y,
@@ -252,13 +255,74 @@ namespace CrossEngineEditor.Panels
                     if (!Matrix4x4Extension.HasNaNElement(transformMat))
                         Context.ActiveEntity.Transform.SetWorldTransform(transformMat);
                 }
+
+                disableSelect |= ImGuizmo.IsOver();
             }
 
             // interaction
-            if (ImGui.IsItemHovered() && Focused)
+            if (!Focused) return;
+
+            var io = ImGui.GetIO();
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
+            {
+                if (io.KeyShift)
+                {
+                    CurrentCamera?.Pan(io.MouseDelta * new Vector2(-1, 1));
+                }
+                else
+                {
+                    CurrentCamera?.Move(io.MouseDelta * new Vector2(-1, 1));
+                }
+            }
+            else if (ImGui.IsMouseDragging(ImGuiMouseButton.Right))
+            {
+                Vector3 move = Vector3.Zero;
+                if (ImGui.IsKeyDown('W') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.UpArrow)))
+                {
+                    move += Vector3.UnitZ;
+                }
+                if (ImGui.IsKeyDown('S') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.DownArrow)))
+                {
+                    move -= Vector3.UnitZ;
+                }
+                if (ImGui.IsKeyDown('D') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.RightArrow)))
+                {
+                    move += Vector3.UnitX;
+                }
+                if (ImGui.IsKeyDown('A') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.LeftArrow)))
+                {
+                    move -= Vector3.UnitX;
+                }
+                if (ImGui.IsKeyDown('E') || ImGui.IsKeyDown(' '))
+                {
+                    move += Vector3.UnitY;
+                }
+                if (ImGui.IsKeyDown('Q') || io.KeyCtrl)
+                {
+                    move -= Vector3.UnitY;
+                }
+
+                if (io.KeyShift)
+                {
+                    move *= 2;
+                }
+                if (io.KeyAlt)
+                {
+                    move *= .5f;
+                }
+
+                move *= _cameraMovementSpeed * io.DeltaTime;
+                _currentCamera.Fly(move, io.MouseDelta);
+
+                string caminfo = $"x{_cameraMovementSpeed} | {_currentCamera.Position:0.0}";
+                Vector2 tsize = ImGui.CalcTextSize(caminfo);
+                ImGui.SetCursorPos(WindowContentAreaMax - WindowContentAreaMin - tsize);
+                ImGui.Text(caminfo);
+            }
+
+            if (ImGui.IsItemHovered())
             {
                 // camera
-                var io = ImGui.GetIO();
                 if (io.MouseWheel != 0)
                 {
                     if (ImGui.IsMouseDown(ImGuiMouseButton.Right))
@@ -268,77 +332,9 @@ namespace CrossEngineEditor.Panels
                     }
                     else
                         CurrentCamera?.Zoom(io.MouseWheel);
-
                 }
-
-                if (ImGui.IsMouseDown(ImGuiMouseButton.Middle))
-                {
-                    if (io.KeyShift)
-                    {
-                        CurrentCamera?.Pan(io.MouseDelta * new Vector2(-1, 1));
-                    }
-                    else
-                    {
-                        CurrentCamera?.Move(io.MouseDelta * new Vector2(-1, 1));
-                    }
-                }
-                else if (ImGui.IsMouseDown(ImGuiMouseButton.Right))
-                {
-                    Vector3 move = Vector3.Zero;
-                    if (ImGui.IsKeyDown('W') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.UpArrow)))
-                    {
-                        move += Vector3.UnitZ;
-                    }
-                    if (ImGui.IsKeyDown('S') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.DownArrow)))
-                    {
-                        move -= Vector3.UnitZ;
-                    }
-                    if (ImGui.IsKeyDown('D') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.RightArrow)))
-                    {
-                        move += Vector3.UnitX;
-                    }
-                    if (ImGui.IsKeyDown('A') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.LeftArrow)))
-                    {
-                        move -= Vector3.UnitX;
-                    }
-                    if (ImGui.IsKeyDown('E') || ImGui.IsKeyDown(' '))
-                    {
-                        move += Vector3.UnitY;
-                    }
-                    if (ImGui.IsKeyDown('Q') || io.KeyCtrl)
-                    {
-                        move -= Vector3.UnitY;
-                    }
-
-                    if (io.KeyShift)
-                    {
-                        move *= 2;
-                    }
-                    if (io.KeyAlt)
-                    {
-                        move *= .5f;
-                    }
-
-                    move *= _cameraMovementSpeed * io.DeltaTime;
-                    _currentCamera.Fly(move, io.MouseDelta);
-
-                    string caminfo = $"x{_cameraMovementSpeed} | {_currentCamera.Position:0.0}";
-                    Vector2 tsize = ImGui.CalcTextSize(caminfo);
-                    ImGui.SetCursorPos(WindowContentAreaMax - WindowContentAreaMin - tsize);
-                    ImGui.Text(caminfo);
-                }
-                // selection
-                else if (enableSelect && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
-                {
-                    Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
-                    texpos.Y = -texpos.Y;
-
-                    int result = ((Framebuffer?)_framebuffer).ReadPixel(1, (uint)texpos.X, (uint)texpos.Y);
-                    ((Framebuffer?)_framebuffer).Unbind();
-                    EditorApplication.Log.Trace($"selected entity id {result}");
-
-                    Context.ActiveEntity = Context.Scene.GetEntityById(result);
-                }
+                
+                // gizmo selection
                 else
                 {
                     if (ImGui.IsKeyPressed('F'))
@@ -357,6 +353,18 @@ namespace CrossEngineEditor.Panels
                     {
                         _currentGizmoOperation = OPERATION.SCALE;
                     }
+                }
+
+                if (!disableSelect && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                {
+                    Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
+                    texpos.Y = -texpos.Y;
+
+                    int result = ((Framebuffer?)_framebuffer).ReadPixel(1, (uint)texpos.X, (uint)texpos.Y);
+                    ((Framebuffer?)_framebuffer).Unbind();
+                    EditorApplication.Log.Trace($"selected entity id {result}");
+
+                    Context.ActiveEntity = Context.Scene.GetEntityById(result);
                 }
             }
         }

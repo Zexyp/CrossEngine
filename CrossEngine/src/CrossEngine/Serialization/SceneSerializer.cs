@@ -10,7 +10,7 @@ using System.IO;
 using CrossEngine.Scenes;
 using CrossEngine.Serialization.Json;
 using CrossEngine.Serialization.Json.Converters;
-//using CrossEngine.Assemblies;
+using CrossEngine.Assemblies;
 
 namespace CrossEngine.Serialization
 {
@@ -23,29 +23,29 @@ namespace CrossEngine.Serialization
         //    new Vector4CustomJsonConverter(),
         //    new QuaternionCustomJsonConverter(),
         //    new Matrix4x4CustomJsonConverter(),
-
+        //
         //    new IEnumerableCustomJsonConverter(),
         //    new EnumCustomJsonConverter(),
-
+        //
         //    new SceneCustomJsonConverter(),
         //    new EntityCustomJsonConverter(),
         //    new TextureCustomJsonConverter(),
         //};
 
-        //class CrossAssemblyTypeResolver : TypeResolver
-        //{
-        //    public override Type ResolveType(string typeName)
-        //    {
-        //        return Type.GetType(typeName) ?? AssemblyLoader.GetType(typeName);
-        //    }
-        //}
+        class CrossAssemblyTypeResolver : TypeResolver
+        {
+            public override Type ResolveType(string typeName)
+            {
+                return Type.GetType(typeName) ?? AssemblyLoader.GetType(typeName);
+            }
+        }
 
         private static JsonSerializerSettings CreateSettings(Scene scene)
         {
             var settings = JsonSerializerSettings.Default;
             settings.Converters.Add(new SceneJsonConverter(scene));
             settings.Converters.Add(new EntityJsonConverter(scene));
-            //settings.TypeResolver = new CrossAssemblyTypeResolver();
+            settings.TypeResolver = new CrossAssemblyTypeResolver();
             return settings;
         }
 

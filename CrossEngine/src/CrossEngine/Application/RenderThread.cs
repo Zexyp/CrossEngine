@@ -20,14 +20,9 @@ namespace CrossEngine
 {
     using ThreadingThreadState = System.Threading.ThreadState;
 
-    public class EventThread
+    class RenderThread
     {
-
-    }
-
-    public class RenderThread
-    {
-        Thread _thread;
+        internal readonly Thread _thread;
         EventWaitHandle _waitHandle;
         EventWaitHandle _joinHandle;
 
@@ -83,6 +78,8 @@ namespace CrossEngine
 
         private unsafe void Loop()
         {
+            ThreadManager.ConfigureCurrentThread();
+
             Profiler.BeginScope($"{nameof(RenderThread)}.{nameof(RenderThread.Init)}");
             Init();
             Profiler.EndScope();
@@ -114,6 +111,8 @@ namespace CrossEngine
         private void OnWindowEvent(Event e)
         {
             Debug.Assert(e != null);
+            if (e is WindowCloseEvent)
+                Window.ShouldClose = false;
 
             if (e is WindowResizeEvent)
             {

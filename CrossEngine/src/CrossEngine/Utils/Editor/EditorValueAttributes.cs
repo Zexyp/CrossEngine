@@ -19,7 +19,7 @@ namespace CrossEngine.Utils.Editor
     public class EditorValueAttribute : Attribute
     {
         public string? Name = null;
-        public virtual EditorAttributeType Type => EditorAttributeType.Edit;
+        public virtual EditorAttributeType Kind => EditorAttributeType.Edit;
         static private int lastOrder = 0;
         public int Order;
 
@@ -37,7 +37,7 @@ namespace CrossEngine.Utils.Editor
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorSectionAttribute : EditorValueAttribute
     {
-        public override EditorAttributeType Type => EditorAttributeType.Decor;
+        public override EditorAttributeType Kind => EditorAttributeType.Decor;
 
         public EditorSectionAttribute(string name)
         {
@@ -48,7 +48,7 @@ namespace CrossEngine.Utils.Editor
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorHintAttribute : EditorValueAttribute
     {
-        public override EditorAttributeType Type => EditorAttributeType.Hint;
+        public override EditorAttributeType Kind => EditorAttributeType.Hint;
 
         public EditorHintAttribute(string name)
         {
@@ -157,6 +157,16 @@ namespace CrossEngine.Utils.Editor
         public EditorGradientAttribute(string name) : base(name) { }
     }
 
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorAssetAttribute : EditorValueAttribute
+    {
+        public Type AssetType;
+
+        public EditorAssetAttribute(Type type)
+        {
+            AssetType = type;
+        }
+    }
 
 
     public enum NumberInputType
@@ -289,6 +299,7 @@ namespace CrossEngine.Utils.Editor
         public EditorBooleanValueAttribute(string name) : base(name) { }
     }
 
+    [Obsolete("No longer supported")]
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorAssetValueAttribute : EditorValueAttribute
     {

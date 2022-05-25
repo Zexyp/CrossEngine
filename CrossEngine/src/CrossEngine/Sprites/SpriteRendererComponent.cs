@@ -11,6 +11,8 @@ using CrossEngine.Utils.Editor;
 using CrossEngine.ComponentSystems;
 using CrossEngine.Rendering.Renderables;
 using CrossEngine.Serialization;
+using CrossEngine.Rendering.Culling;
+using CrossEngine.Assets;
 
 namespace CrossEngine.Components
 {
@@ -43,8 +45,19 @@ namespace CrossEngine.Components
         //[EditorEnumValue]
         //public TransparencyMode TranspMode;
 
-        //[EditorAssetValue(typeof(TextureAsset))]
-        public Ref<Texture> Texture;
+        private TextureAsset _texture;
+        [EditorAsset(typeof(TextureAsset))]
+        public TextureAsset Texture
+        {
+            get => _texture;
+            set
+            {
+                if (value == _texture) return;
+                ((AssetInfo)_texture)?.Unlock();
+                _texture = value;
+                ((AssetInfo)_texture)?.Lock();
+            }
+        }
 
         // virtual offset
         private Vector4 _drawOffsets = new Vector4(0f, 0f, 1f, 1f);
@@ -52,25 +65,35 @@ namespace CrossEngine.Components
         private Matrix4x4 _localOffsetMatrix = Matrix4x4.Identity;
 
         // ISpriteRenderData
-        Matrix4x4 IObjectRenderData.Transform => this._localOffsetMatrix * (this.Entity.TryGetComponent(out TransformComponent tc) ? tc.WorldTransformMatrix : Matrix4x4.Identity);
+        Matrix4x4 IObjectRenderData.Transform => this._localOffsetMatrix * (this.Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity);
         Vector4 ISpriteRenderData.Color => this.Color;
-        Ref<Texture> ISpriteRenderData.Texture => this.Texture;
         int ISpriteRenderData.EntityId => this.Entity.Id;
         Vector4 ISpriteRenderData.TextureOffsets => this.TextureOffsets;
+        Sphere? ISpriteRenderData.Bounds
+        {
+            get
+            {
+                var ws = (this.Entity.Transform?.WorldScale ?? Vector3.One);
+                var sz = ws * new Vector3(_drawOffsets.Z, _drawOffsets.W, 0);
+                var r = sz.Length() / 2 + (new Vector2(_drawOffsets.X, _drawOffsets.Y) * ws.XY()).Length();
+                return new Sphere((this.Entity.Transform?.WorldPosition ?? Vector3.Zero), r);
+            }
+        }
+        TextureAsset ISpriteRenderData.Texture => Texture;
 
         public SpriteRendererComponent()
         {
             
         }
 
-        internal protected override void Attach()
+        internal protected override void Attach(World world)
         {
-            SpriteRendererSystem.Instance.Register(this);
+            world.GetSystem<SpriteRendererSystem>().Register(this);
         }
 
-        internal protected override void Detach()
+        internal protected override void Detach(World world)
         {
-            SpriteRendererSystem.Instance.Unregister(this);
+            world.GetSystem<SpriteRendererSystem>().Unregister(this);
         }
 
         internal protected override void Update()
@@ -106,29 +129,21 @@ namespace CrossEngine.Components
         //    else Renderer2D.DrawQuad(matrix, TextureAsset.Texture, Color, TextureOffsets, Entity.UID);
         //}
 
-        //public override void OnSerialize(SerializationInfo info)
-        //{
-        //    info.AddValue("Size", Size);
-        //    info.AddValue("DrawOffset", DrawOffset);
-        //    info.AddValue("TextureOffsets", TextureOffsets);
-        //    info.AddValue("Color", Color);
-        //
-        //    info.AddValue("TransparencyMode", TranspMode);
-        //
-        //    info.AddValue("TextureAsset", TextureAsset.Asset?.Name);
-        //}
-        //
-        //public override void OnDeserialize(SerializationInfo info)
-        //{
-        //    Size = (Vector2)info.GetValue("Size", typeof(Vector2));
-        //    DrawOffset = (Vector2)info.GetValue("DrawOffset", typeof(Vector2));
-        //    TextureOffsets = (Vector4)info.GetValue("TextureOffsets", typeof(Vector4)); 
-        //    Color = (Vector4)info.GetValue("Color", typeof(Vector4));
-        //
-        //    TranspMode = (TransparencyMode)info.GetValue("TransparencyMode", typeof(TransparencyMode));
-        //
-        //    TextureAsset = (TextureAsset)info.GetValue("TextureAsset", typeof(TextureAsset));
-        //}
+        protected internal override void Serialize(SerializationInfo info)
+        {
+            info.AddValue(nameof(DrawOffsets), DrawOffsets);
+            info.AddValue(nameof(TextureOffsets), TextureOffsets);
+            info.AddValue(nameof(Color), Color);
+            info.AddValue(nameof(Texture), Texture);
+        }
+
+        protected internal override void Deserialize(SerializationInfo info)
+        {
+            DrawOffsets = info.GetValue(nameof(DrawOffsets), DrawOffsets);
+            TextureOffsets = info.GetValue(nameof(TextureOffsets), TextureOffsets);
+            Color = info.GetValue(nameof(Color), Color);
+            Texture = info.GetValue(nameof(Texture), Texture);
+        }
 
         protected override Component CreateClone()
         {
@@ -139,18 +154,6 @@ namespace CrossEngine.Components
             sr.Color = this.Color;
 
             return sr;
-        }
-
-        protected internal override void Serialize(SerializationInfo info)
-        {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
-        }
-
-        protected internal override void Deserialize(SerializationInfo info)
-        {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
         }
     }
 }

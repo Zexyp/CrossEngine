@@ -41,7 +41,7 @@ namespace CrossEngine.Display
         public string Title { get => Data.Title; set { Data.Title = value; UpdateWindowTitle(); } }
 
         public abstract double Time { get; }
-        public abstract bool ShouldClose { get; }
+        public abstract bool ShouldClose { get; set; }
         public abstract bool VSync { get; set; }
 
 

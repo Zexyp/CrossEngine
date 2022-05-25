@@ -49,13 +49,18 @@ namespace CrossEngine.Layers
                 {
                     SceneLayerRenderData layerData = scenRendereData.Layers[layerIndex];
 
+                    layerData.Camera.PrepareFrustum();
+
                     Renderer2D.BeginScene(layerData.Camera.ViewProjectionMatrix);
                     LineRenderer.BeginScene(layerData.Camera.ViewProjectionMatrix);
-                    
+
                     foreach ((IRenderable Renderable, IList Objects) item in layerData.Data)
                     {
                         var rndbl = item.Renderable;
                         var objs = item.Objects;
+
+                        Profiler.BeginScope(rndbl.GetType().Name);
+
                         rndbl.Begin(layerData.Camera);
                         for (int objectIndex = 0; objectIndex < objs.Count; objectIndex++)
                         {
@@ -63,17 +68,18 @@ namespace CrossEngine.Layers
                             rndbl.Submit((IObjectRenderData)objs[objectIndex]);
                         }
                         rndbl.End();
-
+                        
                         Renderer2D.Flush();
                         LineRenderer.Flush();
+
+                        Profiler.EndScope();
                     }
 
+                    Renderer2D.EndScene();
+                    LineRenderer.EndScene();
                 }
 
                 scene.Render();
-
-                Renderer2D.EndScene();
-                LineRenderer.EndScene();
 
                 ((Framebuffer?)scenRendereData.Output)?.Unbind();
             }
@@ -83,6 +89,7 @@ namespace CrossEngine.Layers
 
         public override void OnUpdate()
         {
+            //CrossEngine.Assets.AssetManager.Collect();
             foreach (var scenePair in _scenes)
             {
                 if (scenePair.Value.updateEnabled)

@@ -10,7 +10,7 @@ namespace CrossEngine.Platform.OpenGL
 {
     class GLTexture : Texture
     {
-        private uint _rendererId;
+        internal uint _rendererId;
         private int _filtering = GL_LINEAR;
         private uint _width, _height;
         private int _internalFormat, _dataFormat;

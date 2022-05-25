@@ -33,7 +33,7 @@ namespace CrossEngine.Serialization.Json.Converters
 
         public override void ReadJson(JsonElement reader, Scene value, JsonSerializer serializer)
         {                    
-            //value.AssetPool = (AssetPool)serializer.Deserialize(reader.GetProperty("AssetPool"), typeof(AssetPool));
+            value.AssetRegistry = (AssetRegistry)serializer.Deserialize(reader.GetProperty("AssetRegistry"), typeof(AssetRegistry));
 
             foreach (var entEl in reader.GetProperty("Entities").GetProperty("$values").EnumerateArray())
             {
@@ -47,8 +47,8 @@ namespace CrossEngine.Serialization.Json.Converters
 
         public override void WriteJson(Utf8JsonWriter writer, Scene value, JsonSerializer serializer)
         {
-            //writer.WritePropertyName("AssetPool");
-            //serializer.Serialize(writer, value.AssetPool);
+            writer.WritePropertyName("AssetRegistry");
+            serializer.Serialize(writer, value.AssetRegistry);
 
             writer.WritePropertyName("Entities");
             serializer.Serialize(writer, value.Entities);

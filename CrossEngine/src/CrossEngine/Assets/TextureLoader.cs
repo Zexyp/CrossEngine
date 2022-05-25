@@ -122,12 +122,17 @@ namespace CrossEngine.Assets
         {
             Debug.Assert(RendererAPI.GetAPI() == RendererAPI.API.OpenGL);
 
+            bool glflip = RendererAPI.GetAPI() == RendererAPI.API.OpenGL;
+            if (glflip) image.RotateFlip(RotateFlipType.RotateNoneFlipY);
+
             BitmapData imageData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, image.PixelFormat);
 
             var texture = Texture.Create((uint)imageData.Width, (uint)imageData.Height, desired);
             ((GLTexture)texture.Value).SetData(imageData.Scan0.ToPointer(), (uint)imageData.Width, (uint)imageData.Height, format, desired);
 
             image.UnlockBits(imageData);
+
+            if (glflip) image.RotateFlip(RotateFlipType.RotateNoneFlipY);
 
             return texture;
         }

@@ -15,17 +15,19 @@ namespace CrossEngineEditor.Modals
         public string ModalName = "";
         public bool? Open = true;
         public ImGuiWindowFlags ModalFlags = ImGuiWindowFlags.AlwaysAutoResize;
+        public bool Pushed = false;
 
         public EditorModal(string name)
         {
             this.ModalName = name;
         }
 
+        /// <summary>
+        /// Draws the modal and returns <see langword="false"/> if modal was closed.
+        /// </summary>
+        /// <returns></returns>
         public bool Draw()
         {
-            // hot fix
-            ImGui.OpenPopup(ModalName);
-
             if (ImGuiExtension.BeginPopupModalNullableOpen(ModalName, ref Open, ModalFlags))
             {
                 DrawContents();

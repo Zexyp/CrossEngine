@@ -115,14 +115,14 @@ namespace CrossEngine.Components
 
         internal event Action<RigidBodyComponent, RigidBodyPropertyFlags> OnPropertyChanged;
 
-        internal protected override void Attach()
+        internal protected override void Attach(World world)
         {
-            PhysicsSysten.Instance.RegisterRigidBody(this);
+            world.GetSystem<PhysicsSystem>().RegisterRigidBody(this);
         }
 
-        internal protected override void Detach()
+        internal protected override void Detach(World world)
         {
-            PhysicsSysten.Instance.UnregisterRigidBody(this);
+            world.GetSystem<PhysicsSystem>().UnregisterRigidBody(this);
         }
 
         protected override Component CreateClone()
@@ -141,14 +141,22 @@ namespace CrossEngine.Components
 
         protected internal override void Serialize(SerializationInfo info)
         {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+            info.AddValue(nameof(Mass), Mass);
+            info.AddValue(nameof(Static), Static);
+            info.AddValue(nameof(Velocity), Velocity);
+            info.AddValue(nameof(AngularVelocity), AngularVelocity);
+            info.AddValue(nameof(LinearFactor), LinearFactor);
+            info.AddValue(nameof(AngularFactor), AngularFactor);
         }
 
         protected internal override void Deserialize(SerializationInfo info)
         {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
+            Mass = info.GetValue(nameof(Mass), 1.0f);
+            Static = info.GetValue(nameof(Static), true);
+            Velocity = info.GetValue(nameof(Velocity), Vector3.Zero);
+            AngularVelocity = info.GetValue(nameof(AngularVelocity), Vector3.Zero);
+            LinearFactor = info.GetValue(nameof(LinearFactor), Vector3.One);
+            AngularFactor = info.GetValue(nameof(AngularFactor), Vector3.One);
         }
     }
 }

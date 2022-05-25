@@ -10,11 +10,16 @@ using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.FX.Particles;
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Rendering.Culling;
 
 namespace CrossEngine.ComponentSystems
 {
     class ParticleSystemSystem : System<ParticleSystemComponent>
     {
+        // TODO: implement filtered list of enabled
+
+        public override SystemThreadMode ThreadMode => SystemThreadMode.Async;
+
         (IRenderable Renderable, IList Objects) Data;
 
         private readonly ParallelOptions _parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 20 };
@@ -42,6 +47,7 @@ namespace CrossEngine.FX.Particles
     {
         void Render(Matrix4x4 viewMatrix);
         BlendFunc BlendMode { get; }
+        AABox Bounds { get; }
     }
 
     class ParticleSystemRenderable : Renderable<IParticleSystemRenderData>
@@ -50,12 +56,13 @@ namespace CrossEngine.FX.Particles
         public override void Begin(Camera camera)
         {
             this.camera = camera;
-            Renderer2D.Flush();
         }
 
         public override void Submit(IParticleSystemRenderData data)
         {
             if (!((ParticleSystemComponent)data).Enabled) return;
+
+            if (camera.Frustum.IsAABoxIn(data.Bounds) == Halfspace.Outside) return;
 
             Application.Instance.RendererAPI.SetBlendFunc(data.BlendMode);
             data.Render(camera.ViewMatrix);

@@ -56,8 +56,11 @@ namespace CrossEngine.ECS
         public event Action<Entity, Component> OnComponentAdded;
         public event Action<Entity, Component> OnComponentRemoved;
 
-        public Entity()
+        private World _world;
+
+        internal Entity(World world)
         {
+            _world = world;
             Components = _components.AsReadOnly();
             Children = _children.AsReadOnly();
         }
@@ -84,7 +87,7 @@ namespace CrossEngine.ECS
             _components.Add(component);
             component.Entity = this;
 
-            component.Attach();
+            component.Attach(_world);
 
             OnComponentAdded?.Invoke(this, component);
 
@@ -107,7 +110,7 @@ namespace CrossEngine.ECS
         {
             OnComponentRemoved?.Invoke(this, component);
 
-            component.Detach();
+            component.Detach(_world);
 
             component.Entity = null;
             _components.Remove(component);

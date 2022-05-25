@@ -13,7 +13,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Rendering.Cameras;
-using CrossEngine.Rendering.Buffers;
+using CrossEngine.Assets;
 
 namespace CrossEngine.Scenes
 {
@@ -28,21 +28,39 @@ namespace CrossEngine.Scenes
         int lastId;
         public readonly ReadOnlyCollection<Entity> HierarchyRoot;
         private readonly List<Entity> _roots = new List<Entity>();
-        private EditorCamera _overrideEditorCamera = null;
+        public EditorCamera _overrideEditorCamera = null;
 
-        SceneRenderData _renderData;
+        public SceneRenderData _renderData;
         SceneLayerRenderData _worldLayer;
+
+        public AssetRegistry AssetRegistry;
 
         public Scene()
         {
             HierarchyRoot = _roots.AsReadOnly();
             Entities = _entities.AsReadOnly();
+
+            _worldLayer = new SceneLayerRenderData();
+
+            _ecsWorld.RegisterSystem(new ScriptableSystem());
+            _ecsWorld.RegisterSystem(new SpriteRendererSystem(_worldLayer));
+            _ecsWorld.RegisterSystem(new ParticleSystemSystem(_worldLayer));
+            _ecsWorld.RegisterSystem(new PhysicsSystem(_worldLayer));
+            _ecsWorld.RegisterSystem(new TransformSystem());
+            _ecsWorld.RegisterSystem(new RendererSystem());
+
+            _renderData = new SceneRenderData();
+            _renderData.Layers.Add(_worldLayer);
+
+            AssetRegistry = new AssetRegistry("./assets");
+            AssetManager._ctx = AssetRegistry;
         }
 
         public SceneRenderData GetRenderData()
         {
-            var camComp = RendererSystem.Instance.Primary;
-            if (_overrideEditorCamera == null && camComp?.Camera == null) return null;
+            var camComp = _ecsWorld.GetSystem<RendererSystem>().Primary;
+
+            if ((_overrideEditorCamera ?? camComp?.Camera) == null) return null;
 
             if (_overrideEditorCamera == null)
             {
@@ -65,24 +83,14 @@ namespace CrossEngine.Scenes
             return _renderData;
         }
 
-        public void Init()
+        public void Load()
         {
-            _worldLayer = new SceneLayerRenderData();
-
-            _ecsWorld.RegisterSystem(new ScriptableSystem());
-            _ecsWorld.RegisterSystem(new SpriteRendererSystem(_worldLayer));
-            _ecsWorld.RegisterSystem(new ParticleSystemSystem(_worldLayer));
-            _ecsWorld.RegisterSystem(new PhysicsSysten(_worldLayer));
-            _ecsWorld.RegisterSystem(new TransformSystem());
-            _ecsWorld.RegisterSystem(new RendererSystem());
-
-            _renderData = new SceneRenderData();
-            _renderData.Layers.Add(_worldLayer);
+            AssetRegistry.Load();
         }
 
-        public void SetOutput(Ref<Framebuffer> framebuffer)
+        public void Unload()
         {
-            _renderData.Output = framebuffer;
+            AssetRegistry.Unload();
         }
 
         public void Start()
@@ -112,7 +120,7 @@ namespace CrossEngine.Scenes
 
         public Entity CreateEmptyEntity()
         {
-            Entity entity = new Entity();
+            Entity entity = new Entity(_ecsWorld);
 
             entity.Id = ++lastId;
             _entityIds.Add(entity.Id, entity);
@@ -177,11 +185,6 @@ namespace CrossEngine.Scenes
         {
             if (sender.Parent == null) _roots.Add(sender);
             else _roots.Remove(sender);
-        }
-
-        public void SetEditorCamera(EditorCamera editorCamera)
-        {
-            _overrideEditorCamera = editorCamera;
         }
     }
 }

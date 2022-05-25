@@ -9,14 +9,14 @@ using CrossEngine.Events;
 
 namespace CrossEngine.ECS
 {
-    enum SystemThreadMode
+    public enum SystemThreadMode
     {
         None = default,
         Sync,
         Async,
     }
 
-    interface ISystem
+    public interface ISystem
     {
         SystemThreadMode ThreadMode { get; }
         void Init();
@@ -25,20 +25,11 @@ namespace CrossEngine.ECS
         virtual void Render() { }
     }
 
-    abstract class System<T> : ISystem where T : Component
+    public abstract class System<T> : ISystem where T : Component
     {
         public virtual SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 
-        public static System<T> Instance { get; protected set; }
-
         protected readonly List<T> Components = new List<T>();
-
-        public System()
-        {
-            Debug.Assert(Instance == null);
-
-            Instance = this;
-        }
 
         public virtual void Register(T component)
         {

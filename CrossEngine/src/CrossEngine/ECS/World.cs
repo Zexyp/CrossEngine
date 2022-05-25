@@ -9,7 +9,7 @@ using CrossEngine.Events;
 
 namespace CrossEngine.ECS
 {
-    class World
+    public class World
     {
         List<ISystem> _systems = new List<ISystem>();
 
@@ -33,8 +33,9 @@ namespace CrossEngine.ECS
         {
             for (int i = 0; i < _systems.Count; i++)
             {
-                if (_systems[i].ThreadMode == SystemThreadMode.Async)
-                    Task.Run(() => _systems[i].Update());
+                ISystem system = _systems[i];
+                if (system.ThreadMode == SystemThreadMode.Async)
+                    Task.Run(() => system.Update());
             }
 
             for (int i = 0; i < _systems.Count; i++)
@@ -62,6 +63,16 @@ namespace CrossEngine.ECS
         public void UnregisterSystem(ISystem system)
         {
             _systems.Remove(system);
+        }
+
+        public T GetSystem<T>() where T : ISystem
+        {
+            for (int i = 0; i < _systems.Count; i++)
+            {
+                if (_systems[i] is T)
+                    return (T)_systems[i];
+            }
+            return default;
         }
     }
 }

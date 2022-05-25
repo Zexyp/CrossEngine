@@ -87,14 +87,9 @@ namespace CrossEngineEditor
             AddPanel(new HierarchyPanel());
             //AddPanel(new GamePanel());
             AddPanel(new ViewportPanel());
-            //AddPanel(new GizmoPanel());
             AddPanel(new LagometerPanel());
-            //AddPanel(new ImageViewerPanel());
             AddPanel(new ConfigPanel());
-
-            var ci = (CultureInfo)Thread.CurrentThread.CurrentCulture.Clone();
-            ci.NumberFormat.NumberDecimalSeparator = ".";
-            Thread.CurrentThread.CurrentCulture = ci;
+            AddPanel(new ImageViewerPanel());
         }
 
         private bool LoadConfig(IniFile config)
@@ -169,7 +164,7 @@ namespace CrossEngineEditor
             // --- test code
             Context.Scene = new Scene();
             Application.Instance.GetLayer<SceneLayer>().AddScene(Context.Scene);
-            Context.Scene.Init();
+ 
             for (int i = -5; i <= 5; i++)
             {
                 if (i == 0)
@@ -178,7 +173,7 @@ namespace CrossEngineEditor
                     okl.GetComponent<TransformComponent>().WorldPosition = new Vector3(i, 0, 0);
                     okl.AddComponent(new TagComponent("Main"));
                     okl.AddComponent(new SpriteRendererComponent() { Color = new Vector4(0, 1, 0, 1)});
-                    okl.AddComponent(new CameraComponent(new OrthographicCamera() { OrthographicSize = 10 }) { Primary = true });
+                    okl.AddComponent(new CameraComponent());
                     okl.AddComponent<ParticleSystemComponent>();
                     continue;
                 }
@@ -197,10 +192,11 @@ namespace CrossEngineEditor
             ground.AddComponent(new RigidBodyComponent() { Static = true, LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
             ground.AddComponent(new BoxColliderComponent());
 
+            Context.Scene.Load();
             Context.Scene.Start();
 
             gre.AddElement(0, Vector4.Zero);
-            gre.AddElement(1, Vector4.One);
+            gre.AddElement(1, Vector4.One); 
         }
 
         public override void OnDetach()
@@ -242,7 +238,20 @@ namespace CrossEngineEditor
 
             Profiler.EndScope();
 
-
+            if (e is WindowCloseEvent)
+            {
+                /*
+                PushModal(new ActionModal("Do you want to exti?", "Exit?", ActionModal.ButtonFlags.OK | ActionModal.ButtonFlags.No,
+                    (button) =>
+                    {
+                        if ((button & ActionModal.ButtonFlags.OK) != 0)
+                            Application.Instance.Window.ShouldClose = true;
+                    }));
+                e.Handled = true;
+                */
+                EditorApplication.Log.Debug("TODO: uncomment");
+                return;
+            }
 
             if (e is not ImGuiRenderEvent) return;
 
@@ -279,10 +288,23 @@ namespace CrossEngineEditor
                     string json;
                     json = SceneSerializer.SertializeJson(Context.Scene);
                     Log.App.Debug(json);
-                
+
+                    var oldCam = Context.Scene._overrideEditorCamera;
+                    var oldOut = Context.Scene._renderData.Output;
+
+                    Application.Instance.GetLayer<SceneLayer>().RemoveScene(Context.Scene);
+                    Context.Scene.Stop();
+                    Context.Scene.Unload();
                     //Context.Scene.Unload();
-                    //ClearContext();
-                    //Context.Scene = SceneSerializer.DeserializeJson(json);
+                    ClearContext();
+                    Context.Scene = SceneSerializer.DeserializeJson(json);
+                    Context.Scene.Load();
+                    Context.Scene.Start();
+                    Application.Instance.GetLayer<SceneLayer>().AddScene(Context.Scene);
+
+                    Context.Scene._overrideEditorCamera = oldCam;
+                    Context.Scene._renderData.Output = oldOut;
+
                     //Context.Scene.Load();
                 }
             }
@@ -348,7 +370,9 @@ namespace CrossEngineEditor
         {
             for (int i = 0; i < _panels.Count; i++)
             {
+                ImGui.PushID(_panels[i].GetHashCode());
                 _panels[i].Draw();
+                ImGui.PopID();
             }
         }
 
@@ -602,14 +626,19 @@ namespace CrossEngineEditor
         {
             for (int i = 0; i < _modals.Count; i++)
             {
-                if (!_modals[i].Draw())
+                var mod = _modals[i];
+                if (!mod.Pushed)
+                    ImGui.OpenPopup(mod.ModalName);
+                if (!mod.Draw())
                     _modals.RemoveAt(i);
             }
         }
 
         public void PushModal(EditorModal modal)
         {
-            ImGui.OpenPopup(modal.ModalName);
+
+            if (modal.Pushed = ThreadManager.IsRenderThread)
+                ImGui.OpenPopup(modal.ModalName);
 
             _modals.Add(modal);
         }

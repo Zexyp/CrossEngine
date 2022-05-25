@@ -6,7 +6,6 @@ namespace CrossEngine.Rendering.Cameras
 {
     public class EditorCamera : Camera
     {
-        // TODO: seri
         private Matrix4x4 _viewMatrix = Matrix4x4.Identity;
         private Vector3 _position = Vector3.Zero;
         private Quaternion _rotation = Quaternion.Identity;

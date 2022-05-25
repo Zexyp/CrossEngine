@@ -39,7 +39,7 @@ namespace CrossEngine.ComponentSystems
         LocalOffsets = 1 << 1,
     }
 
-    class PhysicsSysten : ISystem
+    class PhysicsSystem : ISystem
     {
         static readonly Dictionary<Type, Func<ColliderComponent, CollisionShape>> ShapeConvertors = new Dictionary<Type, Func<ColliderComponent, CollisionShape>>()
         {
@@ -54,6 +54,17 @@ namespace CrossEngine.ComponentSystems
             { typeof(SphereColliderComponent), (collider) => {
                 var corrcoll = (SphereColliderComponent)collider;
                 return new SphereShape(corrcoll.Radius);
+            } },
+            { typeof(CapsuleColliderComponent), (collider) => {
+                var corrcoll = (CapsuleColliderComponent)collider;
+                switch (corrcoll.Direction)
+                {
+                    case ColliderDirection.X: return new CapsuleShapeX(corrcoll.Radius, corrcoll.Length);
+                    case ColliderDirection.Y: return new CapsuleShape(corrcoll.Radius, corrcoll.Length);
+                    case ColliderDirection.Z: return new CapsuleShapeZ(corrcoll.Radius, corrcoll.Length);
+                    default: Debug.Assert(false); break;
+                }
+                return null;
             } },
         };
 
@@ -92,12 +103,16 @@ namespace CrossEngine.ComponentSystems
                 }
             }
 
+            readonly PhysicsSystem _ps;
 
 
-            public SyncedRBData(RigidBodyComponent component)
+
+            public SyncedRBData(RigidBodyComponent component, PhysicsSystem system)
             {
                 _entity = component.Entity;
                 _rigidBody = component;
+
+                _ps = system;
             }
 
             public void Destroy()
@@ -165,8 +180,8 @@ namespace CrossEngine.ComponentSystems
 
             private void RigidBody_OnEnabledChanged(Component component)
             {
-                if (!component.Enabled) PhysicsSysten.Instance.rigidBodyWorld.RemoveRigidBody(_body);
-                else PhysicsSysten.Instance.rigidBodyWorld.AddRigidBody(_body);
+                if (!component.Enabled) _ps.rigidBodyWorld.RemoveRigidBody(_body);
+                else _ps.rigidBodyWorld.AddRigidBody(_body);
             }
 
             private void AddCollider(ColliderComponent component)
@@ -210,12 +225,12 @@ namespace CrossEngine.ComponentSystems
                 _body = CreateBody(_rigidBody, _transform, _shape);
                 _motionState = _body.MotionState;
 
-                if (_rigidBody.Enabled) PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
+                if (_rigidBody.Enabled) _ps.rigidBodyWorld.World.AddRigidBody(_body);
             }
 
             public void Deactivate()
             {
-                if (_rigidBody.Enabled) PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
+                if (_rigidBody.Enabled) _ps.rigidBodyWorld.World.RemoveRigidBody(_body);
 
                 _body.MotionState = null;
                 _body.Dispose();
@@ -298,9 +313,9 @@ namespace CrossEngine.ComponentSystems
                     _motionState.WorldTransform = worldMat;
                     _body.WorldTransform = worldMat;
                     //                    sus fix
-                    _shape.LocalScaling = Vector3.Max(new Vector3(0.0001f, 0.0001f, 0.0001f), _transform.Scale).ToBullet();
+                    _shape.LocalScaling = _transform.Scale.ToBullet();
 
-                    if (_rigidBody.Enabled) Instance.rigidBodyWorld.CleanFromProxyPairs(_body);
+                    if (_rigidBody.Enabled) _ps.rigidBodyWorld.CleanFromProxyPairs(_body);
 
                     _updateMotion = false;
                 }
@@ -335,7 +350,7 @@ namespace CrossEngine.ComponentSystems
                     // change of static state
                     if ((_dirtyProperties | RigidBodyPropertyFlags.Static) != 0)
                     {
-                        PhysicsSysten.Instance.rigidBodyWorld.World.RemoveRigidBody(_body);
+                        _ps.rigidBodyWorld.World.RemoveRigidBody(_body);
 
                         if (!_rigidBody.Static)
                         {
@@ -364,7 +379,7 @@ namespace CrossEngine.ComponentSystems
                             _body.WorldTransform = _transform.WorldTransformMatrix.ToBullet();
                         }
 
-                        PhysicsSysten.Instance.rigidBodyWorld.World.AddRigidBody(_body);
+                        _ps.rigidBodyWorld.World.AddRigidBody(_body);
                     }
 
                     _dirtyProperties = RigidBodyPropertyFlags.None;
@@ -435,8 +450,6 @@ namespace CrossEngine.ComponentSystems
 
         public SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 
-        public static PhysicsSysten Instance;
-
         public static Vector4 ColliderRepresentationColor = new Vector4(1.0f, 0.4f, 0.0f, 1.0f);
 
         List<ColliderComponent> _colliders = new List<ColliderComponent>();
@@ -461,12 +474,8 @@ namespace CrossEngine.ComponentSystems
         }
         List<RigidBodyWorld> _debugDrawData = new List<RigidBodyWorld>();
 
-        public PhysicsSysten(SceneLayerRenderData sceneLayerRenderData)
+        public PhysicsSystem(SceneLayerRenderData sceneLayerRenderData)
         {
-            Debug.Assert(Instance == null);
-
-            Instance = this;
-
             sceneLayerRenderData.Data.Add((new RigidBodyWorldDebugRenderable(), _debugDrawData));
         }
 
@@ -500,7 +509,7 @@ namespace CrossEngine.ComponentSystems
 
         public void Update()
         {
-            Profiler.BeginScope($"{nameof(PhysicsSysten)}.Update");
+            Profiler.BeginScope($"{nameof(PhysicsSystem)}.Update");
 
             while (_changed.TryDequeue(out SyncedRBData rbdata))
             {
@@ -549,7 +558,7 @@ namespace CrossEngine.ComponentSystems
 
         private SyncedRBData CreateRBData(RigidBodyComponent rbcomponent)
         {
-            var data = new SyncedRBData(rbcomponent);
+            var data = new SyncedRBData(rbcomponent, this);
             _pairs.Add(rbcomponent, data);
             data.OnUpdateRequired += RBData_OnUpdateRequired;
             return data;

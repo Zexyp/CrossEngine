@@ -1,6 +1,7 @@
 ﻿using System;
 
 using System.Diagnostics;
+using System.Threading;
 
 using CrossEngine.Display;
 using CrossEngine.Layers;
@@ -43,6 +44,9 @@ namespace CrossEngine
             Instance = this;
 
             LayerStack = new LayerStack();
+
+            ThreadManager.Setup(Thread.CurrentThread, RenderThread._thread);
+            ThreadManager.ConfigureCurrentThread();
         }
 
         public void Run()
@@ -191,14 +195,22 @@ namespace CrossEngine
             Profiler.BeginScope($"{nameof(Application)}.{nameof(OnEvent)}({ e.GetType().Name})");
 
             var layers = LayerStack.Layers;
-            for (int i = layers.Count - 1; i >= 0; i--)
+            lock (layers)
             {
-                if (e.Handled) break;
-                layers[i].OnEvent(e);
+                for (int i = layers.Count - 1; i >= 0; i--)
+                {
+                    if (e.Handled) break;
+                    layers[i].OnEvent(e);
+                }
             }
 
             if (!e.Handled) Input.OnEvent(e);
             if (!e.Handled) GlobalEventDispatcher.Dispatch(e);
+
+            if (e is WindowCloseEvent && !e.Handled)
+            {
+                Window.ShouldClose = true;
+            }
 
             Profiler.EndScope();
         }

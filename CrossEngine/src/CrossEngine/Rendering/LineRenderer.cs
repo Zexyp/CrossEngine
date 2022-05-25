@@ -231,6 +231,25 @@ namespace CrossEngine.Rendering
             DrawLine(points[3], points[7], color);
         }
 
+        public static void DrawBox(Vector3 min, Vector3 max, Vector4 color)
+        {
+            DrawLine(min, new Vector3(max.X, min.Y, min.Z), color);
+            DrawLine(min, new Vector3(min.X, max.Y, min.Z), color);
+            DrawLine(min, new Vector3(min.X, min.Y, max.Z), color);
+
+            DrawLine(max, new Vector3(min.X, max.Y, max.Z), color);
+            DrawLine(max, new Vector3(max.X, min.Y, max.Z), color);
+            DrawLine(max, new Vector3(max.X, max.Y, min.Z), color);
+
+            DrawLine(new Vector3(max.X, min.Y, min.Z), new Vector3(max.X, max.Y, min.Z), color);
+            DrawLine(new Vector3(min.X, max.Y, min.Z), new Vector3(min.X, max.Y, max.Z), color);
+            DrawLine(new Vector3(min.X, min.Y, max.Z), new Vector3(max.X, min.Y, max.Z), color);
+            
+            DrawLine(new Vector3(min.X, max.Y, max.Z), new Vector3(min.X, min.Y, max.Z), color);
+            DrawLine(new Vector3(max.X, min.Y, max.Z), new Vector3(max.X, min.Y, min.Z), color);
+            DrawLine(new Vector3(max.X, max.Y, min.Z), new Vector3(min.X, max.Y, min.Z), color);
+        }
+
         static public void DrawCircle(Matrix4x4 matrix, Vector4 color, int segments = 16, float radius = 1.0f)
         {
             Vector3[] points = new Vector3[segments];
