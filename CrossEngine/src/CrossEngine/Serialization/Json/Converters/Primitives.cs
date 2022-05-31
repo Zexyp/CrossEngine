@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Numerics;
 using System.Text.Json;
 
@@ -86,39 +87,52 @@ namespace CrossEngine.Serialization.Json.Converters
 
     class Matrix4x4JsonConverter : JsonConverter<Matrix4x4>
     {
-        public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
+        public override bool Bracketable => false;
+
+        public unsafe override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
-            float[][] values = (float[][])serializer.Deserialize(reader.GetProperty("$values"), typeof(float[][]));
-            Matrix4x4 matrix;
-            matrix.M11 = values[0][0];
-            matrix.M12 = values[0][1];
-            matrix.M13 = values[0][2];
-            matrix.M14 = values[0][3];
-            matrix.M21 = values[1][0];
-            matrix.M22 = values[1][1];
-            matrix.M23 = values[1][2];
-            matrix.M24 = values[1][3];
-            matrix.M31 = values[2][0];
-            matrix.M32 = values[2][1];
-            matrix.M33 = values[2][2];
-            matrix.M34 = values[2][3];
-            matrix.M41 = values[3][0];
-            matrix.M42 = values[3][1];
-            matrix.M43 = values[3][2];
-            matrix.M44 = values[3][3];
+            Matrix4x4 matrix = new Matrix4x4();
+
+            var p = &matrix.M11;
+            var values = reader.EnumerateArray().SelectMany(i => i.EnumerateArray()).Select(i => i.GetSingle()).ToArray();
+            for (int i = 0; i < 16; i++)
+            {
+                p[i] = values[i];
+            }
+
             return matrix;
         }
 
         public override void WriteJson(Utf8JsonWriter writer, Matrix4x4 value, JsonSerializer serializer)
         {
-            writer.WritePropertyName("$values");
-            serializer.Serialize(writer, new float[4][]
-            {
-                new float[4]{ value.M11, value.M12, value.M13, value.M14 },
-                new float[4]{ value.M21, value.M22, value.M23, value.M24 },
-                new float[4]{ value.M31, value.M32, value.M33, value.M34 },
-                new float[4]{ value.M41, value.M42, value.M43, value.M44 },
-            });
+            writer.WriteStartArray();
+
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.M11);
+            writer.WriteNumberValue(value.M12);
+            writer.WriteNumberValue(value.M13);
+            writer.WriteNumberValue(value.M14);
+            writer.WriteEndArray();
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.M21);
+            writer.WriteNumberValue(value.M22);
+            writer.WriteNumberValue(value.M23);
+            writer.WriteNumberValue(value.M24);
+            writer.WriteEndArray();
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.M31);
+            writer.WriteNumberValue(value.M32);
+            writer.WriteNumberValue(value.M33);
+            writer.WriteNumberValue(value.M34);
+            writer.WriteEndArray();
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.M41);
+            writer.WriteNumberValue(value.M42);
+            writer.WriteNumberValue(value.M43);
+            writer.WriteNumberValue(value.M44);
+            writer.WriteEndArray();
+
+            writer.WriteEndArray();
         }
 
         public override void ReadJson(JsonElement reader, Matrix4x4 value, JsonSerializer serializer)

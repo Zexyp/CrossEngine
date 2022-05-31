@@ -306,12 +306,17 @@ namespace CrossEngineEditor.Utils.Gui
             }
 
             var availWidth = ImGui.GetContentRegionAvail().X;
-            ImGui.SetNextItemWidth(availWidth / 4);
+            ImGui.SetNextItemWidth(availWidth / 6);
             ImGui.DragInt("##selected_index", ref selectedIndex, 0.1f, 0, state.ElementCount - 1);
+            ImGui.SameLine();
+            ImGui.Text($"({state.ElementCount})");
             ImGui.SameLine();
             if (ImGui.ArrowButton("##add_index", ImGuiDir.Left)) selectedIndex--;
             ImGui.SameLine();
             if (ImGui.ArrowButton("##dec_index", ImGuiDir.Right)) selectedIndex++;
+
+            // hot fix
+            selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(state.ElementCount - 1, 0));
 
             originPos = ImGui.GetCursorPos();
 
@@ -323,7 +328,7 @@ namespace CrossEngineEditor.Utils.Gui
             {
                 if (state.ElementCount == 0)
                 {
-                    selectedIndex = state.AddElement(0.5f, default);
+                    selectedIndex = state.AddElement(0, default);
                 }
                 else if (state.ElementCount == 1)
                 {
@@ -331,7 +336,9 @@ namespace CrossEngineEditor.Utils.Gui
                 }
                 else if (selectedIndex == state.ElementCount - 1)
                 {
-                    selectedIndex = state.AddElement(0.5f, state.Elements[selectedIndex].value);
+                    float x = (state.Elements[selectedIndex].position + state.Elements[selectedIndex - 1].position) / 2;
+                    var c = state.Sample(x);
+                    selectedIndex = state.AddElement(x, c);
                 }
                 else
                 {

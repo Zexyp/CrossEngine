@@ -43,7 +43,10 @@ namespace CrossEngineEditor.Panels
                 {
                     ViewportSize = viewportPanelSize;
 
-                    ((Framebuffer)Framebuffer).Resize((uint)ViewportSize.X, (uint)ViewportSize.Y);
+                    if (Ref.IsNull(Framebuffer))
+                        ThreadManager.ExecuteOnRenderThread(() => ((Framebuffer)Framebuffer).Resize((uint)ViewportSize.X, (uint)ViewportSize.Y));
+                    else
+                        ((Framebuffer)Framebuffer).Resize((uint)ViewportSize.X, (uint)ViewportSize.Y);
 
                     DrawCamera?.Resize(ViewportSize.X, ViewportSize.Y);
 
@@ -58,7 +61,7 @@ namespace CrossEngineEditor.Panels
             Context.Scene.RenderData.Output = Framebuffer;
             if (Drawing)
                 SceneRenderer.DrawScene(Context.Scene, DrawCamera);
-            ImGui.Image(new IntPtr(((Framebuffer)Framebuffer).GetColorAttachmentRendererID(0)),
+            ImGui.Image(new IntPtr(((Framebuffer)Framebuffer)?.GetColorAttachmentRendererID(0) ?? 0),
                 ViewportSize,
                 new Vector2(0, 1),
                 new Vector2(1, 0));
