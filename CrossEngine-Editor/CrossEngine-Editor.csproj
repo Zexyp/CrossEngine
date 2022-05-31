@@ -43,8 +43,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="src\CrossEngineEditor\Panels\GamePanel.cs" />
     <Compile Remove="src\CrossEngineEditor\Panels\GizmoPanel.cs" />
+    <Compile Remove="src\CrossEngineEditor\Panels\ImageViewerPanel.cs" />
   </ItemGroup>
 
   <ItemGroup>

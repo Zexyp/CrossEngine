@@ -457,7 +457,7 @@ namespace CrossEngine.ComponentSystems
         Dictionary<RigidBodyComponent, SyncedRBData> _pairs = new Dictionary<RigidBodyComponent, SyncedRBData>();
         Queue<SyncedRBData> _changed = new Queue<SyncedRBData>();
 
-        RigidBodyWorld rigidBodyWorld;
+        internal RigidBodyWorld rigidBodyWorld;
 
         // note: 2d colliders are kinda not drawing...
         class RigidBodyWorldDebugRenderable : Renderable<RigidBodyWorld>
@@ -504,7 +504,7 @@ namespace CrossEngine.ComponentSystems
 
             rigidBodyWorld.Dispose();
 
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public void Update()

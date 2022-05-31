@@ -50,13 +50,6 @@ namespace CrossEngine.Assets
             return false;
         }
 
-        public T? GetAsset(string path)
-        {
-            if (_assetDict.ContainsKey(path))
-                return (T)_assetDict[path];
-            return default;
-        }
-
         public void Load(IPathProvider pathProvider = null)
         {
             foreach (var item in _assetDict)

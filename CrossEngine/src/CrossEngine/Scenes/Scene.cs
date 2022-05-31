@@ -28,9 +28,8 @@ namespace CrossEngine.Scenes
         int lastId;
         public readonly ReadOnlyCollection<Entity> HierarchyRoot;
         private readonly List<Entity> _roots = new List<Entity>();
-        public EditorCamera _overrideEditorCamera = null;
 
-        public SceneRenderData _renderData;
+        public SceneRenderData RenderData { get; private set; }
         SceneLayerRenderData _worldLayer;
 
         public AssetRegistry AssetRegistry;
@@ -43,44 +42,31 @@ namespace CrossEngine.Scenes
             _worldLayer = new SceneLayerRenderData();
 
             _ecsWorld.RegisterSystem(new ScriptableSystem());
+            //_ecsWorld.RegisterSystem(new UISystem(_renderData));
             _ecsWorld.RegisterSystem(new SpriteRendererSystem(_worldLayer));
             _ecsWorld.RegisterSystem(new ParticleSystemSystem(_worldLayer));
             _ecsWorld.RegisterSystem(new PhysicsSystem(_worldLayer));
             _ecsWorld.RegisterSystem(new TransformSystem());
             _ecsWorld.RegisterSystem(new RendererSystem());
 
-            _renderData = new SceneRenderData();
-            _renderData.Layers.Add(_worldLayer);
+            RenderData = new SceneRenderData();
+            RenderData.Layers.Add(_worldLayer);
 
-            AssetRegistry = new AssetRegistry("./assets");
-            AssetManager._ctx = AssetRegistry;
+            AssetRegistry = new AssetRegistry("./");
+        }
+
+        public Scene(string home) : this()
+        {
+            AssetRegistry.HomeDirectory = home + "./assets/";
         }
 
         public SceneRenderData GetRenderData()
         {
             var camComp = _ecsWorld.GetSystem<RendererSystem>().Primary;
 
-            if ((_overrideEditorCamera ?? camComp?.Camera) == null) return null;
+            _worldLayer.Camera = camComp?.Camera;
 
-            if (_overrideEditorCamera == null)
-            {
-                Matrix4x4? viewMat = camComp.ViewMatrix;
-                _worldLayer.Camera = camComp.Camera;
-                if (viewMat.HasValue)
-                {
-                    _worldLayer.Camera.ViewMatrix = viewMat.Value;
-                }
-                else
-                {
-                    _worldLayer.Camera.ViewMatrix = Matrix4x4.Identity;
-                }
-            }
-            else
-            {
-                _worldLayer.Camera = _overrideEditorCamera;
-            }
-
-            return _renderData;
+            return RenderData;
         }
 
         public void Load()
@@ -115,7 +101,7 @@ namespace CrossEngine.Scenes
 
         public void OnEvent(Event e)
         {
-
+            _ecsWorld.Event(e);
         }
 
         public Entity CreateEmptyEntity()

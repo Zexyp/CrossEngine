@@ -68,12 +68,23 @@ namespace CrossEngine.Serialization
         public static Scene DeserializeJson(string json)
         {
             Scene scene = new Scene();
+            InternalDeserializeJson(json, scene);
+            return scene;
+        }
 
+        public static Scene DeserializeJson(string json, string homePath)
+        {
+            Scene scene = new Scene(homePath);
+            InternalDeserializeJson(json, scene);
+            return scene;
+        }
+
+        private static void InternalDeserializeJson(string json, Scene scene)
+        {
             JsonSerializer serializer = new JsonSerializer(CreateSettings(scene));
             using (System.Text.Json.JsonDocument reader = System.Text.Json.JsonDocument.Parse(json))
             {
                 serializer.Deserialize(reader.RootElement, typeof(Scene));
-                return scene;
             }
         }
     }

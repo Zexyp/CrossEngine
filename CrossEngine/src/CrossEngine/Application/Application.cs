@@ -86,8 +86,6 @@ namespace CrossEngine
 
                 RenderThread.Join();
 
-                JoinedUpdate();
-
                 //_fixedUpdateAggregate += Time.UnscaledDeltaTime;
                 //if (_fixedUpdateAggregate >= Time.FixedDeltaTime)
                 //{
@@ -150,14 +148,6 @@ namespace CrossEngine
             LayerStack.PopAll();
             //GC.Collect();
             //Assets.GC.GPUGarbageCollector.Collect();
-        }
-
-        protected virtual void JoinedUpdate()
-        {
-            for (int i = 0; i < LayerStack.Layers.Count; i++)
-            {
-                LayerStack.Layers[i].OnJoinedUpdate();
-            }
         }
 
         protected virtual void Update()

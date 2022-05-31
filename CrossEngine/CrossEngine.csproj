@@ -120,9 +120,5 @@
       <TargetPath>cimguizmo.dll</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="src\CrossEngine\UI\Components\" />
-  </ItemGroup>
   
 </Project>

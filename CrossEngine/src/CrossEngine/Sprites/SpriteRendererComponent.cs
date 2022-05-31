@@ -96,7 +96,7 @@ namespace CrossEngine.Components
             world.GetSystem<SpriteRendererSystem>().Unregister(this);
         }
 
-        internal protected override void Update()
+        internal void Update()
         {
             if (_localOffsetMatrixDirty)
             {

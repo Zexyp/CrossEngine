@@ -26,11 +26,13 @@ namespace CrossEngine.Rendering.Cameras
         public virtual void GetObjectData(SerializationInfo info)
         {
             info.AddValue("ProjectionMatrix", ProjectionMatrix);
+            info.AddValue("ViewMatrix", ViewMatrix);
         }
         
         public virtual void SetObjectData(SerializationInfo info)
         {
             ProjectionMatrix = (Matrix4x4)info.GetValue("ProjectionMatrix", typeof(Matrix4x4));
+            ViewMatrix = (Matrix4x4)info.GetValue("ViewMatrix", typeof(Matrix4x4));
         }
     }
 }

@@ -12,7 +12,6 @@ namespace CrossEngineEditor
     {
         private bool? _open = true;
 
-        public EditorContext Context;
         public string WindowName = "";
         public bool? Open
         {
@@ -26,15 +25,18 @@ namespace CrossEngineEditor
         }
 
         public bool Attached { get; internal set; }
-        public ImGuiWindowFlags WindowFlags = ImGuiWindowFlags.None;
-        public Vector2 WindowSize;
-        public Vector2 WindowPos;
-        public Vector2 WindowContentAreaMin;
-        public Vector2 WindowContentAreaMax;
-        public bool Focused;
 
         public event Action<EditorPanel> InnerBeforeDrawCallback;
         public event Action<EditorPanel> InnerAfterDrawCallback;
+        
+        protected ImGuiWindowFlags WindowFlags = ImGuiWindowFlags.None;
+        protected Vector2 WindowSize;
+        protected Vector2 WindowPos;
+        protected Vector2 WindowContentAreaMin;
+        protected Vector2 WindowContentAreaMax;
+        protected bool Focused;
+
+        internal EditorContext Context;
 
         public EditorPanel(string name)
         {
@@ -43,7 +45,7 @@ namespace CrossEngineEditor
 
         public EditorPanel()
         {
-            this.WindowName = "Unnamed Panel";
+            this.WindowName = $"Unnamed Panel {this.GetHashCode()}";
         }
 
         public void Draw()

@@ -15,7 +15,6 @@ namespace CrossEngine.Layers
 
         public virtual void OnAttach() { }
         public virtual void OnDetach() { }
-        public virtual void OnJoinedUpdate() { }
         public virtual void OnUpdate() { }
         public virtual void OnRender() { }
         public virtual void OnEvent(Event e) { }

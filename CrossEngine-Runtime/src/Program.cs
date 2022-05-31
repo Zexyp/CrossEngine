@@ -6,9 +6,9 @@ namespace CrossEngineRuntime
     {
         static void Main(string[] args)
         {
-            //Console.WriteLine("Hello World!");
-            //var app = new RuntimeApplication();
-            //app.Run();
+            Console.WriteLine("Hello World!");
+            var app = new RuntimeApplication();
+            app.Run();
         }
     }
 }

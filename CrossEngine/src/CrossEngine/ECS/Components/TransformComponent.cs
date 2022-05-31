@@ -432,7 +432,7 @@ namespace CrossEngine.Components
             world.GetSystem<TransformSystem>().Unregister(this);
         }
 
-        protected internal override void Update()
+        internal void Update()
         {
             if (_dirty)
             {

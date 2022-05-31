@@ -18,11 +18,16 @@ namespace CrossEngine.Assets
 
         bool Loaded = false;
 
-        string _homeDirectory;
+        public string HomeDirectory { get; set; }
+
+        public AssetRegistry()
+        {
+            HomeDirectory = "./";
+        }
 
         public AssetRegistry(string homeDirectory)
         {
-            _homeDirectory = homeDirectory;
+            HomeDirectory = homeDirectory;
         }
 
         public IAssetCollection GetCollection(Type assetType)
@@ -46,7 +51,7 @@ namespace CrossEngine.Assets
         {
             foreach (var item in _collections.Values)
             {
-                item.Relativize(_homeDirectory);
+                item.Relativize(HomeDirectory);
             }
             info.AddValue(nameof(_collections), _collections);
         }
@@ -76,12 +81,12 @@ namespace CrossEngine.Assets
             Loaded = false;
         }
 
-        string IPathProvider.GetActualPath(string relativePath) => $"{_homeDirectory}/{relativePath}";
+        string IPathProvider.GetActualPath(string relativePath) => Path.Combine(HomeDirectory, relativePath);
     }
 
     class AssetManager
     {
-        public static AssetRegistry _ctx;
+        internal static AssetRegistry _ctx;
 
         //public static TimeSpan CollectionTimeout = new TimeSpan(0, 0, 30);
         //static readonly Dictionary<IAssetInfo, DateTime> _collectedTextures = new Dictionary<IAssetInfo, DateTime>();

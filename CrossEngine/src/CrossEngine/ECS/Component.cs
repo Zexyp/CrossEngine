@@ -36,7 +36,6 @@ namespace CrossEngine.ECS
         protected internal virtual void Attach(World world) { }
         protected internal virtual void Detach(World world) { }
 
-        protected internal virtual void Update() { }
 
         protected internal virtual void Serialize(SerializationInfo info) { }
         protected internal virtual void Deserialize(SerializationInfo info) { }

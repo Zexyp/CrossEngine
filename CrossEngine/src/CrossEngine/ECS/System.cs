@@ -23,6 +23,7 @@ namespace CrossEngine.ECS
         void Shutdown();
         void Update();
         virtual void Render() { }
+        virtual void Event(object e) { }
     }
 
     public abstract class System<T> : ISystem where T : Component

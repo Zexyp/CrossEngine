@@ -21,8 +21,18 @@ namespace CrossEngine.Components
         [EditorValue]
         public bool Primary
         {
-            get => this == _boundTo.Primary;
-            set => _boundTo.Primary = value ? this : null;
+            get
+            {
+                if (_boundTo != null)
+                    return this == _boundTo.Primary;
+                return _primary;
+            }
+            set
+            {
+                if (_boundTo != null)
+                    _boundTo.Primary = value ? this : null;
+                _primary = value;
+            }
         }
 
         private RendererSystem _boundTo;
@@ -50,6 +60,7 @@ namespace CrossEngine.Components
 
         protected internal override void Detach(World world)
         {
+            Primary = Primary;
             world.GetSystem<RendererSystem>().UnregisterCamera(this);
             _boundTo = null;
         }
@@ -62,16 +73,14 @@ namespace CrossEngine.Components
 
         protected internal override void Serialize(SerializationInfo info)
         {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
-            Logging.Log.Core.Debug("CameraComponent says: 'panic!'");
+            info.AddValue("Primary", Primary);
+            info.AddValue("Camera", Camera);
         }
 
         protected internal override void Deserialize(SerializationInfo info)
         {
-            var sussy = new System.Diagnostics.StackFrame();
-            Logging.Log.Core.Debug($"Impl this: in {sussy.GetFileName()} at line {sussy.GetFileLineNumber()}");
-            Logging.Log.Core.Debug("CameraComponent says: 'panic!'");
+            Primary = info.GetValue("Primary", Primary);
+            Camera = info.GetValue("Camera", Camera);
         }
     }
 }

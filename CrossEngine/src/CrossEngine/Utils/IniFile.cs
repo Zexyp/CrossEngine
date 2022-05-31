@@ -27,7 +27,7 @@ namespace CrossEngine.Utils
         public string Read(string section, string key)
         {
             var retVal = new StringBuilder(LineCapacity);
-            GetPrivateProfileString(section, key, "", retVal, 255, Path);
+            GetPrivateProfileString(section, key, "", retVal, LineCapacity, Path);
             return retVal.ToString();
         }
 

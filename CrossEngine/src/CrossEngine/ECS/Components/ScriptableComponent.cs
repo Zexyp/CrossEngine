@@ -20,5 +20,7 @@ namespace CrossEngine.Components
         {
             world.GetSystem<ScriptableSystem>().Unregister(this);
         }
+
+        internal protected virtual void Update() { }
     }
 }

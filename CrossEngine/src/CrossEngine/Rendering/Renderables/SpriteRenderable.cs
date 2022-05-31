@@ -57,7 +57,8 @@ namespace CrossEngine.Rendering.Renderables
                 Renderer2D.DrawQuad(data.Transform, c/*data.Color*/, data.EntityId);
             else
                 Renderer2D.DrawTexturedQuad(data.Transform, data.Texture.Texture, c/*data.Color*/, data.TextureOffsets, data.EntityId);
-            TextRendererUtil.DrawText(data.Transform, ((SpriteRendererComponent)data).Entity.Id.ToString(), Vector4.One);
+            
+            //TextRendererUtil.DrawText(data.Transform, ((SpriteRendererComponent)data).Entity.Id.ToString(), Vector4.One);
         }
     }
 }

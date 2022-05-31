@@ -8,12 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="src\CrossEngineRuntime\**" />
-    <EmbeddedResource Remove="src\CrossEngineRuntime\**" />
-    <None Remove="src\CrossEngineRuntime\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
   </ItemGroup>
 

@@ -38,6 +38,8 @@ namespace CrossEngine.ComponentSystems
         public void RegisterCamera(CameraComponent component)
         {
             _cameras.Add(component);
+            if (component.Primary)
+                Primary = component;
         }
 
         public void UnregisterCamera(CameraComponent component)
@@ -45,6 +47,14 @@ namespace CrossEngine.ComponentSystems
             _cameras.Remove(component);
             if (Primary == component)
                 Primary = null;
+        }
+
+        void ISystem.Event(object e)
+        {
+            if (e is WindowResizeEvent)
+            {
+                Logging.Log.Core.Debug("TODO: camera window resize event");
+            }
         }
     }
 }

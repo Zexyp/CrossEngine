@@ -8,9 +8,7 @@ namespace CrossEngineEditor
 {
     public class EditorContext
     {
-        private Entity _activeEntity = null;
-        private Scene _scene = null;
-
+        public bool Playmode = false;
         public Scene Scene
         {
             get => _scene;
@@ -32,6 +30,9 @@ namespace CrossEngineEditor
                 OnActiveEntityChanged?.Invoke();
             }
         }
+
+        private Entity _activeEntity = null;
+        private Scene _scene = null;
 
         // will we ever get here??
         public readonly List<Entity> SelectedEntities = new List<Entity>();

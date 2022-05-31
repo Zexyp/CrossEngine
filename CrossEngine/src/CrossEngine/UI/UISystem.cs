@@ -8,6 +8,7 @@ using System.Diagnostics;
 using CrossEngine.ECS;
 using CrossEngine.Components;
 using CrossEngine.Rendering;
+using CrossEngine.Events;
 
 namespace CrossEngine.ComponentSystems
 {
@@ -41,12 +42,24 @@ namespace CrossEngine.ComponentSystems
 
         public void RegisterCanvas(CanvasComponent canvas)
         {
-            throw new NotImplementedException();
+            var lrd = new SceneLayerRenderData();
+            _renderData.Layers.Add(lrd);
+            _layers.Add(canvas, lrd);
         }
 
         public void UnregisterCanvas(CanvasComponent canvas)
         {
-            throw new NotImplementedException();
+            _renderData.Layers.Remove(_layers[canvas]);
+            _layers.Remove(canvas);
+        }
+
+        void ISystem.Event(object e)
+        {
+            Event cee = e as Event;
+            foreach (var item in _layers.Keys)
+            {
+                item.OnEvent(cee);
+            }
         }
     }
 }

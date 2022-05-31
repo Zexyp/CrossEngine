@@ -55,6 +55,14 @@ namespace CrossEngine.ECS
             }
         }
 
+        public void Event(object e)
+        {
+            for (int i = 0; i < _systems.Count; i++)
+            {
+                _systems[i].Event(e);
+            }
+        }
+
         public void RegisterSystem(ISystem system)
         {
             _systems.Add(system);

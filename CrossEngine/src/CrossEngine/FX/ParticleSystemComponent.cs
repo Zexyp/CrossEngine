@@ -136,7 +136,7 @@ namespace CrossEngine.Components
             world.GetSystem<ParticleSystemSystem>().Unregister(this);
         }
 
-        protected internal override void Update()
+        internal void Update()
         {
             if (EnableEmit)
             {

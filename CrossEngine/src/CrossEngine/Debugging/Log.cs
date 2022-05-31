@@ -24,23 +24,19 @@ namespace CrossEngine.Logging
         public static Logger App { get; private set; } // for final application
         internal static Logger Core { get; private set; } // for engine core
 
-        private static Dictionary<string, Logger> loggers = new Dictionary<string, Logger>();
-        private static Mutex mutex = new Mutex();
+        private static Dictionary<string, Logger> _loggers = new Dictionary<string, Logger>();
         private static LogLevel _globalLevel = LogLevel.Trace;
+
+        private static Mutex mutex = new Mutex();
 
         public static LogLevel GlobalLevel
         {
             get { return _globalLevel; }
             set
             {
-                mutex.WaitOne();
-
                 _globalLevel = value;
-
-                mutex.ReleaseMutex();
             }
         }
-
 
         static bool initialized = false;
         public static void Init()
@@ -58,12 +54,12 @@ namespace CrossEngine.Logging
 
         public static Logger GetLogger(string name)
         {
-            if (!loggers.ContainsKey(name))
-                loggers.Add(name, new Logger(name));
-            return loggers[name];
+            if (!_loggers.ContainsKey(name))
+                _loggers.Add(name, new Logger(name));
+            return _loggers[name];
         }
 
-        internal static void Print(LogLevel level, string format, params object?[]? arg)
+        internal static void Print(LogLevel level, string message)
         {
             mutex.WaitOne();
 
@@ -91,8 +87,7 @@ namespace CrossEngine.Logging
                         break;
                 }
 
-                if (arg.Length > 0) Console.WriteLine(format, arg);
-                else Console.WriteLine(format);
+                Console.WriteLine(message);
                 Console.ResetColor();
             }
             
@@ -106,86 +101,75 @@ namespace CrossEngine.Logging
         // %t - time
         // %n - name
         // %l - level
+        public string DateTimeFormat = "HH:mm:ss";
 
-        string name = "";
+        public readonly string Name = "";
         public LogLevel LogLevel;
 
         public Logger(string name, LogLevel level = LogLevel.Trace)
         {
-            this.name = name;
+            this.Name = name;
             this.LogLevel = level;
         }
 
-        private string FillPattern(LogLevel level)
+        protected string FillPattern(LogLevel level)
         {
             return Pattern
-                .Replace("%t", DateTime.Now.TimeOfDay.Hours.ToString("00") + ":" + DateTime.Now.TimeOfDay.Minutes.ToString("00") + ":" + DateTime.Now.TimeOfDay.Seconds.ToString("00"))
-                .Replace("%n", name)
+                .Replace("%t", DateTime.Now.ToString(DateTimeFormat))
+                .Replace("%n", Name)
                 .Replace("%l", level.ToString());
         }
 
-#pragma warning disable CS8632
+#nullable enable
         [Conditional("DEBUG")]
-        public void Trace(string format, params object?[]? arg)
+        public virtual void Trace(string format, params object?[] args)
         {
             if (this.LogLevel > LogLevel.Trace) return;
-            Log.Print(LogLevel.Trace, FillPattern(LogLevel.Trace) + format, arg);
+            Log.Print(LogLevel.Trace,
+                FillPattern(LogLevel.Trace) +
+                (args?.Length != 0 ? String.Format(format, args) : format));
         }
 
         [Conditional("DEBUG")]
-        public void Debug(string format, params object?[]? arg)
+        public virtual void Debug(string format, params object?[] args)
         {
             if (this.LogLevel > LogLevel.Debug) return;
-            Log.Print(LogLevel.Debug, FillPattern(LogLevel.Debug) + format, arg);
+            Log.Print(LogLevel.Debug,
+                FillPattern(LogLevel.Debug) +
+                (args?.Length != 0 ? String.Format(format, args) : format));
         }
 
-        public void Info(string format, params object?[]? arg)
+        public virtual void Info(string format, params object?[] args)
         {
             if (this.LogLevel > LogLevel.Info) return;
-            Log.Print(LogLevel.Info, FillPattern(LogLevel.Info) + format, arg);
+            Log.Print(LogLevel.Info,
+                FillPattern(LogLevel.Info) +
+                (args?.Length != 0 ? String.Format(format, args) : format));
         }
 
-        public void Warn(string format, params object?[]? arg)
+        public virtual void Warn(string format, params object?[] args)
         {
             if (this.LogLevel > LogLevel.Warn) return;
-            Log.Print(LogLevel.Warn, FillPattern(LogLevel.Warn) + format, arg);
+            Log.Print(LogLevel.Warn,
+                FillPattern(LogLevel.Warn) +
+                (args?.Length != 0 ? String.Format(format, args) : format));
         }
 
-        public void Error(string format, params object?[]? arg)
+        public virtual void Error(string format, params object?[] args)
         {
             if (this.LogLevel > LogLevel.Error) return;
-            Log.Print(LogLevel.Error, FillPattern(LogLevel.Error) + format, arg);
+            Log.Print(LogLevel.Error,
+                FillPattern(LogLevel.Error) +
+                (args?.Length != 0 ? String.Format(format, args) : format));
         }
 
-        public void Fatal(string format, params object?[]? arg)
+        public virtual void Fatal(string format, params object?[] args)
         {
             if (this.LogLevel > LogLevel.Fatal) return;
-            Log.Print(LogLevel.Fatal, FillPattern(LogLevel.Fatal) + format, arg);
+            Log.Print(LogLevel.Fatal,
+                FillPattern(LogLevel.Fatal) +
+                (args?.Length != 0 ? String.Format(format, args) : format));
         }
-#pragma warning restore CS8632
+#nullable restore
     }
 }
-
-/*
-//####################################################################################################
-//####################################################################################################
-//####################################################################################################
-static class ColoredConsole
-{
-    static public void Write(string text, ConsoleColor? fg = null, ConsoleColor? bg = null)
-    {
-        if (fg != null) Console.ForegroundColor = (ConsoleColor)fg;
-        if (bg != null) Console.BackgroundColor = (ConsoleColor)bg;
-        Console.Write(text);
-        Console.ResetColor();
-    }
-
-    static public void WriteLine(string text, ConsoleColor? fg = null, ConsoleColor? bg = null)
-    {
-        if (fg != null) Console.ForegroundColor = (ConsoleColor)fg;
-        if (bg != null) Console.BackgroundColor = (ConsoleColor)bg;
-        Console.WriteLine(text);
-        Console.ResetColor();
-    }
-}
-*/
