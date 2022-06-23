@@ -36,6 +36,20 @@ namespace CrossEngine.Components
         }
 
         private RendererSystem _boundTo;
+        private TransformComponent _transformBinding;
+        private TransformComponent TransformBinding
+        {
+            get => _transformBinding;
+            set
+            {
+                if (_transformBinding == value) return;
+
+                if (_transformBinding != null) _transformBinding.OnTransformChanged -= UpdateView;
+                _transformBinding = value;
+                if (_transformBinding != null) _transformBinding.OnTransformChanged += UpdateView;
+                UpdateView(_transformBinding);
+            }
+        }
 
         public Matrix4x4? ViewMatrix
         {
@@ -56,6 +70,9 @@ namespace CrossEngine.Components
         {
             world.GetSystem<RendererSystem>().RegisterCamera(this);
             _boundTo = world.GetSystem<RendererSystem>();
+
+            Entity.OnComponentAdded += ComponentChange;
+            Entity.OnComponentRemoved += ComponentChange;
         }
 
         protected internal override void Detach(World world)
@@ -63,11 +80,24 @@ namespace CrossEngine.Components
             Primary = Primary;
             world.GetSystem<RendererSystem>().UnregisterCamera(this);
             _boundTo = null;
+
+            Entity.OnComponentAdded -= ComponentChange;
+            Entity.OnComponentRemoved -= ComponentChange;
+            TransformBinding = null;
+        }
+
+        private void ComponentChange(Entity sender, Component val)
+        {
+            TransformBinding = Entity.Transform;
+        }
+
+        private void UpdateView(TransformComponent component)
+        {
+            Camera.ViewMatrix = ViewMatrix ?? Matrix4x4.Identity;
         }
 
         protected override Component CreateClone()
         {
-            Logging.Log.Core.Debug("CameraComponent says: 'panic!'");
             throw new NotImplementedException();
         }
 

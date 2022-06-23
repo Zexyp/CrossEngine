@@ -42,7 +42,7 @@ namespace CrossEngine.ECS
 
         protected virtual Component CreateClone()
         {
-            Logging.Log.Core.Info("using default constructor for cloning component");
+            Application.CoreLog.Info("using default constructor for cloning component");
             return (Component)Activator.CreateInstance(this.GetType());
         }
 

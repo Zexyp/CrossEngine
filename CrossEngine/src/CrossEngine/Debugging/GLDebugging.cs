@@ -55,7 +55,7 @@ namespace CrossEngine.Debugging
 
         static GLDebugging()
         {
-            GLLog = Log.GetLogger("OpenGL");
+            GLLog = new Logger("OpenGL");
             GLLog.Pattern = "[%t][%n]";
         }
 

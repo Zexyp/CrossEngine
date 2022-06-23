@@ -67,7 +67,7 @@ namespace CrossEngine.Rendering.Culling
     // should be called Frustrum becase it's frustrating
     public struct Frustum
     {
-        Plane[] planes;
+        public Plane[] planes;
 
         // for debug perpouses
         Vector3 centrus;
@@ -188,6 +188,26 @@ namespace CrossEngine.Rendering.Culling
                 planes[4] = Plane.Normalize(planes[4]);
                 planes[5] = Plane.Normalize(planes[5]);
             }
+        }
+
+        public static Vector3 ThreePlaneIntersection(Plane p1, Plane p2, Plane p3)
+        {
+            Vector3 m1 = p1.Normal;
+            Vector3 m2 = p2.Normal;
+            Vector3 m3 = p3.Normal;
+            Vector3 d = new Vector3(p1.D, p2.D, p3.D);
+
+            Vector3 u = Vector3.Cross(m2, m3);
+            Vector3 v = Vector3.Cross(m1, d);
+
+            float denom = Vector3.Dot(m1, u);
+
+            if (Math.Abs(denom) < float.Epsilon)
+            {
+                return default;
+            }
+
+            return new Vector3(Vector3.Dot(d, u) / denom, Vector3.Dot(m3, v) / denom, -Vector3.Dot(m2, v) / denom);
         }
     }
 }

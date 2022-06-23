@@ -43,8 +43,8 @@ namespace CrossEngine.Layers
 
                 GLFW.Window windowHandle = ((CrossEngine.Platform.Windows.GLFWWindow)window).Handle;
 
-                if (ImGuiController.ImGui_ImplGlfw_InitForOpenGL(windowHandle, true)) Log.Core.Info("ImGui GLFW part initialized");
-                if (ImGuiController.ImGui_ImplOpenGL3_Init("#version 330 core")) Log.Core.Info("ImGui OpenGL part initialized");
+                if (ImGuiController.ImGui_ImplGlfw_InitForOpenGL(windowHandle, true)) Application.CoreLog.Info("ImGui GLFW part initialized");
+                if (ImGuiController.ImGui_ImplOpenGL3_Init("#version 330 core")) Application.CoreLog.Info("ImGui OpenGL part initialized");
 
                 ImGuiIOPtr io = ImGui.GetIO();
                 io.DisplaySize = new Vector2(
@@ -106,7 +106,7 @@ namespace CrossEngine.Layers
                 ImGui.DestroyPlatformWindows();
                 //ImGui.*DestroyContext*(ImGuiContext); // this somehow destroys to much
                 ImGuiContext = IntPtr.Zero;
-                Log.Core.Info("ImGui context destroyed");
+                Application.CoreLog.Info("ImGui context destroyed");
                 ImGuiController.ImGui_ImplOpenGL3_Shutdown();
                 ImGuiController.ImGui_ImplGlfw_Shutdown();
             });

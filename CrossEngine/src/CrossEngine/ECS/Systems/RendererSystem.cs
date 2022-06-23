@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Numerics;
 
 using CrossEngine.ECS;
 using CrossEngine.Components;
@@ -53,7 +54,7 @@ namespace CrossEngine.ComponentSystems
         {
             if (e is WindowResizeEvent)
             {
-                Logging.Log.Core.Debug("TODO: camera window resize event");
+                Application.CoreLog.Debug("TODO: camera window resize event");
             }
         }
     }

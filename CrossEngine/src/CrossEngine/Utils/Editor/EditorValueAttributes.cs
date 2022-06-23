@@ -138,7 +138,7 @@ namespace CrossEngine.Utils.Editor
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorColorEditAttribute : EditorValueAttribute
+    public class EditorColorAttribute : EditorValueAttribute
     {
         public bool HDR = true;
     }

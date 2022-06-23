@@ -34,31 +34,29 @@ namespace CrossEngine.Rendering.Renderables
 
         public override void Submit(ISpriteRenderData data)
         {
-            var bounds = data.Bounds;
             Vector4 c = data.Color;
-            if (bounds != null)
-            {
-                var boundsval = (Sphere)bounds;
-                switch (camera.Frustum.IsSphereIn(boundsval.center, boundsval.radius))
-                {
-                    case Halfspace.Outside: return;
-                    case Halfspace.Intersect:
-                        {
-                            c = new Vector4(1, 0, 0, 1);
-                            if (camera.Frustum.IsPointIn(boundsval.center) == Halfspace.Inside)
-                                c = new Vector4(0, 0, 1, 1);
-                        }
-                        break;
-                }
-                LineRenderer.DrawSphere(Matrix4x4.CreateTranslation(boundsval.center), Vector4.One, 16, boundsval.radius);
-            }
+            //var bounds = data.Bounds;
+            //if (bounds != null)
+            //{
+            //    var boundsval = (Sphere)bounds;
+            //    switch (camera.Frustum.IsSphereIn(boundsval.center, boundsval.radius))
+            //    {
+            //        case Halfspace.Outside: return;
+            //        case Halfspace.Intersect:
+            //            {
+            //                c = new Vector4(1, 0, 0, 1);
+            //                if (camera.Frustum.IsPointIn(boundsval.center) == Halfspace.Inside)
+            //                    c = new Vector4(0, 0, 1, 1);
+            //            }
+            //            break;
+            //    }
+            //    LineRenderer.DrawSphere(Matrix4x4.CreateTranslation(boundsval.center), Vector4.One, 16, boundsval.radius);
+            //}
 
             if (data.Texture == null)
                 Renderer2D.DrawQuad(data.Transform, c/*data.Color*/, data.EntityId);
             else
                 Renderer2D.DrawTexturedQuad(data.Transform, data.Texture.Texture, c/*data.Color*/, data.TextureOffsets, data.EntityId);
-            
-            //TextRendererUtil.DrawText(data.Transform, ((SpriteRendererComponent)data).Entity.Id.ToString(), Vector4.One);
         }
     }
 }

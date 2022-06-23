@@ -173,7 +173,7 @@ namespace CrossEngine.Platform.OpenGL
                             specification.Width,
                             specification.Height);
                         break;
-                    default: Log.Core.Warn("depth attachment type not implemented!"); break;
+                    default: Application.CoreLog.Warn("depth attachment type not implemented!"); break;
                 }
             }
 
@@ -181,7 +181,7 @@ namespace CrossEngine.Platform.OpenGL
 
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             {
-                Log.Core.Error("framebuffer is incomplete!");
+                Application.CoreLog.Error("framebuffer is incomplete!");
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -253,7 +253,7 @@ namespace CrossEngine.Platform.OpenGL
         {
             if (width == 0 || height == 0 || width > MaxFramebufferSize || height > MaxFramebufferSize)
             {
-                Log.Core.Warn($"attempted to rezize framebuffer to {width}, {height}");
+                Application.CoreLog.Warn($"attempted to rezize framebuffer to {width}, {height}");
                 return;
             }
             specification.Width = width;

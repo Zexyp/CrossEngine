@@ -9,7 +9,7 @@ using CrossEngine.Events;
 
 namespace CrossEngine.Components
 {
-    class UIComponent : Component
+    public abstract class UIComponent : Component
     {
         public virtual void OnEvent(Event e)
         {

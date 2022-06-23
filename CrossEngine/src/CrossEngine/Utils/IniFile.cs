@@ -11,7 +11,7 @@ namespace CrossEngine.Utils
     public class IniFile
     {
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
-        static extern long WritePrivateProfileString(string section, string key, string value, string filepath);
+        static extern int WritePrivateProfileString(string section, string key, string value, string filepath);
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
         static extern int GetPrivateProfileString(string section, string key, string defaultValue, StringBuilder retVal, int size, string filepath);
 

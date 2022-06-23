@@ -18,7 +18,7 @@ namespace CrossEngine.Rendering
         {
             Profiler.BeginScope();
 
-            var scenRendereData = scene.GetRenderData();
+            var scenRendereData = scene.UpdateRenderData();
             if (scenRendereData == null) return;
 
             ((Framebuffer?)scenRendereData.Output)?.Bind();

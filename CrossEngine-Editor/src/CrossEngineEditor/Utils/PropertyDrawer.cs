@@ -24,7 +24,7 @@ namespace CrossEngineEditor.Utils
         delegate bool EditorRangeFunction(IRangeValue range, string name, ref object value);
         delegate bool EditorDragFunction(ISteppedRangeValue range, string name, ref object value);
         delegate bool EditorSliderFunction(IRangeValue range, string name, ref object value);
-        delegate bool EditorColorValueFunction(EditorColorEditAttribute attribute, string name, ref object value);
+        delegate bool EditorColorValueFunction(EditorColorAttribute attribute, string name, ref object value);
 
         private static void PrintInvalidUI(string name)
         {
@@ -217,13 +217,13 @@ namespace CrossEngineEditor.Utils
         };
         static readonly Dictionary<Type, EditorColorValueFunction> ColorHandlers = new Dictionary<Type, EditorColorValueFunction>()
         {
-            { typeof(Vector3), (EditorColorEditAttribute attribute, string name, ref object value) => {
+            { typeof(Vector3), (EditorColorAttribute attribute, string name, ref object value) => {
                 Vector3 v = (Vector3)value;
                 bool success = ImGui.ColorEdit3(name, ref v, attribute.HDR ? ImGuiColorEditFlags.HDR : 0);
                 if (success) value = v;
                 return success;
             } },
-            { typeof(Vector4), (EditorColorEditAttribute attribute, string name, ref object value) => {
+            { typeof(Vector4), (EditorColorAttribute attribute, string name, ref object value) => {
                 Vector4 v = (Vector4)value;
                 bool success = ImGui.ColorEdit4(name, ref v, attribute.HDR ? ImGuiColorEditFlags.HDR : 0);
                 if (success) value = v;
@@ -342,8 +342,8 @@ namespace CrossEngineEditor.Utils
                 return success;
             } },
 
-            { typeof(EditorColorEditAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorColorEditAttribute)attribute;
+            { typeof(EditorColorAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                var cattribt = (EditorColorAttribute)attribute;
                 if (ColorHandlers.ContainsKey(value.GetType()))
                     return ColorHandlers[value.GetType()](cattribt, name, ref value);
                 else

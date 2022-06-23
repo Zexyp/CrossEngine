@@ -694,7 +694,7 @@ namespace CrossEngine.Utils
                     // The color is not defined, we should throw an error.
 
                     default:
-                        Log.Core.Error("color conversion messed up!");
+                        Application.CoreLog.Error("color conversion messed up!");
                         rgbColor.X = rgbColor.Y = rgbColor.Z = hsvColor.Z;
                         break;
                 }

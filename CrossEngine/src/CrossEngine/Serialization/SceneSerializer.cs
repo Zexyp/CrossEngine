@@ -14,8 +14,10 @@ using CrossEngine.Assemblies;
 
 namespace CrossEngine.Serialization
 {
-    public class SceneSerializer
+    public static class SceneSerializer
     {
+        // it's only single threaded now... 😳
+
         //private static readonly CustomJsonConverterCollection Converters = new CustomJsonConverterCollection()
         //{
         //    new Vector2CustomJsonConverter(),
@@ -40,52 +42,67 @@ namespace CrossEngine.Serialization
             }
         }
 
-        private static JsonSerializerSettings CreateSettings(Scene scene)
+        private readonly static JsonSerializerSettings Settings = JsonSerializerSettings.CreateDefault();
+        private readonly static JsonSerializer Serializer;
+
+        static SceneSerializer()
         {
-            var settings = JsonSerializerSettings.Default;
-            settings.Converters.Add(new SceneJsonConverter(scene));
-            settings.Converters.Add(new EntityJsonConverter(scene));
-            settings.TypeResolver = new CrossAssemblyTypeResolver();
-            return settings;
+            Settings.Converters.Add(new SceneJsonConverter());
+            Settings.Converters.Add(new EntityJsonConverter());
+            Settings.WriterOptions.Indented = true;
+            Settings.TypeResolver = new CrossAssemblyTypeResolver();
+            Serializer = new JsonSerializer(Settings);
         }
 
-        public static string SertializeJson(Scene scene)
+        private static void SetContext(Scene scene)
         {
-            JsonSerializer serializer = new JsonSerializer(CreateSettings(scene));
+            Settings.Context = scene;
+        }
 
-            serializer.Settings.WriterOptions.Indented = true;
-            
-            using (MemoryStream stream = new MemoryStream())
-            using (System.Text.Json.Utf8JsonWriter writer = new System.Text.Json.Utf8JsonWriter(stream, serializer.Settings.WriterOptions))
+        public static void SerializeJson(Scene scene, Stream stream)
+        {
+            SetContext(scene);
+            using (System.Text.Json.Utf8JsonWriter writer = new System.Text.Json.Utf8JsonWriter(stream, Serializer.Settings.WriterOptions))
             {
-                serializer.Serialize(writer, scene);
+                Serializer.Serialize(writer, scene);
                 writer.Flush();
+                stream.Flush();
+            }
+            SetContext(null);
+        }
+
+        public static string SerializeJsonToString(Scene scene)
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                SerializeJson(scene, stream);
                 stream.Flush();
                 return Encoding.Default.GetString(stream.ToArray());
             }
         }
 
-        public static Scene DeserializeJson(string json)
+        public static Scene DeserializeJson(Stream stream)
         {
             Scene scene = new Scene();
-            InternalDeserializeJson(json, scene);
+            SetContext(scene);
+            using (System.Text.Json.JsonDocument reader = System.Text.Json.JsonDocument.Parse(stream))
+            {
+                Serializer.Deserialize(reader.RootElement, typeof(Scene));
+            }
+            SetContext(null);
             return scene;
         }
 
-        public static Scene DeserializeJson(string json, string homePath)
+        public static Scene DeserializeJsonFromString(string json)
         {
-            Scene scene = new Scene(homePath);
-            InternalDeserializeJson(json, scene);
-            return scene;
-        }
-
-        private static void InternalDeserializeJson(string json, Scene scene)
-        {
-            JsonSerializer serializer = new JsonSerializer(CreateSettings(scene));
+            Scene scene = new Scene();
+            SetContext(scene);
             using (System.Text.Json.JsonDocument reader = System.Text.Json.JsonDocument.Parse(json))
             {
-                serializer.Deserialize(reader.RootElement, typeof(Scene));
+                Serializer.Deserialize(reader.RootElement, typeof(Scene));
             }
+            SetContext(null);
+            return scene;
         }
     }
 }

@@ -40,7 +40,7 @@ namespace CrossEngine.Components
         [EditorDrag]
         public Vector4 TextureOffsets = new Vector4(0f, 0f, 1f, 1f);
 
-        [EditorColorEdit]
+        [EditorColor]
         public Vector4 Color = Vector4.One; // also used for tinting; chooses transparency median
         //[EditorEnumValue]
         //public TransparencyMode TranspMode;
@@ -63,9 +63,22 @@ namespace CrossEngine.Components
         private Vector4 _drawOffsets = new Vector4(0f, 0f, 1f, 1f);
         private bool _localOffsetMatrixDirty = true;
         private Matrix4x4 _localOffsetMatrix = Matrix4x4.Identity;
+        private Matrix4x4 LocalOffsetMatrix
+        {
+            get
+            {
+                if (_localOffsetMatrixDirty)
+                {
+                    _localOffsetMatrixDirty = false;
+                    _localOffsetMatrix = Matrix4x4.CreateScale(new Vector3(_drawOffsets.Z, _drawOffsets.W, 0.0f)) *
+                                        Matrix4x4.CreateTranslation(new Vector3(_drawOffsets.X, _drawOffsets.Y, 0.0f));
+                }
+                return _localOffsetMatrix;
+            }
+        }
 
         // ISpriteRenderData
-        Matrix4x4 IObjectRenderData.Transform => this._localOffsetMatrix * (this.Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity);
+        Matrix4x4 IObjectRenderData.Transform => this.LocalOffsetMatrix * (this.Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity);
         Vector4 ISpriteRenderData.Color => this.Color;
         int ISpriteRenderData.EntityId => this.Entity.Id;
         Vector4 ISpriteRenderData.TextureOffsets => this.TextureOffsets;
@@ -94,16 +107,6 @@ namespace CrossEngine.Components
         internal protected override void Detach(World world)
         {
             world.GetSystem<SpriteRendererSystem>().Unregister(this);
-        }
-
-        internal void Update()
-        {
-            if (_localOffsetMatrixDirty)
-            {
-                _localOffsetMatrixDirty = false;
-                _localOffsetMatrix = Matrix4x4.CreateScale(new Vector3(_drawOffsets.Z, _drawOffsets.W, 0.0f)) *
-                                    Matrix4x4.CreateTranslation(new Vector3(_drawOffsets.X, _drawOffsets.Y, 0.0f));
-            }
         }
 
 

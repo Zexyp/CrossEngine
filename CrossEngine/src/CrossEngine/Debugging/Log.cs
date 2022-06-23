@@ -21,10 +21,8 @@ namespace CrossEngine.Logging
 
     public static class Log
     {
-        public static Logger App { get; private set; } // for final application
-        internal static Logger Core { get; private set; } // for engine core
+        public static Logger Default;
 
-        private static Dictionary<string, Logger> _loggers = new Dictionary<string, Logger>();
         private static LogLevel _globalLevel = LogLevel.Trace;
 
         private static Mutex mutex = new Mutex();
@@ -38,25 +36,10 @@ namespace CrossEngine.Logging
             }
         }
 
-        static bool initialized = false;
-        public static void Init()
+        static Log()
         {
-            if (initialized)
-                return;
-            initialized = true;
-
-            Core = new Logger("CORE");
-
-            App = new Logger("APP");
-
-            Log.Core.Trace("log initialized");
-        }
-
-        public static Logger GetLogger(string name)
-        {
-            if (!_loggers.ContainsKey(name))
-                _loggers.Add(name, new Logger(name));
-            return _loggers[name];
+            Default = new Logger("Default");
+            Default.Trace("log initialized");
         }
 
         internal static void Print(LogLevel level, string message)
@@ -103,7 +86,7 @@ namespace CrossEngine.Logging
         // %l - level
         public string DateTimeFormat = "HH:mm:ss";
 
-        public readonly string Name = "";
+        public string Name = "";
         public LogLevel LogLevel;
 
         public Logger(string name, LogLevel level = LogLevel.Trace)

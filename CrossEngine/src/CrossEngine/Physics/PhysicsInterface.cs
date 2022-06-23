@@ -49,7 +49,7 @@ namespace CrossEngine.Physics
         {
             if (_dynamicsWorld == null)
             {
-                Log.Core.Error("raycast attempted without world context!");
+                Application.CoreLog.Error("raycast attempted without world context!");
                 throw new InvalidOperationException("Raycast attempted without world context.");
             }
 
@@ -79,7 +79,7 @@ namespace CrossEngine.Physics
         {
             if (_dynamicsWorld == null)
             {
-                Log.Core.Error("raycast attempted without world context!");
+                Application.CoreLog.Error("raycast attempted without world context!");
                 throw new InvalidOperationException("Raycast attempted without world context.");
             }
 

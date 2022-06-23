@@ -27,7 +27,7 @@ namespace CrossEngine.Layers
             lastLayerIndex++;
             layer.Attached = true;
 
-            Log.Core.Trace($"pushed layer ('{layer.GetType().Name}')");
+            Application.CoreLog.Trace($"pushed layer ('{layer.GetType().Name}')");
         }
 
         public void PushOverlay(Layer overlay)
@@ -36,7 +36,7 @@ namespace CrossEngine.Layers
             overlay.OnAttach();
             overlay.Attached = true;
 
-            Log.Core.Trace($"pushed overlay ('{overlay.GetType().Name}')");
+            Application.CoreLog.Trace($"pushed overlay ('{overlay.GetType().Name}')");
         }
 
         public void PopLayer(Layer layer)
@@ -46,7 +46,7 @@ namespace CrossEngine.Layers
             _layers.Remove(layer);
             lastLayerIndex--;
 
-            Log.Core.Trace($"poped layer ('{layer.GetType().Name}')");
+            Application.CoreLog.Trace($"poped layer ('{layer.GetType().Name}')");
         }
 
         public void PopOverlay(Layer overlay)
@@ -55,7 +55,7 @@ namespace CrossEngine.Layers
             overlay.Attached = false;
             _layers.Remove(overlay);
 
-            Log.Core.Trace($"poped overlay ('{overlay.GetType().Name}')");
+            Application.CoreLog.Trace($"poped overlay ('{overlay.GetType().Name}')");
         }
 
         public void PopAll()
@@ -65,7 +65,7 @@ namespace CrossEngine.Layers
                 _layers[i].OnDetach();
                 _layers[i].Attached = false;
 
-                Log.Core.Trace($"poped layer/overlay ('{_layers[i].GetType().Name}')");
+                Application.CoreLog.Trace($"poped layer/overlay ('{_layers[i].GetType().Name}')");
             }
             _layers.Clear();
             lastLayerIndex = 0;

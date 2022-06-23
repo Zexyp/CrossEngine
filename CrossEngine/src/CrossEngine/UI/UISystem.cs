@@ -43,6 +43,7 @@ namespace CrossEngine.ComponentSystems
         public void RegisterCanvas(CanvasComponent canvas)
         {
             var lrd = new SceneLayerRenderData();
+            lrd.Camera = canvas.Camera;
             _renderData.Layers.Add(lrd);
             _layers.Add(canvas, lrd);
         }

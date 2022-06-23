@@ -10,43 +10,38 @@ namespace CrossEngine.Rendering.Textures
 {
     public class TextureAtlas
     {
-        RectangleF[] tiles;
-        float tileWidth = 0;
-        float tileHeight = 0;
+        Vector4[] sprites;
+
         
-        public TextureAtlas(Vector2 size, float tileWidth, float tileHeight, int numTiles, float spacing = 0)
+        public TextureAtlas(Vector2 sheetSize, Vector2 spriteSize, int numTiles)
         {
-            this.tiles = new RectangleF[numTiles];
+            this.sprites = new Vector4[numTiles];
 
-            this.tileWidth = tileWidth;
-            this.tileHeight = tileHeight;
+            var x = 2;
+            var y = 3;
+            var sheetWidth = sheetSize.X;
+            var sheetHeight = sheetSize.Y;
+            var spriteWidth = spriteSize.X;
+            var spriteHeight = spriteSize.Y;
 
-            float currentX = 0;
-            float currentY = 0;
+            float offx = 0;
+            float offy = 0;
             for (int i = 0; i < numTiles; i++)
             {
-                RectangleF rect = new RectangleF(currentX / size.X,
-                                                 currentY / size.Y,
-                                                 this.tileWidth / size.X,
-                                                 this.tileHeight / size.Y);
-
-                tiles[i] = rect;
-
-                currentX += this.tileWidth + spacing;
-                if (currentX >= size.X)
+                sprites[i] = new Vector4(offx, -offy, spriteWidth / sheetWidth, spriteHeight / sheetHeight);
+                sprites[i].Y -= sprites[i].W;
+                offx += spriteWidth / sheetWidth;
+                if (offx >= 1)
                 {
-                    currentX = 0;
-                    currentY += this.tileHeight + spacing;
+                    offx = 0;
+                    offy += spriteHeight / sheetHeight;
                 }
-
-                Debug.Assert(currentY < size.Y);
             }
         }
 
         public Vector4 GetTextureOffsets(int index)
         {
-            RectangleF rect = tiles[index];
-            return new Vector4(rect.X, 1 - rect.Y, rect.Width, rect.Height);
+            return sprites[index];
         }
     }
 }

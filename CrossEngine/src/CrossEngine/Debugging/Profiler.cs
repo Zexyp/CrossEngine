@@ -11,7 +11,7 @@ namespace CrossEngine.Profiling
 {
     public static class Profiler
     {
-        static Logging.Logger Log = Logging.Log.GetLogger("profiler");
+        static Logging.Logger Log = new Logging.Logger("profiler");
 
         #region Structures
         struct ProfilerSession

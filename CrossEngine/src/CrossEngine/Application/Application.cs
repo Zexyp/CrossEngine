@@ -23,6 +23,9 @@ namespace CrossEngine
         //public string Title { get => Window.Title; set => Window.Title = value; }
         public RendererAPI RendererAPI { get; private set; }
 
+        internal static Logger CoreLog;
+        public static Logger Log;
+
         private LayerStack LayerStack;
         //private double _fixedUpdateAggregate = 0;
 
@@ -33,8 +36,8 @@ namespace CrossEngine
 
         public Application(string title = "Window", int width = 1600, int height = 900)
         {
-            // log needs initialization
-            Log.Init();
+            CoreLog = new Logger("CORE");
+            Log = new Logger("APP");
 
             RenderThread = new RenderThread();
 

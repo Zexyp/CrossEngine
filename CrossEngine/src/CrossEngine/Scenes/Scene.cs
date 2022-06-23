@@ -24,7 +24,7 @@ namespace CrossEngine.Scenes
         readonly List<Entity> _entities = new List<Entity>();
         public readonly ReadOnlyCollection<Entity> Entities;
         Dictionary<int, Entity> _entityIds = new Dictionary<int, Entity>();
-        ECSWorld _ecsWorld = new ECSWorld();
+        public ECSWorld ECSWorld { get; private set; } = new ECSWorld();
         int lastId;
         public readonly ReadOnlyCollection<Entity> HierarchyRoot;
         private readonly List<Entity> _roots = new List<Entity>();
@@ -41,13 +41,15 @@ namespace CrossEngine.Scenes
 
             _worldLayer = new SceneLayerRenderData();
 
-            _ecsWorld.RegisterSystem(new ScriptableSystem());
+            ECSWorld.RegisterSystem(new ScriptableSystem());
             //_ecsWorld.RegisterSystem(new UISystem(_renderData));
-            _ecsWorld.RegisterSystem(new SpriteRendererSystem(_worldLayer));
-            _ecsWorld.RegisterSystem(new ParticleSystemSystem(_worldLayer));
-            _ecsWorld.RegisterSystem(new PhysicsSystem(_worldLayer));
-            _ecsWorld.RegisterSystem(new TransformSystem());
-            _ecsWorld.RegisterSystem(new RendererSystem());
+            ECSWorld.RegisterSystem(new SpriteRendererSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new TextRendererSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new ParticleSystemSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new PhysicsSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new TransformSystem());
+            ECSWorld.RegisterSystem(new RendererSystem());
+            ECSWorld.RegisterSystem(new TagSystem());
 
             RenderData = new SceneRenderData();
             RenderData.Layers.Add(_worldLayer);
@@ -55,14 +57,9 @@ namespace CrossEngine.Scenes
             AssetRegistry = new AssetRegistry("./");
         }
 
-        public Scene(string home) : this()
+        public SceneRenderData UpdateRenderData()
         {
-            AssetRegistry.HomeDirectory = home + "./assets/";
-        }
-
-        public SceneRenderData GetRenderData()
-        {
-            var camComp = _ecsWorld.GetSystem<RendererSystem>().Primary;
+            var camComp = ECSWorld.GetSystem<RendererSystem>().Primary;
 
             _worldLayer.Camera = camComp?.Camera;
 
@@ -81,32 +78,32 @@ namespace CrossEngine.Scenes
 
         public void Start()
         {
-            _ecsWorld.Init();
+            ECSWorld.Init();
         }
 
         public void Stop()
         {
-            _ecsWorld.Shutdown();
+            ECSWorld.Shutdown();
         }
 
         public void Update()
         {
-            _ecsWorld.Update();
+            ECSWorld.Update();
         }
 
         public void Render()
         {
-            _ecsWorld.Render();
+            ECSWorld.Render();
         }
 
         public void OnEvent(Event e)
         {
-            _ecsWorld.Event(e);
+            ECSWorld.Event(e);
         }
 
         public Entity CreateEmptyEntity()
         {
-            Entity entity = new Entity(_ecsWorld);
+            Entity entity = new Entity(ECSWorld);
 
             entity.Id = ++lastId;
             _entityIds.Add(entity.Id, entity);

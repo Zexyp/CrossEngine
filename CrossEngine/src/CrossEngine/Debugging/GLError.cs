@@ -22,7 +22,7 @@ namespace CrossEngine.Debugging
             int error;
             while ((error = glGetError()) != GL_NO_ERROR)
             {
-                Log.Core.Error("(" + error + ")");
+                Application.CoreLog.Error("(" + error + ")");
                 return false;
             }
             return true;
@@ -33,7 +33,7 @@ namespace CrossEngine.Debugging
             int error;
             while ((error = glGetError()) != GL_NO_ERROR)
             {
-                Log.Core.Error("(" + error + ")");
+                Application.CoreLog.Error("(" + error + ")");
                 //error.ToString("X")
             }
         }
@@ -45,7 +45,7 @@ namespace CrossEngine.Debugging
             if (!CheckError())
             {
                 string errorString = "at " + caller + " in " + filepath + ":line " + line;
-                Log.Core.Error(errorString);
+                Application.CoreLog.Error(errorString);
                 if (activeAssert) Debug.Assert(false, errorString);
             }
         }

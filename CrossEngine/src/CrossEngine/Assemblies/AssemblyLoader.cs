@@ -65,9 +65,13 @@ namespace CrossEngine.Assemblies
 
             AssemblyLoadContext alc = new AssemblyLoadContext(null, true);
             AssemblyDependencyResolver dr = new AssemblyDependencyResolver(path);
-            Assembly rootAss = alc.LoadFromAssemblyPath(Path.GetFullPath(path));
+            Assembly rootAss;
+            using (FileStream stream = File.OpenRead(Path.GetFullPath(path)))
+            {
+                rootAss = alc.LoadFromStream(stream);
+            }
 
-            Log.Core.Info($"[assembly loader] loaded assembly '{path}'");
+            Application.CoreLog.Info($"[assembly loader] loaded assembly '{path}'");
 
             AssemblyObject assemblyObject = new AssemblyObject(alc, dr, rootAss, path);
             _assemblies.Add(path, assemblyObject);
@@ -90,7 +94,7 @@ namespace CrossEngine.Assemblies
             string depPath = assObj.Resolver.ResolveAssemblyToPath(assn);
             if (depPath == null) return;
             Assembly ass = assObj.Context.LoadFromAssemblyPath(depPath);
-            Log.Core.Info($"[assembly loader] loaded assembly dependency '{Path.GetRelativePath(Environment.CurrentDirectory, depPath)}'");
+            Application.CoreLog.Info($"[assembly loader] loaded assembly dependency '{Path.GetRelativePath(Environment.CurrentDirectory, depPath)}'");
             {
                 var assnArr = ass.GetReferencedAssemblies();
                 for (int i = 0; i < assnArr.Length; i++)
@@ -131,7 +135,7 @@ namespace CrossEngine.Assemblies
 
             _assemblies[key].Destroy();
 
-            Log.Core.Info($"[assembly loader] unloaded assembly '{key}'");
+            Application.CoreLog.Info($"[assembly loader] unloaded assembly '{key}'");
 
             _assemblies.Remove(key);
         }
@@ -144,7 +148,7 @@ namespace CrossEngine.Assemblies
 
             _assemblies[path].Destroy();
 
-            Log.Core.Info($"[assembly loader] unloaded assembly '{path}'");
+            Application.CoreLog.Info($"[assembly loader] unloaded assembly '{path}'");
 
             _assemblies.Remove(path);
         }

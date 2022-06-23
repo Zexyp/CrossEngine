@@ -10,6 +10,7 @@ using System.Numerics;
 
 using CrossEngine.ECS;
 using CrossEngine.Utils.Editor;
+using CrossEngine.Assemblies;
 
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Modals;
@@ -18,14 +19,13 @@ namespace CrossEngineEditor.Panels
 {
     public class InspectorPanel : EditorPanel
     {
-        private readonly Type[] _coreComponents;
+        private static readonly Type[] _coreComponents = Assembly.GetAssembly(typeof(Component)).ExportedTypes.
+                Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract).
+                ToArray();
 
         public InspectorPanel() : base("Inspector")
         {
             WindowFlags = ImGuiWindowFlags.MenuBar;
-            _coreComponents = Assembly.GetAssembly(typeof(Component)).ExportedTypes.
-                Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract).
-                ToArray();
         }
 
         protected override void DrawWindowContent()
@@ -36,21 +36,29 @@ namespace CrossEngineEditor.Panels
                 {
                     if (ImGui.BeginMenu("Add Component"))
                     {
+                        Component SpawnComponent(Type type)
+                        {
+                            return (Component)Activator.CreateInstance(type);
+                        }
+
                         for (int i = 0; i < _coreComponents.Length; i++)
                         {
                             if (ImGui.MenuItem(_coreComponents[i].Name))
                             {
-                                Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(_coreComponents[i]));
+                                Context.ActiveEntity.AddComponent(SpawnComponent(_coreComponents[i]));
                             }
                         }
-                        //ImGui.Separator();
-                        //for (int i = 0; i < EditorLayer.Instance.ComponentTypeRegistry.Count; i++)
-                        //{
-                        //    if (ImGui.MenuItem(EditorLayer.Instance.ComponentTypeRegistry[i].Name))
-                        //    {
-                        //        Context.ActiveEntity.AddComponent<Component>((Component)Activator.CreateInstance(EditorLayer.Instance.ComponentTypeRegistry[i]));
-                        //    }
-                        //}
+                        
+                        ImGui.Separator();
+
+                        var comps = AssemblyLoader.GetSubclassesOf(typeof(Component));
+                        for (int i = 0; i < comps.Length; i++)
+                        {
+                            if (ImGui.MenuItem(comps[i].Name))
+                            {
+                                Context.ActiveEntity.AddComponent(SpawnComponent(comps[i]));
+                            }
+                        }
                         ImGui.EndMenu();
                     }
                     ImGui.Separator();

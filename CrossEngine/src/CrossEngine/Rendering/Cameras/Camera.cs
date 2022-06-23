@@ -1,6 +1,7 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
-using CrossEngine.Utils.Editor;
+using CrossEngine.Utils;
 using CrossEngine.Serialization;
 using CrossEngine.Rendering.Culling;
 
@@ -10,7 +11,7 @@ namespace CrossEngine.Rendering.Cameras
     {
         //_viewMatrix = Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
         public virtual Matrix4x4 ViewMatrix { get; set; } = Matrix4x4.Identity;
-        public virtual Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.Identity;
+        public virtual Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.CreateScale(0.1f);
         public Matrix4x4 ViewProjectionMatrix { get => ViewMatrix * ProjectionMatrix; }
         public Frustum Frustum;
 
@@ -20,6 +21,16 @@ namespace CrossEngine.Rendering.Cameras
         }
 
         public void PrepareFrustum() => Frustum = new Frustum(ProjectionMatrix, ViewMatrix);
+
+        public void SetOrtho()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetPerspective()
+        {
+            throw new NotImplementedException();
+        }
 
         public virtual void Resize(float width, float height) { }
 

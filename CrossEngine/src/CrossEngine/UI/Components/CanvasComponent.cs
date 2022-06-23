@@ -8,30 +8,47 @@ using System.Numerics;
 using CrossEngine.ECS;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Events;
+using CrossEngine.ComponentSystems;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Components
 {
     public class CanvasComponent : Component
     {
-        Camera _camera = new Camera();
+        [EditorValue]
+        public bool DynamicSize;
+        [EditorDrag]
+        public Vector2 Size
+        {
+            get => _size;
+            set
+            {
+                _size = value;
+                Camera.Resize(_size.X, _size.Y);
+            }
+        }
+        
+        Vector2 _size = new Vector2(1, 1);
+        internal Camera Camera = new Camera();
 
         protected internal override void Attach(World world)
         {
-            throw new NotImplementedException();
+            world.GetSystem<UISystem>().RegisterCanvas(this);
         }
 
         protected internal override void Detach(World world)
         {
-            throw new NotImplementedException();
-        }
-
-        public void Update()
-        {
-            _camera.ViewMatrix = Matrix4x4.CreateTranslation(-Entity.Transform?.WorldPosition ?? Vector3.Zero);
+            world.GetSystem<UISystem>().UnregisterCanvas(this);
         }
 
         public void OnEvent(Event e)
         {
+            if (e is WindowResizeEvent && DynamicSize)
+            {
+                var wre = (WindowResizeEvent)e;
+                Size = new Vector2(wre.Width, wre.Height);
+            }
+
             for (int i = 0; i < Entity.Children.Count; i++)
             {
                 if (e.Handled) return;

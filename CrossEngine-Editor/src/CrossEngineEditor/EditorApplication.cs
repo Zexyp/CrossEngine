@@ -18,8 +18,6 @@ namespace CrossEngineEditor
 {
     class EditorApplication : Application
     {
-        public static Logger Log = CrossEngine.Logging.Log.GetLogger("EDITOR");
-
         public EditorApplication() : base("CrossEngine Editor")
         {
             ThreadManager.ExecuteOnRenderThread(() =>

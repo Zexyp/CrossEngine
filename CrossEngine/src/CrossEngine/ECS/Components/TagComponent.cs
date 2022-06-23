@@ -1,6 +1,7 @@
 ﻿using CrossEngine.ECS;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Serialization;
+using CrossEngine.ComponentSystems;
 
 namespace CrossEngine.Components
 {
@@ -17,6 +18,16 @@ namespace CrossEngine.Components
         public TagComponent(string tag)
         {
             Tag = tag;
+        }
+
+        protected internal override void Attach(World world)
+        {
+            world.GetSystem<TagSystem>().Register(this);
+        }
+
+        protected internal override void Detach(World world)
+        {
+            world.GetSystem<TagSystem>().Unregister(this);
         }
 
         protected override Component CreateClone()

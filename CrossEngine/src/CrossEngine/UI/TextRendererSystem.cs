@@ -4,29 +4,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Numerics;
 
 using CrossEngine.ECS;
 using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Renderables;
-using CrossEngine.Profiling;
 
 namespace CrossEngine.ComponentSystems
 {
-    class SpriteRendererSystem : System<SpriteRendererComponent>
+    class TextRendererSystem : System<TextRendererComponent>
     {
-        List<ISpriteRenderData> _filtered = new List<ISpriteRenderData>();
+        List<ITextRenderData> _filtered = new List<ITextRenderData>();
         (IRenderable Renderable, IList Objects) Data;
 
-        public SpriteRendererSystem(SceneLayerRenderData renderData) : base()
+        public TextRendererSystem(SceneLayerRenderData renderData) : base()
         {
-            Data = (new SpriteRenderable(), _filtered);
+            Data = (new TextRenderable(), _filtered);
             renderData.Data.Add(Data);
         }
 
-        public override void Register(SpriteRendererComponent component)
+        public override void Register(TextRendererComponent component)
         {
             base.Register(component);
 
@@ -34,7 +31,7 @@ namespace CrossEngine.ComponentSystems
             component.OnEnabledChanged += EnabledChange;
         }
 
-        public override void Unregister(SpriteRendererComponent component)
+        public override void Unregister(TextRendererComponent component)
         {
             base.Unregister(component);
 
@@ -45,9 +42,9 @@ namespace CrossEngine.ComponentSystems
         private void EnabledChange(Component sender)
         {
             if (sender.Enabled)
-                _filtered.Add((SpriteRendererComponent)sender);
+                _filtered.Add((TextRendererComponent)sender);
             else
-                _filtered.Remove((SpriteRendererComponent)sender);
+                _filtered.Remove((TextRendererComponent)sender);
         }
     }
 }

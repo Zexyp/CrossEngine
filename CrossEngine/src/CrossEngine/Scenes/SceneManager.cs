@@ -16,7 +16,7 @@ namespace CrossEngine.Scenes
     public static class SceneManager
     {
         static readonly Dictionary<string, string> _sceneDirs = new Dictionary<string, string>();
-        static Scene _current;
+        public static Scene Current { get; private set; }
 
         public static void Add(string path)
         {
@@ -33,8 +33,7 @@ namespace CrossEngine.Scenes
             if (_sceneDirs.ContainsKey(name))
             {
                 var path = _sceneDirs[name];
-                string json = File.ReadAllText(Path.Combine(path, "scene.json"));
-                Load(SceneSerializer.DeserializeJson(json));
+                Load(SceneLoader.Read(Path.Combine(path, "scene.json")));
                 return true;
             }
             return false;
@@ -42,18 +41,18 @@ namespace CrossEngine.Scenes
 
         public static bool Load(Scene scene)
         {
-            _current?.Stop();
-            _current?.Unload();
+            Current?.Stop();
+            Current?.Unload();
             SetCurrentScene(scene);
-            _current.Load();
-            _current.Start();
-            return _current != null;
+            Current.Load();
+            Current.Start();
+            return Current != null;
         }
 
         public static void Clear()
         {
-            _current?.Stop();
-            _current?.Unload();
+            Current?.Stop();
+            Current?.Unload();
             SetCurrentScene(null);
         }
 
@@ -64,32 +63,32 @@ namespace CrossEngine.Scenes
 
         public static void Update()
         {
-            _current?.Update();
+            Current?.Update();
         }
 
         public static void Render()
         {
-            if (_current != null)
-                SceneRenderer.DrawScene(_current);
+            if (Current != null)
+                SceneRenderer.DrawScene(Current);
         }
 
         public static void OnEvent(Event e)
         {
-            _current?.OnEvent(e);
+            Current?.OnEvent(e);
         }
 
         public static void End()
         {
-            if (_current == null) return;
+            if (Current == null) return;
 
-            _current.Stop();
-            _current.Unload();
+            Current.Stop();
+            Current.Unload();
         }
 
         static private void SetCurrentScene(Scene scene)
         {
-            _current = scene;
-            CrossEngine.Assets.AssetManager._ctx = _current?.AssetRegistry;
+            Current = scene;
+            CrossEngine.Assets.AssetManager._ctx = Current?.AssetRegistry;
             //CrossEngine.Physics.PhysicsInterface.SetContext(scene.)
         }
     }

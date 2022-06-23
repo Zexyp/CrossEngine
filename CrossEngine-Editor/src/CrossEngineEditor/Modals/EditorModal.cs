@@ -22,10 +22,6 @@ namespace CrossEngineEditor.Modals
             this.ModalName = name;
         }
 
-        /// <summary>
-        /// Draws the modal and returns <see langword="false"/> if modal was closed.
-        /// </summary>
-        /// <returns></returns>
         public bool Draw()
         {
             if (ImGuiExtension.BeginPopupModalNullableOpen(ModalName, ref Open, ModalFlags))

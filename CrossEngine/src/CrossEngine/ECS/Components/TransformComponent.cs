@@ -92,6 +92,7 @@ namespace CrossEngine.Components
                 if (_eulerAngles == value) return;
                 
                 _eulerAngles = value;
+                _eulerAngles = new Vector3(_eulerAngles.X % (MathF.PI * 2), _eulerAngles.Y % (MathF.PI * 2), _eulerAngles.Z % (MathF.PI * 2));
                 _rotation = QuaternionExtension.RotateXYZ(_eulerAngles);
                 MarkForUpdate();
             }
@@ -349,7 +350,7 @@ namespace CrossEngine.Components
         }
         internal readonly ReadOnlyCollection<TransformComponent> Children;
 
-        internal Action<TransformComponent> OnParentChanged;
+        internal event Action<TransformComponent> OnParentChanged;
 
         private void Entity_OnParentChanged(Entity sender)
         {

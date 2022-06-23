@@ -12,23 +12,11 @@ using CrossEngine.Utils.Exceptions;
 
 namespace CrossEngine.Serialization.Json.Converters
 {
-    abstract class ScenedJsonConverter<T> : JsonConverter<T>
+    class SceneJsonConverter : JsonConverter<Scene>
     {
-        public static Scene Scene = null;
-
-        public ScenedJsonConverter(Scene scene)
-        {
-            Scene = scene;
-        }
-    }
-
-    class SceneJsonConverter : ScenedJsonConverter<Scene>
-    {
-        public SceneJsonConverter(Scene scene) : base(scene) { }
-
         public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
-            return Scene;
+            return serializer.Settings.Context;
         }
 
         public override void ReadJson(JsonElement reader, Scene value, JsonSerializer serializer)
@@ -58,13 +46,11 @@ namespace CrossEngine.Serialization.Json.Converters
         }
     }
 
-    class EntityJsonConverter : ScenedJsonConverter<Entity>
+    class EntityJsonConverter : JsonConverter<Entity>
     {
-        public EntityJsonConverter(Scene scene) : base(scene) { }
-
         public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
-            return Scene.CreateEmptyEntity();
+            return ((Scene)serializer.Settings.Context).CreateEmptyEntity();
         }
 
         public override void ReadJson(JsonElement reader, Entity value, JsonSerializer serializer)

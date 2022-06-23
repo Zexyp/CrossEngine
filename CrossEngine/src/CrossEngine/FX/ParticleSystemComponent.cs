@@ -154,7 +154,7 @@ namespace CrossEngine.Components
         {
             if (Properties == null || Emitter == null)
             {
-                Log.Core.Warn($"particel system has no particle properties or emitter assigned (entity id: {Entity.Id})");
+                Application.CoreLog.Warn($"particel system has no particle properties or emitter assigned (entity id: {Entity.Id})");
                 return;
             }
 

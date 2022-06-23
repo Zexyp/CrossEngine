@@ -170,7 +170,7 @@ namespace CrossEngine.Physics
     class RigidBodyWorldDebugDraw : DebugDraw
     {
         public override DebugDrawModes DebugMode { get; set; }
-        Logger Logger = Log.GetLogger("Bullet");
+        Logger Logger = new Logger("Bullet");
 
         public override void Draw3DText(ref BulletVector3 location, string textString)
         {

@@ -1,10 +1,13 @@
-﻿using System;
+﻿using ImGuiNET;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
+using CrossEngine;
 using CrossEngine.Layers;
 using CrossEngine.Utils;
 using CrossEngine.Assemblies;
@@ -38,13 +41,13 @@ namespace CrossEngineRuntime
             }
             catch (Exception ex)
             {
-                Log.App.Fatal("content structure is incorrect!\n" + ex.ToString());
+                Application.Log.Fatal("content structure is incorrect!\n" + ex.ToString());
                 return;
             }
 
             string entry = ini.Read("", "EntryScene");
             if (!SceneManager.Load(entry))
-                Log.App.Fatal("entry scene not found!");
+                Application.Log.Fatal("entry scene not found!");
         }
 
         public override void OnDetach()

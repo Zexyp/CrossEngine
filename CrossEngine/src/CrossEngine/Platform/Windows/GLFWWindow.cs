@@ -95,7 +95,7 @@ namespace CrossEngine.Platform.Windows
 
         private void GLFWErrorCallback(ErrorCode code, IntPtr message)
         {
-            Log.Core.Error("[GLFW] " + (int)code + " (" + code.ToString() + "): " + Marshal.PtrToStringAnsi(message));
+            Application.CoreLog.Error("[GLFW] " + (int)code + " (" + code.ToString() + "): " + Marshal.PtrToStringAnsi(message));
         }
 
         private SizeCallback windowSizeCallbackHolder;
