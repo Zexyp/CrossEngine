@@ -21,17 +21,30 @@ namespace CrossEngine.Serialization
         public abstract object? GetValue(string name, Type typeOfValue);
         public abstract bool TryGetValue(string name, Type typeOfValue, out object value);
 
-        public object? GetValueOrDefault(string name, Type typeOfValue, object customDefault)
+        public object GetValue(string name, Type typeOfValue, object customDefault)
         {
-            return GetValue(name, typeOfValue) ?? customDefault;
+            if (TryGetValue(name, typeOfValue, out object value))
+                return value;
+            else
+                return customDefault;
+        }
+        public T GetValue<T>(string name, T customDefault)
+        {
+            if (TryGetValue(name, out T value))
+                return value;
+            else
+                return customDefault;
         }
         public T? GetValue<T>(string name)
         {
             return (T?)GetValue(name, typeof(T));
         }
-        public T GetValueOrDefault<T>(string name, T customDefault = default)
+        
+        public bool TryGetValue<T>(string name, out T value)
         {
-            return (T)GetValue(name, typeof(T)) ?? customDefault;
+            bool succ = TryGetValue(name, typeof(T), out object objval);
+            value = succ ? (T)objval : default;
+            return succ;
         }
     }
 }

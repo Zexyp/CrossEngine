@@ -2,7 +2,7 @@
 {
     public interface ISerializable
     {
-        public void OnSerialize(SerializationInfo info);
-        public void OnDeserialize(SerializationInfo info);
+        public void GetObjectData(SerializationInfo info);
+        public void SetObjectData(SerializationInfo info);
     }
 }

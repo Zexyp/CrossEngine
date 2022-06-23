@@ -5,6 +5,170 @@ using System.Numerics;
 
 namespace CrossEngine.Utils.Editor
 {
+    // used for ordering
+    public enum EditorAttributeType
+    {
+        None = 0,
+        Hint,
+        Edit,
+        Decor,
+    }
+
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorValueAttribute : Attribute
+    {
+        public string? Name = null;
+        public virtual EditorAttributeType Kind => EditorAttributeType.Edit;
+        static private int lastOrder = 0;
+        public int Order;
+
+        public EditorValueAttribute()
+        {
+            Order = ++lastOrder;
+        }
+
+        public EditorValueAttribute(string? name) : this()
+        {
+            Name = name;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorSectionAttribute : EditorValueAttribute
+    {
+        public override EditorAttributeType Kind => EditorAttributeType.Decor;
+
+        public EditorSectionAttribute(string name)
+        {
+            Name = name;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorHintAttribute : EditorValueAttribute
+    {
+        public override EditorAttributeType Kind => EditorAttributeType.Hint;
+
+        public EditorHintAttribute(string name)
+        {
+            Name = name;
+        }
+    }
+
+    public interface IRangeValue
+    {
+
+    }
+
+    public interface IRangeValue<T> : IRangeValue where T : IComparable<T>, IComparable
+    {
+        public T Min { get; set; }
+        public T Max { get; set; }
+        public T SoftMin { get; set; }
+        public T SoftMax { get; set; }
+    }
+
+    public interface ISteppedRangeValue
+    {
+
+    }
+
+    public interface ISteppedRangeValue<TRange> : ISteppedRangeValue, IRangeValue<TRange> where TRange : IComparable<TRange>, IComparable
+    {
+        public float Step { get; set; }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorRangeAttribute : EditorValueAttribute, IRangeValue<float>
+    {
+        public float Min { get; set; } = float.MinValue;
+        public float Max { get; set; } = float.MaxValue;
+        public float SoftMin { get; set; }
+        public float SoftMax { get; set; }
+
+        public EditorRangeAttribute()
+        {
+            SoftMin = Min;
+            SoftMax = Max;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorRangeIntAttribute : EditorValueAttribute, IRangeValue<int>
+    {
+        public int Min { get; set; } = int.MinValue;
+        public int Max { get; set; } = int.MaxValue;
+        public int SoftMin { get; set; }
+        public int SoftMax { get; set; }
+
+        public EditorRangeIntAttribute()
+        {
+            SoftMin = Min;
+            SoftMax = Max;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorDragAttribute : EditorRangeAttribute, ISteppedRangeValue<float>
+    {
+        public float Step { get; set; } = 0.1f;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorSliderAttribute : EditorRangeAttribute, IRangeValue<float>
+    {
+        //public float Step { get; set; } = 0.1f;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorDragIntAttribute : EditorRangeIntAttribute, ISteppedRangeValue<int>
+    {
+        public float Step { get; set; } = 0.1f;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorSliderIntAttribute : EditorRangeIntAttribute, IRangeValue<int>
+    {
+        //public int Step { get; set; } = 1;
+    }
+
+    public class EditorEnumAttribute : EditorValueAttribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorColorAttribute : EditorValueAttribute
+    {
+        public bool HDR = true;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorInnerDrawAttribute : EditorValueAttribute
+    {
+        public EditorInnerDrawAttribute() { }
+        public EditorInnerDrawAttribute(string name) : base(name) { }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorGradientAttribute : EditorValueAttribute
+    {
+        public EditorGradientAttribute() { }
+        public EditorGradientAttribute(string name) : base(name) { }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorAssetAttribute : EditorValueAttribute
+    {
+        public Type AssetType;
+
+        public EditorAssetAttribute(Type type)
+        {
+            AssetType = type;
+        }
+    }
+
+
     public enum NumberInputType
     {
         Drag,
@@ -16,29 +180,6 @@ namespace CrossEngine.Utils.Editor
     public class EditorDrawableAttribute : Attribute
     {
 
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorValueAttribute : Attribute
-    {
-        public string Name = null;
-
-        public EditorValueAttribute()
-        {
-
-        }
-
-        public EditorValueAttribute(string name)
-        {
-            Name = name;
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorInnerValueAttribute : EditorValueAttribute
-    {
-        public EditorInnerValueAttribute() { }
-        public EditorInnerValueAttribute(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -132,34 +273,18 @@ namespace CrossEngine.Utils.Editor
     }
     #endregion
 
-    #region Color
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorColor3ValueAttribute : EditorValueAttribute
+    public class EditorStringAttribute : EditorValueAttribute
     {
-        public EditorColor3ValueAttribute() { }
-        public EditorColor3ValueAttribute(string name) : base(name) { }
-    }
+        public EditorStringAttribute() { }
+        public EditorStringAttribute(string name) : base(name) { }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorColor4ValueAttribute : EditorValueAttribute
-    {
-        public EditorColor4ValueAttribute() { }
-        public EditorColor4ValueAttribute(string name) : base(name) { }
-    }
-    #endregion
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorStringValueAttribute : EditorValueAttribute
-    {
-        public EditorStringValueAttribute() { }
-        public EditorStringValueAttribute(string name) : base(name) { }
-
-        public EditorStringValueAttribute(string name, uint maxLength) : base(name)
+        public EditorStringAttribute(string name, uint maxLength) : base(name)
         {
             MaxLength = maxLength;
         }
 
-        public EditorStringValueAttribute(uint maxLength)
+        public EditorStringAttribute(uint maxLength)
         {
             MaxLength = maxLength;
         }
@@ -174,12 +299,7 @@ namespace CrossEngine.Utils.Editor
         public EditorBooleanValueAttribute(string name) : base(name) { }
     }
 
-    public class EditorEnumValueAttribute : EditorValueAttribute
-    {
-        public EditorEnumValueAttribute() { }
-        public EditorEnumValueAttribute(string name) : base(name) { }
-    }
-
+    [Obsolete("No longer supported")]
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorAssetValueAttribute : EditorValueAttribute
     {

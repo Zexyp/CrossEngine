@@ -1,191 +1,120 @@
-﻿using System;
-
+﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.IO;
+using System.Diagnostics;
 
 using CrossEngine.Serialization;
-using CrossEngine.Logging;
-using CrossEngine.Utils;
 
 namespace CrossEngine.Assets
 {
-    public interface IAssetCollection : ISerializable
+    internal class DefaultPathProvider : IPathProvider
     {
-        public Asset? this[string name] { get; }
-        public void Load();
-        public void Unload();
-        public void Relativize(string directory);
-        public IReadOnlyCollection<Asset> GetAll();
+        public string GetActualPath(string relativePath) => relativePath;
     }
 
-    public class AssetCollection<T> : IAssetCollection where T : Asset
+    public interface IPathProvider
     {
-        Dictionary<string, Asset> _assets = new Dictionary<string, Asset>();
+        string GetActualPath(string relativePath);
 
-        public event Action<IAssetCollection, Asset> OnAssetAdded;
-        public event Action<IAssetCollection, Asset> OnAssetRemoved;
+        private static IPathProvider _default = new DefaultPathProvider();
+        public static IPathProvider Default => _default;
+    }
 
-        // TODO: check if this makes sense
-        private bool loaded = false;
+    public interface IAssetCollection : ICollection<AssetInfo>, ISerializable
+    {
+        void Load(IPathProvider pathProvider = null);
+        void Unload();
+        void Relativize(string toRoot);
+    }
 
-        public int Count => throw new NotImplementedException();
+    public class AssetCollection<T> : IAssetCollection where T : AssetInfo
+    {
+        protected readonly Dictionary<string, AssetInfo> _assetDict = new Dictionary<string, AssetInfo>();
+        bool Loaded = false;
 
-        public bool IsReadOnly => throw new NotImplementedException();
-
-        public Asset? this[string name]
+        public void AddAsset(T asset)
         {
-            get
+            _assetDict.Add(asset.RelativePath, asset);
+            if (Loaded)
             {
-                if (_assets.TryGetValue(name, out Asset asset)) return asset;
-                return null;
-            }
-        }
-
-        public IReadOnlyCollection<Asset> GetAll()
-        {
-            return _assets.Values;
-        }
-
-        public void Add(Asset asset)
-        {
-            if (!CheckNameAvailability(asset.Name, out string newName)) asset.Name = newName;
-
-            asset.OnNameChanged += OnAssetNameChanged;
-            _assets.Add(asset.Name, asset);
-
-            asset.IsValid = true;
-
-            if (loaded && !asset.IsLoaded)
+                //asset.Active = true;
                 asset.Load();
-
-            OnAssetAdded?.Invoke(this, asset);
-        }
-
-        public void Remove(Asset asset)
-        {
-            asset.OnNameChanged -= OnAssetNameChanged;
-            _assets.Remove(asset.Name);
-
-            if (loaded && asset.IsLoaded)
-                asset.Unload();
-
-            asset.IsValid = false;
-
-            OnAssetRemoved?.Invoke(this, asset);
-        }
-
-        public void Clear()
-        {
-            throw new NotImplementedException();
-
-            while (_assets.Count > 0)
-            {
-                var asset = System.Linq.Enumerable.First(_assets).Value;
-                Remove(asset);
             }
         }
 
-        public void Relativize(string directory)
+        public bool RemoveAsset(T asset)
         {
-            foreach (var item in _assets.Values)
-            {
-                item.Path = PathUtils.GetRelativePath(directory, item.Path);
-            }
-        }
-
-        // true if available
-        private bool CheckNameAvailability(string name, out string nextAvailableName)
-        {
-            if (!_assets.ContainsKey(name))
-            {
-                nextAvailableName = null;
-                return true;
-            }
-
-            int i = 1;
-            string newName;
-            do
-            {
-                newName = name + "." + i.ToString("D3");
-                i++;
-            }
-            while (_assets.ContainsKey(newName));
-
-            nextAvailableName = newName;
+            if (_assetDict.ContainsKey(asset.RelativePath))
+                return _assetDict.Remove(asset.RelativePath);
             return false;
         }
 
-        private void OnAssetNameChanged(Asset sender)
+        public void Load(IPathProvider pathProvider = null)
         {
-            string oldKey = null;
-            foreach (var pair in _assets)
+            foreach (var item in _assetDict)
             {
-                if (pair.Value == sender)
-                {
-                    oldKey = pair.Key;
-                    break;
-                }
+                //item.Value.Active = true;
+                item.Value.Load();
             }
-            _assets.Remove(oldKey);
-
-            if (!CheckNameAvailability(sender.Name, out string nextName))
-            {
-                var existing = _assets[sender.Name];
-                _assets.Remove(sender.Name);
-
-                existing.OnNameChanged -= OnAssetNameChanged;
-                existing.Name = nextName;
-                existing.OnNameChanged += OnAssetNameChanged;
-
-                _assets.Add(existing.Name, existing);
-            }
-
-            _assets.Add(sender.Name, sender);
-        }
-
-        #region ISerializable
-        public virtual void OnSerialize(SerializationInfo info)
-        {
-            info.AddValue("Collection", _assets);
-        }
-
-        public virtual void OnDeserialize(SerializationInfo info)
-        {
-            _assets = (Dictionary<string, Asset>)info.GetValue("Collection", typeof(Dictionary<string, Asset>));
-        }
-        #endregion
-
-        public void Load()
-        {
-            loaded = true;
-
-            foreach (var ass in _assets.Values)
-            {
-                ass.Load();
-            }
-            Log.Core.Trace($"loaded asset collection of type '{this.GetType().GetGenericArguments()[0].Name}'");
+            Loaded = true;
         }
 
         public void Unload()
         {
-            loaded = false;
-
-            foreach (var ass in _assets.Values)
+            foreach (var item in _assetDict)
             {
-                ass.Unload();
+                //item.Value.Active = false;
+                item.Value.Unload();
             }
-            Log.Core.Trace($"unloaded asset collection of type '{this.GetType().GetGenericArguments()[0].Name}'");
+            Loaded = false;
         }
 
-        /*
-        public bool Contains(Asset item) => ((ICollection<Asset>)_assets.Values).Contains(item);
+        public void Relativize(string root)
+        {
+            foreach (var item in _assetDict.Values)
+            {
+                item.RelativePath = Path.GetRelativePath(root, item.RelativePath);
+            }
+        }
 
-        public void CopyTo(Asset[] array, int index) => ((ICollection<Asset>)_assets.Values).CopyTo(array, index);
+        #region ISerializeable
+        public void GetObjectData(SerializationInfo info)
+        {
+            // also checks for users
+            info.AddValue("Assets", _assetDict.Values.Where(a => a.Users > 0).ToArray());
+        }
 
-        public IEnumerator<Asset> GetEnumerator() => ((ICollection<Asset>)_assets.Values).GetEnumerator();
+        public void SetObjectData(SerializationInfo info)
+        {
+            Debug.Assert(_assetDict.Count == 0);
 
-        bool ICollection<Asset>.Remove(Asset item) => ((ICollection<Asset>) _assets.Values).Remove(item);
+            var asses = info.GetValue<AssetInfo[]>("Assets");
+            for (int i = 0; i < asses.Length; i++)
+            {
+                _assetDict.Add(asses[i].RelativePath, (T)asses[i]);
+            }
+        }
+        #endregion
 
-        IEnumerator IEnumerable.GetEnumerator() => ((ICollection<Asset>)_assets.Values).GetEnumerator();
-        */
+        #region ICollection
+        public int Count => _assetDict.Count;
+
+        bool ICollection<AssetInfo>.IsReadOnly => ((ICollection<KeyValuePair<string, AssetInfo>>)_assetDict).IsReadOnly;
+
+        void ICollection<AssetInfo>.Add(AssetInfo item) => AddAsset((T)item);
+
+        public void Clear() => _assetDict.Clear();
+
+        public bool Contains(AssetInfo item) => _assetDict.ContainsValue(item);
+
+        public void CopyTo(AssetInfo[] array, int index) => _assetDict.Values.CopyTo(array, index);
+
+        bool ICollection<AssetInfo>.Remove(AssetInfo item) => RemoveAsset((T)item);
+
+        public IEnumerator<AssetInfo> GetEnumerator() => _assetDict.Values.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => _assetDict.Values.GetEnumerator();
+        #endregion
     }
 }

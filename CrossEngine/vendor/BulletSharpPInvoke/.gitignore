@@ -1,0 +1,8 @@
+/demos
+/tests
+
+obj
+bin
+packages
+*.suo
+*.user

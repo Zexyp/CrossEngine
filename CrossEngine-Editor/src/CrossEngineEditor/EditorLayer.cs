@@ -11,8 +11,7 @@ using System.Threading;
 using System.Globalization;
 
 using CrossEngine;
-using CrossEngine.Entities;
-using CrossEngine.Entities.Components;
+using CrossEngine.ECS;
 using CrossEngine.Events;
 using CrossEngine.Layers;
 using CrossEngine.Logging;
@@ -20,14 +19,16 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
-using CrossEngine.Assets;
 using CrossEngine.Physics;
 using CrossEngine.Serialization;
 using CrossEngine.Profiling;
-using CrossEngine.Assemblies;
 using CrossEngine.Inputs;
+using CrossEngine.Components;
+using CrossEngine.Debugging;
+using CrossEngine.Assemblies;
 
 using CrossEngineEditor.Utils;
+using CrossEngineEditor.Utils.Gui;
 using CrossEngineEditor.Panels;
 using CrossEngineEditor.Modals;
 
@@ -40,27 +41,37 @@ namespace CrossEngineEditor
 
     public class EditorLayer : Layer
     {
-        // singleton
+        // instatnce
         static public EditorLayer Instance;
 
-        public EditorCamera EditorCamera = new EditorCamera();
+        // contexts
+        //public EditorCamera EditorCamera = new EditorCamera();
+        
         public readonly EditorContext Context = new EditorContext();
-        public bool SceneUpdate = true;
+
         private Scene workingScene = null;
+        //public bool SceneUpdate = true;
 
         // ui things
         private List<EditorPanel> _panels = new List<EditorPanel>();
-        private EditorModal _modal = null;
+        private List<EditorModal> _modals = new List<EditorModal>();
         //Texture dockspaceIconTexture;
 
-        // components
-        public Type[] CoreComponentTypes = Assembly.GetAssembly(typeof(Component)).ExportedTypes.Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract).ToArray();
-        
-        private readonly List<Type> _componentTypeRegistry = new List<Type>();
-        public readonly ReadOnlyCollection<Type> ComponentTypeRegistry;
-
         // files
-        readonly internal IniConfig EditorConfig = new IniConfig("editor");
+        readonly internal IniFile EditorConfig = new IniFile("editor");
+        //private string _scenePath = null;
+        //private string ScenePath
+        //{
+        //    get => _scenePath;
+        //    set
+        //    {
+        //        _scenePath = value;
+        //
+        //        var window = Application.Instance.Window;
+        //        if (_scenePath == null) window.Title = "CrossEngine Editor";
+        //        else window.Title = $"CrossEngine Editor [{_scenePath}]";
+        //    }
+        //}
 
         // events
         public event Action PlaymodeStarted;
@@ -69,27 +80,20 @@ namespace CrossEngineEditor
         public EditorLayer()
         {
             if (Instance != null)
-                Log.App.Warn("there should be only one editor layer");
+                EditorApplication.Log.Warn("there should be only one editor layer");
 
             Instance = this;
 
-            ComponentTypeRegistry = _componentTypeRegistry.AsReadOnly();
-
             AddPanel(new InspectorPanel());
-            AddPanel(new SceneHierarchyPanel());
+            AddPanel(new HierarchyPanel());
             AddPanel(new GamePanel());
             AddPanel(new ViewportPanel());
-            AddPanel(new GizmoPanel());
             AddPanel(new LagometerPanel());
-            AddPanel(new ImageViewerPanel());
             AddPanel(new ConfigPanel());
-
-            var ci = (CultureInfo)Thread.CurrentThread.CurrentCulture.Clone();
-            ci.NumberFormat.NumberDecimalSeparator = ".";
-            Thread.CurrentThread.CurrentCulture = ci;
+            //AddPanel(new ImageViewerPanel());
         }
 
-        internal bool LoadConfig(IniConfig config)
+        private bool LoadConfig(IniFile config)
         {
             bool success = true;
 
@@ -127,64 +131,30 @@ namespace CrossEngineEditor
             return success;
         }
 
-        internal void SaveConfig(IniConfig config)
+        private void SaveConfig(IniFile config)
         {
             // panels
             {
                 for (int i = 0; i < _panels.Count; i++)
                 {
                     EditorPanel panel = _panels[i];
-                    config.Write(EditorConfigSections.PanelsOpen, panel.GetType().Name, (panel != null) ? panel.Open.ToString() : "null" );
+                    config.Write(EditorConfigSections.PanelsOpen, panel.GetType().Name, (panel.Open != null) ? panel.Open.ToString() : "null" );
                 }
             }
         }
+
+        bool corruptedConfig = false;
 
         public override void OnAttach()
         {
             //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());
             //dockspaceIconTexture.SetFilterParameter(Rendering.Textures.FilterParameter.Nearest);
 
-            if (!LoadConfig(EditorConfig)) PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
-            if (!ImGuiStyleConfig.Load(new IniConfig("style"))) PushModal(new ActionModal("Config seems to be corrupted!", ActionModal.ButtonFlags.OK));
+            if (!LoadConfig(EditorConfig)) corruptedConfig = true;
+            if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfig = true;
 
-            // --- test code
-            Context.Scene = new Scene();
-            for (int i = -5; i <= 5; i++)
-            {
-                if (i == 0)
-                {
-                    Entity okl = Context.Scene.CreateEntity();
-                    okl.Transform.WorldPosition = new Vector3(i, 0, 0);
-                    okl.AddComponent(new TagComponent("Main"));
-                    okl.AddComponent(new SpriteRendererComponent() { Color = new Vector4(0, 1, 0, 1)});
-                    okl.AddComponent(new CameraComponent(new OrthographicCamera() { OrthographicSize = 10 }));
-                    continue;
-                }
-                Entity ent = Context.Scene.CreateEntity();
-                ent.Transform.WorldPosition = new Vector3(i, 0, 0);
-                ent.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
-                ent.AddComponent(new TagComponent("asd" + i));
-                ent.AddComponent(new RigidBodyComponent() { LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
-                ent.AddComponent(new Box2DColliderComponent());
-            }
-            
-            Entity ground = Context.Scene.CreateEntity();
-            ground.Transform.Scale = new Vector3(10, 1, 1);
-            ground.Transform.Position = new Vector3(0, -5, 0);
-            ground.AddComponent(new SpriteRendererComponent() { Color = new Vector4(1, 1, 1, 1), /*Sprite = new CrossEngine.Rendering.Sprites.Sprite(AssetManager.Textures.LoadTexture("textures/prototype_512x512_grey1.png"))*/ });
-            ground.AddComponent(new RigidBodyComponent() { Mass = 0, Static = true, LinearFactor = new Vector3(1, 1, 0), AngularFactor = new Vector3(0, 0, 1) });
-            ground.AddComponent(new Box2DColliderComponent());
-            //ground.AddComponent(new ExcComponent());
-
-            //CrossEngine.Serialization.Json.JsonSerializer serializer = new CrossEngine.Serialization.Json.JsonSerializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
-            //string json = serializer.Serialize(Scene);
-            //Log.App.Debug(json);
-            //CrossEngine.Serialization.Json.JsonDeserializer deserializer = new CrossEngine.Serialization.Json.JsonDeserializer(CrossEngine.Serialization.Json.JsonSerialization.CreateBaseConvertersCollection());
-            //Scene = (Scene)deserializer.Deserialize(json, typeof(Scene));
-            
-            Application.Instance.Window.SetVSync(false);
-            
-            // ---
+            gre.AddElement(0, Vector4.Zero);
+            gre.AddElement(1, Vector4.One); 
         }
 
         public override void OnDetach()
@@ -196,65 +166,25 @@ namespace CrossEngineEditor
         }
 
         // test pcode
-        int sleep = 0;
+        int updSleep = 0;
+        int rndSleep = 0;
+        Gradient<Vector4> gre = new Gradient<Vector4>();
 
-        public unsafe override void OnRender()
+        int profFrames = 0;
+        public override void OnUpdate()
         {
-            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.OnRender)}");
-
-            Renderer.Clear();
-
-            ImGuiLayer.Instance.Begin();
-
-            SetupDockspace();
-
-            DrawModals();
-
-            DrawMainMenuBar();
-
-            ImGui.ShowDemoWindow(); // purely dev thing
-
-            // debug
-            ImGui.Begin("Debug");
-            if (Context.Scene != null)
+            if (profFrames > 0)
             {
-                Vector3 gr = (Context.Scene.RigidBodyWorld != null) ? Context.Scene.RigidBodyWorld.Gravity : default;
-                if (ImGui.DragFloat3("gravity", ref gr)) Context.Scene.RigidBodyWorld.Gravity = gr;
-                ImGui.Text("editor camera pos:");
-                if (EditorCamera != null) ImGui.Text(EditorCamera.Position.ToString("0.00"));
-                ImGui.SliderInt("sleep", ref sleep, 0, 1000);
-                if (sleep > 0) System.Threading.Thread.Sleep(sleep);
-
-                // test seri
-                if (ImGui.Button("seri test"))
-                {
-                    string json;
-                    json = SceneSerializer.SertializeJson(Context.Scene);
-                    Log.App.Debug(json);
-
-                    Context.Scene.Unload();
-                    ClearContext();
-                    Context.Scene = SceneSerializer.DeserializeJson(json);
-                    Context.Scene.Load();
-                }
+                profFrames--;
+                if (profFrames <= 0) Application.Instance.EndProfiler();
             }
-            ImGui.End();
+            if (Input.GetKeyDown(Key.F9))
+            {
+                profFrames = 60;
+                Application.Instance.StartProfiler();
+            }
 
-
-            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.DrawPanels)}");
-            DrawPanels();
-            Profiler.EndScope();
-
-            EndDockspace();
-
-            ImGuiLayer.Instance.End();
-
-            Profiler.EndScope();
-        }
-
-        public override void OnUpdate(float timestep)
-        {
-            if (Context.Scene?.Running == true && SceneUpdate) Context.Scene.OnUpdateRuntime(Time.DeltaTimeF);
+            SceneManager.Update();
         }
 
         public override void OnEvent(Event e)
@@ -265,6 +195,87 @@ namespace CrossEngineEditor
             {
                 _panels[i].OnEvent(e);
             }
+
+            Profiler.EndScope();
+
+            if (e is WindowCloseEvent)
+            {
+                /*
+                PushModal(new ActionModal("Do you want to exti?", "Exit?", ActionModal.ButtonFlags.OK | ActionModal.ButtonFlags.No,
+                    (button) =>
+                    {
+                        if ((button & ActionModal.ButtonFlags.OK) != 0)
+                            Application.Instance.Window.ShouldClose = true;
+                    }));
+                e.Handled = true;
+                */
+                EditorApplication.Log.Debug("TODO: uncomment");
+                return;
+            }
+
+            if (e is not ImGuiRenderEvent) return;
+
+            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.OnRender)}");
+
+            SetupDockspace();
+
+            DrawModals();
+
+            DrawMainMenuBar();
+
+            ImGui.ShowDemoWindow(); // purely dev thing
+
+            if (corruptedConfig)
+            {
+                PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
+                corruptedConfig = false;
+            }
+
+            // debug
+            ImGui.Begin("Debug");
+            if (Context.Scene != null)
+            {
+                ImGui.SliderInt("upd sleep", ref updSleep, 0, 1000);
+                ImGui.SliderInt("rnd sleep", ref rndSleep, 0, 1000);
+                if (updSleep > 0) ThreadManager.ExecuteOnMianThread(() => Thread.Sleep(updSleep));
+                if (rndSleep > 0) ThreadManager.ExecuteOnRenderThread(() => Thread.Sleep(rndSleep));
+
+                ImGradient.Manipulate(gre);
+
+                // test seri
+                if (ImGui.Button("seri test"))
+                {
+                    string json;
+                    json = SceneSerializer.SerializeJsonToString(Context.Scene);
+                    Application.Log.Debug(json);
+
+                    var oldOut = Context.Scene.RenderData.Output;
+
+                    //Context.Scene.Stop();
+                    Context.Scene.Unload();
+                    //Context.Scene.Unload();
+                    Context.Scene = SceneSerializer.DeserializeJsonFromString(json);
+                    Context.Scene.Load();
+                    //Context.Scene.Start();
+
+                    Context.Scene.RenderData.Output = oldOut;
+
+                    //Context.Scene.Load();
+                }
+            }
+
+            if (ImGui.Button("get ex dir"))
+            {
+                Console.WriteLine(Environment.CurrentDirectory);
+            }
+            ImGui.End();
+
+
+            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.DrawPanels)}");
+            DrawPanels();
+            Profiler.EndScope();
+
+            EndDockspace();
 
             Profiler.EndScope();
         }
@@ -319,7 +330,9 @@ namespace CrossEngineEditor
         {
             for (int i = 0; i < _panels.Count; i++)
             {
+                ImGui.PushID(_panels[i].GetHashCode());
                 _panels[i].Draw();
+                ImGui.PopID();
             }
         }
 
@@ -330,43 +343,87 @@ namespace CrossEngineEditor
                 #region File Menu
                 if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.MenuItem("New"))
+                    if (ImGui.MenuItem("New Project..."))
                     {
-                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ButtonFlags.OKCancel, (flags) =>
-                        {
-                            if (flags == ActionModal.ButtonFlags.OK) FileNewScene();
-                        }));
+                        if (Context.Project != null)
+                            PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", "Are you sure?", ActionModal.ButtonFlags.OKCancel, (flags) =>
+                            {
+                                if (flags == ActionModal.ButtonFlags.OK) FileMenu_NewProject();
+                            }));
+                        else
+                            FileMenu_NewProject();
+                    }
+                
+                    if (ImGui.MenuItem("Open Project..."))
+                    {
+                        if (Context.Project != null)
+                            PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", "Are you sure?", ActionModal.ButtonFlags.OKCancel, (flags) =>
+                            {
+                                if (flags == ActionModal.ButtonFlags.OK) FileMenu_OpenProject();
+                            }));
+                        else
+                            FileMenu_OpenProject();
+                    }
+                    
+                    ImGui.Separator();
+                    
+                    if (ImGui.MenuItem("Save Project", Context.Project != null))
+                    {
+                        Context.Project.Save();
                     }
 
-                    if (ImGui.MenuItem("Open..."))
+                    ImGui.Separator();
+                    
+                    if (ImGui.MenuItem("Create Scene...", Context.Project != null))
                     {
-                        PushModal(new ActionModal("All those beautiful changes will be lost.\nThis operation cannot be undone!\n", ActionModal.ButtonFlags.OKCancel, (flags) =>
-                        {
-                            if (flags == ActionModal.ButtonFlags.OK) FileOpenScene();
-                        }));
+                        FileMenu_CreateScene();
+                    }
+
+                    if (ImGui.MenuItem("Save Scene", Context.Scene != null))
+                    {
+                        Context.Project.SaveScene(Context.Scene);
                     }
 
                     ImGui.Separator();
 
-                    if (ImGui.MenuItem("Save", Context.Scene != null))
+                    if (ImGui.BeginMenu("Load Scene", Context.Project != null))
                     {
-                        FileSaveScene();
+                        string[] scenes = Directory.GetDirectories(Context.Project.ScenesDir);
+                        for (int i = 0; i < scenes.Length; i++)
+                        {
+                            if (ImGui.MenuItem(Path.GetFileName(scenes[i])))
+                            {
+                                Context.Scene?.Unload();
+                                Context.Scene = SceneLoader.Read(Path.Combine(scenes[i], "scene.json"));
+                                Context.Scene.Load();
+                            }
+                        }
+
+                        ImGui.EndMenu();
                     }
 
-                    if (ImGui.MenuItem("Save As...", Context.Scene != null))
-                    {
-                        FileSaveSceneAs();
-                    }
+                    ImGui.Separator();
 
-                    if (ImGui.MenuItem("Save Copy...", Context.Scene != null))
+                    if (ImGui.BeginMenu("Entry Scene", Context.Project != null))
                     {
-                        FileSaveSceneAs(true);
+                        string[] scenes = Directory.GetDirectories(Context.Project.ScenesDir);
+                        for (int i = 0; i < scenes.Length; i++)
+                        {
+                            string name = Path.GetFileName(scenes[i]);
+                            if (ImGui.MenuItem(name, "", name == Context.Project.EntryScene))
+                            {
+                                Context.Project.EntryScene = name;
+                            }
+                        }
+
+                        ImGui.EndMenu();
                     }
 
                     ImGui.EndMenu();
                 }
                 #endregion
 
+                #region Edit Menu
                 if (ImGui.BeginMenu("Edit"))
                 {
                     ImGui.Separator();
@@ -378,7 +435,9 @@ namespace CrossEngineEditor
 
                     ImGui.EndMenu();
                 }
+                #endregion
 
+                #region Window Menu
                 if (ImGui.BeginMenu("Window"))
                 {
                     if (ImGui.BeginMenu("Panels"))
@@ -397,12 +456,22 @@ namespace CrossEngineEditor
                                 ImGui.MenuItem(_panels[i].WindowName);
                             }
                         }
+
+                        ImGui.Separator();
+
+                        if (ImGui.MenuItem("Save Open States"))
+                        {
+                            SaveConfig(EditorConfig);
+                        }
+
                         ImGui.EndMenu();
                     }
+
                     ImGui.EndMenu();
                 }
+                #endregion
 
-                if (ImGui.BeginMenu("Resources", Context.Scene != null))
+                if (ImGui.BeginMenu("Resources", Context.Project != null))
                 {
                     //if (ImGui.BeginMenu("Import Assets"))
                     //{
@@ -415,109 +484,56 @@ namespace CrossEngineEditor
                     //}
                     //
                     //ImGui.Separator();
-
+                
                     if (ImGui.BeginMenu("Assemblies"))
                     {
-                        if (ImGui.MenuItem("Load..."))
+                        if (ImGui.MenuItem("Reload"))
                         {
-                            AssembliesLoad();
-                            ResetComponentTypeRegistry();
-                        }
-                        if (ImGui.MenuItem("Load List..."))
-                        {
-                            AssembliesLoadList();
-                            ResetComponentTypeRegistry();
-                        }
-
-                        ImGui.Separator();
-
-                        if (ImGui.BeginMenu("Reload", AssemblyLoader.LoadedAssemblies.Count > 0))
-                        {
-                            if (ImGui.MenuItem("All"))
+                            AssemblyLoader.UnloadAll();
+                            string[] files = Directory.GetFiles(Context.Project.AssembliesDir);
+                            for (int i = 0; i < files.Length; i++)
                             {
-                                AssemblyLoader.ReloadAll();
-                                ResetComponentTypeRegistry();
+                                AssemblyLoader.Load(files[i]);
                             }
-
-                            ImGui.Separator();
-
-                            foreach (var item in AssemblyLoader.LoadedAssemblies)
-                            {
-                                if (ImGui.MenuItem(item.Path))
-                                {
-                                    AssemblyLoader.Reload(item.Path);
-                                    ResetComponentTypeRegistry();
-                                    break;
-                                }
-                            }
-
-                            ImGui.EndMenu();
                         }
-
-                        ImGui.Separator();
-
-                        if (ImGui.MenuItem("Save List Copy..."))
-                        {
-                            AssembliesSaveList();
-                        }
-
-                        ImGui.Separator();
-
-                        if (ImGui.BeginMenu("Unload", AssemblyLoader.LoadedAssemblies.Count > 0))
-                        {
-                            foreach (var item in AssemblyLoader.LoadedAssemblies)
-                            {
-                                if (ImGui.MenuItem(item.Path))
-                                {
-                                    AssemblyLoader.Unload(item.Path);
-                                    ResetComponentTypeRegistry();
-                                    break;
-                                }
-                            }
-
-                            ImGui.EndMenu();
-                        }
-
+                        
                         ImGui.EndMenu();
                     }
-
+                
                     ImGui.EndMenu();
                 }
 
-                // play mode button
-                Vector2 cp = ImGui.GetCursorPos();
-                cp.X += ImGui.GetColumnWidth() / 2;
-                ImGui.SetCursorPos(cp);
-                bool colorPushed = Context.Scene?.Running == true;
-                if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000dd/*new Vector4(1, 0.2f, 0.1f, 1)*/);
-                if (ImGui.ArrowButton("##play", Context.Scene?.Running == true ? ImGuiDir.Down : ImGuiDir.Right))
+                if (Context.Scene != null)
                 {
-                    if (Context.Scene != null)
+                    // play mode button
+                    Vector2 cp = ImGui.GetCursorPos();
+                    cp.X += ImGui.GetColumnWidth() / 2;
+                    ImGui.SetCursorPos(cp);
+                    bool colorPushed = Context.Playmode == true;
+                    if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000dd/*new Vector4(1, 0.2f, 0.1f, 1)*/);
+                    if (ImGui.ArrowButton("##play", Context.Playmode ? ImGuiDir.Down : ImGuiDir.Right))
                     {
-                        if (!Context.Scene.Running)
+                        if (!Context.Playmode)
                         {
                             StartPlaymode();
                             var gamePanel = GetPanel<GamePanel>();
                             if (gamePanel != null)
                             {
-                                // initial resize event
-                                Context.Scene.OnEvent(new WindowResizeEvent((uint)gamePanel.WindowSize.X, (uint)gamePanel.WindowSize.Y));
                                 ImGui.SetWindowFocus(gamePanel.WindowName);
                             }
                         }
                         else
                         {
                             EndPlaymode();
-                            SceneUpdate = true;
                             ImGui.SetWindowFocus(GetPanel<ViewportPanel>()?.WindowName);
                         }
                     }
+                    if (colorPushed) ImGui.PopStyleColor();
+
+                    //ImGui.Checkbox("##update", ref EditorLayer.Instance.SceneUpdate);
                 }
-                if (colorPushed) ImGui.PopStyleColor();
 
-                ImGui.Checkbox("##update", ref EditorLayer.Instance.SceneUpdate);
-
-                ImGui.BeginMainMenuBar();
+                ImGui.EndMainMenuBar();
             }
         }
 
@@ -530,12 +546,12 @@ namespace CrossEngineEditor
             panel.Attached = true;
             panel.OnAttach();
 
-            panel.OnOpen();
+            if (panel.Open != false) panel.OnOpen();
         }
 
         private void RemovePanel(EditorPanel panel)
         {
-            panel.OnClose();
+            if (panel.Open != false) panel.OnClose();
 
             panel.Attached = false;
             panel.OnDetach();
@@ -558,124 +574,189 @@ namespace CrossEngineEditor
         #region Modal Methods
         private void DrawModals()
         {
-            if (_modal != null)
+            for (int i = 0; i < _modals.Count; i++)
             {
-                if (!_modal.Draw())
-                    _modal = null;
+                var mod = _modals[i];
+                ImGui.PushID(mod.GetHashCode());
+                if (!mod.Pushed)
+                {
+                    mod.Pushed = true;
+                    ImGui.OpenPopup(mod.ModalName);
+                }
+
+                // TODO: stacked modals need to handled recursivly
+                if (!mod.Draw())
+                {
+                    _modals.RemoveAt(i);
+                    i--;
+                }
+                ImGui.PopID();
             }
         }
 
         public void PushModal(EditorModal modal)
         {
-            if (_modal != null) throw new Exception("Modal already opened!");
-            _modal = modal;
+            _modals.Add(modal);
         }
 
         public void PopModal(EditorModal modal)
         {
-            _modal = null;
+            _modals.Remove(modal);
         }
         #endregion
 
-        #region Context
-        public void ClearContext()
+        #region Real Magic
+        private void StartPlaymode()
         {
-            Context.SelectedEntities.Clear();
-            Context.ActiveEntity = null;
+            EditorApplication.Log.Info("starting playmode");
+
+            Context.Playmode = true;
+
+            string json;
+            json = SceneSerializer.SerializeJsonToString(Context.Scene);
+            EditorApplication.Log.Debug($"\n{json}");
+            workingScene = Context.Scene;
+
+            Context.Scene = SceneSerializer.DeserializeJsonFromString(json);
+
+            string[] scenes = Directory.GetDirectories(Context.Project.ScenesDir);
+            for (int i = 0; i < scenes.Length; i++)
+            {
+                SceneManager.Add(scenes[i]);
+            }
+            SceneManager.Load(Context.Scene);
+
+            PlaymodeEnded?.Invoke();
+
+            EditorApplication.Log.Info("playmode started");
+        }
+
+        private void EndPlaymode()
+        {
+            EditorApplication.Log.Info("ending playmode");
+
+            Context.Playmode = false;
+
+            PlaymodeEnded?.Invoke();
+
+            SceneManager.Clear();
+            SceneManager.Reset();
+
+            Context.Scene = workingScene;
+            workingScene = null;
+
+            EditorApplication.Log.Info("playmode ended");
         }
         #endregion
 
         #region File Menu Actions
-        private string _savePath = null;
-        private string SavePath
-        {
-            set
-            {
-                _savePath = value;
-
-                if (_savePath == null) Application.Instance.Window.Title = "CrossEngine Editor";
-                else Application.Instance.Window.Title = $"CrossEngine Editor [{_savePath}]";
-            }
-        }
-        private void FileNewScene()
-        {
-            Context.Scene?.Unload();
-            Context.Scene?.Destroy();
-
-            ClearContext();
-
-            Context.Scene = new Scene();
-            Context.Scene.Load();
-
-            SavePath = null;
-        }
-        private void FileOpenScene()
-        {
-            if (FileDialog.Open(out string path,
-                                    filter:
-                                    "Scene File Env. JSON (*.sfe.json)\0*.sfe.json\0" +
-                                    "All Files (*.*)\0*.*\0"))
-            {
-                Context.Scene?.Unload();
-                Context.Scene?.Destroy();
-
-                AssemblyLoader.UnloadAll();
-
-                ClearContext();
-
-                Context.Scene = SceneLoader.Load(path);
-                Context.Scene.Load();
-
-                SavePath = path;
-            }
-        }
-        private void FileSaveScene()
-        {
-            if (_savePath != null)
-            {
-                EditorApplication.Log.Warn("sry not implemented");
-                FileSaveSceneAs();
-            }
-            else
-            {
-                FileSaveSceneAs();
-            }
-        }
-        private void FileSaveSceneAs(bool copy = false)
+        private void FileMenu_NewProject()
         {
             if (FileDialog.Save(out string path,
                             filter:
-                            "Scene File Env. JSON (*.sfe.json)\0*.sfe.json\0" +
-                            "All Files (*.*)\0*.*\0",
-                            name: "scene"))
+                            FileDialog.Filters.IniFile +
+                            FileDialog.Filters.AllFiles,
+                            name: "ce"))
             {
-                string asmListFile = $"./{Path.GetFileNameWithoutExtension(path)}.assemblies.list";
-                string sceneFile = $"./{Path.GetFileNameWithoutExtension(path)}.scene.json";
+                Context.Project = EditorProject.Create(path);
+            }
+        }
 
-                if (File.Exists(asmListFile) || File.Exists(sceneFile))
+        private void FileMenu_OpenProject()
+        {
+            if (FileDialog.Open(out string path,
+                            filter:
+                            FileDialog.Filters.IniFile +
+                            FileDialog.Filters.AllFiles))
+            {
+                Context.Project = EditorProject.Read(path);
+                var ass = Directory.GetFiles(Context.Project.AssembliesDir);
+                for (int i = 0; i < ass.Length; i++)
                 {
-                    PushModal(new ActionModal("File collison detected!\nOverwrite?",
-                        ActionModal.ButtonFlags.OKCancel,
-                        (button) => { if (button == ActionModal.ButtonFlags.OK) FinishSave(); }
-                        ));
-                    return;
-                }
-
-                FinishSave();
-                void FinishSave()
-                {
-                    SceneLoader.Save(path, Context.Scene, new SceneFileEnvironment()
-                    {
-                        AssembliesList = asmListFile,
-                        Scene = sceneFile,
-                    });
-
-                    if (!copy) SavePath = path;
+                    AssemblyLoader.Load(ass[i]);
                 }
             }
         }
+
+        private void FileMenu_CreateScene()
+        {
+            if (FileDialog.Save(out string path,
+                            filter:
+                            FileDialog.Filters.JsonFile +
+                            FileDialog.Filters.AllFiles,
+                            name: "scene"))
+            {
+                Context.Scene?.Unload();
+                Context.Scene = Context.Project.CreateScene(Path.GetFileName(Path.GetDirectoryName(path)));
+                Context.Scene.Load();
+            }
+        }
+
+        //private void FileOpenScene()
+        //{
+        //    if (FileDialog.Open(out string path,
+        //                            filter:
+        //                            "JSON File (*.json)\0*.json\0" +
+        //                            "All Files (*.*)\0*.*\0"))
+        //    {
+        //        Context.Scene?.Unload();
+        //
+        //        ClearContext();
+        //
+        //        Context.Scene = SceneSerializer.DeserializeJson(File.ReadAllText(path), Path.GetDirectoryName(path));
+        //        Context.Scene.Load();
+        //
+        //        ScenePath = path;
+        //    }
+        //}
+        //private void FileSaveScene()
+        //{
+        //    if (ScenePath != null)
+        //    {
+        //        EditorApplication.Log.Warn("sry not implemented");
+        //        FileSaveSceneAs();
+        //    }
+        //    else
+        //    {
+        //        FileSaveSceneAs();
+        //    }
+        //}
+        //private void FileSaveSceneAs(bool copy = false)
+        //{
+        //    if (FileDialog.Save(out string path,
+        //                    filter:
+        //                    "Scene File Env. INI (*.sfe.ini)\0*.sfe.ini\0" +
+        //                    "All Files (*.*)\0*.*\0",
+        //                    name: "scene"))
+        //    {
+        //        string asmListFile = $"./{Path.GetFileNameWithoutExtension(path)}.assemblies.list";
+        //        string sceneFile = $"./{Path.GetFileNameWithoutExtension(path)}.scene.json";
+        //
+        //        if (File.Exists(asmListFile) || File.Exists(sceneFile))
+        //        {
+        //            PushModal(new ActionModal("File collison detected!\nOverwrite?",
+        //                ActionModal.ButtonFlags.OKCancel,
+        //                (button) => { if (button == ActionModal.ButtonFlags.OK) FinishSave(); }
+        //                ));
+        //            return;
+        //        }
+        //
+        //        FinishSave();
+        //        void FinishSave()
+        //        {
+        //            SceneLoader.Save(path, Context.Scene, new SceneFileEnvironment()
+        //            {
+        //                AssembliesList = asmListFile,
+        //                Scene = sceneFile,
+        //            });
+        //
+        //            if (!copy) SavePath = path;
+        //        }
+        //    }
+        //}
         #endregion
 
+        /*
         #region Assemblies Menu Actions
         private void AssembliesLoad()
         {
@@ -725,40 +806,6 @@ namespace CrossEngineEditor
             _componentTypeRegistry.AddRange(AssemblyLoader.GetSubclassesOf(typeof(Component)));
         }
         #endregion
-
-        #region Real Magic
-        public void StartPlaymode()
-        {
-            EditorApplication.Log.Info("starting playmode");
-
-            string json;
-            json = SceneSerializer.SertializeJson(Context.Scene);
-            //EditorApplication.Log.Debug($"\n{json}");
-            workingScene = Context.Scene;
-            ClearContext();
-
-            Context.Scene = SceneSerializer.DeserializeJson(json);
-
-            Context.Scene.Load();
-            Context.Scene.Start();
-
-            EditorApplication.Log.Info("playmode started");
-        }
-
-        public void EndPlaymode()
-        {
-            EditorApplication.Log.Info("ending playmode");
-
-            Context.Scene.End();
-            Context.Scene.Unload();
-            Context.Scene.Destroy();
-
-            Context.Scene = workingScene;
-            ClearContext();
-            workingScene = null;
-
-            EditorApplication.Log.Info("playmode ended");
-        }
-        #endregion
+        */
     }
 }

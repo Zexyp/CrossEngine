@@ -14,19 +14,18 @@ namespace CrossEngine.Serialization.Json
         public IList<JsonConverter> Converters;
         public TypeResolver TypeResolver;
         public JsonWriterOptions WriterOptions;
+        public object? Context = null;
 
         public JsonSerializerSettings()
         {
             Converters = new List<JsonConverter>();
         }
 
-        public static JsonSerializerSettings Default
+        public static JsonSerializerSettings CreateDefault()
         {
-            get
+            return new JsonSerializerSettings()
             {
-                return new JsonSerializerSettings()
-                {
-                    Converters =
+                Converters =
                     {
                         new EnumJsonConverter(),
                         new TypeJsonConverter(),
@@ -40,10 +39,9 @@ namespace CrossEngine.Serialization.Json
                         new DictionaryInterfaceJsonConverter(),
                         new SerializableInterfaceJsonConverter(),
                     },
-                    TypeResolver = new DefaultTypeResolver(),
-                    WriterOptions = default,
-                };
-            }
+                TypeResolver = new DefaultTypeResolver(),
+                WriterOptions = default,
+            };
         }
     }
 }

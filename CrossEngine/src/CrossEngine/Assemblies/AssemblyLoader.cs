@@ -61,13 +61,17 @@ namespace CrossEngine.Assemblies
         {
             if (!File.Exists(path)) throw new FileNotFoundException();
 
-            path = PathUtils.GetRelativePath(Environment.CurrentDirectory, path);
+            path = Path.GetRelativePath(Environment.CurrentDirectory, path);
 
             AssemblyLoadContext alc = new AssemblyLoadContext(null, true);
             AssemblyDependencyResolver dr = new AssemblyDependencyResolver(path);
-            Assembly rootAss = alc.LoadFromAssemblyPath(Path.GetFullPath(path));
+            Assembly rootAss;
+            using (FileStream stream = File.OpenRead(Path.GetFullPath(path)))
+            {
+                rootAss = alc.LoadFromStream(stream);
+            }
 
-            Log.Core.Info($"[assembly loader] loaded assembly '{path}'");
+            Application.CoreLog.Info($"[assembly loader] loaded assembly '{path}'");
 
             AssemblyObject assemblyObject = new AssemblyObject(alc, dr, rootAss, path);
             _assemblies.Add(path, assemblyObject);
@@ -90,7 +94,7 @@ namespace CrossEngine.Assemblies
             string depPath = assObj.Resolver.ResolveAssemblyToPath(assn);
             if (depPath == null) return;
             Assembly ass = assObj.Context.LoadFromAssemblyPath(depPath);
-            Log.Core.Info($"[assembly loader] loaded assembly dependency '{Path.GetRelativePath(Environment.CurrentDirectory, depPath)}'");
+            Application.CoreLog.Info($"[assembly loader] loaded assembly dependency '{Path.GetRelativePath(Environment.CurrentDirectory, depPath)}'");
             {
                 var assnArr = ass.GetReferencedAssemblies();
                 for (int i = 0; i < assnArr.Length; i++)
@@ -131,20 +135,20 @@ namespace CrossEngine.Assemblies
 
             _assemblies[key].Destroy();
 
-            Log.Core.Info($"[assembly loader] unloaded assembly '{key}'");
+            Application.CoreLog.Info($"[assembly loader] unloaded assembly '{key}'");
 
             _assemblies.Remove(key);
         }
 
         public static void Unload(string path)
         {
-            path = PathUtils.GetRelativePath(Environment.CurrentDirectory, path);
+            path = Path.GetRelativePath(Environment.CurrentDirectory, path);
             
             if (!_assemblies.ContainsKey(path)) throw new InvalidOperationException();
 
             _assemblies[path].Destroy();
 
-            Log.Core.Info($"[assembly loader] unloaded assembly '{path}'");
+            Application.CoreLog.Info($"[assembly loader] unloaded assembly '{path}'");
 
             _assemblies.Remove(path);
         }

@@ -5,9 +5,15 @@
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>CrossEngine_Editor</RootNamespace>
     <Configurations>Debug;Release;Profiling Debug</Configurations>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
@@ -17,7 +23,16 @@
     <DefineConstants>TRACE;DEBUG;PROFILING</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling Debug|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>TRACE;DEBUG;PROFILING</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -25,6 +40,11 @@
     <Compile Remove="assets\**" />
     <EmbeddedResource Remove="assets\**" />
     <None Remove="assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="src\CrossEngineEditor\Panels\GizmoPanel.cs" />
+    <Compile Remove="src\CrossEngineEditor\Panels\ImageViewerPanel.cs" />
   </ItemGroup>
 
   <ItemGroup>

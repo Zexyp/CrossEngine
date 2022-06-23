@@ -154,13 +154,15 @@ namespace CrossEngine.Inputs
         #region Is
         public static bool IsKeyPressed(Key key)
         {
-            InputState state = Glfw.GetKey(Application.Instance.Window.Handle, (Keys)key);
-            return state == InputState.Press || state == InputState.Repeat;
+            throw new NotImplementedException();
+            //InputState state = Glfw.GetKey(Application.Instance.Window.Handle, (Keys)key);
+            //return state == InputState.Press || state == InputState.Repeat;
         }
         public static bool IsMouseButtonPressed(Mouse button)
         {
-            InputState state = Glfw.GetMouseButton(Application.Instance.Window.Handle, (MouseButton)button);
-            return state == InputState.Press;
+            throw new NotImplementedException();
+            //InputState state = Glfw.GetMouseButton(Application.Instance.Window.Handle, (MouseButton)button);
+            //return state == InputState.Press;
         }
         #endregion
 
@@ -193,12 +195,12 @@ namespace CrossEngine.Inputs
         //    float currentY = (mousePosition.Y / (float)Application.Instance.Window.Height) * 2.0f - 1.0f;
         //    return Vector3.Transform(new Vector3(0, -currentY, 0), Matrix4x4Extension.Invert(camera.ViewProjectionMatrix)).Y;
         //}
-        public static Vector2 GetProjectedMouse(Rendering.Cameras.Camera camera, Vector2 mouse, Vector2 window, Vector3 position, Quaternion rotation)
-        {
-            float currentX = (mouse.X / window.X) * 2.0f - 1.0f;
-            float currentY = (mouse.Y / window.Y) * 2.0f - 1.0f;
-            Vector3 projected = Vector3.Transform(new Vector3(currentX, -currentY, 0), Matrix4x4Extension.Invert(Matrix4x4.CreateTranslation(-position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(rotation)) * camera.ProjectionMatrix));
-            return new Vector2(projected.X, projected.Y);
-        }
+        //public static Vector2 GetProjectedMouse(Rendering.Cameras.Camera camera, Vector2 mouse, Vector2 window, Vector3 position, Quaternion rotation)
+        //{
+        //    float currentX = (mouse.X / window.X) * 2.0f - 1.0f;
+        //    float currentY = (mouse.Y / window.Y) * 2.0f - 1.0f;
+        //    Vector3 projected = Vector3.Transform(new Vector3(currentX, -currentY, 0), Matrix4x4Extension.Invert(Matrix4x4.CreateTranslation(-position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(rotation)) * camera.ProjectionMatrix));
+        //    return new Vector2(projected.X, projected.Y);
+        //}
     }
 }

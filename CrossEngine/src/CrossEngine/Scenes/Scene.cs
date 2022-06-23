@@ -1,397 +1,173 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
-using System.Linq;
 
-using CrossEngine.Entities;
-using CrossEngine.Entities.Components;
+using CrossEngine.ECS;
+using CrossEngine.ComponentSystems;
+using CrossEngine.Components;
+using CrossEngine.Rendering;
 using CrossEngine.Events;
 using CrossEngine.Utils;
-using CrossEngine.Rendering;
 using CrossEngine.Rendering.Cameras;
-using CrossEngine.Physics;
-using CrossEngine.Logging;
-using CrossEngine.Rendering.Buffers;
-using CrossEngine.Rendering.Lines;
 using CrossEngine.Assets;
-using CrossEngine.Rendering.Passes;
-using CrossEngine.Profiling;
 
 namespace CrossEngine.Scenes
 {
+    using ECSWorld = World;
+
     public class Scene
     {
-        // serialized
-        public AssetPool AssetPool { get; internal set; } = new AssetPool();
-        
-        public bool Running { get; private set; } = false;
-
-        public readonly ComponentRegistry Registry = new ComponentRegistry();
-
-        private readonly List<Entity> _entities = new List<Entity>();
+        readonly List<Entity> _entities = new List<Entity>();
         public readonly ReadOnlyCollection<Entity> Entities;
-        private Dictionary<int, Entity> _uids = new Dictionary<int, Entity>();
+        Dictionary<int, Entity> _entityIds = new Dictionary<int, Entity>();
+        public ECSWorld ECSWorld { get; private set; } = new ECSWorld();
+        int lastId;
+        public readonly ReadOnlyCollection<Entity> HierarchyRoot;
+        private readonly List<Entity> _roots = new List<Entity>();
 
-        public readonly TreeNode<Entity> HierarchyRoot = new TreeNode<Entity>();
+        public SceneRenderData RenderData { get; private set; }
+        SceneLayerRenderData _worldLayer;
 
-        public RenderPipeline Pipeline;
-
-        public RigidBodyWorld RigidBodyWorld;
-
-        //float fixedUpdateQueue = 0.0f;
-        //int maxFixedUpdateQueue = 3;
-        //float fixedUpdateRate = 60.0f;
+        public AssetRegistry AssetRegistry;
 
         public Scene()
         {
+            HierarchyRoot = _roots.AsReadOnly();
             Entities = _entities.AsReadOnly();
 
-            //Pipeline = new RenderPipeline();
-            //Pipeline.RegisterPass(new Renderer2DPass());
-            //Pipeline.RegisterPass(new LineRenderPass());
+            _worldLayer = new SceneLayerRenderData();
+
+            ECSWorld.RegisterSystem(new ScriptableSystem());
+            //_ecsWorld.RegisterSystem(new UISystem(_renderData));
+            ECSWorld.RegisterSystem(new SpriteRendererSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new TextRendererSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new ParticleSystemSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new PhysicsSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new TransformSystem());
+            ECSWorld.RegisterSystem(new RendererSystem());
+            ECSWorld.RegisterSystem(new TagSystem());
+
+            RenderData = new SceneRenderData();
+            RenderData.Layers.Add(_worldLayer);
+
+            AssetRegistry = new AssetRegistry("./");
         }
 
-        #region Entity Manage
+        public SceneRenderData UpdateRenderData()
+        {
+            var camComp = ECSWorld.GetSystem<RendererSystem>().Primary;
+
+            _worldLayer.Camera = camComp?.Camera;
+
+            return RenderData;
+        }
+
+        public void Load()
+        {
+            AssetRegistry.Load();
+        }
+
+        public void Unload()
+        {
+            AssetRegistry.Unload();
+        }
+
+        public void Start()
+        {
+            ECSWorld.Init();
+        }
+
+        public void Stop()
+        {
+            ECSWorld.Shutdown();
+        }
+
+        public void Update()
+        {
+            ECSWorld.Update();
+        }
+
+        public void Render()
+        {
+            ECSWorld.Render();
+        }
+
+        public void OnEvent(Event e)
+        {
+            ECSWorld.Event(e);
+        }
+
         public Entity CreateEmptyEntity()
         {
-            int why;
+            Entity entity = new Entity(ECSWorld);
 
-            if (_uids.Keys.Count > 0)
-                why = Enumerable.Range(1, _uids.Keys.Max() + 2).Except(_uids.Keys).First();
-            else
-                why = 1;
+            entity.Id = ++lastId;
+            _entityIds.Add(entity.Id, entity);
 
-            Entity entity = new Entity(this, why);
-
-            _uids.Add(why, entity);
             _entities.Add(entity);
 
-            entity.HierarchyNode.Parent = HierarchyRoot;
-
-            if (Running)
-            {
-                entity.Activate();
-            }
-
-            entity.OnComponentAdded += Entity_OnComponentAdded;
-            entity.OnComponentRemoved += Entity_OnComponentRemoved;
-
-            Log.Core.Trace($"created entity with uid {entity.UID}");
-
+            if (entity.Parent == null) _roots.Add(entity);
+            entity.OnParentChanged += Entity_OnParentChanged;
+            
             return entity;
         }
 
         public Entity CreateEntity()
         {
             Entity entity = CreateEmptyEntity();
-            entity.AddComponent(new TransformComponent());
-
+            entity.AddComponent<TransformComponent>();
             return entity;
         }
 
         public void DestroyEntity(Entity entity)
         {
-            if (Running)
-            {
-                entity.Deactivate();
-            }
+            entity.OnParentChanged += Entity_OnParentChanged;
+            _roots.Remove(entity);
 
-            var comps = entity.Components;
-            while (comps.Count > 0) entity.RemoveComponent(comps[0]);
-
-            for (int i = 0; i < entity.HierarchyNode.Children.Count; i++)
-            {
-                entity.HierarchyNode.Children[i].Value.Parent = null;
-            }
-            entity.Parent = null;
-            entity.HierarchyNode.Parent = null;
-
+            while (entity.Components.Count > 0) entity.RemoveComponent(entity.Components[0]);
+            _entityIds.Remove(entity.Id);
+            entity.Id = 0;
+            
             _entities.Remove(entity);
-            _uids.Remove(entity.UID);
-
-            entity.OnComponentAdded -= Entity_OnComponentAdded;
-            entity.OnComponentRemoved -= Entity_OnComponentRemoved;
-
-            Log.Core.Trace($"removed entity with uid {entity.UID}");
         }
 
-        public void DestroyEntityWithChildren(Entity entity)
+        public Entity GetEntityById(int id)
         {
-            if (Running)
-            {
-                entity.Deactivate();
-            }
-
-            var comps = entity.Components;
-            while (comps.Count > 0) entity.RemoveComponent(comps[0]);
-
-            for (int i = 0; i < entity.HierarchyNode.Children.Count; i++)
-            {
-                DestroyEntityWithChildren(entity.HierarchyNode.Children[i].Value);
-            }
-            entity.Parent = null;
-            entity.HierarchyNode.Parent = null;
-
-            _entities.Remove(entity);
-            _uids.Remove(entity.UID);
-
-            Log.Core.Trace($"removed entity with uid {entity.UID}");
+            if (_entityIds.ContainsKey(id))
+                return _entityIds[id];
+            return null;
         }
 
-        private void Entity_OnComponentAdded(Entity sender, Component component)
-        {
-            Registry.AddComponent(component);
-        }
-        private void Entity_OnComponentRemoved(Entity sender, Component component)
-        {
-            Registry.RemoveComponent(component);
-        }
+        public int GetEntityIndex(Entity entity) => _entities.IndexOf(entity);
 
-        public Entity GetEntity(int uid)
+        public void ShiftEntity(Entity child, int destinationIndex)
         {
-            if (!_uids.ContainsKey(uid)) return null;
-            return _uids[uid];
+            if (!_entities.Contains(child)) throw new InvalidOperationException("Scene does not contain entity!");
+            if (destinationIndex < 0 || destinationIndex > _entities.Count - 1) throw new IndexOutOfRangeException("Invalid index!");
+
+            _entities.Remove(child);
+            _entities.Insert(destinationIndex, child);
         }
 
-        //public Entity GetPrimaryCameraEntity()
-        //{
-        //    if (Registry.ContainsType<CameraComponent>())
-        //    {
-        //        var col = Registry.GetComponentsCollection<CameraComponent>();
-        //        for (int i = 0; i < col.Count; i++)
-        //        {
-        //            CameraComponent camComp = col[i];
-        //            if (camComp.Primary) return camComp.Camera;
-        //        }
-        //    }
-        //    return null;
-        //}
+        public int GetRootEntityIndex(Entity entity) => _roots.IndexOf(entity);
 
-        public Camera GetPrimaryCamera()
+        public void ShiftRootEntity(Entity child, int destinationIndex)
         {
-            return Registry.Find<CameraComponent>((camcomp) => camcomp.Primary)?.Camera;
+            if (!_roots.Contains(child)) throw new InvalidOperationException("Scene does not contain root entity!");
+            if (destinationIndex < 0 || destinationIndex > _roots.Count - 1) throw new IndexOutOfRangeException("Invalid index!");
+
+            _roots.Remove(child);
+            _roots.Insert(destinationIndex, child);
         }
 
-        public CameraComponent GetPrimaryCameraComponent()
+        private void Entity_OnParentChanged(Entity sender)
         {
-            return Registry.Find<CameraComponent>((camcomp) => camcomp.Primary);
-        }
-
-        public Matrix4x4? GetPrimaryCamerasViewProjectionMatrix()
-        {
-            return Registry.Find<CameraComponent>((camcomp) => camcomp.Primary)?.ViewProjectionMatrix;
-        }
-
-        public int GetEntityIndex(Entity entity)
-        {
-            //if (!_entities.Contains(entity)) throw new InvalidOperationException("Scene does not contain given entity!");
-            return _entities.IndexOf(entity);
-        }
-
-        public void ShiftEntity(Entity entity, int destinationIndex)
-        {
-            if (!_entities.Contains(entity)) throw new InvalidOperationException("Scene does not contain given entity!");
-            if (destinationIndex < 0 || destinationIndex > _entities.Count - 1) throw new InvalidOperationException("Invalid index!");
-
-            _entities.Remove(entity);
-            _entities.Insert(destinationIndex, entity);
-        }
-        #endregion
-
-        #region Start/End
-        public void Start()
-        {
-            RigidBodyWorld = new RigidBodyWorld();
-
-            Physics.Physics.SetContext(RigidBodyWorld.GetWorld());
-
-            for (int i = 0; i < _entities.Count; i++)
-            {
-                _entities[i].Activate();
-            }
-
-            Running = true;
-        }
-
-        public void End()
-        {
-            Running = false;
-
-
-            for (int i = 0; i < _entities.Count; i++)
-            {
-                _entities[i].Deactivate();
-            }
-
-            Physics.Physics.SetContext(null);
-
-            RigidBodyWorld.Cleanup();
-            RigidBodyWorld = null;
-        }
-        #endregion
-
-        #region Resource Manage
-        public void Load()
-        {
-            if (Running == false) AssetPool.Load();
-            else throw new InvalidOperationException();
-        }
-
-        public void Unload()
-        {
-            if (Running == false) AssetPool.Unload();
-            else throw new InvalidOperationException();
-        }
-
-        public void Destroy()
-        {
-            while (_uids.Count > 0) DestroyEntity(_uids.ElementAt(0).Value);
-        }
-        #endregion
-
-        public void OnEvent(Event e)
-        {
-            for (int i = _entities.Count - 1; i >= 0; i--)
-            {
-                if (e.Handled) break;
-                if (_entities[i].Enabled)
-                    _entities[i].OnEvent(e);
-            }
-        }
-
-        public void OnRender(RenderEvent re)
-        {
-            for (int i = 0; i < _entities.Count; i++)
-            {
-                if (_entities[i].Enabled)
-                    _entities[i].OnRender(re);
-            }
-        }
-
-        public void OnUpdateRuntime(float timestep)
-        {
-            for (int i = 0; i < _entities.Count; i++)
-            {
-                if (_entities[i].Enabled)
-                    _entities[i].OnUpdate(timestep);
-            }
-
-            Profiler.BeginScope("Update physics");
-            RigidBodyWorld.Update(timestep);
-            Profiler.EndScope();
-
-            OnEvent(new RigidBodyWorldUpdateEvent());
-
-            //// fixed update mechanism
-            //fixedUpdateQueue += timestep * fixedUpdateRate;
-            //if (fixedUpdateQueue > maxFixedUpdateQueue)
-            //{
-            //    fixedUpdateQueue = 0.0f;
-            //    Log.Core.Trace("droped scene fixed update queue");
-            //}
-            //while (fixedUpdateQueue > 1.0f)
-            //{
-            //    fixedUpdateQueue--;
-            //}
-            //OnFixedUpdateRuntime();
-        }
-
-        //public void OnFixedUpdateRuntime()
-        //{
-        //
-        //}
-
-        public void OnRenderRuntime()
-        {
-            // TODO: fix no camera state
-
-            var vpMatrix = GetPrimaryCamerasViewProjectionMatrix();
-            if (vpMatrix != null)
-            {
-                RenderPipeline((Matrix4x4)vpMatrix);
-            }
-        }
-
-        public void OnRenderEditor(Matrix4x4 viewProjectionMatrix)
-        {
-            RenderPipeline(viewProjectionMatrix);
-        }
-
-        public void OnRenderEditor(EditorCamera camera)
-        {
-            RenderPipeline(camera.ViewProjectionMatrix);
-        }
-
-        private void RenderPipeline(Matrix4x4 viewProjectionMatrix)
-        {
-            Pipeline?.Render(new SceneData(this, viewProjectionMatrix));
-
-            //if (framebuffer != null) framebuffer.Bind();
-            //
-            //// sprite render pass
-            //Renderer2D.BeginScene(viewProjectionMatrix);
-            //{
-            //    var spriteEnts = Registry.GetComponentsGroup<TransformComponent, SpriteRendererComponent>(Registry.GetComponentsCollection<SpriteRendererComponent>());
-            //    foreach (var spEnt in spriteEnts)
-            //    {
-            //        SpriteRendererComponent src = spEnt.Item2;
-            //        // check if enabled
-            //        if (!src.Enabled) continue;
-            //        TransformComponent trans = spEnt.Item1;
-            //
-            //        // forced z index
-            //        //if (!ForceZIndex)
-            //        //else
-            //
-            //        Matrix4x4 matrix = Matrix4x4.CreateScale(new Vector3(src.Size, 1.0f)) * Matrix4x4.CreateTranslation(new Vector3(src.DrawOffset, 1.0f)) * trans.WorldTransformMatrix;
-            //
-            //        //                          small check can be implemented later
-            //        if (src.TextureAsset == null/* || !src.TextureAsset.IsLoaded*/) Renderer2D.DrawQuad(matrix, src.Color, spEnt.CommonEntity.UID);
-            //        else Renderer2D.DrawQuad(matrix, src.TextureAsset.Texture, src.Color, src.TextureOffsets, spEnt.CommonEntity.UID);
-            //    }
-            //    OnRender(new SpriteRenderEvent());
-            //}
-            //Renderer2D.EndScene();
-            //
-            ////Renderer2D.EnableDiscardingTransparency(true);
-            ////
-            ////Renderer2D.BeginScene(viewProjectionMatrix);
-            ////{
-            ////    SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.Discarding);
-            ////    OnRender(re);
-            ////}
-            ////Renderer2D.EndScene();
-            ////
-            ////Renderer2D.EnableDiscardingTransparency(false);
-            ////
-            ////Renderer.EnableBlending(true, BlendFunc.OneMinusSrcAlpha);
-            ////
-            ////Renderer2D.BeginScene(viewProjectionMatrix);
-            ////{
-            ////    SpriteRenderEvent re = new SpriteRenderEvent(SpriteRendererComponent.TransparencyMode.Blending);
-            ////    OnRender(re);
-            ////}
-            ////Renderer2D.EndScene();
-            ////
-            ////Renderer.EnableBlending(false);
-            //
-            //if (framebuffer != null) framebuffer.EnableColorDrawBuffer(1, false);
-            //
-            //// line render pass
-            //Renderer.SetDepthFunc(DepthFunc.LessEqual);
-            //
-            //LineRenderer.BeginScene(viewProjectionMatrix);
-            //{
-            //    OnRender(new LineRenderEvent());
-            //}
-            //LineRenderer.EndScene();
-            //
-            //Renderer.SetDepthFunc(DepthFunc.Default);
-            //
-            //if (framebuffer != null) framebuffer.EnableAllColorDrawBuffers(true);
+            if (sender.Parent == null) _roots.Add(sender);
+            else _roots.Remove(sender);
         }
     }
 }

@@ -61,6 +61,16 @@ namespace CrossEngine.Properties {
         }
         
         /// <summary>
+        ///   Vyhledává lokalizovaný prostředek typu System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap DebugFontAtlas {
+            get {
+                object obj = ResourceManager.GetObject("DebugFontAtlas", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Vyhledává lokalizovaný prostředek typu System.Drawing.Icon podobný (Ikona).
         /// </summary>
         internal static System.Drawing.Icon DefaultWindowIcon {

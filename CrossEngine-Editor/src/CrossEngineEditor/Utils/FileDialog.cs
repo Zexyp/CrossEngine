@@ -10,43 +10,7 @@ namespace CrossEngineEditor.Utils
     // black box content provided by:
     // https://stackoverflow.com/questions/9088227/using-getopenfilename-instead-of-openfiledialog
 
-    // Copyright
-    // Microsoft Corporation
-    // All rights reserved
-
-    // OpenFileDlg.cs
-
-    
-
-    /*
-    typedef struct tagOFN { 
-      DWORD         lStructSize; 
-      HWND          hwndOwner; 
-      HINSTANCE     hInstance; 
-      LPCTSTR       lpstrFilter; 
-      LPTSTR        lpstrCustomFilter; 
-      DWORD         nMaxCustFilter; 
-      DWORD         nFilterIndex; 
-      LPTSTR        lpstrFile; 
-      DWORD         nMaxFile; 
-      LPTSTR        lpstrFileTitle; 
-      DWORD         nMaxFileTitle; 
-      LPCTSTR       lpstrInitialDir; 
-      LPCTSTR       lpstrTitle; 
-      DWORD         Flags; 
-      WORD          nFileOffset; 
-      WORD          nFileExtension; 
-      LPCTSTR       lpstrDefExt; 
-      LPARAM        lCustData; 
-      LPOFNHOOKPROC lpfnHook; 
-      LPCTSTR       lpTemplateName; 
-    #if (_WIN32_WINNT >= 0x0500)
-      void *        pvReserved;
-      DWORD         dwReserved;
-      DWORD         FlagsEx;
-    #endif // (_WIN32_WINNT >= 0x0500)
-    } OPENFILENAME, *LPOPENFILENAME; 
-    */
+    // param structures
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
     internal class OpenFileName
@@ -86,10 +50,9 @@ namespace CrossEngineEditor.Utils
         public int flagsEx = 0;
     }
 
-    internal class LibWrap
+    internal class NativeDlg
     {
         //BOOL GetOpenFileName(LPOPENFILENAME lpofn);
-
         [DllImport("Comdlg32.dll", CharSet = CharSet.Auto)]
         public static extern bool GetOpenFileName([In, Out] OpenFileName ofn);
         [DllImport("Comdlg32.dll", CharSet = CharSet.Auto)]
@@ -99,8 +62,22 @@ namespace CrossEngineEditor.Utils
         public const int OFN_OVERWRITEPROMPT = 0x00000002;
     }
 
-    public class FileDialog
+    class FileDialog
     {
+        public static class Filters
+        {
+            public const string AllFiles = "All Files (*.*)\0*.*\0";
+            public const string JsonFile = "JSON File (*.json)\0*.json\0";
+            public const string IniFile = "INI File (*.ini)\0*.ini\0";
+            public const string ImageFiles = "All Image Files (*.bmp; *.jpg; *.jpeg; *.png; *.tif; *.tiff)\0*.bmp;*.jpg;*.jpeg;*.png;*.tif;*.tiff\0" +
+                "PNG (*.png)\0*.png\0" +
+                "JPG (*.jpg; *.jpeg)\0*.jpg;*.jpeg\0" +
+                "BMP (*.bmp)\0*.bmp\0" +
+                "GIF (*.gif)\0*.gif\0" +
+                "TIFF (*.tif; *.tiff)\0*.tif;*.tiff\0" +
+                "EXIF (*.exif)\0*.exif\0";
+        }
+
         public static bool Open(out string filepath, 
             string initialDir = null,
             string title = null,
@@ -124,10 +101,10 @@ namespace CrossEngineEditor.Utils
             ofn.defExt = (defExt != null) ? defExt : "";
 
             // !!!
-            ofn.flags |= LibWrap.OFN_NOCHANGEDIR; // what kind person decided that it's good idea to change execution directory when calling this mess (._. )
+            ofn.flags |= NativeDlg.OFN_NOCHANGEDIR; // what kind person decided that it's good idea to change execution directory when calling this mess (._. )
             // !!!
 
-            bool success = LibWrap.GetOpenFileName(ofn);
+            bool success = NativeDlg.GetOpenFileName(ofn);
 
             // sussy info
             //Console.WriteLine("Selected file with full path: {0}", ofn.file);
@@ -165,9 +142,9 @@ namespace CrossEngineEditor.Utils
             ofn.title = (title != null) ? title : "Save";
             ofn.defExt = (defExt != null) ? defExt : "";
 
-            ofn.flags |= LibWrap.OFN_OVERWRITEPROMPT;
+            ofn.flags |= NativeDlg.OFN_OVERWRITEPROMPT;
 
-            bool success = LibWrap.GetSaveFileName(ofn);
+            bool success = NativeDlg.GetSaveFileName(ofn);
 
             // sussy info
             //Console.WriteLine("Selected file with full path: {0}", ofn.file);

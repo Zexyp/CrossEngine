@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 
 namespace CrossEngine.Serialization.Json.Converters
 {
@@ -6,14 +7,14 @@ namespace CrossEngine.Serialization.Json.Converters
     {
         public override void ReadJson(JsonElement reader, ISerializable value, JsonSerializer serializer)
         {
-            value.OnDeserialize(new JsonSerializationInfo(reader, serializer));
+            value.SetObjectData(new JsonSerializationInfo(serializer, reader));
         }
 
         public override void WriteJson(Utf8JsonWriter writer, ISerializable value, JsonSerializer serializer)
         {
-            var valtype = value.GetType();
+            //var valtype = value.GetType();
             //writer.WriteString("$type", valtype.FullName);
-            value.OnSerialize(new JsonSerializationInfo(writer, serializer));
+            value.GetObjectData(new JsonSerializationInfo(serializer, writer));
         }
     }
 }

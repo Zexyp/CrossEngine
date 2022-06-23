@@ -3,8 +3,8 @@
 using System.Text.Json;
 
 using CrossEngine.Scenes;
-using CrossEngine.Entities;
-using CrossEngine.Entities.Components;
+using CrossEngine.ECS;
+using CrossEngine.Components;
 using CrossEngine.Assets;
 using CrossEngine.Utils;
 using CrossEngine.Logging;
@@ -12,28 +12,16 @@ using CrossEngine.Utils.Exceptions;
 
 namespace CrossEngine.Serialization.Json.Converters
 {
-    abstract class ScenedJsonConverter<T> : JsonConverter<T>
+    class SceneJsonConverter : JsonConverter<Scene>
     {
-        public static Scene Scene = null;
-
-        public ScenedJsonConverter(Scene scene)
-        {
-            Scene = scene;
-        }
-    }
-
-    class SceneJsonConverter : ScenedJsonConverter<Scene>
-    {
-        public SceneJsonConverter(Scene scene) : base(scene) { }
-
         public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
-            return Scene;
+            return serializer.Settings.Context;
         }
 
         public override void ReadJson(JsonElement reader, Scene value, JsonSerializer serializer)
         {                    
-            value.AssetPool = (AssetPool)serializer.Deserialize(reader.GetProperty("AssetPool"), typeof(AssetPool));
+            value.AssetRegistry = (AssetRegistry)serializer.Deserialize(reader.GetProperty("AssetRegistry"), typeof(AssetRegistry));
 
             foreach (var entEl in reader.GetProperty("Entities").GetProperty("$values").EnumerateArray())
             {
@@ -47,8 +35,8 @@ namespace CrossEngine.Serialization.Json.Converters
 
         public override void WriteJson(Utf8JsonWriter writer, Scene value, JsonSerializer serializer)
         {
-            writer.WritePropertyName("AssetPool");
-            serializer.Serialize(writer, value.AssetPool);
+            writer.WritePropertyName("AssetRegistry");
+            serializer.Serialize(writer, value.AssetRegistry);
 
             writer.WritePropertyName("Entities");
             serializer.Serialize(writer, value.Entities);
@@ -58,18 +46,16 @@ namespace CrossEngine.Serialization.Json.Converters
         }
     }
 
-    class EntityJsonConverter : ScenedJsonConverter<Entity>
+    class EntityJsonConverter : JsonConverter<Entity>
     {
-        public EntityJsonConverter(Scene scene) : base(scene) { }
-
         public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
-            return Scene.CreateEmptyEntity();
+            return ((Scene)serializer.Settings.Context).CreateEmptyEntity();
         }
 
         public override void ReadJson(JsonElement reader, Entity value, JsonSerializer serializer)
         {
-            value.Enabled = reader.GetProperty("Enabled").GetBoolean();
+            //value.Enabled = reader.GetProperty("Enabled").GetBoolean();
 
             value.Parent = (Entity)serializer.Deserialize(reader.GetProperty("Parent"), typeof(Entity));
 
@@ -82,42 +68,11 @@ namespace CrossEngine.Serialization.Json.Converters
 
         public override void WriteJson(Utf8JsonWriter writer, Entity value, JsonSerializer serializer)
         {
-            writer.WriteBoolean("Enabled", value.Enabled);
+            //writer.WriteBoolean("Enabled", value.Enabled);
             writer.WritePropertyName("Parent");
             serializer.Serialize(writer, value.Parent);
             writer.WritePropertyName("Components");
             serializer.Serialize(writer, value.Components);
-        }
-    }
-
-    class ComponentJsonConverter : MutableJsonConverter<Component>
-    {
-        public override void ReadJson(JsonElement reader, Component value, JsonSerializer serializer)
-        {
-            value.Enabled = reader.GetProperty("Enabled").GetBoolean();
-
-            try
-            {
-                value.OnDeserialize(new JsonSerializationInfo(reader, serializer));
-            }
-            catch (Exception ex)
-            {
-                Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnDeserialize), value.GetType().Name, ex);
-            }
-        }
-
-        public override void WriteJson(Utf8JsonWriter writer, Component value, JsonSerializer serializer)
-        {
-            writer.WriteBoolean("Enabled", value.Enabled);
-
-            try
-            {
-                value.OnSerialize(new JsonSerializationInfo(writer, serializer));
-            }
-            catch (Exception ex)
-            {
-                Log.Core.Error(ExceptionMessages.ComponentInteraction, nameof(Component.OnSerialize), value.GetType().Name, ex);
-            }
         }
     }
 }

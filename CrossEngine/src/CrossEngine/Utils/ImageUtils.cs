@@ -10,7 +10,7 @@ using System.Numerics;
 
 
 
-namespace CrossEngine.Utils
+namespace CrossEngine.Utils.Imaging
 {
 	public static class ImageUtils
     {

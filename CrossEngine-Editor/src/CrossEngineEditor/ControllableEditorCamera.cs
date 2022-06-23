@@ -12,20 +12,31 @@ namespace CrossEngineEditor
 {
     abstract public class ControllableEditorCamera : EditorCamera
     {
-        // in pixels needed to resolve input amount
+        // in pixels; needed to resolve input amount
         public Vector2 ViewportSize;
-        public float AspectRatio = 1;
+        private float _aspectRatio;
+        public float AspectRatio
+        {
+            get { return _aspectRatio; }
+            set
+            {
+                _aspectRatio = value;
+                if (_aspectRatio <= 0) _aspectRatio = 1;
+            }
+        }
 
         public abstract void Pan(Vector2 delta);
         public abstract void Move(Vector2 delta);
         public abstract void Zoom(float delta);
+        public abstract void Fly(Vector3 delta, Vector2 mouse);
+        protected abstract Matrix4x4 CreateProjectionMatrix();
 
         public override void Resize(float width, float height)
         {
             ViewportSize = new Vector2(width, height);
-            AspectRatio = ViewportSize.X / ViewportSize .Y;
+            AspectRatio = ViewportSize.X / ViewportSize.Y;
 
-            MarkProjectionDirty();
+            ProjectionMatrix = CreateProjectionMatrix();
         }
     }
 
@@ -35,7 +46,8 @@ namespace CrossEngineEditor
         private float _zNear = -1.0f;
         private float _zFar = 1.0f;
 
-        [EditorSingleValue]
+        #region Properies
+        [EditorDrag]
         public float OrthographicSize
         {
             get => _orthographicSize;
@@ -43,10 +55,10 @@ namespace CrossEngineEditor
             {
                 if (_orthographicSize == value) return;
                 _orthographicSize = value;
-                MarkProjectionDirty();
+                ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZNear
         {
             get => _zNear;
@@ -54,10 +66,10 @@ namespace CrossEngineEditor
             {
                 if (_zNear == value) return;
                 _zNear = value;
-                MarkProjectionDirty();
+                ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZFar
         {
             get => _zFar;
@@ -65,9 +77,10 @@ namespace CrossEngineEditor
             {
                 if (_zFar == value) return;
                 _zFar = value;
-                MarkProjectionDirty();
+                ProjectionMatrix = CreateProjectionMatrix();
             }
         }
+        #endregion
 
         protected override Matrix4x4 CreateProjectionMatrix()
         {
@@ -87,7 +100,7 @@ namespace CrossEngineEditor
             OrthographicSize -= delta * 0.25f / (1 / OrthographicSize * 4);
             OrthographicSize = Math.Max(OrthographicSize, 0.1f);
 
-            MarkProjectionDirty();
+            ProjectionMatrix = CreateProjectionMatrix();
         }
 
         public override void Pan(Vector2 delta)
@@ -95,74 +108,11 @@ namespace CrossEngineEditor
             Move(delta);
         }
 
-        //float pitch = 0.0f, yaw = 0.0f, roll = 0.0f;
-
-        //float cameraTranslationSpeed = 5.0f;
-
-        //public Vector3 GetUpDirection()
-        //{
-        //    return Vector3.Transform(Vector3.UnitY, Camera.Rotation);
-        //}
-        //public Vector3 GetRightDirection()
-        //{
-        //    return Vector3.Transform(Vector3.UnitX, Camera.Rotation);
-        //}
-        //public Vector3 GetForwardDirection()
-        //{
-        //    return Vector3.Transform(Vector3.UnitZ, Camera.Rotation);
-        //}
-
-        //public Quaternion GetOrientation()
-        //{
-        //    // mby negate roll
-        //    return QuaternionExtension.CreateFromXYZRotation(new Vector3(-pitch, -yaw, roll));
-        //}
-
-        //public void OnUpdateX(float timestep)
-        //{
-        //    Vector2 mouse = new Vector2(Input.GetMouseX(), Input.GetMouseY());
-        //    Vector2 delta = (mouse - initialMousePosition) * 0.003f;
-        //    initialMousePosition = mouse;
-        //
-        //    if (Input.IsMouseButtonPressed(Mouse.Middle))
-        //        MousePan(delta);
-        //
-        //    float moveSpeedMultiplier = Input.GetKey(Key.LeftShift) ? 2.0f : (Input.GetKey(Key.LeftControl) ? 0.5f : 1.0f);
-        //    moveSpeedMultiplier *= timestep * cameraTranslationSpeed;
-        //
-        //    if (Input.GetKey(Key.ArrowRight))
-        //    {
-        //        Camera.Position += moveSpeedMultiplier * GetRightDirection();
-        //    }
-        //    if (Input.GetKey(Key.ArrowLeft))
-        //    {
-        //        Camera.Position -= moveSpeedMultiplier * GetRightDirection();
-        //    }
-        //    
-        //    if (Input.GetKey(Key.ArrowUp))
-        //    {
-        //        Camera.Position += moveSpeedMultiplier * GetUpDirection();
-        //    }
-        //    if (Input.GetKey(Key.ArrowDown))
-        //    {
-        //        Camera.Position -= moveSpeedMultiplier * GetUpDirection();
-        //    }
-        //
-        //    cameraTranslationSpeed = zoomLevel;
-        //}
-        //
-        //public void Resize(float width, float height)
-        //{
-        //    aspectRatio = width / height;
-        //    camera.SetProjection(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel);
-        //}
-        //
-        //
-        //void OnWindowResize(WindowResizeEvent e)
-        //{
-        //    if (AutoResize)
-        //        Resize(e.Width, e.Height);
-        //}
+        public override void Fly(Vector3 delta, Vector2 mouse)
+        {
+            Position += new Vector3(delta.X, delta.Z, delta.Y) * OrthographicSize;
+            Zoom(mouse.X * 0.05f);
+        }
     }
 
     public class PerspectiveControllableEditorCamera : ControllableEditorCamera
@@ -173,7 +123,10 @@ namespace CrossEngineEditor
         private float _zoom = 10f;
         Vector2 rotation;
 
-        [EditorSingleValue]
+        public override Matrix4x4 ViewMatrix => base.ViewMatrix * Matrix4x4.CreateTranslation(new Vector3(0, 0, _zoom));
+
+        #region Properies
+        [EditorDrag]
         public float ZNear
         {
             get => _zNear;
@@ -181,10 +134,10 @@ namespace CrossEngineEditor
             {
                 if (_zNear == value) return;
                 _zNear = Math.Clamp(value, float.Epsilon, BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(_zFar) - 1));
-                MarkProjectionDirty();
+                ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZFar
         {
             get => _zFar;
@@ -192,21 +145,21 @@ namespace CrossEngineEditor
             {
                 if (_zFar == value) return;
                 _zFar = Math.Clamp(value, BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(_zNear) + 1), float.MaxValue);
-                MarkProjectionDirty();
+                ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag(Min = 1, Max = 179.999985f)]
         public float FOV
         {
             get => _fov;
             set
             {
                 if (_fov == value) return;
-                _fov = Math.Clamp(value, float.Epsilon, 179.999985f);
-                MarkProjectionDirty();
+                _fov = value;
+                ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorSingleValue]
+        [EditorDrag]
         public float ZoomDistance
         {
             get => _zoom;
@@ -214,16 +167,14 @@ namespace CrossEngineEditor
             {
                 if (_fov == value) return;
                 _zoom = Math.Clamp(value, float.Epsilon, float.MaxValue);
-                MarkProjectionDirty();
+                ProjectionMatrix = CreateProjectionMatrix();
             }
         }
+        #endregion
 
         protected override Matrix4x4 CreateProjectionMatrix()
         {
-            return Matrix4x4.CreateTranslation(new Vector3(0, 0, -_zoom)) * Matrix4x4.CreatePerspectiveFieldOfView(
-                MathExtension.ToRadians(_fov),
-                AspectRatio,
-                _zNear, _zFar);
+            return Matrix4x4Extension.Perspective(MathExtension.ToRadians(_fov), AspectRatio, _zNear, _zFar);
         }
 
 
@@ -233,7 +184,8 @@ namespace CrossEngineEditor
             // input direction correction
             if (Math.Abs(rotation.Y) + MathF.PI / 2 > MathF.PI) delta.X *= -1;
 
-            rotation += delta / 360 * (MathF.PI / 2);
+            //                  magical number
+            rotation -= delta / 360 * (MathF.PI / 2);
             rotation = new Vector2(rotation.X % (2*MathF.PI), rotation.Y % (2*MathF.PI));
 
             Rotation = Quaternion.CreateFromYawPitchRoll(
@@ -251,7 +203,18 @@ namespace CrossEngineEditor
         {
             ZoomDistance -= delta * 0.25f / (1 / _zoom * 4);
 
-            MarkProjectionDirty();
+            ProjectionMatrix = CreateProjectionMatrix();
+        }
+
+        public override void Fly(Vector3 delta, Vector2 mouse)
+        {
+            Vector3 rotated = Vector3.Transform(delta, Rotation);
+            Position += rotated * _zoom;
+            Position -= Vector3.Transform(Vector3.UnitZ, Rotation) * _zoom;
+
+            Move(-mouse * new Vector2(1, -1) / 2);
+
+            Position += Vector3.Transform(Vector3.UnitZ, Rotation) * _zoom;
         }
     }
 }

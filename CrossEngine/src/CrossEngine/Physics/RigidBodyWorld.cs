@@ -2,105 +2,59 @@
 using BulletSharp;
 
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Drawing;
-using System.Numerics;
 
-using CrossEngine.Events;
-using CrossEngine.Entities.Components;
 using CrossEngine.Logging;
-using CrossEngine.Utils;
+using CrossEngine.Rendering;
+using CrossEngine.Utils.Bullet;
 
 namespace CrossEngine.Physics
 {
+    using BulletVector4 = BulletSharp.Math.Vector4;
     using BulletVector3 = BulletSharp.Math.Vector3;
+    using Vector3 = System.Numerics.Vector3;
+    using Vector4 = System.Numerics.Vector4;
 
-    public class RigidBodyWorldUpdateEvent : Event
+    class RigidBodyWorld : IDisposable, IObjectRenderData
     {
-
-    }
-
-    public class RigidBodyWorld
-    {
-        private CollisionConfiguration _collisionConfiguration;
-        private CollisionDispatcher _dispatcher;
-        private BroadphaseInterface _overlappingPairCache;
-        private DiscreteDynamicsWorld _world;
-
-        internal CollisionDispatcher Dispatcher { get => _dispatcher; }
-        internal BroadphaseInterface Broadphase { get => _overlappingPairCache; }
-
-        public int MaxSubSteps = 10;
-        public float FixedTimeStep = 1.0f / 60;
-
-        //private readonly VoronoiSimplexSolver _simplexSolver;
-        //private readonly MinkowskiPenetrationDepthSolver _penetrationDepthSolver;
-        //
-        //private readonly Convex2DConvex2DAlgorithm.CreateFunc _convexAlgo2D;
-        //private readonly Box2DBox2DCollisionAlgorithm.CreateFunc _boxAlgo2D;
-
         public Vector3 Gravity
         {
-            get => _world.Gravity.ToNumerics();
+            get => World.Gravity.ToNumerics();
             set
             {
-                var bulletval = value.ToBullet();
-                if (_world.Gravity == bulletval) return;
-                _world.Gravity = bulletval;
-                CollisionObject co;
-                for (int i = 0; i < _world.CollisionObjectArray.Count; i++)
+                World.Gravity = value.ToBullet();
+                for (int i = 0; i < World.CollisionObjectArray.Count; i++)
                 {
-                    co = _world.CollisionObjectArray[i];
-                    if (!co.IsActive) co.Activate();
+                    var collisionObject = World.CollisionObjectArray[i];
+                    if (!collisionObject.IsStaticObject)
+                        collisionObject.Activate();
                 }
             }
         }
 
-        internal object GetWorld() => _world;
+        CollisionConfiguration _collisionConfiguration;
+        CollisionDispatcher _dispatcher;
+        internal BroadphaseInterface Broadphase { get; private set; }
+        internal DiscreteDynamicsWorld World { get; private set; }
 
         public RigidBodyWorld()
         {
             _collisionConfiguration = new DefaultCollisionConfiguration();
             _dispatcher = new CollisionDispatcher(_collisionConfiguration);
-            _overlappingPairCache = new DbvtBroadphase();
-            _world = new DiscreteDynamicsWorld(_dispatcher, _overlappingPairCache, null, _collisionConfiguration);
+            Broadphase = new DbvtBroadphase();
+            World = new DiscreteDynamicsWorld(_dispatcher, Broadphase, null, _collisionConfiguration);
+            World.LatencyMotionStateInterpolation = false;
 
-            //_world.DebugDrawer = new RigidBodyWorldDebugDraw();
-            
-            // 2D rn!
-            //
-            //collisionConfiguration = new DefaultCollisionConfiguration();
-            //
-            //// Use the default collision dispatcher. For parallel processing you can use a diffent dispatcher.
-            //Dispatcher = new CollisionDispatcher(collisionConfiguration);
-            //
-            ////_simplexSolver = new VoronoiSimplexSolver();
-            ////_penetrationDepthSolver = new MinkowskiPenetrationDepthSolver();
-            ////
-            ////_convexAlgo2D = new Convex2DConvex2DAlgorithm.CreateFunc(_simplexSolver, _penetrationDepthSolver);
-            ////_boxAlgo2D = new Box2DBox2DCollisionAlgorithm.CreateFunc();
-            ////
-            ////Dispatcher.RegisterCollisionCreateFunc(BroadphaseNativeType.Convex2DShape, BroadphaseNativeType.Convex2DShape, _convexAlgo2D);
-            ////Dispatcher.RegisterCollisionCreateFunc(BroadphaseNativeType.Box2DShape, BroadphaseNativeType.Convex2DShape, _convexAlgo2D);
-            ////Dispatcher.RegisterCollisionCreateFunc(BroadphaseNativeType.Convex2DShape, BroadphaseNativeType.Box2DShape, _convexAlgo2D);
-            ////Dispatcher.RegisterCollisionCreateFunc(BroadphaseNativeType.Box2DShape, BroadphaseNativeType.Box2DShape, _boxAlgo2D);
-            //
-            //Broadphase = new DbvtBroadphase();
-            //
-            //dynamicsWorld = new DiscreteDynamicsWorld(Dispatcher, Broadphase, null, collisionConfiguration);
-            //
+            World.DebugDrawer = new RigidBodyWorldDebugDraw();
         }
 
         #region Cleanup
-        public void Cleanup()
+        public void Dispose()
         {
-            CleanupConstraints(_world);
-            CleanupBodiesAndShapes(_world);
+            CleanupConstraints(World);
+            CleanupBodiesAndShapes(World);
 
-            _world.Dispose();
-            _overlappingPairCache.Dispose();
+            World.Dispose();
+            Broadphase.Dispose();
             _dispatcher.Dispose();
             _collisionConfiguration.Dispose();
         }
@@ -137,7 +91,7 @@ namespace CrossEngine.Physics
             for (int i = world.NumCollisionObjects - 1; i >= 0; i--)
             {
                 CollisionObject obj = world.CollisionObjectArray[i];
-                
+
                 var rigidBody = obj as RigidBody;
                 if (rigidBody != null && rigidBody.MotionState != null)
                 {
@@ -192,40 +146,45 @@ namespace CrossEngine.Physics
         }
         #endregion
 
-        public void Update(float step)
+        public void AddRigidBody(RigidBody body)
         {
-            // TODO: look into StepSimulation(float timeStep, int maxSubSteps, float fixedTimeStep)
-            _world.StepSimulation(step/*, MaxSubSteps, FixedTimeStep*/);
+            World.AddRigidBody(body);
         }
 
-        internal void AddRigidBody(RigidBody body)
+        public void RemoveRigidBody(RigidBody body)
         {
-            _world.AddRigidBody(body);
+            World.RemoveRigidBody(body);
         }
 
-        internal void RemoveRigidBody(RigidBody body)
+        public void CleanFromProxyPairs(RigidBody body)
         {
-            _world.RemoveRigidBody(body);
+            Broadphase.OverlappingPairCache.CleanProxyFromPairs(body.BroadphaseProxy, _dispatcher);
+        }
+
+        public void Simulate(float timeStep, int maxSubSteps, float fixedTimeStep)
+        {
+            World.StepSimulation(timeStep, maxSubSteps, fixedTimeStep);
         }
     }
 
     class RigidBodyWorldDebugDraw : DebugDraw
     {
         public override DebugDrawModes DebugMode { get; set; }
+        Logger Logger = new Logger("Bullet");
 
-        public override void Draw3DText(ref BulletSharp.Math.Vector3 location, string textString)
+        public override void Draw3DText(ref BulletVector3 location, string textString)
         {
             throw new NotImplementedException();
         }
 
-        public override void DrawLine(ref BulletSharp.Math.Vector3 from, ref BulletSharp.Math.Vector3 to, ref BulletSharp.Math.Vector3 color)
+        public override void DrawLine(ref BulletVector3 from, ref BulletVector3 to, ref BulletVector3 color)
         {
-            throw new NotImplementedException();
+            LineRenderer.DrawLine(from.ToNumerics(), to.ToNumerics(), new Vector4(color.ToNumerics(), 1.0f));
         }
 
         public override void ReportErrorWarning(string warningString)
         {
-            Log.Core.Warn($"[Bullet] {warningString}");
+            Logger.Warn(warningString);
         }
     }
 }

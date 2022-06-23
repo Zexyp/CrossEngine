@@ -194,7 +194,7 @@ namespace CrossEngine.Serialization.Json
                 if (_seriReferences.ContainsKey(value))
                 {
                     // write ref
-                    writer.WriteString("$ref", _seriReferences[value]);
+                    writer.WriteRef(_seriReferences[value]);
                 }
                 else
                 {
@@ -202,7 +202,7 @@ namespace CrossEngine.Serialization.Json
                     if (!typeOfValue.IsValueType)
                     {
                         string newid = (_seriReferences.Count + 1).ToString();
-                        writer.WriteString("$id", newid);
+                        writer.WriteID(newid);
                         _seriReferences.Add(value, newid);
                     }
 
@@ -303,47 +303,55 @@ namespace CrossEngine.Serialization.Json
         }
     }
 
-    static class JsonElementExtensions
+    static class JsonExtensions
     {
-        static public bool TryGetRef(this JsonElement element, out string id)
+        private const string IDExpression = "$id";
+        private const string RefExpression = "$ref";
+        private const string TypeExpression = "$type";
+
+        public static bool TryGetRef(this JsonElement element, out string id)
         {
             id = null;
 
             if (element.ValueKind != JsonValueKind.Object) return false;
 
-            bool succes = element.TryGetProperty("$ref", out JsonElement idEl);
+            bool succes = element.TryGetProperty(RefExpression, out JsonElement idEl);
 
             if (succes) id = idEl.GetString();
 
             return succes;
         }
 
-        static public bool TryGetID(this JsonElement element, out string id)
+        public static bool TryGetID(this JsonElement element, out string id)
         {
             id = null;
 
             if (element.ValueKind != JsonValueKind.Object) return false;
 
-            bool succes = element.TryGetProperty("$id", out JsonElement idEl);
+            bool succes = element.TryGetProperty(IDExpression, out JsonElement idEl);
 
             if (succes) id = idEl.GetString();
 
             return succes;
         }
 
-        static public bool TryGetTypeString(this JsonElement element, out string typeString)
+        public static bool TryGetTypeString(this JsonElement element, out string typeString)
         {
             typeString = null;
 
             if (element.ValueKind != JsonValueKind.Object) return false;
 
-            bool succes = element.TryGetProperty("$type", out JsonElement idEl);
+            bool succes = element.TryGetProperty(TypeExpression, out JsonElement idEl);
 
             if (succes) typeString = idEl.GetString();
 
             return succes;
         }
 
-        static public string GetTypeString(this JsonElement element) => element.GetProperty("$type").GetString();
+        public static string GetTypeString(this JsonElement element) => element.GetProperty("$type").GetString();
+
+        public static void WriteID(this Utf8JsonWriter writer, string id) => writer.WriteString(IDExpression, id);
+
+        public static void WriteRef(this Utf8JsonWriter writer, string id) => writer.WriteString(RefExpression, id);
     }
 }

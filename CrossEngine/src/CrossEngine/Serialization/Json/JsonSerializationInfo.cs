@@ -10,13 +10,13 @@ namespace CrossEngine.Serialization.Json
 
         private JsonSerializer serializer;
 
-        public JsonSerializationInfo(Utf8JsonWriter writer, JsonSerializer serializer) : base(Operation.Write)
+        public JsonSerializationInfo(JsonSerializer serializer, Utf8JsonWriter writer) : base(Operation.Write)
         {
             this.writer = writer;
             this.serializer = serializer;
         }
 
-        public JsonSerializationInfo(JsonElement reader, JsonSerializer serializer) : base(Operation.Read)
+        public JsonSerializationInfo(JsonSerializer serializer, JsonElement reader) : base(Operation.Read)
         {
             this.reader = reader;
             this.serializer = serializer;

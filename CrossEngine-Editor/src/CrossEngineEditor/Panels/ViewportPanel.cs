@@ -1,5 +1,6 @@
 ﻿using System;
 using ImGuiNET;
+using ImGuizmoNET;
 
 using System.Numerics;
 
@@ -13,50 +14,53 @@ using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
-using CrossEngine.Rendering.Passes;
+using CrossEngine.Components;
 
 using CrossEngineEditor.Utils;
 
 namespace CrossEngineEditor.Panels
 {
-    class ViewportPanel : EditorPanel
+    class ViewportPanel : SceneViewPanel
     {
-        Vector2 viewportSize;
-        RenderPipeline pipeline;
-
-        private ControllableEditorCamera _currentCamera;
-
-        [EditorInnerValue]
+        [EditorInnerDraw]
         public ControllableEditorCamera CurrentCamera
         {
-            get { return _currentCamera; }
+            get { return (ControllableEditorCamera)DrawCamera; }
             set
             {
-                if (value is OrthographicControllableEditorCamera) _projectionMode = ViewMode.Orthographic;
-                else if (value is PerspectiveControllableEditorCamera) _projectionMode = ViewMode.Perspective;
-                else _projectionMode = ViewMode.Undefined;
-                EditorLayer.Instance.EditorCamera = _currentCamera = value;
-                _currentCamera?.Resize(viewportSize.X, viewportSize.Y);
+                DrawCamera = value;
+                if (DrawCamera is OrthographicControllableEditorCamera) _projectionMode = ProjectionMode.Orthographic;
+                else if (DrawCamera is PerspectiveControllableEditorCamera) _projectionMode = ProjectionMode.Perspective;
+                else _projectionMode = ProjectionMode.Undefined;
+                DrawCamera?.Resize(ViewportSize.X, ViewportSize.Y);
             }
         }
 
+        [EditorDrag(Min = 0.25f)]
+        public float _cameraMovementSpeed = 2;
 
         OrthographicControllableEditorCamera orthographicCamera;
         PerspectiveControllableEditorCamera perspectiveCamera;
 
-        public bool EnableSelect = true;
+        public enum ProjectionMode
+        {
+            Undefined = default,
+            Orthographic,
+            Perspective,
+        }
 
         public enum ViewMode
         {
-            Orthographic,
-            Perspective,
-            Undefined,
+            Solid,
+            Wireframe,
+            Points,
         }
 
-        private ViewMode _projectionMode;
+        private ProjectionMode _projectionMode = ProjectionMode.Orthographic;
+        private ViewMode _viewMode = ViewMode.Solid;
 
-        [EditorEnumValue]
-        public ViewMode ProjectioMode
+        [EditorEnum]
+        public ProjectionMode ProjectioMode
         {
             get { return _projectionMode; }
             set
@@ -64,78 +68,84 @@ namespace CrossEngineEditor.Panels
                 _projectionMode = value;
                 switch (_projectionMode)
                 {
-                    case ViewMode.Orthographic: CurrentCamera = orthographicCamera;
+                    case ProjectionMode.Orthographic: CurrentCamera = orthographicCamera;
                         break;
-                    case ViewMode.Perspective: CurrentCamera = perspectiveCamera;
+                    case ProjectionMode.Perspective: CurrentCamera = perspectiveCamera;
                         break;
-                    case ViewMode.Undefined: CurrentCamera = null; break;
-                    default: throw new InvalidOperationException();
+                }
+            }
+        }
+        [EditorEnum]
+        public ViewMode View
+        {
+            get { return _viewMode; }
+            set
+            {
+                _viewMode = value;
+                switch (_viewMode)
+                {
+                    case ViewMode.Solid:
+                        Application.Instance.RendererAPI.SetPolygonMode(PolygonMode.Fill);
+                        break;
+                    case ViewMode.Wireframe:
+                        Application.Instance.RendererAPI.SetPolygonMode(PolygonMode.Line);
+                        break;
+                    case ViewMode.Points:
+                        Application.Instance.RendererAPI.SetPolygonMode(PolygonMode.Point);
+                        break;
                 }
             }
         }
 
+        [EditorEnum]
+        public OPERATION _currentGizmoOperation = OPERATION.TRANSLATE;
+        [EditorEnum]
+        public MODE _currentGizmoMode = MODE.WORLD;
 
-        public ViewportPanel() : base("Viewport")
+        public ViewportPanel()
         {
+            WindowName = "Viewport";
+
             WindowFlags |= ImGuiWindowFlags.MenuBar;
+
+            orthographicCamera = new OrthographicControllableEditorCamera();
+            perspectiveCamera = new PerspectiveControllableEditorCamera();
+            ProjectioMode = ProjectionMode.Orthographic;
         }
 
         public override void OnAttach()
         {
-            orthographicCamera = new OrthographicControllableEditorCamera();
-            perspectiveCamera = new PerspectiveControllableEditorCamera();
-            ProjectioMode = ViewMode.Orthographic;
         }
 
         public override void OnDetach()
         {
         }
 
-        public override void OnOpen()
-        {
-            pipeline = new RenderPipeline();
-            pipeline.RegisterPass(new Renderer2DPass());
-            pipeline.RegisterPass(new LineRenderPass());
-            pipeline.RegisterPass(new EditorDrawPass());
-        }
-
-        public override void OnClose()
-        {
-            pipeline.Dispose();
-            pipeline = null;
-        }
-
-        protected override void PrepareWindow()
-        {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-        }
-
-        protected override void EndPrepareWindow()
-        {
-            ImGui.PopStyleVar();
-        }
-
-        float lastZoomVectorLength;
-
         protected override void DrawWindowContent()
         {
+            #region MenuBar
             if (ImGui.BeginMenuBar())
             {
+                if (ImGui.BeginMenu("Gizmo"))
+                {
+                    PropertyDrawer.DrawEditorValue(typeof(ViewportPanel).GetField(nameof(_currentGizmoMode)), this);
+                    PropertyDrawer.DrawEditorValue(typeof(ViewportPanel).GetField(nameof(_currentGizmoOperation)), this);
+
+                    ImGui.EndMenu();
+                }
                 if (ImGui.BeginMenu("View"))
                 {
-                    if (ImGui.BeginMenu("Mode"))
-                    {
-                        PropertyDrawer.DrawEditorValue(typeof(ViewportPanel).GetMember(nameof(ViewportPanel.ProjectioMode))[0], this);
-                        if (CurrentCamera != null) PropertyDrawer.DrawEditorValue(typeof(ViewportPanel).GetMember(nameof(ViewportPanel.CurrentCamera))[0], this);
-
-                        ImGui.EndMenu();
-                    }
+                    PropertyDrawer.DrawEditorValue(typeof(ViewportPanel).GetMember(nameof(View))[0], this);
+                    PropertyDrawer.DrawEditorValue(typeof(ViewportPanel).GetMember(nameof(ProjectioMode))[0], this);
+                    if (CurrentCamera != null)
+                        PropertyDrawer.DrawEditorValue(typeof(ViewportPanel).GetMember(nameof(CurrentCamera))[0], this);
+                    PropertyDrawer.DrawEditorValue(typeof(ViewportPanel).GetField(nameof(_cameraMovementSpeed)), this);
 
                     ImGui.Separator();
 
                     if (ImGui.MenuItem("Focus"))
                     {
-                        if (Context.ActiveEntity?.Transform != null) CurrentCamera.Position = Context.ActiveEntity.Transform.Position;
+                        FocusView();
                     }
 
                     ImGui.Separator();
@@ -150,68 +160,157 @@ namespace CrossEngineEditor.Panels
 
                 ImGui.EndMenuBar();
             }
+            #endregion
 
-            if (Context.Scene != null)
+            // return if there is nothing to do
+            if (Context.Scene == null || CurrentCamera == null)
+                return;
+
+            base.DrawWindowContent();
+
+            bool disableSelect = false;
+            if (Context.ActiveEntity?.Transform != null)
             {
-                // resize check
+                ImGuizmo.SetOrthographic(ProjectioMode == ViewportPanel.ProjectionMode.Orthographic);
+
+                ImGuizmo.SetRect(WindowContentAreaMin.X,
+                                    WindowContentAreaMin.Y,
+                                    WindowContentAreaMax.X - WindowContentAreaMin.X,
+                                    WindowContentAreaMax.Y - WindowContentAreaMin.Y);
+                //ref *(float*)(void*)null
+
+                var cameraView = CurrentCamera.ViewMatrix;
+                var cameraProjection = CurrentCamera.ProjectionMatrix;
+                var transformMat = Context.ActiveEntity.Transform.WorldTransformMatrix;
+
+                ImGuizmo.SetDrawlist();
+                if (ImGuizmo.Manipulate(ref cameraView.M11, ref cameraProjection.M11, _currentGizmoOperation, (_currentGizmoOperation != OPERATION.SCALE) ? _currentGizmoMode : MODE.LOCAL, ref transformMat.M11))
                 {
-                    Vector2 viewportPanelSize = ImGui.GetContentRegionAvail();
-                    if (viewportPanelSize != viewportSize && viewportPanelSize.X > 0 && viewportPanelSize.Y > 0)
-                    {
-                        viewportSize = viewportPanelSize;
-
-                        pipeline.Framebuffer.Resize((uint)viewportSize.X, (uint)viewportSize.Y);
-
-                        CurrentCamera.Resize(viewportSize.X, viewportSize.Y);
-                    }
+                    // safety feature
+                    if (!Matrix4x4Extension.HasNaNElement(transformMat))
+                        Context.ActiveEntity.Transform.SetWorldTransform(transformMat);
                 }
 
-                // draw the framebuffer as image
-                ImGui.Image(new IntPtr(pipeline.Framebuffer.ColorAttachments[pipeline.FbStructureIndex.Color]),
-                    viewportSize,
-                    new Vector2(0, 1),
-                    new Vector2(1, 0));
-
-                pipeline.Framebuffer.Bind();
-                Renderer.Clear();
-                pipeline.Framebuffer.ClearAttachment((uint)pipeline.FbStructureIndex.Id, 0);
-
-                // interaction
-                if (ImGui.IsItemHovered() && Focused)
-                {
-                    // camera
-                    var io = ImGui.GetIO();
-                    if (io.MouseWheel != 0) CurrentCamera?.Zoom(io.MouseWheel);
-
-                    if (ImGui.IsMouseDown(ImGuiMouseButton.Middle))
-                    {
-                        if ((io.KeyMods & ImGuiKeyModFlags.Shift) > 0)
-                        {
-                            CurrentCamera?.Pan(io.MouseDelta * new Vector2(-1, 1));
-                        }
-                        else
-                        {
-                            CurrentCamera?.Move(io.MouseDelta * new Vector2(-1, 1));
-                        }
-                    }
-                    // selection
-                    else if (EnableSelect && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
-                    {
-                        Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
-                        texpos.Y = -texpos.Y;
-                        int result = pipeline.Framebuffer.ReadPixel((uint)Context.Scene.Pipeline.FbStructureIndex.Id, (int)texpos.X, (int)texpos.Y);
-                        EditorApplication.Log.Trace($"selected entity id {result}");
-
-                        Context.ActiveEntity = Context.Scene.GetEntity(result);
-                    }
-                }
-
-                // draw
-                Context.Scene.Pipeline = pipeline;
-                if (CurrentCamera != null) Context.Scene.OnRenderEditor(CurrentCamera.ViewProjectionMatrix);
-
-                Framebuffer.Unbind();
+                disableSelect |= ImGuizmo.IsOver();
             }
+
+            // interaction
+            if (!Focused) return;
+
+            var io = ImGui.GetIO();
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
+            {
+                if (io.KeyShift)
+                {
+                    CurrentCamera?.Pan(io.MouseDelta * new Vector2(-1, 1));
+                }
+                else
+                {
+                    CurrentCamera?.Move(io.MouseDelta * new Vector2(-1, 1));
+                }
+            }
+            else if (ImGui.IsMouseDragging(ImGuiMouseButton.Right))
+            {
+                Vector3 move = Vector3.Zero;
+                if (ImGui.IsKeyDown('W') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.UpArrow)))
+                {
+                    move += Vector3.UnitZ;
+                }
+                if (ImGui.IsKeyDown('S') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.DownArrow)))
+                {
+                    move -= Vector3.UnitZ;
+                }
+                if (ImGui.IsKeyDown('D') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.RightArrow)))
+                {
+                    move += Vector3.UnitX;
+                }
+                if (ImGui.IsKeyDown('A') || ImGui.IsKeyDown(ImGui.GetKeyIndex(ImGuiKey.LeftArrow)))
+                {
+                    move -= Vector3.UnitX;
+                }
+                if (ImGui.IsKeyDown('E') || ImGui.IsKeyDown(' '))
+                {
+                    move += Vector3.UnitY;
+                }
+                if (ImGui.IsKeyDown('Q') || io.KeyCtrl)
+                {
+                    move -= Vector3.UnitY;
+                }
+
+                if (io.KeyShift)
+                {
+                    move *= 2;
+                }
+                if (io.KeyAlt)
+                {
+                    move *= .5f;
+                }
+
+                _cameraMovementSpeed += io.MouseWheel * 0.25f * _cameraMovementSpeed;
+                _cameraMovementSpeed = Math.Max(0.1f, _cameraMovementSpeed);
+                move *= _cameraMovementSpeed * io.DeltaTime;
+                CurrentCamera.Fly(move, io.MouseDelta);
+
+                string caminfo = $"x{_cameraMovementSpeed} | {CurrentCamera.Position:0.0}";
+                Vector2 tsize = ImGui.CalcTextSize(caminfo);
+                ImGui.SetCursorPos(WindowContentAreaMax - WindowContentAreaMin - tsize);
+                ImGui.Text(caminfo);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                // camera
+                if (io.MouseWheel != 0)
+                {
+                    if (ImGui.IsMouseDown(ImGuiMouseButton.Right))
+                    {
+                        _cameraMovementSpeed += io.MouseWheel / (1 / _cameraMovementSpeed * 4);
+                        _cameraMovementSpeed = Math.Clamp(_cameraMovementSpeed, float.Epsilon, float.MaxValue);
+                    }
+                    else
+                        CurrentCamera?.Zoom(io.MouseWheel);
+                }
+                
+                // gizmo selection
+                else
+                {
+                    if (ImGui.IsKeyPressed('F'))
+                    {
+                        FocusView();
+                    }
+                    if (ImGui.IsKeyPressed('G'))
+                    {
+                        _currentGizmoOperation = OPERATION.TRANSLATE;
+                    }
+                    if (ImGui.IsKeyPressed('R'))
+                    {
+                        _currentGizmoOperation = OPERATION.ROTATE;
+                    }
+                    if (ImGui.IsKeyPressed('S'))
+                    {
+                        _currentGizmoOperation = OPERATION.SCALE;
+                    }
+                }
+
+                if (!disableSelect && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                {
+                    Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
+                    texpos.Y = -texpos.Y;
+
+                    int result = ((Framebuffer)Framebuffer).ReadPixel(1, (uint)texpos.X, (uint)texpos.Y);
+                    ((Framebuffer)Framebuffer).Unbind();
+                    EditorApplication.Log.Trace($"selected entity id {result}");
+
+                    Context.ActiveEntity = Context.Scene.GetEntityById(result);
+                }
+            }
+        }
+
+        private void FocusView()
+        {
+            TransformComponent transform = null;
+            if (Context.ActiveEntity?.TryGetComponent(out transform) == true)
+                CurrentCamera.Position = transform.Position;
         }
     }
 }

@@ -4,9 +4,11 @@ using ImGuiNET;
 using System.Numerics;
 using System.Text;
 
+using CrossEngine;
 using CrossEngine.Assets;
 using CrossEngine.Scenes;
 using CrossEngine.Logging;
+using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 
 using CrossEngineEditor.Utils;
@@ -26,14 +28,14 @@ namespace CrossEngineEditor.Panels
             set
             {
                 textureAssets = value;
-                SelectedTextureAsset = null;
+                selectedTextureAsset = null;
             }
         }
-        [EditorAssetValue(typeof(TextureAsset))]
-        public TextureAsset SelectedTextureAsset = null;
+        [EditorAsset(typeof(TextureAsset), Name = "")]
+        public TextureAsset selectedTextureAsset = null;
         int selectedIndex = 0;
         Vector2 viewPos;
-        float zoom = 1f;
+        float viewZoom = 1f;
 
         #region Prepare Window
         protected override void PrepareWindow()
@@ -49,16 +51,13 @@ namespace CrossEngineEditor.Panels
 
         protected override void DrawWindowContent()
         {
-            bool resetView = false;
-            bool openRename = false;
-
             if (ImGui.BeginMenuBar())
             {
                 if (ImGui.BeginMenu("View", Context.Scene != null))
                 {
                     if (ImGui.MenuItem("Reset"))
                     {
-                        resetView = true;
+                        ResetView();
                     }
                     ImGui.EndMenu();
                 }
@@ -69,141 +68,111 @@ namespace CrossEngineEditor.Panels
                     {
                         LoadAsset();
                     }
-                    if (ImGui.MenuItem("Unload", SelectedTextureAsset != null))
+                    if (ImGui.MenuItem("Unload", selectedTextureAsset != null))
                     {
                         UnloadAsset();
                     }
                     ImGui.Separator();
-                    if (ImGui.MenuItem("Rename", SelectedTextureAsset != null))
-                    {
-                        openRename = true;
-                    }
 
                     ImGui.EndMenu();
                 }
 
-                ImGui.PushItemWidth(256);
-                PropertyDrawer.DrawEditorValue(this.GetType().GetField(nameof(SelectedTextureAsset)), this);
-                ImGui.PopItemWidth();
-
+                PropertyDrawer.DrawEditorValue(this.GetType().GetField(nameof(selectedTextureAsset)), this);
 
                 ImGui.EndMenuBar();
             }
 
-
-            if (openRename) ImGui.OpenPopup("renameasset");
-
-            if (ImGui.BeginPopup("renameasset"))
-            {
-                byte[] bytes = new byte[256];
-                Encoding.UTF8.GetBytes(SelectedTextureAsset.Name).CopyTo(bytes, 0);
-                ImGui.Text("Rename");
-                if (ImGui.InputText("New name", bytes, (uint)bytes.Length)) ;
-                {
-                    // ! always trim end null bytes!!!
-                    string text = Encoding.UTF8.GetString(bytes).TrimEnd('\0');
-                    SelectedTextureAsset.Name = text;
-                }
-
-                ImGui.EndPopup();
-            }
-
-
-            if (SelectedTextureAsset != null)
+            if (!Ref.IsNull(selectedTextureAsset?.Texture))
             {
                 //ImGui.SetCursorPos(WindowSize / 2 - currentTexture.Texture.Size / 2);
 
-                var zoomedImageSize = SelectedTextureAsset.Texture.Size * zoom;
-
-                if (zoomedImageSize.X < WindowSize.X && zoomedImageSize.Y < WindowSize.Y)
-                    ImGui.SetCursorPos((WindowSize - zoomedImageSize) * 0.5f);
-
-                ImGui.PushStyleColor(ImGuiCol.Button, 0xff000000);
-                ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xff000000);
-                ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0xff000000);
-                ImGui.ImageButton(new IntPtr(SelectedTextureAsset.Texture.ID), SelectedTextureAsset.Texture.Size * zoom, new Vector2(0, 1), new Vector2(1, 0), 0);
-                ImGui.PopStyleColor(3);
-
-                bool imageHovered = ImGui.IsItemHovered();
-
-                if (resetView) ResetView();
-
-                if (viewPos.X != ImGui.GetScrollX() + WindowSize.X / 2 || viewPos.Y != ImGui.GetScrollY() + WindowSize.Y / 2)
+                if (Focused)
                 {
-                    viewPos.X = ImGui.GetScrollX() + WindowSize.X / 2;
-                    viewPos.Y = ImGui.GetScrollY() + WindowSize.Y / 2;
+                    var io = ImGui.GetIO();
+                    if (ImGui.IsMouseDragging(ImGuiMouseButton.Left) || ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
+                    {
+                        viewPos += 1 / viewZoom * io.MouseDelta;
+                    }
+                    if (io.MouseWheel != 0.0f && ImGui.GetIO().KeyCtrl)
+                    {
+                        viewZoom += io.MouseWheel * 0.25f * viewZoom;
+                        viewZoom = Math.Max(viewZoom, 1.0f / 8);
+                    }
                 }
 
-                if (imageHovered)
-                {
-                    MouseMove();
+                var tex = selectedTextureAsset.Texture.Value;
+                var cursorScreenCenter = (WindowContentAreaMax - WindowContentAreaMin) / 2;
+                var imgTransMat = Matrix3x2.CreateTranslation(viewPos) * Matrix3x2.CreateScale(viewZoom) * Matrix3x2.CreateTranslation(ImGui.GetCursorPos() + cursorScreenCenter + WindowContentAreaMin);
+                var min = Vector2.Transform(-tex.Size / 2, imgTransMat);
+                var max = Vector2.Transform( tex.Size / 2, imgTransMat);
 
-                    //var io = ImGui.GetIO();
-                    //float my_tex_w = SelectedTextureAsset.Texture.Width;
-                    //float my_tex_h = SelectedTextureAsset.Texture.Height;
-                    //Vector2 pos = ImGui.GetCursorScreenPos();
-                    //ImGui.BeginTooltip();
-                    //float region_sz = 32.0f;
-                    //float region_x = io.MousePos.X - pos.X - region_sz * 0.5f;
-                    //float region_y = io.MousePos.Y - pos.Y - region_sz * 0.5f;
-                    //float zoom = 4.0f;
-                    //if (region_x < 0.0f) { region_x = 0.0f; }
-                    //else if (region_x > my_tex_w - region_sz) { region_x = my_tex_w - region_sz; }
-                    //if (region_y < 0.0f) { region_y = 0.0f; }
-                    //else if (region_y > my_tex_h - region_sz) { region_y = my_tex_h - region_sz; }
-                    //ImGui.Text($"Min: ({region_x:F2}, {region_y:F2})");
-                    //ImGui.Text($"Max: ({region_x + region_sz:F2}, {region_y + region_sz:F2})");
-                    //Vector2 uv0 = new Vector2((region_x) / my_tex_w, (region_y) / my_tex_h);
-                    //Vector2 uv1 = new Vector2((region_x + region_sz) / my_tex_w, (region_y + region_sz) / my_tex_h);
-                    //ImGui.Image(new IntPtr(SelectedTextureAsset.Texture.ID), new Vector2(region_sz * zoom, region_sz * zoom), uv0, uv1);
-                    //ImGui.EndTooltip();
-                }
-                else
-                {
-                    // correct image pos
-                    ImGui.SetScrollX(viewPos.X - WindowSize.X / 2);
-                    ImGui.SetScrollY(viewPos.Y - WindowSize.Y / 2);
-                }
+                ImGui.GetWindowDrawList().AddImage(new IntPtr(selectedTextureAsset.Texture.Value.RendererId), min, max, new (0, 1), new (1, 0));
+                
+                Vector2 bakus = Vector2.Zero;
+                if (min.X - WindowContentAreaMin.X < 0)
+                    bakus.X += WindowContentAreaMin.X - min.X;
+                if (min.Y - WindowContentAreaMin.Y < 0)
+                    bakus.Y += WindowContentAreaMin.Y - min.Y;
+                if (max.X > WindowContentAreaMax.X)
+                    bakus.X += max.X - WindowContentAreaMax.X;
+                if (max.Y > WindowContentAreaMax.Y)
+                    bakus.Y += max.Y - WindowContentAreaMax.Y;
+                if (bakus != Vector2.Zero)
+                    bakus += new Vector2(ImGui.GetStyle().ScrollbarSize);
 
-                if (ImGui.IsWindowHovered())
-                {
-                    MouseZoom();
-                }
-            }
-        }
+                ImGui.InvisibleButton("##interactor", WindowContentAreaMax - WindowContentAreaMin);
 
-        private void MouseMove()
-        {
-            if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) || ImGui.IsMouseReleased(ImGuiMouseButton.Middle))
-            {
-                viewPos -= ImGui.GetMouseDragDelta();
-                viewPos = Vector2.Clamp(viewPos, WindowSize * 0.5f / zoom, WindowSize * 2 * zoom);
-            }
-            if ((ImGui.IsMouseDragging(ImGuiMouseButton.Left) || ImGui.IsMouseDragging(ImGuiMouseButton.Middle)) && Focused)
-            {
-                viewPos = viewPos - ImGui.GetMouseDragDelta();
-                ImGui.SetScrollX(viewPos.X - WindowSize.X / 2);
-                ImGui.SetScrollY(viewPos.Y - WindowSize.Y / 2);
-                ImGui.ResetMouseDragDelta();
-            }
-        }
+                ImGuizmoNET.ImGuizmo.SetOrthographic(true);
+                var projMat = Matrix4x4Extension.Ortho(1 / viewZoom * -cursorScreenCenter.X,
+                                                       1 / viewZoom * cursorScreenCenter.X,
+                                                       1 / viewZoom * -cursorScreenCenter.Y,
+                                                       1 / viewZoom * cursorScreenCenter.Y,
+                                                       -1, 1);
+                var viewMat = Matrix4x4.CreateTranslation(new Vector3(viewPos.X, -viewPos.Y, 0));
+                var modeMat = Matrix4x4.CreateScale(new Vector3(1, 1, 0));
+                var identity = Matrix4x4.Identity;
+                ImGuizmoNET.ImGuizmo.SetRect(WindowContentAreaMin.X,
+                                    WindowContentAreaMin.Y,
+                                    WindowContentAreaMax.X - WindowContentAreaMin.X,
+                                    WindowContentAreaMax.Y - WindowContentAreaMin.Y);
+                ImGuizmoNET.ImGuizmo.SetDrawlist();
+                ImGuizmoNET.ImGuizmo.Manipulate(ref viewMat.M11, ref projMat.M11, ImGuizmoNET.OPERATION.TRANSLATE, ImGuizmoNET.MODE.WORLD, ref modeMat.M11);
 
-        private void MouseZoom()
-        {
-            if (ImGui.GetIO().MouseWheel != 0.0f && ImGui.GetIO().KeyCtrl)
-            {
-                zoom += ImGui.GetIO().MouseWheel * 0.25f * zoom;
-                zoom = Math.Clamp(zoom, 1.0f / 8, 10);
+                //if (ImGui.hovered())
+                //{
+                //var io = ImGui.GetIO();
+                //float my_tex_w = SelectedTextureAsset.Texture.Width;
+                //float my_tex_h = SelectedTextureAsset.Texture.Height;
+                //Vector2 pos = ImGui.GetCursorScreenPos();
+                //ImGui.BeginTooltip();
+                //float region_sz = 32.0f;
+                //float region_x = io.MousePos.X - pos.X - region_sz * 0.5f;
+                //float region_y = io.MousePos.Y - pos.Y - region_sz * 0.5f;
+                //float zoom = 4.0f;
+                //if (region_x < 0.0f) { region_x = 0.0f; }
+                //else if (region_x > my_tex_w - region_sz) { region_x = my_tex_w - region_sz; }
+                //if (region_y < 0.0f) { region_y = 0.0f; }
+                //else if (region_y > my_tex_h - region_sz) { region_y = my_tex_h - region_sz; }
+                //ImGui.Text($"Min: ({region_x:F2}, {region_y:F2})");
+                //ImGui.Text($"Max: ({region_x + region_sz:F2}, {region_y + region_sz:F2})");
+                //Vector2 uv0 = new Vector2((region_x) / my_tex_w, (region_y) / my_tex_h);
+                //Vector2 uv1 = new Vector2((region_x + region_sz) / my_tex_w, (region_y + region_sz) / my_tex_h);
+                //ImGui.Image(new IntPtr(SelectedTextureAsset.Texture.ID), new Vector2(region_sz * zoom, region_sz * zoom), uv0, uv1);
+                //ImGui.EndTooltip();
+                //}
+
+                //if (viewPos.X != ImGui.GetScrollX() + WindowSize.X / 2 || viewPos.Y != ImGui.GetScrollY() + WindowSize.Y / 2)
+                //{
+                //    viewPos.X = ImGui.GetScrollX() + WindowSize.X / 2;
+                //    viewPos.Y = ImGui.GetScrollY() + WindowSize.Y / 2;
+                //}
             }
         }
 
         private void ResetView()
         {
-            if (SelectedTextureAsset != null)
-            {
-                viewPos = SelectedTextureAsset.Texture.Size / 2;
-                zoom = 1.0f;
-            }
+            viewPos = Vector2.Zero;
+            viewZoom = 1f;
         }
 
         private void LoadAsset()
@@ -220,60 +189,28 @@ namespace CrossEngineEditor.Panels
                 "All Files (*.*)\0*.*\0"))
                 return;
 
-            SelectedTextureAsset = new TextureAsset(path);
-            SelectedTextureAsset.Load();
-            textureAssets.Add(SelectedTextureAsset);
+            textureAssets = Context.Scene.AssetRegistry.GetCollection<TextureAsset>();
 
-            selectedIndex = textureAssets.GetAll().Count - 1;
-            selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(textureAssets.GetAll().Count - 1, 0));
+            selectedTextureAsset = new TextureAsset();
+            selectedTextureAsset.RelativePath = path;
+            textureAssets.AddAsset(selectedTextureAsset);
+
+            selectedIndex = textureAssets.Count - 1;
+            selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(textureAssets.Count - 1, 0));
 
             ResetView();
         }
 
         private void UnloadAsset()
         {
-            textureAssets.Remove(SelectedTextureAsset);
-            SelectedTextureAsset.Unload();
-            SelectedTextureAsset = null;
+            textureAssets.RemoveAsset(selectedTextureAsset);
+            selectedTextureAsset.Unload();
+            selectedTextureAsset = null;
 
-            selectedIndex = textureAssets.GetAll().Count - 1;
-            selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(textureAssets.GetAll().Count - 1, 0));
+            selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(textureAssets.Count - 1, 0));
+            selectedIndex = textureAssets.Count - 1;
 
             ResetView();
-        }
-
-        public override void OnAttach()
-        {
-            Context.OnSceneChanged += OnContextSceneChanged;
-            textureAssets = Context.Scene?.AssetPool.GetCollection<TextureAsset>();
-        }
-        public override void OnDetach()
-        {
-            Context.OnSceneChanged -= OnContextSceneChanged;
-            textureAssets = null;
-        }
-
-        private void OnContextSceneChanged()
-        {
-            if (textureAssets != null) textureAssets.OnAssetAdded -= OnTextureAssetsAdded;
-            TextureAssets = Context.Scene?.AssetPool.GetCollection<TextureAsset>();
-            if (textureAssets != null) textureAssets.OnAssetAdded += OnTextureAssetsAdded;
-        }
-
-        public override void OnOpen()
-        {
-            if (textureAssets != null)
-                textureAssets.OnAssetAdded += OnTextureAssetsAdded;
-        }
-        public override void OnClose()
-        {
-            if (textureAssets != null)
-                textureAssets.OnAssetAdded -= OnTextureAssetsAdded;
-        }
-
-        private void OnTextureAssetsAdded(IAssetCollection collection, Asset asset)
-        {
-            
         }
     }
 }

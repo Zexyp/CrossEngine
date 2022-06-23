@@ -4,7 +4,7 @@ using System.Numerics;
 
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
-using CrossEngine.Serialization;
+//using CrossEngine.Serialization;
 
 namespace CrossEngine.Rendering.Cameras
 {
@@ -56,6 +56,7 @@ namespace CrossEngine.Rendering.Cameras
             {
                 if (_aspectRatio == value) return;
                 _aspectRatio = value;
+                if (_aspectRatio <= 0) _aspectRatio = 1;
                 MarkProjectionDirty();
             }
         }
@@ -75,28 +76,28 @@ namespace CrossEngine.Rendering.Cameras
             return Matrix4x4Extension.Ortho(-_orthographicSize * _aspectRatio, _orthographicSize * _aspectRatio, -_orthographicSize, _orthographicSize, ZNear, ZFar);
         }
 
-        #region Serialization
-        public override void OnSerialize(SerializationInfo info)
-        {
-            base.OnSerialize(info);
-
-            info.AddValue("OrthographicSize", _orthographicSize);
-            info.AddValue("ZNear", _zNear);
-            info.AddValue("ZFar", _zFar);
-            info.AddValue("AspectRatio", _aspectRatio);
-
-        }
-
-        public override void OnDeserialize(SerializationInfo info)
-        {
-            base.OnDeserialize(info);
-
-            _orthographicSize = info.GetValue<float>("OrthographicSize");
-            _zNear = info.GetValue<float>("ZNear");
-            _zFar = info.GetValue<float>("ZFar");
-            _aspectRatio = info.GetValue<float>("AspectRatio");
-            MarkProjectionDirty();
-        }
-        #endregion
+        //#region Serialization
+        //public override void OnSerialize(SerializationInfo info)
+        //{
+        //    base.OnSerialize(info);
+        //
+        //    info.AddValue("OrthographicSize", _orthographicSize);
+        //    info.AddValue("ZNear", _zNear);
+        //    info.AddValue("ZFar", _zFar);
+        //    info.AddValue("AspectRatio", _aspectRatio);
+        //
+        //}
+        //
+        //public override void OnDeserialize(SerializationInfo info)
+        //{
+        //    base.OnDeserialize(info);
+        //
+        //    _orthographicSize = info.GetValue<float>("OrthographicSize");
+        //    _zNear = info.GetValue<float>("ZNear");
+        //    _zFar = info.GetValue<float>("ZFar");
+        //    _aspectRatio = info.GetValue<float>("AspectRatio");
+        //    MarkProjectionDirty();
+        //}
+        //#endregion
     }
 }

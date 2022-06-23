@@ -37,8 +37,7 @@ namespace CrossEngine.Rendering.Cameras
             }
         }
 
-        public Matrix4x4 ViewProjectionMatrix { get => ViewMatrix * ProjectionMatrix; }
-        public Matrix4x4 ViewMatrix
+        public override Matrix4x4 ViewMatrix
         {
             get
             {

@@ -15,21 +15,31 @@ namespace CrossEngineEditor.Modals
     {
         public enum ButtonFlags
         {
-            None = 0,
-            OK = 1 << 0,
+            None   = 0,
+            OK     = 1 << 0,
             Cancel = 1 << 1,
-            Yes = 1 << 2,
-            No = 1 << 3,
+            Yes    = 1 << 2,
+            No     = 1 << 3,
 
             OKCancel = OK | Cancel,
             YesNo = Yes | No,
         }
 
-        string Text;
-        Action<ButtonFlags> Action;
-        ButtonFlags Buttons;
+        public enum TextColor
+        {
+            None = 0,
+            
+            Info = None,
+            Warn,
+            Error,
+        }
 
-        public ActionModal(string text, ButtonFlags buttons = ButtonFlags.None, Action <ButtonFlags> action = null, string name = "") : base(name)
+        public string Text;
+        public Action<ButtonFlags> Action;
+        public ButtonFlags Buttons;
+        public TextColor Color;
+
+        public ActionModal(string text, string name = "", ButtonFlags buttons = ButtonFlags.None, Action <ButtonFlags> action = null) : base(name)
         {
             this.Text = text;
             this.Action = action;
@@ -38,7 +48,18 @@ namespace CrossEngineEditor.Modals
 
         protected override unsafe void DrawContents()
         {
+            switch (Color)
+            {
+                case TextColor.Warn: ImGui.PushStyleColor(ImGuiCol.Text, 0xE7AD00FF);
+                    break;
+                case TextColor.Error: ImGui.PushStyleColor(ImGuiCol.Text, 0xE70000FF);
+                    break;
+            }
+
             ImGui.Text(Text);
+
+            if (Color != TextColor.None)
+                ImGui.PopStyleColor();
 
             ImGui.Separator();
 

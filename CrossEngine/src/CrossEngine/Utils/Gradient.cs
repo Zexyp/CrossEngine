@@ -1,39 +1,40 @@
 ﻿using System;
 
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Numerics;
+using System.Diagnostics;
+
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Utils
 {
-    //interface IGradient
-    //{
-    //    int ElementCount { get; }
-    //
-    //    bool AddElement(float element);
-    //    bool AddElement(Vector2 element);
-    //    bool AddElement(Vector3 element);
-    //    bool AddElement(Vector4 element);
-    //
-    //    void RemoveElement(int index);
-    //    void ClearElements();
-    //
-    //    float SampleFloat(float position);
-    //    Vector2 SampleVector2(float position);
-    //    Vector3 SampleVector3(float position);
-    //    Vector4 SampleVector4(float position);
-    //}
-
-    public class Gradient
+    public interface IGradient : ISerializable
     {
-        // idea: extrapolation
+        int ElementCount { get; }
+        Type Type { get; }
+    
+        void AddElement(float position, object element);
+        void RemoveElement(int index);
+        void ClearElements();
+        object Sample(float position);
+        void SetElementValue(int index, object value);
+        int SetElementPosition(int index, float position);
+    }
 
-        public struct GradientElement
+    /// <summary>
+    /// Only allowed generic parameters for <typeparamref name="T"/> are <see cref="float"/>, <see cref="Vector2"/>, <see cref="Vector3"/> and <see cref="Vector4"/>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class Gradient<T> : IGradient where T : struct
+    {
+        public struct GradientElement : ISerializable
         {
             public float position;
-            public Vector4 value;
+            public T value;
 
-            public GradientElement(float position, Vector4 value)
+            public GradientElement(float position, T value)
             {
                 this.position = position;
                 this.value = value;
@@ -43,15 +44,46 @@ namespace CrossEngine.Utils
             {
                 return "position: " + position + "; value: " + value;
             }
+
+            public void GetObjectData(SerializationInfo info)
+            {
+                info.AddValue(nameof(position), position);
+                info.AddValue(nameof(value), value);
+            }
+
+            public void SetObjectData(SerializationInfo info)
+            {
+                position = info.GetValue<float>(nameof(position));
+                value = info.GetValue<T>(nameof(value));
+            }
         }
 
-        List<GradientElement> elements = new List<GradientElement> { };
+        private static readonly Dictionary<Type, Func<object, object, float, object>> Lerps = new Dictionary<Type, Func<object, object, float, object>>()
+        {
+            { typeof(float), (a, b, factor) => MathExtension.Lerp((float)a, (float)b, factor) },
+            { typeof(Vector2), (a, b, factor) => Vector2.Lerp((Vector2)a, (Vector2)b, factor) },
+            { typeof(Vector3), (a, b, factor) => Vector3.Lerp((Vector3)a, (Vector3)b, factor) },
+            { typeof(Vector4), (a, b, factor) => Vector4.Lerp((Vector4)a, (Vector4)b, factor) },
+        };
+
+        public Gradient()
+        {
+            var type = typeof(T);
+            if (!Lerps.ContainsKey(type))
+            {
+                throw new ArgumentException($"Disallowed type ('{type.Name}').");
+            }
+
+            Type = type;
+            Elements = elements.AsReadOnly();
+        }
+
+        private readonly List<GradientElement> elements = new List<GradientElement>();
+        public readonly ReadOnlyCollection<GradientElement> Elements;
 
         public int ElementCount { get { return elements.Count; } }
-        public GradientElement[] GetElements()
-        {
-            return elements.ToArray();
-        }
+
+        public Type Type { get; set; }
 
         public void RemoveElement(int index)
         {
@@ -61,96 +93,54 @@ namespace CrossEngine.Utils
         {
             elements.Clear();
         }
-        public void Reverse()
-        {
-            elements.Reverse();
 
-            GradientElement el; // positions need to be reversed
-            for (int i = 0; i < elements.Count; i++)
-            {
-                el = elements[i];
-                el.position = -el.position + 1;
-                elements[i] = el;
-            }
-        }
-
-        #region AddElement
-        public void AddElement(float position, float value) => AddElement(position, new Vector4(value));
-        public void AddElement(float position, Vector2 value) => AddElement(position, new Vector4(value, 0, 0));
-        public void AddElement(float position, Vector3 value) => AddElement(position, new Vector4(value, 0));
-        public void AddElement(float position, Vector4 value)
+        public int AddElement(float position, T value)
         {
             if (elements.Count == 0)
             {
                 elements.Add(new GradientElement(position, value));
-                return;
+                return 0;
             }
 
-            if (elements[0].position > position)
+            if (elements[0].position >= position)
             {
                 elements.Insert(0, new GradientElement(position, value));
-                return;
+                return 0;
             }
-            if (elements[elements.Count - 1].position < position)
+            if (elements[elements.Count - 1].position <= position)
             {
                 elements.Add(new GradientElement(position, value));
-                return;
+                return elements.Count - 1;
             }
 
             for (int i = 0; i < elements.Count; i++)
             {
-                if (elements[i].position < position && elements[i + 1].position > position)
+                if (elements[i].position < position && elements[i + 1].position >= position)
                 {
                     elements.Insert(i + 1, new GradientElement(position, value));
-                    return;
+                    return i + 1;
                 }
             }
 
-            throw new Exception("unexpected end of method!");
+            Debug.Assert(false, "unexpected end of a method!");
+            return default;
         }
-        #endregion
 
-        #region SetElement
-        public bool SetElementValue(int index, float value) => SetElementValue(index, new Vector4(value));
-        public bool SetElementValue(int index, Vector2 value) => SetElementValue(index, new Vector4(value, 0, 0));
-        public bool SetElementValue(int index, Vector3 value) => SetElementValue(index, new Vector4(value, 0));
-        public bool SetElementValue(int index, Vector4 value)
+        public void SetElementValue(int index, T value)
         {
-            if (index > elements.Count - 1 || index < 0)
-                return false;
-
             GradientElement el = elements[index];
             el.value = value;
             elements[index] = el;
-            return true;
         }
-        #endregion
 
-        #region Sample
-        public float SampleFloat(float position)
-        {
-            return Sample(position).X;
-        }
-        public Vector2 SampleVector2(float position)
-        {
-            Vector4 vec = Sample(position);
-            return new Vector2(vec.X, vec.Y);
-        }
-        public Vector3 SampleVector3(float position)
-        {
-            Vector4 vec = Sample(position);
-            return new Vector3(vec.X, vec.Y, vec.Z);
-        }
-        public Vector4 SampleVector4(float position) => Sample(position);
-
-        public Vector4 Sample(float position)
+        public T Sample(float position)
         {
             if (elements.Count == 0)
-                return Vector4.Zero;
+                return default;
 
-            if (elements[0].position > position)
+            if (elements[0].position >= position)
                 return elements[0].value;
-            if (elements[elements.Count - 1].position < position)
+            if (elements[elements.Count - 1].position <= position)
                 return elements[elements.Count - 1].value;
 
             GradientElement firstElement = elements[0];
@@ -158,40 +148,75 @@ namespace CrossEngine.Utils
             {
                 GradientElement secondElement = elements[i];
 
-                if (position == secondElement.position) // small check
+                if (position == secondElement.position)
                     return secondElement.value;
 
                 if (firstElement.position < position && secondElement.position > position)
                 {
                     float sample = (position - firstElement.position) / (secondElement.position - firstElement.position);
 
-                    return Vector4.Lerp(firstElement.value, secondElement.value, sample);
+                    return (T)Lerps[Type](firstElement.value, secondElement.value, sample);
                 }
                 firstElement = secondElement;
             }
 
-            throw new Exception("unexpected end of sampling method!");
+            Debug.Assert(false, "unexpected end of a method!");
+            return default;
         }
-        #endregion
 
-        static public Gradient Default 
+        void IGradient.AddElement(float position, object element) => AddElement(position, (T) element);
+
+        object IGradient.Sample(float position) => Sample(position);
+
+        public void SetElementValue(int index, object value) => SetElementValue(index, (T)value);
+        public int SetElementPosition(int index, float position)
         {
-            get
+            GradientElement el = elements[index];
+            elements.RemoveAt(index);
+
+            if (elements.Count == 0)
             {
-                Gradient gradient = new Gradient();
-                gradient.AddElement(0, new Vector4(0, 0, 0, 1));
-                gradient.AddElement(1, new Vector4(1, 1, 1, 1));
-                return gradient;
-            } 
+                elements.Add(new GradientElement(position, el.value));
+                return 0;
+            }
+
+            if (elements[0].position >= position)
+            {
+                elements.Insert(0, new GradientElement(position, el.value));
+                return 0;
+            }
+            if (elements[elements.Count - 1].position <= position)
+            {
+                elements.Add(new GradientElement(position, el.value));
+                return elements.Count - 1;
+            }
+
+            for (int i = 0; i < elements.Count; i++)
+            {
+                if (elements[i].position < position && elements[i + 1].position >= position)
+                {
+                    elements.Insert(i + 1, new GradientElement(position, el.value));
+                    return i + 1;
+                }
+            }
+
+            Debug.Assert(false, "unexpected end of a method!");
+            return default;
         }
-        static public Gradient InvertedDefault
+
+        public void GetObjectData(SerializationInfo info)
         {
-            get
+            info.AddValue(nameof(Elements), elements);
+        }
+
+        public void SetObjectData(SerializationInfo info)
+        {
+            var els = info.GetValue<List<GradientElement>>(nameof(Elements));
+
+            elements.Clear();
+            for (int i = 0; i < els.Count; i++)
             {
-                Gradient gradient = new Gradient();
-                gradient.AddElement(0, new Vector4(1, 1, 1, 1));
-                gradient.AddElement(1, new Vector4(0, 0, 0, 1));
-                return gradient;
+                AddElement(els[i].position, els[i].value);
             }
         }
     }

@@ -9,8 +9,8 @@ using CrossEngine.Utils;
 using CrossEngine.Layers;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
-using CrossEngine.Rendering.Lines;
 using CrossEngine.Profiling;
+using CrossEngine.Debugging;
 
 using CrossEngineEditor.Utils;
 
@@ -18,27 +18,19 @@ namespace CrossEngineEditor
 {
     class EditorApplication : Application
     {
-        public static Logger Log = CrossEngine.Logging.Log.GetLogger("EDITOR");
-
         public EditorApplication() : base("CrossEngine Editor")
         {
+            ThreadManager.ExecuteOnRenderThread(() =>
+            {
+                GLDebugging.EnableGLDebugging(LogLevel.Warn);
+                Renderer2D.Init();
+                LineRenderer.Init();
+                RendererAPI.SetDepthFunc(DepthFunc.Default);
+                RendererAPI.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
+            });
+
             PushOverlay(new ImGuiLayer());
             PushLayer(new EditorLayer());
-            //PushLayer(sceneLayer = new SceneLayer(null));
-            //PushLayer(new TestLayer());
-            //PushLayer(new SceneTestLayer());
-        }
-
-        protected override void Init()
-        {
-            Profiler.BeginScope($"{nameof(EditorApplication)}.{nameof(EditorApplication.Init)}");
-
-            LineRenderer.Init();
-            Renderer2D.Init();
-            CrossEngine.Logging.Log.EnableGLDebugging(LogLevel.Warn);
-            Renderer.SetClearColor(0.05f, 0.05f, 0.05f);
-
-            Profiler.EndScope();
         }
     }
 }

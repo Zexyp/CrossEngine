@@ -4,14 +4,16 @@ using System.Diagnostics;
 using System.Threading;
 using System.IO;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Globalization;
-
-using CrossEngine.Logging;
 
 namespace CrossEngine.Profiling
 {
-    public class Profiler
+    public static class Profiler
     {
+        static Logging.Logger Log = new Logging.Logger("profiler");
+
+        #region Structures
         struct ProfilerSession
         {
             public string Name;
@@ -36,14 +38,23 @@ namespace CrossEngine.Profiling
                 ThreadID = tid;
                 Start = start;
             }
-        }
 
+            public override string ToString()
+            {
+                return $"ThreadID: {ThreadID}; Name: {Name}";
+            }
+        }
+        #endregion
+
+        #region Private Fields
         static Mutex mutex = new Mutex();
         static FileStream outputStream;
         static StreamWriter streamWriter;
         static ProfilerSession? currentSession = null;
         static readonly NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = ".", NumberDecimalDigits = 3 };
         static DateTime appStarted = DateTime.Now;
+        static ConcurrentDictionary<int, Stack<ProfileResult>> profileResultsStacks = new ConcurrentDictionary<int, Stack<ProfileResult>>();
+        #endregion
 
         #region Public Methods
         [Conditional("PROFILING")]
@@ -51,23 +62,19 @@ namespace CrossEngine.Profiling
         {
             mutex.WaitOne();
 
-            Log.Init();
-
-            profileResultsStack = new Stack<ProfileResult>();
-
             if (currentSession != null)
             {
-                Log.Core.Error("[profiler] session was already created");
+                Log.Error("session was already created");
                 return;
             }
 
             try
             {
-                outputStream = File.Open(filepath, FileMode.Create);
+                outputStream = File.Open(filepath, FileMode.Create, FileAccess.Write, FileShare.Read);
             }
             catch (IOException)
             {
-                Log.Core.Error("[profiler] file cannot be created");
+                Log.Error("file cannot be created");
                 return;
             }
 
@@ -76,7 +83,7 @@ namespace CrossEngine.Profiling
             currentSession = new ProfilerSession(name);
             WriteHeader();
 
-            Log.Core.Info("[profiler] profiling session started");
+            Log.Info("profiling session started");
 
             mutex.ReleaseMutex();
         }
@@ -84,30 +91,32 @@ namespace CrossEngine.Profiling
         [Conditional("PROFILING")]
         public static void EndSession()
         {
+            if (AreProfileResultsEmpty()) Log.Trace("waiting for threads to finish scopes");
+            SpinWait.SpinUntil(AreProfileResultsEmpty);
+
             mutex.WaitOne();
 
             InternalEndSession();
-            Log.Core.Info("[profiler] profiling session ended");
+            Log.Info("profiling session ended");
 
             mutex.ReleaseMutex();
         }
-
-        static Stack<ProfileResult> profileResultsStack;
 
         [Conditional("PROFILING")]
         public static void BeginScope(string name)
         {
             if (currentSession == null)
             {
-                Log.Core.Error($"[profiler] no session to profile scope '{name}'");
+                //Log.Error($"no session to profile a scope '{name}'");
                 return;
             }
 
-            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
+            int ctid = Thread.CurrentThread.ManagedThreadId;
+            ProfileResult result = new ProfileResult(name, ctid, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
 
             mutex.WaitOne();
 
-            profileResultsStack.Push(result);
+            GetThreadProfileResultsStack(ctid).Push(result);
 
             mutex.ReleaseMutex();
         }
@@ -115,21 +124,10 @@ namespace CrossEngine.Profiling
         [Conditional("PROFILING")]
         public static void BeginScope()
         {
-            string name = new StackTrace().GetFrame(1).GetMethod().Name;
+            var mth = new StackTrace().GetFrame(1).GetMethod();
+            string name = $"{mth.ReflectedType.Name}.{mth.Name}";
 
-            if (currentSession == null)
-            {
-                Log.Core.Error($"[profiler] no session to profile scope '{name}'");
-                return;
-            }
-
-            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
-
-            mutex.WaitOne();
-
-            profileResultsStack.Push(result);
-
-            mutex.ReleaseMutex();
+            BeginScope(name);
         }
 
         [Conditional("PROFILING")]
@@ -137,14 +135,14 @@ namespace CrossEngine.Profiling
         {
             if (currentSession == null)
             {
-                Log.Core.Error("[profiler] no session to end a scope");
+                //Log.Error("no session to end a scope");
                 return;
             }
 
             mutex.WaitOne();
 
-            ProfileResult result = profileResultsStack.Pop();
-            result.ElapsedTime = ((float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond) - result.Start;
+            ProfileResult result = GetThreadProfileResultsStack(Thread.CurrentThread.ManagedThreadId).Pop();
+            result.ElapsedTime = ((double)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond) - result.Start;
             WriteProfile(ref result);
 
             mutex.ReleaseMutex();
@@ -155,13 +153,13 @@ namespace CrossEngine.Profiling
         {
             if (currentSession == null)
             {
-                Log.Core.Error($"[profiler] no session to profile function '{name}'");
+                //Log.Error($"no session to profile a function '{name}'");
                 return;
             }
 
             mutex.WaitOne();
 
-            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
+            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (double)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
             WriteProfile(ref result);
 
             mutex.ReleaseMutex();
@@ -170,22 +168,26 @@ namespace CrossEngine.Profiling
         [Conditional("PROFILING")]
         public static void Function()
         {
-            string name = new StackTrace().GetFrame(1).GetMethod().Name;
+            var mth = new StackTrace().GetFrame(1).GetMethod();
+            string name = $"{mth.ReflectedType.Name}.{mth.Name}";
 
-            if (currentSession == null)
-            {
-                Log.Core.Error($"[profiler] no session to profile function '{name}'");
-                return;
-            }
-
-            mutex.WaitOne();
-
-            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
-            WriteProfile(ref result);
-
-            mutex.ReleaseMutex();
+            Function(name);
         }
         #endregion
+
+        #region Private Methods
+        private static Stack<ProfileResult> GetThreadProfileResultsStack(int currentThreadId)
+        {
+            if (!profileResultsStacks.ContainsKey(currentThreadId))
+                Debug.Assert(profileResultsStacks.TryAdd(currentThreadId, new Stack<ProfileResult>()), "this should work");
+            return profileResultsStacks[currentThreadId];
+        }
+
+        private static bool AreProfileResultsEmpty()
+        {
+            foreach (var stack in profileResultsStacks.Values) if (stack.Count > 0) return false;
+            return true;
+        }
 
         private static void WriteProfile(ref ProfileResult result)
 		{
@@ -238,5 +240,6 @@ namespace CrossEngine.Profiling
                 currentSession = null;
             }
         }
+        #endregion
     }
 }

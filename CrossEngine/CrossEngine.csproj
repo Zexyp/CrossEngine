@@ -11,12 +11,14 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Configurations>Debug;Release;Profiling Debug</Configurations>
+    <Version>0.1.0-alpha-ex</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <OutputPath></OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -45,20 +47,30 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="unused\**" />
+    <Compile Remove="vendor\BulletSharpPInvoke\BulletSharp\demos\**" />
+    <Compile Remove="vendor\BulletSharpPInvoke\BulletSharp\Properties\**" />
+    <Compile Remove="vendor\BulletSharpPInvoke\BulletSharp\test\**" />
     <Compile Remove="vendor\glfw-net\Examples\**" />
     <Compile Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
     <Compile Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
     <Compile Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram\**" />
     <EmbeddedResource Remove="unused\**" />
+    <EmbeddedResource Remove="vendor\BulletSharpPInvoke\BulletSharp\demos\**" />
+    <EmbeddedResource Remove="vendor\BulletSharpPInvoke\BulletSharp\Properties\**" />
+    <EmbeddedResource Remove="vendor\BulletSharpPInvoke\BulletSharp\test\**" />
     <EmbeddedResource Remove="vendor\glfw-net\Examples\**" />
     <EmbeddedResource Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
     <EmbeddedResource Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
     <EmbeddedResource Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram\**" />
     <None Remove="unused\**" />
+    <None Remove="vendor\BulletSharpPInvoke\BulletSharp\demos\**" />
+    <None Remove="vendor\BulletSharpPInvoke\BulletSharp\Properties\**" />
+    <None Remove="vendor\BulletSharpPInvoke\BulletSharp\test\**" />
     <None Remove="vendor\glfw-net\Examples\**" />
     <None Remove="vendor\ImGui.NET\src\CodeGenerator\**" />
     <None Remove="vendor\ImGui.NET\src\ImGui.NET.SampleProgram.XNA\**" />
@@ -66,11 +78,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="src\CrossEngine\Entities\Components\Colliders\BoxColliderComponent.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Cameras\OrthograficCamera.cs" />
+    <Compile Remove="src\CrossEngine\Rendering\Cameras\PerspectiveCamera.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BulletSharp.x64" Version="0.12.0" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
   </ItemGroup>
@@ -91,17 +103,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath Include="vendor\lib\glfw\x64\glfw3.dll">
+    <ContentWithTargetPath Include="deps\glfw\x64\glfw3.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>glfw3.dll</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="vendor\lib\imgui\x64\Release\cimgui.dll">
+    <ContentWithTargetPath Include="deps\bullet\libbulletc.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>libbulletc.dll</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="deps\cimgui\x64\Release\cimgui.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="vendor\lib\imgui\x64\Release\cimguizmo.dll">
+    <ContentWithTargetPath Include="deps\cimgui\x64\Release\cimguizmo.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>cimguizmo.dll</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
+  
 </Project>

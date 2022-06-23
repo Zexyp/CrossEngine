@@ -1,11 +1,15 @@
 ﻿using System;
 
-using CrossEngine.Rendering.Display;
+using System.Diagnostics;
+using System.Threading;
+
+using CrossEngine.Display;
 using CrossEngine.Layers;
 using CrossEngine.Events;
 using CrossEngine.Inputs;
 using CrossEngine.Logging;
 using CrossEngine.Profiling;
+using CrossEngine.Rendering;
 
 namespace CrossEngine
 {
@@ -13,82 +17,128 @@ namespace CrossEngine
     {
         public static Application Instance { get; private set; } = null;
 
-        public Window Window { get; private set; }
+        RenderThread RenderThread;
         //public uint Width { get => Window.Width; set => Window.Width = value; }
         //public uint Height { get => Window.Height; set => Window.Height = value; }
         //public string Title { get => Window.Title; set => Window.Title = value; }
+        public RendererAPI RendererAPI { get; private set; }
+
+        internal static Logger CoreLog;
+        public static Logger Log;
 
         private LayerStack LayerStack;
+        //private double _fixedUpdateAggregate = 0;
+
+#if PROFILING
+        private bool _shouldStartProfiling = false;
+        private bool _shouldEndProfiling = false;
+#endif
 
         public Application(string title = "Window", int width = 1600, int height = 900)
         {
-            // log needs initialization
-            Log.Init();
+            CoreLog = new Logger("CORE");
+            Log = new Logger("APP");
 
-            WindowProperties props;
-            props.title = title;
-            props.width = (uint)width;
-            props.height = (uint)height;
+            RenderThread = new RenderThread();
 
             if (Instance != null)
-                System.Diagnostics.Debug.Assert(false, "There can be only one Application!");
+                Debug.Assert(false, "There can be only one Application!");
 
             Instance = this;
 
-            Window = new Window(props);
-
             LayerStack = new LayerStack();
 
-            // set the event route
-            Window.SetEventCallback(OnEvent);
+            ThreadManager.Setup(Thread.CurrentThread, RenderThread._thread);
+            ThreadManager.ConfigureCurrentThread();
         }
-
-        const float MaxTimestep = 1.0f / 60;
 
         public void Run()
         {
-            Profiler.BeginSession("session", "profiling.json");
+            //Profiler.BeginSession("session", "profiling.json");
 
-            Profiler.BeginScope(nameof(Init));
             Init();
-            Profiler.EndScope();
 
             LoadContent();
 
             OnEvent(new WindowResizeEvent(Window.Width, Window.Height));
 
-            while (!Window.ShouldClose)
+            while (!(RenderThread.Window?.ShouldClose != false))
             {
+#if PROFILING
+                if (_shouldStartProfiling)
+                {
+                    _shouldStartProfiling = false;
+                    Profiler.BeginSession("session", "profiling.json");
+                }
+#endif
+
                 Profiler.BeginScope("Main loop");
 
-                Time.Update(Window.Time);
+                Time.Update(RenderThread.Window.Time);
 
-                Profiler.BeginScope(nameof(Update));
-                Update(Math.Min((float)Time.DeltaTime, MaxTimestep));
-                Profiler.EndScope();
+                RenderThread.Run();
 
-                EventLoop.Update();
+                while (ThreadManager.MainThreadActionQueue.TryDequeue(out Action action)) action.Invoke();
+                Update();
 
-                Profiler.BeginScope(nameof(Render));
-                Render();
-                Profiler.EndScope();
+                //EventLoop.Update();
+
+                //Profiler.BeginScope(nameof(Render));
+                //Render();
+                //Profiler.EndScope();
+
+                RenderThread.Join();
+
+                //_fixedUpdateAggregate += Time.UnscaledDeltaTime;
+                //if (_fixedUpdateAggregate >= Time.FixedDeltaTime)
+                //{
+                //    _fixedUpdateAggregate = 0;
+                //    Profiler.BeginScope(nameof(FixedUpdate));
+                //    FixedUpdate();
+                //    Profiler.EndScope();
+                //}
 
                 Input.Update();
 
-                Window.Update();
+                Event de;
+                while ((de = RenderThread.DequeueEvent()) != null) OnEvent(de);
+
                 Profiler.EndScope();
+
+#if PROFILING
+                if (_shouldEndProfiling)
+                {
+                    _shouldEndProfiling = false;
+                    Profiler.EndSession();
+                }
+#endif
             }
 
             UnloadContent();
 
-            Window.CloseWindow();
+            Profiler.BeginScope(nameof(End));
+            End();
+            Profiler.EndScope();
 
-            Profiler.EndSession();
+            //Profiler.EndSession();
         }
 
         protected virtual void Init()
         {
+            Profiler.BeginScope();
+            RenderThread.Start();
+            RenderThread.Join();
 
+            RendererAPI = RenderThread.rapi;
+            Profiler.EndScope();
+        }
+
+        protected virtual void End()
+        {
+            Profiler.BeginScope();
+            RenderThread.Stop();
+            RenderThread.Join();
+            Profiler.EndScope();
         }
 
         protected virtual void LoadContent()
@@ -103,43 +153,81 @@ namespace CrossEngine
             //Assets.GC.GPUGarbageCollector.Collect();
         }
 
-        protected virtual void Update(float timestep)
+        protected virtual void Update()
         {
-            var layers = LayerStack.GetLayers();
-            for (int i = 0; i < layers.Count; i++)
+            Profiler.BeginScope();
+            for (int i = 0; i < LayerStack.Layers.Count; i++)
             {
-                layers[i].OnUpdate(timestep);
+                LayerStack.Layers[i].OnUpdate();
             }
+            Profiler.EndScope();
         }
 
-        protected virtual void Render()
+        public virtual void Render()
         {
-            var layers = LayerStack.GetLayers();
-            for (int i = 0; i < layers.Count; i++)
+            Profiler.BeginScope();
+            for (int i = 0; i < LayerStack.Layers.Count; i++)
             {
-                layers[i].OnRender();
+                LayerStack.Layers[i].OnRender();
             }
+            Profiler.EndScope();
         }
 
-        protected virtual void OnEvent(Event e)
+        //protected virtual void FixedUpdate()
+        //{
+        //    var layers = LayerStack.GetLayers();
+        //    var fue = new FixedUpdateEvent();
+        //    for (int i = 0; i < layers.Count; i++)
+        //    {
+        //        layers[i].OnEvent(fue);
+        //    }
+        //}
+
+        public virtual void OnEvent(Event e)
         {
-            Profiler.BeginScope($"{nameof(OnEvent)}({ e.GetType().Name})");
-            var layers = LayerStack.GetLayers();
-            for (int i = layers.Count - 1; i >= 0; i--)
+            Profiler.BeginScope($"{nameof(Application)}.{nameof(OnEvent)}({ e.GetType().Name})");
+
+            var layers = LayerStack.Layers;
+            lock (layers)
             {
-                if (e.Handled) break;
-                layers[i].OnEvent(e);
+                for (int i = layers.Count - 1; i >= 0; i--)
+                {
+                    if (e.Handled) break;
+                    layers[i].OnEvent(e);
+                }
             }
 
             if (!e.Handled) Input.OnEvent(e);
             if (!e.Handled) GlobalEventDispatcher.Dispatch(e);
+
+            if (e is WindowCloseEvent && !e.Handled)
+            {
+                Window.ShouldClose = true;
+            }
 
             Profiler.EndScope();
         }
 
         public void PushLayer(Layer layer) => LayerStack.PushLayer(layer);
         public void PushOverlay(Layer overlay) => LayerStack.PushOverlay(overlay);
+
         public void PopLayer(Layer layer) => LayerStack.PopLayer(layer);
         public void PopOverlay(Layer overlay) => LayerStack.PopOverlay(overlay);
+
+        public T GetLayer<T>() where T : Layer
+        {
+            for (int i = 0; i < LayerStack.Layers.Count; i++)
+            {
+                if (LayerStack.Layers[i] is T) return (T)LayerStack.Layers[i];
+            }
+            return null;
+        }
+
+        public Window Window => RenderThread.Window;
+
+#if PROFILING
+        public void StartProfiler() => _shouldStartProfiling = true;
+        public void EndProfiler() => _shouldEndProfiling = true;
+#endif
     }
 }

@@ -1,73 +1,15 @@
 ﻿using System;
-using static OpenGL.GL;
 
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Numerics;
+using System.Diagnostics;
 
-using CrossEngine.Logging;
-using CrossEngine.Assets.GC;
-using CrossEngine.Serialization.Json;
 using CrossEngine.Utils;
+using CrossEngine.Platform.OpenGL;
 
 namespace CrossEngine.Rendering.Textures
 {
-    public class Texture : IDisposable
+    public abstract class Texture : IDisposable
     {
-        private uint _id = 0;
-        private TextureTarget _target;
-        private IntVec2 _size;
-
-        public uint ID { get => _id; }
-        public TextureTarget Target { get => _target; }
-        public IntVec2 Size { get => _size; }
-        public int Width { get => Size.X; }
-        public int Height { get => Size.Y; }
-
-        public unsafe Texture()
-        {
-            fixed (uint* p = &_id)
-                glGenTextures(1, p);
-            Log.Core.Trace("generated texture (id: {0})", _id);
-        }
-
-        #region Other Constructors
-        public unsafe Texture(Image image) : this()
-        {
-            //fixed (uint* p = &_id)
-            //    glGenTextures(1, p);
-
-            SetImage2DData(image);
-        }
-
-        public unsafe Texture(int width, int height, ColorChannelFormat format) : this()
-        {
-            //fixed (uint* p = &_id)
-            //    glGenTextures(1, p);
-
-            SetImage2DData(null, width, height, ColorChannelFormat.TripleBGR, format, false);
-        }
-
-        public unsafe Texture(uint color) : this()
-        {
-            //fixed (uint* p = &_id)
-            //    glGenTextures(1, p);
-
-            SetImage2DData(&color, 1, 1, ColorChannelFormat.QuadrupleRGBA, ColorChannelFormat.QuadrupleRGBA, false);
-        }
-        #endregion
-
-        #region IDisposable
-        // cleanup
-        ~Texture()
-        {
-            Log.Core.Warn("unhandled texture disposure (id: {0})", _id);
-            //System.Diagnostics.Debug.Assert(false);
-            GPUGarbageCollector.MarkObject(GPUObjectType.Texture, _id);
-            return;
-
-            Dispose(false);
-        }
+        public bool Disposed { get; protected set; } = false;
 
         public void Dispose()
         {
@@ -75,216 +17,85 @@ namespace CrossEngine.Rendering.Textures
             GC.SuppressFinalize(this);
         }
 
-        private unsafe void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
-            if (_id != 0)
-            {
-                Log.Core.Trace("deleting texture (id: {0})", _id);
-
-                fixed (uint* idp = &_id)
-                    glDeleteTextures(1, idp);
-                _id = 0;
-            }
-        }
-        #endregion
-
-        /*
-        // for cube maps
-        public unsafe Texture(Image[] images)
-        {
-            // images go like so: right, left, top, bottom, front, back
-            if (images.Length < 6)
-            {
-                Log.Error("not enough images supplied while creating cubemap!");
+            if (Disposed)
                 return;
-            }
 
-            fixed (uint* idp = &id)
-                glGenTextures(1, idp);
-
-            glBindTexture(GL_TEXTURE_CUBE_MAP, id);
-
-            for (int i = 0; i < 6; i++)
+            if (disposing)
             {
-                int width = images[i].Width;
-                int height = images[i].Height;
-
-                BitmapData data = ((Bitmap)images[i]).LockBits(new Rectangle(0, 0, images[i].Width, images[i].Height), ImageLockMode.ReadWrite, images[i].PixelFormat);
-
-                if (width > 0 && height > 0)
-                {
-
-                    switch (data.PixelFormat)
-                    {
-                        case PixelFormat.Format24bppRgb: glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data.Scan0); break;
-                        default: Log.Warn("another texture format (texture will not be loaded)"); break;
-                    }
-
-                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                }
-                else
-                {
-                    Log.Error("critical error occurred while loading texture");
-                }
-
-                ((Bitmap)images[i]).UnlockBits(data);
+                // free any other managed objects here
             }
 
-            this.type = GL_TEXTURE_CUBE_MAP;
-        }
-        */
+            // free any unmanaged objects here
 
-        public void SetFilterParameter(FilterParameter param, bool min = true, bool mag = true)
-        {
-            glBindTexture((int)_target, _id);
-
-            if (min) glTexParameteri((int)_target, GL_TEXTURE_MIN_FILTER, (int)param);
-            if (mag) glTexParameteri((int)_target, GL_TEXTURE_MAG_FILTER, (int)param);
+            Disposed = true;
         }
 
-        public void SetWrapParameter(WrapParameter param, bool x = true, bool y = true)
+        ~Texture()
         {
-            glBindTexture((int)_target, _id);
-
-            if (x) glTexParameteri((int)_target, GL_TEXTURE_WRAP_S, (int)param);
-            if (y) glTexParameteri((int)_target, GL_TEXTURE_WRAP_T, (int)param);
+            Dispose(false);
         }
 
-        public void Bind(int? slot = null)
-        {
-            if (slot != null)
-                glActiveTexture(GL_TEXTURE0 + (int)slot);
-            glBindTexture((int)_target, _id);
-        }
+        public TextureTarget Target { get; protected set; }
 
-        public static void Unbind(TextureTarget type = TextureTarget.Texture2D, int? slot = null)
-        {
-            if (slot != null)
-                glActiveTexture(GL_TEXTURE0 + (int)slot);
-            glBindTexture((int)type, 0);
-        }
+        public abstract uint RendererId { get; }
+        public abstract uint Width { get; }
+        public abstract uint Height { get; }
+        public IntVec2 Size => new IntVec2((int)Width, (int)Height);
 
-        public static void UnbindAll(int slotRangeLast, TextureTarget type = TextureTarget.Texture2D)
+        public abstract void Bind(uint slot = 0);
+        public abstract void Unbind();
+
+        public abstract unsafe void SetData(void* data, uint size);
+
+        public abstract void SetFilterParameter(FilterParameter filter);
+        public abstract void SetWrapParameter(WrapParameter wrap);
+
+        public static Ref<Texture> Create(uint width, uint height, ColorFormat internalFormat)
         {
-            for (int i = 0; i <= slotRangeLast; i++)
+            switch (RendererAPI.GetAPI())
             {
-                glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture((int)type, 0);
-            }
-        }
-
-        public unsafe void SetImage2DData(void* data, int width, int height, ColorChannelFormat suppliedFormat, ColorChannelFormat desiredFormat, bool generateMipmaps = true)
-        {
-            _target = TextureTarget.Texture2D;
-
-            if (width <= 0 && height <= 0)
-            {
-                throw new Exception("invalid texture size!");
-#pragma warning disable CS0162
-                return;
-#pragma warning restore CS0162
-            }
-            glBindTexture((int)_target, _id);
-
-            // TODO: add data type
-            glTexImage2D((int)_target, 0, (int)desiredFormat, width, height, 0, (int)suppliedFormat, GL_UNSIGNED_BYTE, data);
-
-            if (generateMipmaps) glGenerateMipmap((int)_target);
-
-            // parameters need to be set
-            SetFilterParameter(FilterParameter.Linear);
-            //SetWrapParameter(WrapParameter.Repeat);
-
-            glBindTexture((int)_target, 0);
-
-            this._size = new IntVec2(width, height);
-        }
-
-        public unsafe void SetImage2DData(Image image)
-        {
-            _target = TextureTarget.Texture2D;
-
-            ColorChannelFormat format = 0;
-            ColorChannelFormat desired = 0;
-
-            bool converted = false;
-            switch (image.PixelFormat)
-            {
-                case PixelFormat.Format32bppArgb:
-                    {
-                        format = ColorChannelFormat.QuadrupleBGRA;
-                        desired = ColorChannelFormat.QuadrupleRGBA;
-                    }
-                    break;
-                case PixelFormat.Format24bppRgb:
-                    {
-                        format = ColorChannelFormat.TripleBGR;
-                        desired = ColorChannelFormat.TripleRGB;
-                    }
-                    break;
-                case PixelFormat.Format8bppIndexed:
-                    {
-                        format = ColorChannelFormat.SingleR;
-                        desired = ColorChannelFormat.SingleR;
-                    }
-                    break;
-                default:
-                    {
-                        converted = true;
-                        if (Image.IsAlphaPixelFormat(image.PixelFormat))
-                        {
-                            image = ImageUtils.CreateNewWithPixelFormat(image, PixelFormat.Format32bppArgb);
-
-                            format = ColorChannelFormat.QuadrupleBGRA;
-                            desired = ColorChannelFormat.QuadrupleRGBA;
-                        }
-                        else
-                        {
-                            image = ImageUtils.CreateNewWithPixelFormat(image, PixelFormat.Format24bppRgb);
-
-                            format = ColorChannelFormat.TripleBGR;
-                            desired = ColorChannelFormat.TripleRGB;
-                        }
-                        Log.Core.Trace("image format converted");
-
-                        //Log.Core.Warn("another texture format (texture will not be loaded)");
-                    }
-                    break;
+                case RendererAPI.API.None: Debug.Assert(false, $"No API is not supported"); return null;
+                case RendererAPI.API.OpenGL: return (Ref<Texture>)new GLTexture(width, height, internalFormat);
             }
 
-            BitmapData data = ((Bitmap)image).LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, image.PixelFormat);
-            SetImage2DData(data.Scan0.ToPointer(), data.Width, data.Height, format, desired);
-            ((Bitmap)image).UnlockBits(data);
-            if (converted) image.Dispose();
+            Debug.Assert(false, $"Udefined {nameof(RendererAPI.API)} value");
+            return null;
         }
     }
 
-    public enum FilterParameter : int
+    public enum FilterParameter
     {
-        Linear = GL_LINEAR,
-        Nearest = GL_NEAREST
+        None = 0,
+
+        Linear,
+        Nearest,
+
+        Default = Linear,
     }
 
-    public enum WrapParameter : int
+    public enum WrapParameter
     {
-        Repeat = GL_REPEAT,
-        MirroredRepeat = GL_MIRRORED_REPEAT,
-        ClampToEdge = GL_CLAMP_TO_EDGE,
-        ClampToBorder = GL_CLAMP_TO_BORDER
+        None = 0,
+
+        Repeat,
+        MirroredRepeat,
+        ClampToEdge, // tex coords clamped
+        ClampToBorder, // tex coords outside have user specified color
+
+        Default = Repeat,
     }
 
-    public enum TextureTarget : int
+    public enum TextureTarget
     {
-        Texture1D = GL_TEXTURE_1D,
-        Texture2D = GL_TEXTURE_2D,
-        Texture3D = GL_TEXTURE_3D,
+        None = 0,
 
-        TextureCubeMap = GL_TEXTURE_CUBE_MAP,
+        Texture1D,
+        Texture2D,
+        Texture3D,
+
+        TextureCubeMap,
 
         //TextureCubeMapPositiveX = GL_TEXTURE_CUBE_MAP_POSITIVE_X,
         //TextureCubeMapNegativeX = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
@@ -294,45 +105,26 @@ namespace CrossEngine.Rendering.Textures
         //TextureCubeMapNegativeZ = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
     }
 
-    public enum ColorChannelFormat : int
+    public enum ColorFormat
     {
-        SingleR = GL_RED,
-        SingleG = GL_GREEN,
-        SingleB = GL_BLUE,
-        SingleA = GL_ALPHA,
+        None = 0,
 
-        DoubleRG = GL_RG,
+        //SingleR,
+        //SingleG,
+        //SingleB,
+        //SingleA,
+        //
+        //DoubleRG,
 
-        TripleRGB = GL_RGB,
-        TripleBGR = GL_BGR,
+        RGB,
+        BGR,
 
-        QuadrupleRGBA = GL_RGBA,
-        QuadrupleBGRA = GL_BGRA
+        RGBA,
+        BGRA,
+
+        Luminance,
 
         // GL_COLOR_INDEX
-        // GL_LUMINANCE
         // GL_LUMINANCE_ALPHA
     }
-
-    /*
-    public enum MaterialTextureType
-    {
-        Diffuse = 1,
-        Specular = 2,
-        Normal = 3,
-        Height = 4
-    }
-
-    public static string TypeEnumToString(MaterialTextureType type)
-    {
-        switch (type)
-        {
-            case MaterialTextureType.Diffuse: return "diffuse";
-            case MaterialTextureType.Specular: return "specular";
-            case MaterialTextureType.Normal: return "normal";
-            case MaterialTextureType.Height: return "height";
-            default: return "";
-        }
-    }
-    */
 }
