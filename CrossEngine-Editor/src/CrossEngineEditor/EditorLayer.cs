@@ -652,10 +652,10 @@ namespace CrossEngineEditor
         #region File Menu Actions
         private void FileMenu_NewProject()
         {
-            if (FileDialog.Save(out string path,
+            if (Dialog.SaveFile(out string path,
                             filter:
-                            FileDialog.Filters.IniFile +
-                            FileDialog.Filters.AllFiles,
+                            Dialog.Filters.IniFile +
+                            Dialog.Filters.AllFiles,
                             name: "ce"))
             {
                 Context.Project = EditorProject.Create(path);
@@ -664,10 +664,10 @@ namespace CrossEngineEditor
 
         private void FileMenu_OpenProject()
         {
-            if (FileDialog.Open(out string path,
+            if (Dialog.OpenFile(out string path,
                             filter:
-                            FileDialog.Filters.IniFile +
-                            FileDialog.Filters.AllFiles))
+                            Dialog.Filters.IniFile +
+                            Dialog.Filters.AllFiles))
             {
                 Context.Project = EditorProject.Read(path);
                 var ass = Directory.GetFiles(Context.Project.AssembliesDir);
@@ -680,10 +680,10 @@ namespace CrossEngineEditor
 
         private void FileMenu_CreateScene()
         {
-            if (FileDialog.Save(out string path,
+            if (Dialog.SaveFile(out string path,
                             filter:
-                            FileDialog.Filters.JsonFile +
-                            FileDialog.Filters.AllFiles,
+                            Dialog.Filters.JsonFile +
+                            Dialog.Filters.AllFiles,
                             name: "scene"))
             {
                 Context.Scene?.Unload();
