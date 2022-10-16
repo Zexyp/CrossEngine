@@ -47,9 +47,9 @@ namespace CrossEngineEditor.Panels
 
                     if (ImGui.Button("Load From File..."))
                     {
-                        if (FileDialog.Open(out string path,
-                            filter: FileDialog.Filters.IniFile +
-                                    FileDialog.Filters.AllFiles))
+                        if (Dialog.OpenFile(out string path,
+                            filter: Dialog.Filters.IniFile +
+                                    Dialog.Filters.AllFiles))
                         {
                             if (!ImGuiStyleConfig.Load(new IniFile(path, true))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
                         }
