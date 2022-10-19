@@ -652,6 +652,8 @@ namespace CrossEngineEditor
         #region File Menu Actions
         private void FileMenu_NewProject()
         {
+            throw new NotImplementedException();
+            /*
             if (Dialog.SaveFile(out string path,
                             filter:
                             Dialog.Filters.IniFile +
@@ -660,10 +662,13 @@ namespace CrossEngineEditor
             {
                 Context.Project = EditorProject.Create(path);
             }
+            */
         }
 
         private void FileMenu_OpenProject()
         {
+            throw new NotImplementedException();
+            /*
             if (Dialog.OpenFile(out string path,
                             filter:
                             Dialog.Filters.IniFile +
@@ -676,10 +681,13 @@ namespace CrossEngineEditor
                     AssemblyLoader.Load(ass[i]);
                 }
             }
+            */
         }
 
         private void FileMenu_CreateScene()
         {
+            throw new NotImplementedException();
+            /*
             if (Dialog.SaveFile(out string path,
                             filter:
                             Dialog.Filters.JsonFile +
@@ -690,6 +698,7 @@ namespace CrossEngineEditor
                 Context.Scene = Context.Project.CreateScene(Path.GetFileName(Path.GetDirectoryName(path)));
                 Context.Scene.Load();
             }
+            */
         }
 
         //private void FileOpenScene()
@@ -807,5 +816,5 @@ namespace CrossEngineEditor
         }
         #endregion
         */
+        }
     }
-}
