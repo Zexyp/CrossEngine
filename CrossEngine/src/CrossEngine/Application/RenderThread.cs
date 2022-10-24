@@ -11,10 +11,7 @@ using CrossEngine.Utils.Imaging;
 using CrossEngine.Display;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
-using CrossEngine.Rendering.Buffers;
-using CrossEngine.Rendering.Shaders;
 using CrossEngine.Logging;
-using CrossEngine.Layers;
 
 namespace CrossEngine
 {
@@ -22,90 +19,109 @@ namespace CrossEngine
 
     class RenderThread
     {
-        internal readonly Thread _thread;
-        EventWaitHandle _waitHandle;
-        EventWaitHandle _joinHandle;
-
         public Window Window { get; private set; } = null;
 
-        bool _shouldStop = false;
+        private readonly Thread _thread;
+        private readonly EventWaitHandle _waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
+        private readonly EventWaitHandle _runWaitHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
+        private ConcurrentQueue<Event> _events = new ConcurrentQueue<Event>();
+        private RendererAPI _rapi;
 
-        Queue<Event> _events = new Queue<Event>();
+        private bool _shouldStop = false;
 
-        public RendererAPI rapi;
-
-        IReadOnlyCollection<Layer> _renderLayers = null;
-
-        public RenderThread()
+        public RenderThread(RendererAPI rendererAPI)
         {
+            _rapi = rendererAPI;
+
             _thread = new Thread(Loop);
 
-            _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
-            _joinHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
-
             Window = new GLFWWindow();
-        }
 
-        public void Run()
-        {
-            _waitHandle.Set();
+            ThreadManager.SetRenderThread(_thread);
         }
 
         public void Start()
         {
-            if (_thread.ThreadState != ThreadingThreadState.Unstarted) throw new Exception("Thread is already running.");
+            if (_thread.ThreadState != ThreadingThreadState.Unstarted)
+                throw new InvalidOperationException("Thread is already running.");
 
-            _joinHandle.Reset();
+            _waitHandle.Reset();
             _thread.Start();
         }
 
-        public void Join()
+        public void Wait()
         {
-            _joinHandle.WaitOne();
+            _waitHandle.WaitOne();
+        }
+
+        public void Begin()
+        {
+            _runWaitHandle.Set();
         }
 
         public void Stop()
         {
-            if (_thread.ThreadState == ThreadingThreadState.Unstarted) throw new Exception("Thread wasn't started.");
+            if (_thread.ThreadState == ThreadingThreadState.Unstarted)
+                throw new InvalidOperationException("Thread wasn't started.");
 
-            Join();
+            Begin();
 
             _shouldStop = true;
-            Run();
         }
 
-        public Event? DequeueEvent() => _events.TryDequeue(out Event e) ? e : null;
+        public Event? DequeueEvent()
+        {
+            return _events.TryDequeue(out Event e) ? e : null;
+        }
 
         private unsafe void Loop()
         {
-            ThreadManager.ConfigureCurrentThread();
-
             Profiler.BeginScope($"{nameof(RenderThread)}.{nameof(RenderThread.Init)}");
             Init();
             Profiler.EndScope();
 
-            rapi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
+            // handle is reset in the start method
+            _waitHandle.Set();
 
-            do
+            _runWaitHandle.Set();
+
+            while (!_shouldStop)
             {
-                _joinHandle.Set();
-                _waitHandle.WaitOne();
-                _joinHandle.Reset();
+                _runWaitHandle.WaitOne();
+
+                _waitHandle.Reset();
+                
+                _runWaitHandle.Set();
+                if (_shouldStop)
+                    continue;
+
+                Profiler.BeginScope("Render loop");
+
+                _rapi.Clear();
+
+                while (ThreadManager.RenderThreadActionQueue.TryDequeue(out Action action))
+                    action.Invoke();
+
+                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Render)}");
+                Application.Instance.Render();
+                Profiler.EndScope();
 
                 Window.PollWindowEvents();
                 Window.UpdateWindow();
 
-                rapi.Clear();
+                Profiler.EndScope();
 
-                while (ThreadManager.RenderThreadActionQueue.TryDequeue(out Action action)) action.Invoke();
-                Application.Instance.Render();
-            } while (!_shouldStop);
+                _waitHandle.Set();
+            }
+
+            // a way to wait until the windows closes
+            _waitHandle.Reset();
 
             Profiler.BeginScope($"{nameof(RenderThread)}.{nameof(RenderThread.Destroy)}");
             Destroy();
             Profiler.EndScope();
 
-            _joinHandle.Set();
+            _waitHandle.Set();
         }
 
         private void OnWindowEvent(Event e)
@@ -117,16 +133,19 @@ namespace CrossEngine
             if (e is WindowResizeEvent)
             {
                 var wre = e as WindowResizeEvent;
-                rapi.SetViewport(0, 0, wre.Width, wre.Height);
+                _rapi.SetViewport(0, 0, wre.Width, wre.Height);
             }
             _events.Enqueue(e);
         }
 
         private unsafe void Init()
         {
+            ThreadManager.ConfigureCurrentThread();
+
             Window.SetEventCallback(OnWindowEvent);
             Window.CreateWindow();
 
+            // set window icon
             var icon = Properties.Resources.DefaultWindowIcon.ToBitmap();
             ImageUtils.SwapChannels(icon, ImageUtils.ColorChannel.Red, ImageUtils.ColorChannel.Blue); // this will come and bite later :D
             System.Drawing.Imaging.BitmapData bitmapData = icon.LockBits(new System.Drawing.Rectangle(0, 0, icon.Width, icon.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, icon.PixelFormat);
@@ -134,8 +153,9 @@ namespace CrossEngine
             icon.UnlockBits(bitmapData);
             icon.Dispose();
 
-            rapi = RendererAPI.Create();
-            rapi.Init();
+            _rapi.Init();
+            _rapi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
+
         }
 
         private void Destroy()

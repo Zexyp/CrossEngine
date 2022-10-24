@@ -8,10 +8,10 @@ using System.Globalization;
 
 namespace CrossEngine
 {
-    public class ThreadManager
+    public static class ThreadManager
     {
-        internal static ConcurrentQueue<Action> RenderThreadActionQueue { get; private set; } = new ConcurrentQueue<Action>();
-        internal static ConcurrentQueue<Action> MainThreadActionQueue { get; private set; } = new ConcurrentQueue<Action>();
+        internal static readonly ConcurrentQueue<Action> RenderThreadActionQueue = new ConcurrentQueue<Action>();
+        internal static readonly ConcurrentQueue<Action> MainThreadActionQueue = new ConcurrentQueue<Action>();
 
         public static bool IsRenderThread => Thread.CurrentThread == _renderThread;
         public static bool IsMainThread => Thread.CurrentThread == _mainThread;
@@ -28,12 +28,17 @@ namespace CrossEngine
             MainThreadActionQueue.Enqueue(action);
         }
 
-        internal static void Setup(Thread main, Thread render)
+        internal static void SetMainThread(Thread main)
         {
-            _renderThread = render;
             _mainThread = main;
         }
 
+        internal static void SetRenderThread(Thread render)
+        {
+            _renderThread = render;
+        }
+
+        // it's not possible to clone a culture info of a given thread
         internal static void ConfigureCurrentThread()
         {
             var ci = (CultureInfo)Thread.CurrentThread.CurrentCulture.Clone();

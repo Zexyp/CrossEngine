@@ -16,30 +16,24 @@ namespace CrossEngine
     public abstract class Application
     {
         public static Application Instance { get; private set; } = null;
+        public Window Window => _renderThread?.Window;
 
-        RenderThread RenderThread;
-        //public uint Width { get => Window.Width; set => Window.Width = value; }
-        //public uint Height { get => Window.Height; set => Window.Height = value; }
-        //public string Title { get => Window.Title; set => Window.Title = value; }
+        private readonly RenderThread _renderThread;
         public RendererAPI RendererAPI { get; private set; }
 
         internal static Logger CoreLog;
         public static Logger Log;
 
-        private LayerStack LayerStack;
+        private readonly LayerStack LayerStack;
         //private double _fixedUpdateAggregate = 0;
-
-#if PROFILING
-        private bool _shouldStartProfiling = false;
-        private bool _shouldEndProfiling = false;
-#endif
 
         public Application(string title = "Window", int width = 1600, int height = 900)
         {
             CoreLog = new Logger("CORE");
             Log = new Logger("APP");
 
-            RenderThread = new RenderThread();
+            RendererAPI = RendererAPI.Create();
+            _renderThread = new RenderThread(RendererAPI);
 
             if (Instance != null)
                 Debug.Assert(false, "There can be only one Application!");
@@ -48,21 +42,21 @@ namespace CrossEngine
 
             LayerStack = new LayerStack();
 
-            ThreadManager.Setup(Thread.CurrentThread, RenderThread._thread);
+            ThreadManager.SetMainThread(Thread.CurrentThread);
             ThreadManager.ConfigureCurrentThread();
         }
 
         public void Run()
         {
-            //Profiler.BeginSession("session", "profiling.json");
-
             Init();
 
+            Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.LoadContent)}");
             LoadContent();
+            Profiler.EndScope();
 
             OnEvent(new WindowResizeEvent(Window.Width, Window.Height));
 
-            while (!(RenderThread.Window?.ShouldClose != false))
+            while (!(Window?.ShouldClose != false))
             {
 #if PROFILING
                 if (_shouldStartProfiling)
@@ -74,20 +68,18 @@ namespace CrossEngine
 
                 Profiler.BeginScope("Main loop");
 
-                Time.Update(RenderThread.Window.Time);
+                _renderThread.Begin();
 
-                RenderThread.Run();
+                Time.Update(Window.Time);
 
-                while (ThreadManager.MainThreadActionQueue.TryDequeue(out Action action)) action.Invoke();
+                while (ThreadManager.MainThreadActionQueue.TryDequeue(out Action action))
+                    action.Invoke();
+
+                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Update)}");
                 Update();
+                Profiler.EndScope();
 
                 //EventLoop.Update();
-
-                //Profiler.BeginScope(nameof(Render));
-                //Render();
-                //Profiler.EndScope();
-
-                RenderThread.Join();
 
                 //_fixedUpdateAggregate += Time.UnscaledDeltaTime;
                 //if (_fixedUpdateAggregate >= Time.FixedDeltaTime)
@@ -100,8 +92,13 @@ namespace CrossEngine
 
                 Input.Update();
 
+                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.OnEvent)}");
                 Event de;
-                while ((de = RenderThread.DequeueEvent()) != null) OnEvent(de);
+                while ((de = _renderThread.DequeueEvent()) != null)
+                    OnEvent(de);
+                Profiler.EndScope();
+
+                _renderThread.Wait();
 
                 Profiler.EndScope();
 
@@ -114,31 +111,26 @@ namespace CrossEngine
 #endif
             }
 
+            Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.UnloadContent)}");
             UnloadContent();
-
-            Profiler.BeginScope(nameof(End));
-            End();
             Profiler.EndScope();
 
-            //Profiler.EndSession();
+            Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Destroy)}");
+            Destroy();
+            Profiler.EndScope();
         }
 
+        #region Virtual Methods
         protected virtual void Init()
         {
-            Profiler.BeginScope();
-            RenderThread.Start();
-            RenderThread.Join();
-
-            RendererAPI = RenderThread.rapi;
-            Profiler.EndScope();
+            _renderThread.Start();
+            _renderThread.Wait();
         }
 
-        protected virtual void End()
+        protected virtual void Destroy()
         {
-            Profiler.BeginScope();
-            RenderThread.Stop();
-            RenderThread.Join();
-            Profiler.EndScope();
+            _renderThread.Stop();
+            _renderThread.Wait();
         }
 
         protected virtual void LoadContent()
@@ -155,37 +147,23 @@ namespace CrossEngine
 
         protected virtual void Update()
         {
-            Profiler.BeginScope();
             for (int i = 0; i < LayerStack.Layers.Count; i++)
             {
                 LayerStack.Layers[i].OnUpdate();
             }
-            Profiler.EndScope();
         }
 
         public virtual void Render()
         {
-            Profiler.BeginScope();
             for (int i = 0; i < LayerStack.Layers.Count; i++)
             {
                 LayerStack.Layers[i].OnRender();
             }
-            Profiler.EndScope();
         }
-
-        //protected virtual void FixedUpdate()
-        //{
-        //    var layers = LayerStack.GetLayers();
-        //    var fue = new FixedUpdateEvent();
-        //    for (int i = 0; i < layers.Count; i++)
-        //    {
-        //        layers[i].OnEvent(fue);
-        //    }
-        //}
 
         public virtual void OnEvent(Event e)
         {
-            Profiler.BeginScope($"{nameof(Application)}.{nameof(OnEvent)}({ e.GetType().Name})");
+            Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.OnEvent)}({e.GetType().Name})(base)");
 
             var layers = LayerStack.Layers;
             lock (layers)
@@ -207,7 +185,9 @@ namespace CrossEngine
 
             Profiler.EndScope();
         }
+        #endregion
 
+        #region Layer Operations Methods
         public void PushLayer(Layer layer) => LayerStack.PushLayer(layer);
         public void PushOverlay(Layer overlay) => LayerStack.PushOverlay(overlay);
 
@@ -222,12 +202,28 @@ namespace CrossEngine
             }
             return null;
         }
+        #endregion
 
-        public Window Window => RenderThread.Window;
-
+        #region Profiling Methods
 #if PROFILING
-        public void StartProfiler() => _shouldStartProfiling = true;
-        public void EndProfiler() => _shouldEndProfiling = true;
+        private bool _shouldStartProfiling = false;
+        private bool _shouldEndProfiling = false;
 #endif
+
+        [Conditional("PROFILING")]
+        public void StartProfiler()
+        {
+#if PROFILING
+            _shouldStartProfiling = true;
+#endif
+        }
+        [Conditional("PROFILING")]
+        public void EndProfiler()
+        {
+#if PROFILING
+            _shouldEndProfiling = true;
+#endif
+        }
+        #endregion
     }
 }

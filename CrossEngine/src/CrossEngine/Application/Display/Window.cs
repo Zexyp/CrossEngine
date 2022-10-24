@@ -36,13 +36,14 @@ namespace CrossEngine.Display
 
         protected WindowData Data;
 
-        public uint Width { get => Data.Width; set { Data.Width = value; UpdateWindowSize(); } }
-        public uint Height { get => Data.Height; set { Data.Height = value; UpdateWindowSize(); } }
-        public string Title { get => Data.Title; set { Data.Title = value; UpdateWindowTitle(); } }
+        public uint Width { get => Data.Width; set { Data.Width = value; if (Handle != IntPtr.Zero) UpdateWindowSize(); } }
+        public uint Height { get => Data.Height; set { Data.Height = value; if (Handle != IntPtr.Zero) UpdateWindowSize(); } }
+        public string Title { get => Data.Title; set { Data.Title = value; if (Handle != IntPtr.Zero) UpdateWindowTitle(); } }
 
         public abstract double Time { get; }
         public abstract bool ShouldClose { get; set; }
         public abstract bool VSync { get; set; }
+        public abstract IntPtr Handle { get; }
 
 
         //public abstract void SetIcon(System.Drawing.Image image);

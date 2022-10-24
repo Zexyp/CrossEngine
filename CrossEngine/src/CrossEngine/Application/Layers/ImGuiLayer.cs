@@ -41,7 +41,7 @@ namespace CrossEngine.Layers
                 var window = app.Window;
                 if (!(window is CrossEngine.Platform.Windows.GLFWWindow)) throw new NotImplementedException();
 
-                GLFW.Window windowHandle = ((CrossEngine.Platform.Windows.GLFWWindow)window).Handle;
+                GLFW.Window windowHandle = (GLFW.Window)((CrossEngine.Platform.Windows.GLFWWindow)window).Handle;
 
                 if (ImGuiController.ImGui_ImplGlfw_InitForOpenGL(windowHandle, true)) Application.CoreLog.Info("ImGui GLFW part initialized");
                 if (ImGuiController.ImGui_ImplOpenGL3_Init("#version 330 core")) Application.CoreLog.Info("ImGui OpenGL part initialized");
