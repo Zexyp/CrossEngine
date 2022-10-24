@@ -47,12 +47,15 @@ namespace CrossEngineEditor.Panels
 
                     if (ImGui.Button("Load From File..."))
                     {
+                        throw new NotImplementedException();
+                        /*
                         if (Dialog.OpenFile(out string path,
                             filter: Dialog.Filters.IniFile +
                                     Dialog.Filters.AllFiles))
                         {
                             if (!ImGuiStyleConfig.Load(new IniFile(path, true))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
                         }
+                        */
                     }
 
                     ImGuiUtils.EndGroupFrame();

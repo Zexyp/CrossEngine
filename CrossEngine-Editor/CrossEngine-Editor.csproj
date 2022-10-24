@@ -38,8 +38,17 @@
 
   <ItemGroup>
     <Compile Remove="assets\**" />
+    <Compile Remove="vendor\ShellFileDialogs\NuGet-Consumers\**" />
+    <Compile Remove="vendor\ShellFileDialogs\ShellFileDialogs.Demo\**" />
+    <Compile Remove="vendor\ShellFileDialogs\ShellFileDialogs.NuGet\**" />
     <EmbeddedResource Remove="assets\**" />
+    <EmbeddedResource Remove="vendor\ShellFileDialogs\NuGet-Consumers\**" />
+    <EmbeddedResource Remove="vendor\ShellFileDialogs\ShellFileDialogs.Demo\**" />
+    <EmbeddedResource Remove="vendor\ShellFileDialogs\ShellFileDialogs.NuGet\**" />
     <None Remove="assets\**" />
+    <None Remove="vendor\ShellFileDialogs\NuGet-Consumers\**" />
+    <None Remove="vendor\ShellFileDialogs\ShellFileDialogs.Demo\**" />
+    <None Remove="vendor\ShellFileDialogs\ShellFileDialogs.NuGet\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,6 +58,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="deps\shellfiledialogs\" />
   </ItemGroup>
 
 </Project>
