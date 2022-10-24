@@ -70,5 +70,21 @@ namespace CrossEngine.Layers
             _layers.Clear();
             lastLayerIndex = 0;
         }
+
+        public void PushLayersRange(IEnumerable<Layer> layers)
+        {
+            foreach (var item in layers)
+            {
+                PushLayer(item);
+            }
+        }
+
+        public void PushOverlaysRange(IEnumerable<Layer> layers)
+        {
+            foreach (var item in layers)
+            {
+                PushOverlay(item);
+            }
+        }
     }
 }

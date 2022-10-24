@@ -7,11 +7,13 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Globalization;
 
+using CrossEngine.Logging;
+
 namespace CrossEngine.Profiling
 {
     public static class Profiler
     {
-        static Logging.Logger Log = new Logging.Logger("profiler");
+        static readonly Logger Log = new Logger("profiler");
 
         #region Structures
         struct ProfilerSession

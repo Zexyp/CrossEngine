@@ -57,7 +57,7 @@ namespace CrossEngine.Utils.Imaging
             {
 				case PixelFormat.Format32bppArgb: offset = 4; break;
 				case PixelFormat.Format24bppRgb: offset = 3; break;
-				default: throw new InvalidDataException("The images has unsupported format!");
+				default: throw new InvalidDataException("Image format not supported!");
 			}
 
 			for (int counter = (int)colorChannel1; counter < rgbValues.Length; counter += offset)

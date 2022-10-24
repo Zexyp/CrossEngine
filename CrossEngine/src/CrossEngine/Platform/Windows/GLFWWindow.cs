@@ -12,21 +12,28 @@ namespace CrossEngine.Platform.Windows
 
     class GLFWWindow : CrossEngine.Display.Window
     {
-        private bool _vsync;
-
         public override double Time => Glfw.Time;
-        public override bool ShouldClose { get => Glfw.WindowShouldClose(Handle); set => Glfw.SetWindowShouldClose(Handle, value); }
+        public override bool ShouldClose
+        {
+            get => Glfw.WindowShouldClose(_nativeHandle);
+            set => Glfw.SetWindowShouldClose(_nativeHandle, value);
+        }
         public override bool VSync
         {
             get => _vsync;
             set
             {
                 _vsync = value;
+                if (_nativeHandle == WindowHandle.None)
+                    return;
                 Glfw.SwapInterval(_vsync ? 1 : 0);
             }
         }
 
-        internal WindowHandle Handle { get; private set; } = WindowHandle.None;
+        public override IntPtr Handle => _nativeHandle;
+
+        private WindowHandle _nativeHandle = WindowHandle.None;
+        private bool _vsync;
 
         public GLFWWindow(uint width = 1600, uint height = 900, string title = "Pew")
         {
@@ -47,9 +54,9 @@ namespace CrossEngine.Platform.Windows
             //Glfw.WindowHint(Hint.Decorated, true);
             //Glfw.WindowHint(Hint.OpenglForwardCompatible, true);
 
-            Handle = Glfw.CreateWindow((int)Data.Width, (int)Data.Height, Data.Title, Monitor.None, WindowHandle.None);
+            _nativeHandle = Glfw.CreateWindow((int)Data.Width, (int)Data.Height, Data.Title, Monitor.None, WindowHandle.None);
 
-            Glfw.MakeContextCurrent(Handle);
+            Glfw.MakeContextCurrent(_nativeHandle);
 
             SetupCallbacks();
 
@@ -58,8 +65,8 @@ namespace CrossEngine.Platform.Windows
 
         protected internal override void DestroyWindow()
         {
-            Glfw.DestroyWindow(Handle);
-            Handle = WindowHandle.None;
+            Glfw.DestroyWindow(_nativeHandle);
+            _nativeHandle = WindowHandle.None;
         }
 
         protected internal override void SetEventCallback(EventCallbackFunction callback)
@@ -69,7 +76,7 @@ namespace CrossEngine.Platform.Windows
 
         protected internal override void UpdateWindow()
         {
-            Glfw.SwapBuffers(Handle);
+            Glfw.SwapBuffers(_nativeHandle);
         }
 
         protected internal override void PollWindowEvents()
@@ -80,17 +87,17 @@ namespace CrossEngine.Platform.Windows
         protected internal override unsafe void SetIcon(void* data, uint width, uint height)
         {
             GLFW.Image iconImage = new GLFW.Image((int)width, (int)height, new IntPtr(data));
-            Glfw.SetWindowIcon(Handle, 1, new GLFW.Image[] { iconImage });
+            Glfw.SetWindowIcon(_nativeHandle, 1, new GLFW.Image[] { iconImage });
         }
 
         protected override void UpdateWindowSize()
         {
-            if (Handle != WindowHandle.None) Glfw.SetWindowSize(Handle, (int)Data.Width, (int)Data.Height);
+            Glfw.SetWindowSize(_nativeHandle, (int)Data.Width, (int)Data.Height);
         }
 
         protected override void UpdateWindowTitle()
         {
-            if (Handle !=  WindowHandle.None) Glfw.SetWindowTitle(Handle, Title);
+            Glfw.SetWindowTitle(_nativeHandle, Title);
         }
 
         private void GLFWErrorCallback(ErrorCode code, IntPtr message)
@@ -98,17 +105,17 @@ namespace CrossEngine.Platform.Windows
             Application.CoreLog.Error("[GLFW] " + (int)code + " (" + code.ToString() + "): " + Marshal.PtrToStringAnsi(message));
         }
 
-        private SizeCallback windowSizeCallbackHolder;
-        private WindowCallback closeCallbackHolder;
-        private KeyCallback keyCallbackHolder;
-        private CharCallback charCallbackHolder;
-        private MouseButtonCallback mouseButtonCallbackHolder;
-        private MouseCallback scrollCallbackHolder;
-        private MouseCallback cursorPositionCallbackHolder;
+        private SizeCallback _windowSizeCallbackHolder;
+        private WindowCallback _closeCallbackHolder;
+        private KeyCallback _keyCallbackHolder;
+        private CharCallback _charCallbackHolder;
+        private MouseButtonCallback _mouseButtonCallbackHolder;
+        private MouseCallback _scrollCallbackHolder;
+        private MouseCallback _cursorPositionCallbackHolder;
 
         private void SetupCallbacks()
         {
-            Glfw.SetWindowSizeCallback(Handle, windowSizeCallbackHolder = (WindowHandle window, int width, int height) =>
+            Glfw.SetWindowSizeCallback(_nativeHandle, _windowSizeCallbackHolder = (WindowHandle window, int width, int height) =>
             {
                 Data.Width = (uint)width;
                 Data.Height = (uint)height;
@@ -116,12 +123,12 @@ namespace CrossEngine.Platform.Windows
                 Data.EventCallback?.Invoke(new WindowResizeEvent((uint)width, (uint)height));
             });
 
-            Glfw.SetCloseCallback(Handle, closeCallbackHolder = (WindowHandle window) =>
+            Glfw.SetCloseCallback(_nativeHandle, _closeCallbackHolder = (WindowHandle window) =>
             {
                 Data.EventCallback?.Invoke(new WindowCloseEvent());
             });
 
-            Glfw.SetKeyCallback(Handle, keyCallbackHolder = (WindowHandle window, Keys key, int scanCode, InputState state, ModifierKeys mods) =>
+            Glfw.SetKeyCallback(_nativeHandle, _keyCallbackHolder = (WindowHandle window, Keys key, int scanCode, InputState state, ModifierKeys mods) =>
             {
                 switch (state)
                 {
@@ -143,12 +150,12 @@ namespace CrossEngine.Platform.Windows
                 }
             });
 
-            Glfw.SetCharCallback(Handle, charCallbackHolder = (WindowHandle window, uint codePoint) =>
+            Glfw.SetCharCallback(_nativeHandle, _charCallbackHolder = (WindowHandle window, uint codePoint) =>
             {
                 Data.EventCallback?.Invoke(new KeyTypedEvent((CrossEngine.Inputs.Key)codePoint));
             });
 
-            Glfw.SetMouseButtonCallback(Handle, mouseButtonCallbackHolder = (WindowHandle window, MouseButton button, InputState state, ModifierKeys modifiers) =>
+            Glfw.SetMouseButtonCallback(_nativeHandle, _mouseButtonCallbackHolder = (WindowHandle window, MouseButton button, InputState state, ModifierKeys modifiers) =>
             {
                 switch (state)
                 {
@@ -165,12 +172,12 @@ namespace CrossEngine.Platform.Windows
                 }
             });
 
-            Glfw.SetScrollCallback(Handle, scrollCallbackHolder = (WindowHandle window, double x, double y) =>
+            Glfw.SetScrollCallback(_nativeHandle, _scrollCallbackHolder = (WindowHandle window, double x, double y) =>
             {
                 Data.EventCallback?.Invoke(new MouseScrolledEvent((float)x, (float)y));
             });
 
-            Glfw.SetCursorPositionCallback(Handle, cursorPositionCallbackHolder = (WindowHandle window, double x, double y) =>
+            Glfw.SetCursorPositionCallback(_nativeHandle, _cursorPositionCallbackHolder = (WindowHandle window, double x, double y) =>
             {
                 Data.EventCallback?.Invoke(new MouseMovedEvent((float)x, (float)y));
             });

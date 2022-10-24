@@ -1,5 +1,4 @@
-﻿using GLFW;
-using System;
+﻿using System;
 
 using System.Numerics;
 using System.Linq;
@@ -25,18 +24,7 @@ namespace CrossEngine.Inputs
 
         public static bool Enabled = true;
 
-        // meh
-        //static Input()
-        //{
-        //    GlobalEventDispatcher.Register<KeyPressedEvent>(OnKeyPressed);
-        //    GlobalEventDispatcher.Register<KeyReleasedEvent>(OnKeyReleased);
-        //    GlobalEventDispatcher.Register<MouseButtonPressedEvent>(OnMouseButtonPressed);
-        //    GlobalEventDispatcher.Register<MouseButtonReleasedEvent>(OnMouseButtonReleased);
-        //    GlobalEventDispatcher.Register<MouseScrolledEvent>(OnMouseScrolled);
-        //    GlobalEventDispatcher.Register<MouseMovedEvent>(OnMouseMoved);
-        //}
-
-        static public void Update()
+        static internal void Update()
         {
             mouseDelta.X = mouseDelta.Y = 0.0f;
             mouseLastPosition = mousePosition;
@@ -77,13 +65,13 @@ namespace CrossEngine.Inputs
         {
             if (!Enabled) return;
 
-            EventDispatcher dispatcher = new EventDispatcher(e);
-            dispatcher.Dispatch<KeyPressedEvent>(OnKeyPressed);
-            dispatcher.Dispatch<KeyReleasedEvent>(OnKeyReleased);
-            dispatcher.Dispatch<MouseButtonPressedEvent>(OnMouseButtonPressed);
-            dispatcher.Dispatch<MouseButtonReleasedEvent>(OnMouseButtonReleased);
-            dispatcher.Dispatch<MouseScrolledEvent>(OnMouseScrolled);
-            dispatcher.Dispatch<MouseMovedEvent>(OnMouseMoved);
+            new EventDispatcher(e)
+                .Dispatch<KeyPressedEvent>(OnKeyPressed)
+                .Dispatch<KeyReleasedEvent>(OnKeyReleased)
+                .Dispatch<MouseButtonPressedEvent>(OnMouseButtonPressed)
+                .Dispatch<MouseButtonReleasedEvent>(OnMouseButtonReleased)
+                .Dispatch<MouseScrolledEvent>(OnMouseScrolled)
+                .Dispatch<MouseMovedEvent>(OnMouseMoved);
         }
 
         static void OnKeyPressed(KeyPressedEvent e)
@@ -126,14 +114,20 @@ namespace CrossEngine.Inputs
         #region Get
         public static bool GetKey(Key key)
         {
+            if (key == Key.Unknown)
+                throw new Exception();
             return keys[(int)key];
         }
         public static bool GetKeyDown(Key key)
         {
+            if (key == Key.Unknown)
+                throw new Exception();
             return keysDown[(int)key];
         }
         public static bool GetKeyUp(Key key)
         {
+            if (key == Key.Unknown)
+                throw new Exception();
             return keysUp[(int)key];
         }
 
