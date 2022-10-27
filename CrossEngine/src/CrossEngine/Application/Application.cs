@@ -10,21 +10,22 @@ using CrossEngine.Inputs;
 using CrossEngine.Logging;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
+using System.Collections.Concurrent;
 
 namespace CrossEngine
 {
     public abstract class Application
     {
-        public static Application Instance { get; private set; } = null;
-        public Window Window => _renderThread?.Window;
-
-        private readonly RenderThread _renderThread;
-        public RendererAPI RendererAPI { get; private set; }
-
         internal static Logger CoreLog;
         public static Logger Log;
 
+        public static Application Instance { get; private set; } = null;
+        public Window Window => _renderThread?.Window;
+        public RendererAPI RendererAPI { get; private set; }
+
+        private readonly RenderThread _renderThread;
         private readonly LayerStack LayerStack;
+        private ConcurrentQueue<Event> _events = new ConcurrentQueue<Event>();
         //private double _fixedUpdateAggregate = 0;
 
         public Application(string title = "Window", int width = 1600, int height = 900)
@@ -34,6 +35,20 @@ namespace CrossEngine
 
             RendererAPI = RendererAPI.Create();
             _renderThread = new RenderThread(RendererAPI);
+            _renderThread.OnEvent += (e) =>
+            {
+                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.OnEvent)}");
+                OnEvent(e);
+                Profiler.EndScope();
+            };
+            _renderThread.OnRender += () =>
+            {
+                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Render)}");
+                Render();
+                Profiler.EndScope();
+            };
+            _renderThread.OnInit += RenderInit;
+            _renderThread.OnDestroy += RenderDestry;
 
             if (Instance != null)
                 Debug.Assert(false, "There can be only one Application!");
@@ -48,7 +63,9 @@ namespace CrossEngine
 
         public void Run()
         {
+            Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Init)}");
             Init();
+            Profiler.EndScope();
 
             Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.LoadContent)}");
             LoadContent();
@@ -92,11 +109,9 @@ namespace CrossEngine
 
                 Input.Update();
 
-                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.OnEvent)}");
-                Event de;
-                while ((de = _renderThread.DequeueEvent()) != null)
-                    OnEvent(de);
-                Profiler.EndScope();
+                //Event de;
+                //while ((de = _renderThread.DequeueEvent()) != null)
+                //    OnEvent(de);
 
                 _renderThread.Wait();
 
@@ -127,11 +142,15 @@ namespace CrossEngine
             _renderThread.Wait();
         }
 
+        protected virtual void RenderInit() { }
+
         protected virtual void Destroy()
         {
             _renderThread.Stop();
             _renderThread.Wait();
         }
+
+        protected virtual void RenderDestry() { }
 
         protected virtual void LoadContent()
         {

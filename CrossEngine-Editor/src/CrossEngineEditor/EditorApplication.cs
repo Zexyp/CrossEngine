@@ -20,17 +20,17 @@ namespace CrossEngineEditor
     {
         public EditorApplication() : base("CrossEngine Editor")
         {
-            ThreadManager.ExecuteOnRenderThread(() =>
-            {
-                GLDebugging.EnableGLDebugging(LogLevel.Warn);
-                Renderer2D.Init();
-                LineRenderer.Init();
-                RendererAPI.SetDepthFunc(DepthFunc.Default);
-                RendererAPI.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
-            });
-
             PushOverlay(new ImGuiLayer());
             PushLayer(new EditorLayer());
+        }
+
+        protected override void RenderInit()
+        {
+            GLDebugging.EnableGLDebugging(LogLevel.Warn);
+            Renderer2D.Init();
+            LineRenderer.Init();
+            RendererAPI.SetDepthFunc(DepthFunc.Default);
+            RendererAPI.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
         }
     }
 }

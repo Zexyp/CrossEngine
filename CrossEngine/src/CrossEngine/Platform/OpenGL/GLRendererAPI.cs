@@ -26,15 +26,15 @@ namespace CrossEngine.Platform.OpenGL
         public override unsafe void DrawIndexed(Ref<VertexArray> vertexArray, uint indexCount = 0)
         {
             var ib = vertexArray.Value.GetIndexBuffer();
-            ((VertexArray)vertexArray).Bind();
-            uint count = (indexCount != 0) ? indexCount : ((IndexBuffer)ib).Count;
-            glDrawElements(GL_TRIANGLES, (int)count, GLUtils.ToGLIndexDataType(((IndexBuffer)ib).DataType), null);
+            vertexArray.Value.Bind();
+            uint count = (indexCount != 0) ? indexCount : ib.Value.Count;
+            glDrawElements(GL_TRIANGLES, (int)count, GLUtils.ToGLIndexDataType(ib.Value.DataType), null);
             // TODO: consider unbinding to keep the vertex array state safe
         }
 
         public override unsafe void DrawArray(Ref<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
         {
-            ((VertexArray)vertexArray).Bind();
+            vertexArray.Value.Bind();
             glDrawArrays(GLUtils.ToGLDrawMode(mode), 0, (int)verticesCount);
             // TODO: consider unbinding to keep the vertex array state safe
         }

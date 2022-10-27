@@ -24,8 +24,12 @@ namespace CrossEngine
         private readonly Thread _thread;
         private readonly EventWaitHandle _waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
         private readonly EventWaitHandle _runWaitHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
-        private ConcurrentQueue<Event> _events = new ConcurrentQueue<Event>();
         private RendererAPI _rapi;
+
+        public event Action OnDestroy;
+        public event Action OnInit;
+        public event Action OnRender;
+        public event Action<Event> OnEvent;
 
         private bool _shouldStop = false;
 
@@ -69,11 +73,6 @@ namespace CrossEngine
             _shouldStop = true;
         }
 
-        public Event? DequeueEvent()
-        {
-            return _events.TryDequeue(out Event e) ? e : null;
-        }
-
         private unsafe void Loop()
         {
             Profiler.BeginScope($"{nameof(RenderThread)}.{nameof(RenderThread.Init)}");
@@ -102,9 +101,7 @@ namespace CrossEngine
                 while (ThreadManager.RenderThreadActionQueue.TryDequeue(out Action action))
                     action.Invoke();
 
-                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Render)}");
-                Application.Instance.Render();
-                Profiler.EndScope();
+                OnRender?.Invoke();
 
                 Window.PollWindowEvents();
                 Window.UpdateWindow();
@@ -135,7 +132,8 @@ namespace CrossEngine
                 var wre = e as WindowResizeEvent;
                 _rapi.SetViewport(0, 0, wre.Width, wre.Height);
             }
-            _events.Enqueue(e);
+
+            OnEvent?.Invoke(e);
         }
 
         private unsafe void Init()
@@ -156,10 +154,13 @@ namespace CrossEngine
             _rapi.Init();
             _rapi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
 
+            OnInit?.Invoke();
         }
 
         private void Destroy()
         {
+            OnDestroy?.Invoke();
+
             Window.DestroyWindow();
             Window = null;
         }

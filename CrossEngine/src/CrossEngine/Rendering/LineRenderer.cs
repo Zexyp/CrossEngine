@@ -77,12 +77,12 @@ namespace CrossEngine.Rendering
             data.lineVertexArray = VertexArray.Create();
 
             data.lineVertexBuffer = VertexBuffer.Create(null, (uint)(LineRendererData.MaxVertices * sizeof(LineVertex)), BufferUsageHint.DynamicDraw);
-            ((VertexBuffer?)data.lineVertexBuffer).SetLayout(new BufferLayout(
+            data.lineVertexBuffer.Value.SetLayout(new BufferLayout(
                 new BufferElement(ShaderDataType.Float3, "aPosition"),
                 new BufferElement(ShaderDataType.Float4, "aColor")
             ));
 
-            ((VertexArray?)data.lineVertexArray).AddVertexBuffer(data.lineVertexBuffer);
+            data.lineVertexArray.Value.AddVertexBuffer(data.lineVertexBuffer);
 
             data.lineVertexBufferBase = new LineVertex[LineRendererData.MaxVertices];
 
@@ -95,7 +95,10 @@ namespace CrossEngine.Rendering
 
         public static void Shutdown()
         {
-            throw new NotImplementedException();
+            data.lineShader.Dispose();
+            data.lineVertexArray.Value.Dispose();
+            data.lineVertexBuffer.Value.Dispose();
+            data.lineVertexBufferBase = null;
         }
 
         public static void SetLineWidth(float width) => Application.Instance.RendererAPI.SetLineWidth(width);
@@ -129,7 +132,7 @@ namespace CrossEngine.Rendering
             fixed (LineVertex* p = &data.lineVertexBufferBase[0])
             {
                 dataSize = (uint)((byte*)data.lineVertexBufferPtr - (byte*)p);
-                ((VertexBuffer?)data.lineVertexBuffer).SetData(p, dataSize);
+                data.lineVertexBuffer.Value.SetData(p, dataSize);
             }
 
             data.lineShader.Use();

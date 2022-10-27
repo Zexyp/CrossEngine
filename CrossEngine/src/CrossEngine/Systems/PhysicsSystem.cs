@@ -1,16 +1,17 @@
-﻿using BulletSharp;
+﻿using System;
+using BulletSharp;
+
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Numerics;
+
 using CrossEngine.Components;
 using CrossEngine.ECS;
 using CrossEngine.Physics;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Utils.Bullet;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-
 using CrossEngine.Utils;
 
 namespace CrossEngine.ComponentSystems

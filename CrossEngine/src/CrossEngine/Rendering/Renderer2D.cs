@@ -194,7 +194,7 @@ namespace CrossEngine.Rendering
 
             data.whiteTexture = Texture.Create(1, 1, ColorFormat.RGBA);
             uint whiteCol = 0xffffffff;
-            ((Texture)data.whiteTexture).SetData(&whiteCol, sizeof(uint));
+            data.whiteTexture.Value.SetData(&whiteCol, sizeof(uint));
 
             int[] samplers = new int[Renderer2DData.MaxTextureSlots];
             for (uint i = 0; i < Renderer2DData.MaxTextureSlots; i++)
@@ -238,7 +238,7 @@ namespace CrossEngine.Rendering
                 }
 
                 data.quads.VertexBuffer = VertexBuffer.Create(null, (uint)(Renderer2DData.MaxQuadVertices * sizeof(PrimitiveVertex)), BufferUsageHint.DynamicDraw);
-                ((VertexBuffer)data.quads.VertexBuffer).SetLayout(layout);
+                data.quads.VertexBuffer.Value.SetLayout(layout);
 
                 Ref<IndexBuffer> quadIB;
                 fixed (uint* p = &indices[0])
@@ -246,8 +246,8 @@ namespace CrossEngine.Rendering
                 indices = null; // marked for deletion i hope
 
                 data.quads.VertexArray = VertexArray.Create();
-                ((VertexArray)data.quads.VertexArray).AddVertexBuffer(data.quads.VertexBuffer);
-                ((VertexArray)data.quads.VertexArray).SetIndexBuffer(quadIB);
+                data.quads.VertexArray.Value.AddVertexBuffer(data.quads.VertexBuffer);
+                data.quads.VertexArray.Value.SetIndexBuffer(quadIB);
             }
             // tris
             {
@@ -255,10 +255,10 @@ namespace CrossEngine.Rendering
                 data.tris.TextureSlots = new Ref<Texture>[Renderer2DData.MaxTextureSlots];
 
                 data.tris.VertexBuffer = VertexBuffer.Create(null, (uint)(Renderer2DData.MaxTriVertices * sizeof(PrimitiveVertex)), BufferUsageHint.DynamicDraw);
-                ((VertexBuffer)data.tris.VertexBuffer).SetLayout(layout);
+                data.tris.VertexBuffer.Value.SetLayout(layout);
 
                 data.tris.VertexArray = VertexArray.Create();
-                ((VertexArray)data.tris.VertexArray).AddVertexBuffer(data.tris.VertexBuffer);
+                data.tris.VertexArray.Value.AddVertexBuffer(data.tris.VertexBuffer);
             }
 
             data.quads.TextureSlots[0] = data.whiteTexture;
@@ -267,7 +267,18 @@ namespace CrossEngine.Rendering
 
         public static void Shutdown()
         {
+            data.discardingShader.Dispose();
+            data.regularShader.Dispose();
+            data.whiteTexture.Value.Dispose();
 
+            data.quads.VertexArray.Value.Dispose();
+            data.quads.VertexArray.Value.GetIndexBuffer().Value.Dispose();
+            data.quads.VertexBuffer.Value.Dispose();
+            data.quads.VertexBufferBase = null;
+
+            data.tris.VertexArray.Value.Dispose();
+            data.tris.VertexBuffer.Value.Dispose();
+            data.tris.VertexBufferBase = null;
         }
 
         public static void BeginScene(Matrix4x4 viewProjectionMatrix)
@@ -307,12 +318,12 @@ namespace CrossEngine.Rendering
                 return;
 
             fixed (PrimitiveVertex* p = data.quads.VertexBufferBase)
-                ((VertexBuffer)data.quads.VertexBuffer).SetData(p, (uint)((byte*)data.quads.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
+                data.quads.VertexBuffer.Value.SetData(p, (uint)((byte*)data.quads.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
 
             // bind textures
             for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
             {
-                if (!Ref.IsNull(data.quads.TextureSlots[i])) ((Texture)data.quads.TextureSlots[i]).Bind(i);
+                if (!Ref.IsNull(data.quads.TextureSlots[i])) data.quads.TextureSlots[i].Value.Bind(i);
             }
 
             data.currentShader.Use();
@@ -342,12 +353,12 @@ namespace CrossEngine.Rendering
                 return;
 
             fixed (PrimitiveVertex* p = data.tris.VertexBufferBase)
-                ((VertexBuffer)data.tris.VertexBuffer).SetData(p, (uint)((byte*)data.tris.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
+                data.tris.VertexBuffer.Value.SetData(p, (uint)((byte*)data.tris.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
 
             // bind textures
             for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
             {
-                if (!Ref.IsNull(data.tris.TextureSlots[i])) ((Texture)data.tris.TextureSlots[i]).Bind(i);
+                if (!Ref.IsNull(data.tris.TextureSlots[i])) data.tris.TextureSlots[i].Value.Bind(i);
             }
 
             data.currentShader.Use();
@@ -398,7 +409,7 @@ namespace CrossEngine.Rendering
             float textureIndex = 0.0f;
             for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
             {
-                if (((Texture)data.quads.TextureSlots[i]) == ((Texture)texture))
+                if (data.quads.TextureSlots[i].Value == texture.Value)
                 {
                     textureIndex = i;
                     break;
@@ -438,7 +449,7 @@ namespace CrossEngine.Rendering
             float textureIndex = 0.0f;
             for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
             {
-                if (((Texture)data.quads.TextureSlots[i]) == ((Texture)texture))
+                if (data.quads.TextureSlots[i].Value == texture.Value)
                 {
                     textureIndex = i;
                     break;
@@ -501,7 +512,7 @@ namespace CrossEngine.Rendering
             float textureIndex = 0.0f;
             for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
             {
-                if (((Texture)data.tris.TextureSlots[i]) == ((Texture)texture))
+                if (data.tris.TextureSlots[i].Value == texture.Value)
                 {
                     textureIndex = i;
                     break;
@@ -543,7 +554,7 @@ namespace CrossEngine.Rendering
             float textureIndex = 0.0f;
             for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
             {
-                if (((Texture)data.tris.TextureSlots[i]) == ((Texture)texture))
+                if (data.tris.TextureSlots[i].Value == texture.Value)
                 {
                     textureIndex = i;
                     break;

@@ -51,4 +51,16 @@ namespace CrossEngine.ECS
         public virtual void Update() { }
         public virtual void Render() { }
     }
+
+    public abstract class ParallelSystem<T> : System<T> where T : Component
+    {
+        protected ParallelOptions ParallelOptions = new ParallelOptions();
+
+        public override void Update()
+        {
+            Parallel.ForEach(Components, ParallelOptions, Process);
+        }
+
+        protected abstract void Process(T component);
+    }
 }
