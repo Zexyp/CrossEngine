@@ -5,6 +5,7 @@ using System.Diagnostics;
 
 using CrossEngine.Profiling;
 using CrossEngine.Rendering.Textures;
+using CrossEngine.Rendering;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -25,6 +26,8 @@ namespace CrossEngine.Platform.OpenGL
 
             fixed (uint* p = &_rendererId)
                 glGenTextures(1, p);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         public unsafe GLTexture(uint width, uint height, ColorFormat internalFormat) : this()
@@ -47,6 +50,8 @@ namespace CrossEngine.Platform.OpenGL
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 glDeleteTextures(1, p);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }

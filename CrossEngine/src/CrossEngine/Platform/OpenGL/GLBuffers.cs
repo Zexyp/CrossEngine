@@ -8,6 +8,7 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Utils;
+using CrossEngine.Rendering;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -25,6 +26,8 @@ namespace CrossEngine.Platform.OpenGL
 
             fixed (uint* p = &_rendererId)
                 glGenBuffers(1, p);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         public unsafe GLVertexBuffer(void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw) : this()
@@ -50,6 +53,8 @@ namespace CrossEngine.Platform.OpenGL
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 glDeleteBuffers(1, p);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }
@@ -92,6 +97,8 @@ namespace CrossEngine.Platform.OpenGL
 
             fixed (uint* p = &_rendererId)
                 glGenBuffers(1, p);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         public unsafe GLIndexBuffer(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw) : this()
@@ -119,6 +126,8 @@ namespace CrossEngine.Platform.OpenGL
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 glDeleteBuffers(1, p);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }
@@ -172,6 +181,8 @@ namespace CrossEngine.Platform.OpenGL
 
             fixed (uint* p = &_rendererId)
                 glGenVertexArrays(1, p);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         protected override unsafe void Dispose(bool disposing)
@@ -189,6 +200,8 @@ namespace CrossEngine.Platform.OpenGL
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 glDeleteVertexArrays(1, p);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }
@@ -211,9 +224,9 @@ namespace CrossEngine.Platform.OpenGL
         {
             Profiler.Function();
 
-            Debug.Assert(((VertexBuffer)vb).GetLayout() != null && ((VertexBuffer)vb).GetLayout().GetElements().Length > 0);
+            Debug.Assert(vb.Value.GetLayout() != null && vb.Value.GetLayout().GetElements().Length > 0);
 
-            var vertexBuffer = ((VertexBuffer)vb);
+            var vertexBuffer = vb.Value;
 
             glBindVertexArray(_rendererId);
             vertexBuffer.Bind();

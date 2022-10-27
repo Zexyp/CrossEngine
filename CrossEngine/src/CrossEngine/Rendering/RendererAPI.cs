@@ -4,11 +4,14 @@ using System.Numerics;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 using CrossEngine.Platform.OpenGL;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Rendering
 {
     public abstract class RendererAPI
     {
+        internal static Logger Log = new Logger("rapi");
+
         public enum API
         {
             None = 0,

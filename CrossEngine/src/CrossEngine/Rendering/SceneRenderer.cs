@@ -21,7 +21,7 @@ namespace CrossEngine.Rendering
             var scenRendereData = scene.UpdateRenderData();
             if (scenRendereData == null) return;
 
-            ((Framebuffer?)scenRendereData.Output)?.Bind();
+            scenRendereData.Output?.Value.Bind();
             if (scenRendereData.ClearColor != null)
             {
                 Application.Instance.RendererAPI.SetClearColor(scenRendereData.ClearColor.Value);
@@ -66,7 +66,7 @@ namespace CrossEngine.Rendering
 
             //scene.Render();
 
-            ((Framebuffer?)scenRendereData.Output)?.Unbind();
+            scenRendereData.Output?.Value.Unbind();
 
             Profiler.EndScope();
         }

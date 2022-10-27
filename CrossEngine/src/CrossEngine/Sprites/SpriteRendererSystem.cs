@@ -30,19 +30,19 @@ namespace CrossEngine.ComponentSystems
         {
             base.Register(component);
 
-            EnabledChange(component);
-            component.OnEnabledChanged += EnabledChange;
+            EnabledChanged(component);
+            component.OnEnabledChanged += EnabledChanged;
         }
 
         public override void Unregister(SpriteRendererComponent component)
         {
             base.Unregister(component);
 
-            component.OnEnabledChanged -= EnabledChange;
+            component.OnEnabledChanged -= EnabledChanged;
             _filtered.Remove(component);
         }
 
-        private void EnabledChange(Component sender)
+        private void EnabledChanged(Component sender)
         {
             if (sender.Enabled)
                 _filtered.Add((SpriteRendererComponent)sender);

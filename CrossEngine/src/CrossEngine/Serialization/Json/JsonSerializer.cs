@@ -353,5 +353,20 @@ namespace CrossEngine.Serialization.Json
         public static void WriteID(this Utf8JsonWriter writer, string id) => writer.WriteString(IDExpression, id);
 
         public static void WriteRef(this Utf8JsonWriter writer, string id) => writer.WriteString(RefExpression, id);
+
+        public static bool ReadBoolean(this JsonElement element, string id) => element.GetProperty(id).GetBoolean();
+        public static float ReadSingle(this JsonElement element, string id) => element.GetProperty(id).GetSingle();
+        public static double ReadDouble(this JsonElement element, string id) => element.GetProperty(id).GetDouble();
+        public static ulong ReadUInt64(this JsonElement element, string id) => element.GetProperty(id).GetUInt64();
+        public static long ReadInt64(this JsonElement element, string id) => element.GetProperty(id).GetInt64();
+        public static uint ReadUInt32(this JsonElement element, string id) => element.GetProperty(id).GetUInt32();
+        public static int ReadInt32(this JsonElement element, string id) => element.GetProperty(id).GetInt32();
+        public static ushort ReadUInt16(this JsonElement element, string id) => element.GetProperty(id).GetUInt16();
+        public static short ReadInt16(this JsonElement element, string id) => element.GetProperty(id).GetInt16();
+        public static sbyte ReadSByte(this JsonElement element, string id) => element.GetProperty(id).GetSByte();
+        public static byte ReadByte(this JsonElement element, string id) => element.GetProperty(id).GetByte();
+        public static string ReadString(this JsonElement element, string id) => element.GetProperty(id).GetString();
+
+        // TODO: add try methods
     }
 }
