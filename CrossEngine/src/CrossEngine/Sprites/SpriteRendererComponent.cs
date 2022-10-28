@@ -80,7 +80,7 @@ namespace CrossEngine.Components
         // ISpriteRenderData
         Matrix4x4 IObjectRenderData.Transform => this.LocalOffsetMatrix * (this.Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity);
         Vector4 ISpriteRenderData.Color => this.Color;
-        int ISpriteRenderData.EntityId => this.Entity.Id;
+        int IObjectRenderData.EntityId => this.Entity.Id;
         Vector4 ISpriteRenderData.TextureOffsets => this.TextureOffsets;
         Sphere? ISpriteRenderData.Bounds
         {

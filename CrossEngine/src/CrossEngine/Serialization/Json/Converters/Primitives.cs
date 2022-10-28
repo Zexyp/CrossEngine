@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define JSON_MINIFY
+
+using System;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json;
@@ -9,15 +11,31 @@ namespace CrossEngine.Serialization.Json.Converters
     #region Vectors
     class Vector2JsonConverter : JsonConverter<Vector2>
     {
+#if JSON_MINIFY
+        public override bool Bracketable => false;
+#endif
+
         public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
+#if JSON_MINIFY
+            float[] vec = reader.EnumerateArray().Select(e => e.GetSingle()).ToArray();
+            return new Vector2(vec[0], vec[1]);
+#else
             return new Vector2(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle());
+#endif
         }
 
         public override void WriteJson(Utf8JsonWriter writer, Vector2 value, JsonSerializer serializer)
         {
+#if JSON_MINIFY
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.X);
+            writer.WriteNumberValue(value.Y);
+            writer.WriteEndArray();
+#else
             writer.WriteNumber("X", value.X);
             writer.WriteNumber("Y", value.Y);
+#endif
         }
 
         public override void ReadJson(JsonElement reader, Vector2 value, JsonSerializer serializer)
@@ -27,16 +45,33 @@ namespace CrossEngine.Serialization.Json.Converters
 
     class Vector3JsonConverter : JsonConverter<Vector3>
     {
+#if JSON_MINIFY
+        public override bool Bracketable => false;
+#endif
+
         public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
+#if JSON_MINIFY
+            float[] vec = reader.EnumerateArray().Select(e => e.GetSingle()).ToArray();
+            return new Vector3(vec[0], vec[1], vec[2]);
+#else
             return new Vector3(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle());
+#endif
         }
 
         public override void WriteJson(Utf8JsonWriter writer, Vector3 value, JsonSerializer serializer)
         {
+#if JSON_MINIFY
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.X);
+            writer.WriteNumberValue(value.Y);
+            writer.WriteNumberValue(value.Z);
+            writer.WriteEndArray();
+#else
             writer.WriteNumber("X", value.X);
             writer.WriteNumber("Y", value.Y);
             writer.WriteNumber("Z", value.Z);
+#endif
         }
 
         public override void ReadJson(JsonElement reader, Vector3 value, JsonSerializer serializer)
@@ -46,38 +81,74 @@ namespace CrossEngine.Serialization.Json.Converters
 
     class Vector4JsonConverter : JsonConverter<Vector4>
     {
+#if JSON_MINIFY
+        public override bool Bracketable => false;
+#endif
+
         public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
+#if JSON_MINIFY
+            float[] vec = reader.EnumerateArray().Select(e => e.GetSingle()).ToArray();
+            return new Vector4(vec[0], vec[1], vec[2], vec[3]);
+#else
             return new Vector4(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle(), reader.GetProperty("W").GetSingle());
+#endif
         }
 
         public override void WriteJson(Utf8JsonWriter writer, Vector4 value, JsonSerializer serializer)
         {
+#if JSON_MINIFY
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.X);
+            writer.WriteNumberValue(value.Y);
+            writer.WriteNumberValue(value.Z);
+            writer.WriteNumberValue(value.W);
+            writer.WriteEndArray();
+#else
             writer.WriteNumber("X", value.X);
             writer.WriteNumber("Y", value.Y);
             writer.WriteNumber("Z", value.Z);
             writer.WriteNumber("W", value.W);
+#endif
         }
 
         public override void ReadJson(JsonElement reader, Vector4 value, JsonSerializer serializer)
         {
         }
     }
-    #endregion
+#endregion
 
     class QuaternionJsonConverter : JsonConverter<Quaternion>
     {
+#if JSON_MINIFY
+        public override bool Bracketable => false;
+#endif
+
         public override object Create(JsonElement reader, Type type, JsonSerializer serializer)
         {
+#if JSON_MINIFY
+            float[] vec = reader.EnumerateArray().Select(e => e.GetSingle()).ToArray();
+            return new Quaternion(vec[0], vec[1], vec[2], vec[3]);
+#else
             return new Quaternion(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle(), reader.GetProperty("W").GetSingle());
+#endif
         }
 
         public override void WriteJson(Utf8JsonWriter writer, Quaternion value, JsonSerializer serializer)
         {
+#if JSON_MINIFY
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.X);
+            writer.WriteNumberValue(value.Y);
+            writer.WriteNumberValue(value.Z);
+            writer.WriteNumberValue(value.W);
+            writer.WriteEndArray();
+#else
             writer.WriteNumber("X", value.X);
             writer.WriteNumber("Y", value.Y);
             writer.WriteNumber("Z", value.Z);
             writer.WriteNumber("W", value.W);
+#endif
         }
 
         public override void ReadJson(JsonElement reader, Quaternion value, JsonSerializer serializer)
@@ -139,7 +210,7 @@ namespace CrossEngine.Serialization.Json.Converters
         {
         }
     }
-    #endregion
+#endregion
 
     class EnumJsonConverter : JsonConverter<Enum>
     {
