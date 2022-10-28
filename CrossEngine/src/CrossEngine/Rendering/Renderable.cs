@@ -43,6 +43,7 @@ namespace CrossEngine.Rendering
     public interface IObjectRenderData
     {
         virtual Matrix4x4 Transform { get => throw new NotImplementedException(); }
+        virtual int EntityId => 0;
     }
 
     //interface IDrawable<T, D> where T : Renderable<D> where D : IObjectRenderData

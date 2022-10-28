@@ -17,7 +17,7 @@ using CrossEngine.Logging;
 using CrossEngine.Serialization;
 using CrossEngine.Rendering.Culling;
 
-namespace CrossEngine.Components
+namespace CrossEngine.FX.Particles
 {
     public class ParticleSystemComponent : Component, IParticleSystemRenderData
     {

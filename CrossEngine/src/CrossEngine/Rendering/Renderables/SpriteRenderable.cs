@@ -18,7 +18,6 @@ namespace CrossEngine.Rendering.Renderables
     {
         Vector4 Color { get; }
         virtual Sphere? Bounds => null;
-        virtual int EntityId => 0;
         virtual Vector4 TextureOffsets => new Vector4(0, 0, 1, 1);
         virtual TextureAsset Texture => null;
     }

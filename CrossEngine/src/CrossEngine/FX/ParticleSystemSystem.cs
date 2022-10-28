@@ -12,7 +12,7 @@ using CrossEngine.FX.Particles;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Rendering.Culling;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.FX.Particles
 {
     class ParticleSystemSystem : System<ParticleSystemComponent>
     {

@@ -14,6 +14,7 @@ using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Assets;
+using CrossEngine.FX.Particles;
 
 namespace CrossEngine.Scenes
 {
