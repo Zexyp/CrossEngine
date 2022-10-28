@@ -38,6 +38,7 @@ namespace CrossEngine.Serialization.Json
                         new ListInterfaceJsonConverter(),
                         new DictionaryInterfaceJsonConverter(),
                         new SerializableInterfaceJsonConverter(),
+                        new DateTimeJsonConverter(),
                     },
                 TypeResolver = new DefaultTypeResolver(),
                 WriterOptions = default,
