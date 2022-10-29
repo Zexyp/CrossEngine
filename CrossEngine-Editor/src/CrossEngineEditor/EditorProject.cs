@@ -48,8 +48,9 @@ namespace CrossEngineEditor
         {
             var scene = new Scene();
             var sceneDir = Path.Combine(Directory, "scenes", name);
-            scene.AssetRegistry.HomeDirectory = sceneDir;
+            scene.AssetRegistry.HomeDirectory = Path.Combine(sceneDir, "assets");
             IODirectory.CreateDirectory(sceneDir);
+            IODirectory.CreateDirectory(scene.AssetRegistry.HomeDirectory);
             _sceneNames.Add(name);
             SceneLoader.Write(scene, Path.Combine(sceneDir, "scene.json"));
             return scene;
@@ -58,7 +59,7 @@ namespace CrossEngineEditor
         public void WriteScene(Scene scene)
         {
             Application.Log.Warn("lazy testing implementation!!!");
-            SceneLoader.Write(scene, Path.Combine(scene.AssetRegistry.HomeDirectory, "scene.json"));
+            SceneLoader.Write(scene, Path.Combine(Path.GetDirectoryName(scene.AssetRegistry.HomeDirectory), "scene.json"));
         }
 
         public static EditorProject Read(string directory)

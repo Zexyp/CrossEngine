@@ -15,6 +15,13 @@ namespace CrossEngine.Rendering.Cameras
         public Matrix4x4 ViewProjectionMatrix { get => ViewMatrix * ProjectionMatrix; }
         public Frustum Frustum;
 
+        // TODO: finish this
+        private bool _resize = false;
+        private float _width, _height;
+        private float _near, _far;
+        private float _p_fov;
+        private float _o_size;
+
         public Camera()
         {
 

@@ -30,13 +30,13 @@ namespace CrossEngine.FX.Particles
 
         [EditorSection("Color")]
         [EditorGradient]
-        public Gradient<Vector4> colorGradient = new Gradient<Vector4>();
+        public Gradient<Vector4> colorGradient = new Gradient<Vector4>((0, Vector4.One));
         [EditorDrag]
         public Vector3 colorVariation; // hsv
 
         [EditorSection("Size")]
         [EditorGradient]
-        public Gradient<float> sizeGradient = new Gradient<float>();
+        public Gradient<float> sizeGradient = new Gradient<float>(1, 0);
         [EditorDrag]
         public float sizeVariation;
 
@@ -53,11 +53,7 @@ namespace CrossEngine.FX.Particles
             pp.velocity = Vector3.Zero;
             pp.velocityVariation = Vector3.One * 5;
 
-            pp.colorGradient.AddElement(0, Vector4.One);
             pp.colorVariation = Vector3.Zero;
-
-            pp.sizeGradient.AddElement(0, 1);
-            pp.sizeGradient.AddElement(1, 0);
 
             pp.lifeTime = 1.0f;
 
