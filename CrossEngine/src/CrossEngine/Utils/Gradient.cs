@@ -124,14 +124,6 @@ namespace CrossEngine.Utils
 
         public Type Type { get; set; }
 
-        public void RemoveElement(int index)
-        {
-            if (elements.Count == 1)
-                throw new InvalidOperationException();
-
-            elements.RemoveAt(index);
-        }
-
         public void Clear()
         {
             elements.Clear();
@@ -170,11 +162,12 @@ namespace CrossEngine.Utils
             return default;
         }
 
-        public void SetElementValue(int index, T value)
+        public void RemoveElement(int index)
         {
-            GradientElement el = elements[index];
-            el.value = value;
-            elements[index] = el;
+            if (elements.Count == 1)
+                throw new InvalidOperationException();
+
+            elements.RemoveAt(index);
         }
 
         public T Sample(float position)
@@ -208,11 +201,15 @@ namespace CrossEngine.Utils
             return default;
         }
 
-        void IGradient.AddElement(float position, object element) => AddElement(position, (T) element);
-
-        object IGradient.Sample(float position) => Sample(position);
+        public void SetElementValue(int index, T value)
+        {
+            GradientElement el = elements[index];
+            el.value = value;
+            elements[index] = el;
+        }
 
         public void SetElementValue(int index, object value) => SetElementValue(index, (T)value);
+
         public int SetElementPosition(int index, float position)
         {
             GradientElement el = elements[index];
@@ -247,6 +244,9 @@ namespace CrossEngine.Utils
             Debug.Assert(false, "unexpected end of a method!");
             return default;
         }
+
+        void IGradient.AddElement(float position, object element) => AddElement(position, (T)element);
+        object IGradient.Sample(float position) => Sample(position);
 
         public void GetObjectData(SerializationInfo info)
         {

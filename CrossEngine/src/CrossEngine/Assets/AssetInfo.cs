@@ -12,13 +12,14 @@ namespace CrossEngine.Assets
     {
         //AssetType Type { get; }
         public string RelativePath { get; set; }
-        public uint Users { get; private set; }
         //bool Active { get; set; }
         public bool Loaded { get; protected set; }
 
         public abstract void Load(IPathProvider pathProvider = null);
         public abstract void Unload();
 
+        /*
+        public uint Users { get; private set; }
         public void Lock()
         {
             if (Users == 0)
@@ -31,9 +32,9 @@ namespace CrossEngine.Assets
             if (Users == 0)
                 OnUnused();
         }
-
         protected virtual void OnUsed() { }
         protected virtual void OnUnused() { }
+        */
 
         protected virtual void OnSerialize(SerializationInfo info) { }
         protected virtual void OnDeserialize(SerializationInfo info) { }

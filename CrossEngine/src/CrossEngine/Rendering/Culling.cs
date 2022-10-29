@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Numerics;
-
+using System.Runtime.InteropServices;
 using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Culling
@@ -65,18 +65,26 @@ namespace CrossEngine.Rendering.Culling
     }
 
     // should be called Frustrum becase it's frustrating
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Frustum
     {
-        public Plane[] planes;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+        public readonly Plane[] Planes;
+        public Plane Left => Planes[0];
+        public Plane Right => Planes[1];
+        public Plane Bottom => Planes[2];
+        public Plane Top => Planes[3];
+        public Plane Near => Planes[4];
+        public Plane Far => Planes[5];
 
         // for debug perpouses
         Vector3 centrus;
 
         public Frustum(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
         {
-            planes = new Plane[6];
+            Planes = new Plane[6];
             var inv = Matrix4x4Extension.Invert(viewMatrix);
-            ExtractPlanes(planes, projectionMatrix, inv, true);
+            ExtractPlanes(Planes, projectionMatrix, inv, true);
             centrus = Vector3.Transform(Vector3.One, inv);
         }
 
@@ -85,7 +93,7 @@ namespace CrossEngine.Rendering.Culling
             var result = Halfspace.Inside;
             for (int i = 0; i < 6; i++)
             {
-                if (DistanceToPlane(p, planes[i]) < 0)
+                if (DistanceToPlane(p, Planes[i]) < 0)
                     return Halfspace.Outside;
             }
             return result;
@@ -97,7 +105,7 @@ namespace CrossEngine.Rendering.Culling
             float distance;
             for (int i = 0; i < 6; i++)
             {
-                distance = DistanceToPlane(p, planes[i]);
+                distance = DistanceToPlane(p, Planes[i]);
                 if (distance < -radius)
                     return Halfspace.Outside;
                 else if (distance < radius)
@@ -111,9 +119,9 @@ namespace CrossEngine.Rendering.Culling
             var result = Halfspace.Inside;
             for (int i = 0; i < 6; i++)
             {
-                if (DistanceToPlane(b.GetVertexP(planes[i].Normal), planes[i]) < 0)
+                if (DistanceToPlane(b.GetVertexP(Planes[i].Normal), Planes[i]) < 0)
                     return Halfspace.Outside;
-                else if (DistanceToPlane(b.GetVertexN(planes[i].Normal), planes[i]) < 0)
+                else if (DistanceToPlane(b.GetVertexN(Planes[i].Normal), Planes[i]) < 0)
                     result = Halfspace.Intersect;
             }
             return result;
@@ -121,12 +129,12 @@ namespace CrossEngine.Rendering.Culling
 
         public void Draw()
         {
-            LineRenderer.DrawLine(centrus, centrus + planes[0].Normal * -planes[0].D, new Vector4(0, 1, 1, 1));
-            LineRenderer.DrawLine(centrus, centrus + planes[1].Normal * -planes[1].D, new Vector4(1, 0, 0, 1));
-            LineRenderer.DrawLine(centrus, centrus + planes[2].Normal * -planes[2].D, new Vector4(1, 0, 1, 1));
-            LineRenderer.DrawLine(centrus, centrus + planes[3].Normal * -planes[3].D, new Vector4(0, 1, 0, 1));
-            LineRenderer.DrawLine(centrus, centrus + planes[4].Normal * -planes[4].D, new Vector4(1, 1, 0, 1));
-            LineRenderer.DrawLine(centrus, centrus + planes[5].Normal * -planes[5].D, new Vector4(0, 0, 1, 1));
+            LineRenderer.DrawLine(centrus, centrus + Planes[0].Normal * -Planes[0].D, new Vector4(0, 1, 1, 1));
+            LineRenderer.DrawLine(centrus, centrus + Planes[1].Normal * -Planes[1].D, new Vector4(1, 0, 0, 1));
+            LineRenderer.DrawLine(centrus, centrus + Planes[2].Normal * -Planes[2].D, new Vector4(1, 0, 1, 1));
+            LineRenderer.DrawLine(centrus, centrus + Planes[3].Normal * -Planes[3].D, new Vector4(0, 1, 0, 1));
+            LineRenderer.DrawLine(centrus, centrus + Planes[4].Normal * -Planes[4].D, new Vector4(1, 1, 0, 1));
+            LineRenderer.DrawLine(centrus, centrus + Planes[5].Normal * -Planes[5].D, new Vector4(0, 0, 1, 1));
         }
 
 

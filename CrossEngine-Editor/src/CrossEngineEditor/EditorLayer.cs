@@ -151,8 +151,15 @@ namespace CrossEngineEditor
             //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());
             //dockspaceIconTexture.SetFilterParameter(Rendering.Textures.FilterParameter.Nearest);
 
-            if (!LoadConfig(EditorConfig)) corruptedConfig = true;
-            if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfig = true;
+            ThreadManager.ExecuteOnRenderThread(() =>
+            {
+                if (!LoadConfig(EditorConfig)) corruptedConfig = true;
+                if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfig = true;
+            });
+
+            var n = 7;
+            Vector4[] vals = Enumerable.Range(0, n).Select(e => new Vector4(Color.HSVToRGB(new(e * (1f / n), 1, 1)), 1)).ToArray();
+            gre = new Gradient<Vector4>(vals);
         }
 
         public override void OnDetach()
@@ -166,7 +173,7 @@ namespace CrossEngineEditor
         // test pcode
         int updSleep = 0;
         int rndSleep = 0;
-        Gradient<Vector4> gre = new Gradient<Vector4>(new Vector4(Color.HSVToRGB(new (0, 1, 1)), 1), new Vector4(Color.HSVToRGB(new(0.3f, 1, 1)), 1), new Vector4(Color.HSVToRGB(new(0.6f, 1, 1)), 1), new Vector4(Color.HSVToRGB(new(1, 1, 1)), 1));
+        Gradient<Vector4> gre;
 
         int profFrames = 0;
         public override void OnUpdate()
