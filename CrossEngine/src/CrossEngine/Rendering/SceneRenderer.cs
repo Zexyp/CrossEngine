@@ -33,7 +33,11 @@ namespace CrossEngine.Rendering
                 SceneLayerRenderData layerData = scenRendereData.Layers[layerIndex];
                 Camera activeCamera = overrideEditorCamera ?? layerData.Camera;
 
-                if (activeCamera == null) continue;
+                if (activeCamera == null)
+                {
+                    Application.Log.Warn("skipping render layer: no camere to render with");
+                    continue;
+                }
                 activeCamera.PrepareFrustum();
 
                 Renderer2D.BeginScene(activeCamera.ViewProjectionMatrix);

@@ -60,8 +60,4 @@
     <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="deps\shellfiledialogs\" />
-  </ItemGroup>
-
 </Project>

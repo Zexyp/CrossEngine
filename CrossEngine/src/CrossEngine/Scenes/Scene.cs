@@ -22,38 +22,39 @@ namespace CrossEngine.Scenes
 
     public class Scene
     {
-        readonly List<Entity> _entities = new List<Entity>();
         public readonly ReadOnlyCollection<Entity> Entities;
-        Dictionary<int, Entity> _entityIds = new Dictionary<int, Entity>();
-        public ECSWorld ECSWorld { get; private set; } = new ECSWorld();
-        int lastId;
         public readonly ReadOnlyCollection<Entity> HierarchyRoot;
-        private readonly List<Entity> _roots = new List<Entity>();
-
+        public ECSWorld ECSWorld { get; private set; } = new ECSWorld();
         public SceneRenderData RenderData { get; private set; }
-        SceneLayerRenderData _worldLayer;
-
         public AssetRegistry AssetRegistry;
+        
+        private readonly List<Entity> _roots = new List<Entity>();
+        private readonly Dictionary<int, Entity> _entityIds = new Dictionary<int, Entity>();
+        private readonly List<Entity> _entities = new List<Entity>();
+        private SceneLayerRenderData _defaultRenderLayer;
+        // lol i wonder when this will overflow
+        private int _lastId;
+
 
         public Scene()
         {
-            HierarchyRoot = _roots.AsReadOnly();
             Entities = _entities.AsReadOnly();
+            HierarchyRoot = _roots.AsReadOnly();
 
-            _worldLayer = new SceneLayerRenderData();
+            _defaultRenderLayer = new SceneLayerRenderData();
 
             ECSWorld.RegisterSystem(new ScriptableSystem());
             //_ecsWorld.RegisterSystem(new UISystem(_renderData));
-            ECSWorld.RegisterSystem(new SpriteRendererSystem(_worldLayer));
-            ECSWorld.RegisterSystem(new TextRendererSystem(_worldLayer));
-            ECSWorld.RegisterSystem(new ParticleSystemSystem(_worldLayer));
-            ECSWorld.RegisterSystem(new PhysicsSystem(_worldLayer));
+            ECSWorld.RegisterSystem(new SpriteRendererSystem(_defaultRenderLayer));
+            ECSWorld.RegisterSystem(new TextRendererSystem(_defaultRenderLayer));
+            ECSWorld.RegisterSystem(new ParticleSystemSystem(_defaultRenderLayer));
+            ECSWorld.RegisterSystem(new PhysicsSystem(_defaultRenderLayer));
             ECSWorld.RegisterSystem(new TransformSystem());
             ECSWorld.RegisterSystem(new RendererSystem());
             ECSWorld.RegisterSystem(new TagSystem());
 
             RenderData = new SceneRenderData();
-            RenderData.Layers.Add(_worldLayer);
+            RenderData.Layers.Add(_defaultRenderLayer);
 
             AssetRegistry = new AssetRegistry("./");
         }
@@ -62,7 +63,7 @@ namespace CrossEngine.Scenes
         {
             var camComp = ECSWorld.GetSystem<RendererSystem>().Primary;
 
-            _worldLayer.Camera = camComp?.Camera;
+            _defaultRenderLayer.Camera = camComp?.Camera;
 
             return RenderData;
         }
@@ -106,7 +107,7 @@ namespace CrossEngine.Scenes
         {
             Entity entity = new Entity(ECSWorld);
 
-            entity.Id = ++lastId;
+            entity.Id = ++_lastId;
             _entityIds.Add(entity.Id, entity);
 
             _entities.Add(entity);

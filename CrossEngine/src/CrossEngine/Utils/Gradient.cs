@@ -17,7 +17,7 @@ namespace CrossEngine.Utils
     
         void AddElement(float position, object element);
         void RemoveElement(int index);
-        void ClearElements();
+        void Clear();
         object Sample(float position);
         void SetElementValue(int index, object value);
         int SetElementPosition(int index, float position);
@@ -76,6 +76,45 @@ namespace CrossEngine.Utils
 
             Type = type;
             Elements = elements.AsReadOnly();
+
+            Clear();
+        }
+
+        public Gradient(params (float Position, T Value)[] stops) : this()
+        {
+            if (stops == null)
+                throw new ArgumentNullException();
+            if (stops.Length == 0)
+                throw new ArgumentException();
+
+            else
+            {
+                elements.Clear();
+                for (int i = 0; i < stops.Length; i++)
+                {
+                    AddElement(stops[i].Position, stops[i].Value);
+                }
+            }
+        }
+
+        public Gradient(params T[] values) : this()
+        {
+            if (values == null)
+                throw new ArgumentNullException();
+            if (values.Length == 0)
+                throw new ArgumentException();
+
+            else
+            {
+                elements.Clear();
+                float offset = (values.Length > 1) ? 1f / (values.Length - 1) : 0;
+                float pos = 0;
+                for (int i = 0; i < values.Length; i++)
+                {
+                    AddElement(pos, values[i]);
+                    pos += offset;
+                }
+            }
         }
 
         private readonly List<GradientElement> elements = new List<GradientElement>();
@@ -87,11 +126,16 @@ namespace CrossEngine.Utils
 
         public void RemoveElement(int index)
         {
+            if (elements.Count == 1)
+                throw new InvalidOperationException();
+
             elements.RemoveAt(index);
         }
-        public void ClearElements()
+
+        public void Clear()
         {
             elements.Clear();
+            AddElement(0, default);
         }
 
         public int AddElement(float position, T value)

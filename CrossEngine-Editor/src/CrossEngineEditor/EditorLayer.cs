@@ -31,6 +31,7 @@ using CrossEngineEditor.Utils;
 using CrossEngineEditor.Utils.Gui;
 using CrossEngineEditor.Panels;
 using CrossEngineEditor.Modals;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngineEditor
 {
@@ -152,9 +153,6 @@ namespace CrossEngineEditor
 
             if (!LoadConfig(EditorConfig)) corruptedConfig = true;
             if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfig = true;
-
-            gre.AddElement(0, Vector4.Zero);
-            gre.AddElement(1, Vector4.One); 
         }
 
         public override void OnDetach()
@@ -168,7 +166,7 @@ namespace CrossEngineEditor
         // test pcode
         int updSleep = 0;
         int rndSleep = 0;
-        Gradient<Vector4> gre = new Gradient<Vector4>();
+        Gradient<Vector4> gre = new Gradient<Vector4>(new Vector4(Color.HSVToRGB(new (0, 1, 1)), 1), new Vector4(Color.HSVToRGB(new(0.3f, 1, 1)), 1), new Vector4(Color.HSVToRGB(new(0.6f, 1, 1)), 1), new Vector4(Color.HSVToRGB(new(1, 1, 1)), 1));
 
         int profFrames = 0;
         public override void OnUpdate()
@@ -200,7 +198,10 @@ namespace CrossEngineEditor
 
             if (e is WindowCloseEvent)
             {
-                /*
+#if DEBUG
+                EditorApplication.Log.Debug("TODO: since you are using DEBUG build the window closed rly easily");
+                return;
+#else
                 PushModal(new ActionModal("Do you want to exti?", "Exit?", ActionModal.ButtonFlags.OK | ActionModal.ButtonFlags.No,
                     (button) =>
                     {
@@ -208,9 +209,7 @@ namespace CrossEngineEditor
                             Application.Instance.Window.ShouldClose = true;
                     }));
                 e.Handled = true;
-                */
-                EditorApplication.Log.Debug("TODO: uncomment");
-                return;
+#endif
             }
 
             if (e is not ImGuiRenderEvent) return;
@@ -233,14 +232,14 @@ namespace CrossEngineEditor
 
             // debug
             ImGui.Begin("Debug");
+            ImGradient.Manipulate(gre);
+
             if (Context.Scene != null)
             {
                 ImGui.SliderInt("upd sleep", ref updSleep, 0, 1000);
                 ImGui.SliderInt("rnd sleep", ref rndSleep, 0, 1000);
                 if (updSleep > 0) ThreadManager.ExecuteOnMianThread(() => Thread.Sleep(updSleep));
                 if (rndSleep > 0) ThreadManager.ExecuteOnRenderThread(() => Thread.Sleep(rndSleep));
-
-                ImGradient.Manipulate(gre);
 
                 // test seri
                 if (ImGui.Button("seri test"))
@@ -280,7 +279,7 @@ namespace CrossEngineEditor
             Profiler.EndScope();
         }
 
-        #region Dockspace
+#region Dockspace
         private unsafe void SetupDockspace()
         {
             ImGuiIOPtr io = ImGui.GetIO();
@@ -324,7 +323,7 @@ namespace CrossEngineEditor
         {
             ImGui.End();
         }
-        #endregion
+#endregion
 
         private void DrawPanels()
         {
@@ -340,7 +339,7 @@ namespace CrossEngineEditor
         {
             if (ImGui.BeginMainMenuBar())
             {
-                #region File Menu
+#region File Menu
                 if (ImGui.BeginMenu("File"))
                 {
                     if (ImGui.MenuItem("New Project..."))
@@ -369,7 +368,7 @@ namespace CrossEngineEditor
                     
                     if (ImGui.MenuItem("Save Project", Context.Project != null))
                     {
-                        Context.Project.Save();
+                        Context.Project.Write();
                     }
 
                     ImGui.Separator();
@@ -381,20 +380,20 @@ namespace CrossEngineEditor
 
                     if (ImGui.MenuItem("Save Scene", Context.Scene != null))
                     {
-                        Context.Project.SaveScene(Context.Scene);
+                        Context.Project.WriteScene(Context.Scene);
                     }
 
                     ImGui.Separator();
 
                     if (ImGui.BeginMenu("Load Scene", Context.Project != null))
                     {
-                        string[] scenes = Directory.GetDirectories(Context.Project.ScenesDir);
+                        string[] scenes = Context.Project.SceneNames.ToArray();
                         for (int i = 0; i < scenes.Length; i++)
                         {
-                            if (ImGui.MenuItem(Path.GetFileName(scenes[i])))
+                            if (ImGui.MenuItem(scenes[i]))
                             {
                                 Context.Scene?.Unload();
-                                Context.Scene = SceneLoader.Read(Path.Combine(scenes[i], "scene.json"));
+                                Context.Scene = SceneLoader.Read(Path.Combine(Context.Project.Directory, "scenes", scenes[i], "scene.json"));
                                 Context.Scene.Load();
                             }
                         }
@@ -406,10 +405,10 @@ namespace CrossEngineEditor
 
                     if (ImGui.BeginMenu("Entry Scene", Context.Project != null))
                     {
-                        string[] scenes = Directory.GetDirectories(Context.Project.ScenesDir);
+                        string[] scenes = Context.Project.SceneNames.ToArray();
                         for (int i = 0; i < scenes.Length; i++)
                         {
-                            string name = Path.GetFileName(scenes[i]);
+                            string name = scenes[i];
                             if (ImGui.MenuItem(name, "", name == Context.Project.EntryScene))
                             {
                                 Context.Project.EntryScene = name;
@@ -421,9 +420,9 @@ namespace CrossEngineEditor
 
                     ImGui.EndMenu();
                 }
-                #endregion
+#endregion
 
-                #region Edit Menu
+#region Edit Menu
                 if (ImGui.BeginMenu("Edit"))
                 {
                     ImGui.Separator();
@@ -435,9 +434,9 @@ namespace CrossEngineEditor
 
                     ImGui.EndMenu();
                 }
-                #endregion
+#endregion
 
-                #region Window Menu
+#region Window Menu
                 if (ImGui.BeginMenu("Window"))
                 {
                     if (ImGui.BeginMenu("Panels"))
@@ -469,7 +468,7 @@ namespace CrossEngineEditor
 
                     ImGui.EndMenu();
                 }
-                #endregion
+#endregion
 
                 if (ImGui.BeginMenu("Resources", Context.Project != null))
                 {
@@ -490,7 +489,7 @@ namespace CrossEngineEditor
                         if (ImGui.MenuItem("Reload"))
                         {
                             AssemblyLoader.UnloadAll();
-                            string[] files = Directory.GetFiles(Context.Project.AssembliesDir);
+                            string[] files = Directory.GetFiles(Path.Combine(Context.Project.Directory, "assemblies"));
                             for (int i = 0; i < files.Length; i++)
                             {
                                 AssemblyLoader.Load(files[i]);
@@ -537,7 +536,7 @@ namespace CrossEngineEditor
             }
         }
 
-        #region Panel Methods
+#region Panel Methods
         private void AddPanel(EditorPanel panel)
         {
             _panels.Add(panel);
@@ -569,9 +568,9 @@ namespace CrossEngineEditor
             }
             return null;
         }
-        #endregion
+#endregion
 
-        #region Modal Methods
+#region Modal Methods
         private void DrawModals()
         {
             for (int i = 0; i < _modals.Count; i++)
@@ -603,9 +602,9 @@ namespace CrossEngineEditor
         {
             _modals.Remove(modal);
         }
-        #endregion
+#endregion
 
-        #region Real Magic
+#region Real Magic
         private void StartPlaymode()
         {
             EditorApplication.Log.Info("starting playmode");
@@ -619,10 +618,10 @@ namespace CrossEngineEditor
 
             Context.Scene = SceneSerializer.DeserializeJsonFromString(json);
 
-            string[] scenes = Directory.GetDirectories(Context.Project.ScenesDir);
+            string[] scenes = Context.Project.SceneNames.ToArray();
             for (int i = 0; i < scenes.Length; i++)
             {
-                SceneManager.Add(scenes[i]);
+                SceneManager.Add(Path.Combine(scenes[i], "scene.json"));
             }
             SceneManager.Load(Context.Scene);
 
@@ -647,58 +646,68 @@ namespace CrossEngineEditor
 
             EditorApplication.Log.Info("playmode ended");
         }
-        #endregion
+#endregion
 
-        #region File Menu Actions
+#region File Menu Actions
         private void FileMenu_NewProject()
         {
-            throw new NotImplementedException();
-            /*
-            if (Dialog.SaveFile(out string path,
-                            filter:
-                            Dialog.Filters.IniFile +
-                            Dialog.Filters.AllFiles,
-                            name: "ce"))
+            if (Dialog.FolderBrowser(out string dir, initialDirectory: Environment.CurrentDirectory))
             {
-                Context.Project = EditorProject.Create(path);
+                Context.Project = EditorProject.Create(dir);
             }
-            */
         }
 
         private void FileMenu_OpenProject()
         {
-            throw new NotImplementedException();
-            /*
-            if (Dialog.OpenFile(out string path,
-                            filter:
-                            Dialog.Filters.IniFile +
-                            Dialog.Filters.AllFiles))
+            // bordel na stole
+            if (Dialog.FolderBrowser(out string dir, initialDirectory: Environment.CurrentDirectory))
             {
-                Context.Project = EditorProject.Read(path);
-                var ass = Directory.GetFiles(Context.Project.AssembliesDir);
+                Context.Project = EditorProject.Read(dir);
+                var ass = Directory.GetFiles(Path.Combine(Context.Project.Directory, "assemblies"));
                 for (int i = 0; i < ass.Length; i++)
                 {
                     AssemblyLoader.Load(ass[i]);
                 }
             }
-            */
+        }
+
+        class CreateSceneModal : EditorModal
+        {
+            Action<string> _callback;
+            [EditorString(Name = "Scene Name")]
+            public string _name = "";
+
+            public CreateSceneModal(Action<string> createSceneCallback) : base("Create New Scene")
+            {
+                _callback = createSceneCallback;
+            }
+
+            protected override void DrawContents()
+            {
+                PropertyDrawer.DrawEditorValue(typeof(CreateSceneModal).GetField(nameof(_name)), this);
+
+                ImGui.Separator();
+
+                if (ImGui.Button("OK", new Vector2(60, 0)))
+                {
+                    _callback(_name);
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Cancel", new Vector2(60, 0)))
+                {
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGui.SameLine();
+            }
         }
 
         private void FileMenu_CreateScene()
         {
-            throw new NotImplementedException();
-            /*
-            if (Dialog.SaveFile(out string path,
-                            filter:
-                            Dialog.Filters.JsonFile +
-                            Dialog.Filters.AllFiles,
-                            name: "scene"))
+            PushModal(new CreateSceneModal((name) =>
             {
-                Context.Scene?.Unload();
-                Context.Scene = Context.Project.CreateScene(Path.GetFileName(Path.GetDirectoryName(path)));
-                Context.Scene.Load();
-            }
-            */
+                Context.Project.CreateScene(name);
+            }));
         }
 
         //private void FileOpenScene()
@@ -763,10 +772,10 @@ namespace CrossEngineEditor
         //        }
         //    }
         //}
-        #endregion
+#endregion
 
         /*
-        #region Assemblies Menu Actions
+#region Assemblies Menu Actions
         private void AssembliesLoad()
         {
             if (FileDialog.Open(out string path,
@@ -814,7 +823,7 @@ namespace CrossEngineEditor
             _componentTypeRegistry.Clear();
             _componentTypeRegistry.AddRange(AssemblyLoader.GetSubclassesOf(typeof(Component)));
         }
-        #endregion
+#endregion
         */
         }
     }
