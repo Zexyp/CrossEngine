@@ -588,6 +588,8 @@ namespace CrossEngineEditor.Utils
             } },
         };
 
+        // TODO: this mess can't handle null value :(
+
         public static void DrawEditorValue(FieldInfo fieldInfo, object target, Action<Exception> errorCallback = null)
         {
             if (fieldInfo == null)

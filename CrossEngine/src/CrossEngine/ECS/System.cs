@@ -22,6 +22,7 @@ namespace CrossEngine.ECS
         void Init();
         void Shutdown();
         void Update();
+        // mby move to renderable system interface
         virtual void Render() { }
         virtual void Event(object e) { }
     }

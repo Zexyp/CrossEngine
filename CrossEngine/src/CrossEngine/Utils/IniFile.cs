@@ -20,7 +20,7 @@ namespace CrossEngine.Utils
 
         public IniFile(string path, bool isFileName = false)
         {
-            if (!isFileName) path = path + ".ini";
+            if (!isFileName) path += ".ini";
             Path = new FileInfo(path).FullName;
         }
 

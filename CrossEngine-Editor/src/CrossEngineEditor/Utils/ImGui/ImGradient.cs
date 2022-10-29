@@ -326,6 +326,7 @@ namespace CrossEngineEditor.Utils.Gui
             ImGui.SameLine();
             if (ImGuiUtils.SquareButton("+"))
             {
+                // addition behaviour
                 if (state.ElementCount == 0)
                 {
                     selectedIndex = state.AddElement(0, default);
@@ -334,21 +335,21 @@ namespace CrossEngineEditor.Utils.Gui
                 {
                     selectedIndex = state.AddElement(0.5f, state.Elements[0].value);
                 }
-                else if (selectedIndex == state.ElementCount - 1)
-                {
-                    float x = (state.Elements[selectedIndex].position + state.Elements[selectedIndex - 1].position) / 2;
-                    var c = state.Sample(x);
-                    selectedIndex = state.AddElement(x, c);
-                }
-                else
+                else if (selectedIndex == 0)
                 {
                     float x = (state.Elements[selectedIndex].position + state.Elements[selectedIndex + 1].position) / 2;
                     var c = state.Sample(x);
                     selectedIndex = state.AddElement(x, c);
                 }
+                else
+                {
+                    float x = (state.Elements[selectedIndex].position + state.Elements[selectedIndex - 1].position) / 2;
+                    var c = state.Sample(x);
+                    selectedIndex = state.AddElement(x, c);
+                }
             }
             ImGui.SameLine();
-            if (ImGuiUtils.SquareButton("-") && state.ElementCount > 0)
+            if (ImGuiUtils.SquareButton("-") && state.ElementCount > 1)
             {
                 state.RemoveElement(selectedIndex);
                 if (state.ElementCount > 0)

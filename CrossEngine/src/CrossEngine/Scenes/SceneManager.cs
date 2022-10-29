@@ -10,6 +10,7 @@ using CrossEngine.Assemblies;
 using CrossEngine.Serialization;
 using CrossEngine.Events;
 using CrossEngine.Rendering;
+using CrossEngine.Debugging;
 
 namespace CrossEngine.Scenes
 {
@@ -70,6 +71,8 @@ namespace CrossEngine.Scenes
         {
             if (Current != null)
                 SceneRenderer.DrawScene(Current);
+            else
+                Application.Log.Warn("nothing to render");
         }
 
         public static void OnEvent(Event e)
