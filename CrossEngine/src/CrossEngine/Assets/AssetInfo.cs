@@ -18,7 +18,6 @@ namespace CrossEngine.Assets
         public abstract void Load(IPathProvider pathProvider = null);
         public abstract void Unload();
 
-        /*
         public uint Users { get; private set; }
         public void Lock()
         {
@@ -34,8 +33,7 @@ namespace CrossEngine.Assets
         }
         protected virtual void OnUsed() { }
         protected virtual void OnUnused() { }
-        */
-
+        
         protected virtual void OnSerialize(SerializationInfo info) { }
         protected virtual void OnDeserialize(SerializationInfo info) { }
 

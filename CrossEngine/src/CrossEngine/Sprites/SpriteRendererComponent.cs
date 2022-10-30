@@ -53,9 +53,9 @@ namespace CrossEngine.Components
             set
             {
                 if (value == _texture) return;
-                //((AssetInfo)_texture)?.Unlock();
+                _texture?.Unlock();
                 _texture = value;
-                //((AssetInfo)_texture)?.Lock();
+                _texture?.Lock();
             }
         }
 

@@ -367,6 +367,125 @@ namespace CrossEngine.Serialization.Json
         public static byte ReadByte(this JsonElement element, string id) => element.GetProperty(id).GetByte();
         public static string ReadString(this JsonElement element, string id) => element.GetProperty(id).GetString();
 
-        // TODO: add try methods
+        public static bool TryReadBoolean(this JsonElement element, string id, out bool value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetBoolean();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadSingle(this JsonElement element, string id, out float value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetSingle();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadDouble(this JsonElement element, string id, out double value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetDouble();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadUInt64(this JsonElement element, string id, out ulong value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetUInt64();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadInt64(this JsonElement element, string id, out long value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetInt64();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadUInt32(this JsonElement element, string id, out uint value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetUInt32();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadInt32(this JsonElement element, string id, out int value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetInt32();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadUInt16(this JsonElement element, string id, out ushort value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetUInt16();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadInt16(this JsonElement element, string id, out short value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetInt16();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadSByte(this JsonElement element, string id, out sbyte value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetSByte();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadByte(this JsonElement element, string id, out byte value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetByte();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadString(this JsonElement element, string id, out string value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetString();
+                return true;
+            }
+            return false;
+        }
     }
 }

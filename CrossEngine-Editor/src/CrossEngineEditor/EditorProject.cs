@@ -59,7 +59,7 @@ namespace CrossEngineEditor
         public void WriteScene(Scene scene)
         {
             Application.Log.Warn("lazy testing implementation!!!");
-            SceneLoader.Write(scene, Path.Combine(Path.GetDirectoryName(scene.AssetRegistry.HomeDirectory), "scene.json"));
+            SceneLoader.Write(scene, Path.Combine(scene.AssetRegistry.HomeDirectory, "scene.json"));
         }
 
         public static EditorProject Read(string directory)

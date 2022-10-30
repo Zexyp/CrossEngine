@@ -8,19 +8,6 @@ using CrossEngine.Serialization;
 
 namespace CrossEngine.Assets
 {
-    internal class DefaultPathProvider : IPathProvider
-    {
-        public string GetActualPath(string relativePath) => relativePath;
-    }
-
-    public interface IPathProvider
-    {
-        string GetActualPath(string relativePath);
-
-        private static IPathProvider _default = new DefaultPathProvider();
-        public static IPathProvider Default => _default;
-    }
-
     public interface IAssetCollection : ICollection<AssetInfo>, ISerializable
     {
         void Load(IPathProvider pathProvider = null);
@@ -54,8 +41,7 @@ namespace CrossEngine.Assets
         {
             foreach (var item in _assetDict)
             {
-                //item.Value.Active = true;
-                item.Value.Load();
+                item.Value.Load(pathProvider);
             }
             Loaded = true;
         }
