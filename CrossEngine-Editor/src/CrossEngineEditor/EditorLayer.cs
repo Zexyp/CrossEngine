@@ -91,7 +91,7 @@ namespace CrossEngineEditor
             AddPanel(new ViewportPanel());
             AddPanel(new LagometerPanel());
             AddPanel(new ConfigPanel());
-            //AddPanel(new ImageViewerPanel());
+            AddPanel(new ImageViewerPanel());
         }
 
         private bool LoadConfig(IniFile config)
@@ -380,7 +380,7 @@ namespace CrossEngineEditor
 
                     ImGui.Separator();
                     
-                    if (ImGui.MenuItem("Create Scene...", Context.Project != null))
+                    if (ImGui.MenuItem("New Scene...", Context.Project != null))
                     {
                         FileMenu_CreateScene();
                     }
@@ -628,7 +628,7 @@ namespace CrossEngineEditor
             string[] scenes = Context.Project.SceneNames.ToArray();
             for (int i = 0; i < scenes.Length; i++)
             {
-                SceneManager.Add(Path.Combine(scenes[i], "scene.json"));
+                SceneManager.Add(Path.Combine(scenes[i], "scene.json"), scenes[i]);
             }
             SceneManager.Load(Context.Scene);
 

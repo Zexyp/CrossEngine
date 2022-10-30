@@ -19,9 +19,9 @@ namespace CrossEngine.Scenes
         static readonly Dictionary<string, string> _sceneDirs = new Dictionary<string, string>();
         public static Scene Current { get; private set; }
 
-        public static void Add(string path)
+        public static void Add(string path, string name)
         {
-            _sceneDirs.Add(Path.GetFileName(path), path);
+            _sceneDirs.Add(name, path);
         }
 
         public static void Remove(string path)

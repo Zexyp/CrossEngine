@@ -34,6 +34,7 @@ namespace CrossEngineEditor.Panels
         [EditorAsset(typeof(TextureAsset), Name = "")]
         public TextureAsset selectedTextureAsset = null;
         int selectedIndex = 0;
+
         Vector2 viewPos;
         float viewZoom = 1f;
 
@@ -177,16 +178,8 @@ namespace CrossEngineEditor.Panels
 
         private void LoadAsset()
         {
-            if (!FileDialog.Open(out string path,
-                filter:
-                "All Image Files (*.bmp; *.jpg; *.jpeg; *.png; *.tif; *.tiff)\0*.bmp;*.jpg;*.jpeg;*.png;*.tif;*.tiff\0" +
-                "PNG (*.png)\0*.png\0" +
-                "JPG (*.jpg; *.jpeg)\0*.jpg;*.jpeg\0" +
-                "BMP (*.bmp)\0*.bmp\0" +
-                "GIF (*.gif)\0*.gif\0" +
-                "TIFF (*.tif; *.tiff)\0*.tif;*.tiff\0" +
-                "EXIF (*.exif)\0*.exif\0" +
-                "All Files (*.*)\0*.*\0"))
+            if (!Dialog.FileOpen(out string path,
+                filters: Dialog.Filters.ImageFiles))
                 return;
 
             textureAssets = Context.Scene.AssetRegistry.GetCollection<TextureAsset>();
@@ -195,7 +188,6 @@ namespace CrossEngineEditor.Panels
             selectedTextureAsset.RelativePath = path;
             textureAssets.AddAsset(selectedTextureAsset);
 
-            selectedIndex = textureAssets.Count - 1;
             selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(textureAssets.Count - 1, 0));
 
             ResetView();
@@ -208,7 +200,6 @@ namespace CrossEngineEditor.Panels
             selectedTextureAsset = null;
 
             selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(textureAssets.Count - 1, 0));
-            selectedIndex = textureAssets.Count - 1;
 
             ResetView();
         }

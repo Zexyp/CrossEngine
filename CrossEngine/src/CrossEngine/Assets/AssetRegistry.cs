@@ -67,7 +67,7 @@ namespace CrossEngine.Assets
         {
             foreach (var item in _collections)
             {
-                item.Value.Load();
+                item.Value.Load(this);
             }
             Loaded = true;
         }
@@ -81,7 +81,17 @@ namespace CrossEngine.Assets
             Loaded = false;
         }
 
-        string IPathProvider.GetActualPath(string relativePath) => Path.Combine(HomeDirectory, relativePath);
+        string IPathProvider.GetActualPath(string relativePath, AssetType type = AssetType.None)
+        {
+            switch (type)
+            {
+                case AssetType.None: return Path.Combine(HomeDirectory, relativePath);
+                case AssetType.Texture: return Path.Combine(HomeDirectory, "textures", relativePath);
+                default:
+                    Debug.Assert(false, "Unknown type");
+                    return null;
+            }
+        }
     }
 
     class AssetManager

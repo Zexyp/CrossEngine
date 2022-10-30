@@ -56,7 +56,10 @@ namespace CrossEngine.Serialization
 
         private static void SetContext(Scene scene)
         {
-            Settings.Context = scene;
+            if (scene != null)
+                Settings.Context = new SceneConvertorContext() { scene = scene };
+            else
+                Settings.Context = null;
         }
 
         public static void SerializeJson(Scene scene, Stream stream)
