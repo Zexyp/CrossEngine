@@ -31,6 +31,8 @@ namespace CrossEngine.Utils
         {
             if (text == null)
                 return;
+            if (textTexture == null)
+                return;
 
             int line = 0;
             for (int i = 0; i < text.Length; i++)

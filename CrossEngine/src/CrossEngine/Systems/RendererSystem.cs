@@ -11,15 +11,15 @@ using CrossEngine.Components;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Events;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.Systems
 {
-    class RendererSystem : ISystem
+    public class RendererSystem : ISystem
     {
         public SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 
         List<CameraComponent> _cameras = new List<CameraComponent>();
 
-        public CameraComponent Primary;
+        public CameraComponent PrimaryCamera;
 
         public void Init()
         {
@@ -40,14 +40,14 @@ namespace CrossEngine.ComponentSystems
         {
             _cameras.Add(component);
             if (component.Primary)
-                Primary = component;
+                PrimaryCamera = component;
         }
 
         public void UnregisterCamera(CameraComponent component)
         {
             _cameras.Remove(component);
-            if (Primary == component)
-                Primary = null;
+            if (PrimaryCamera == component)
+                PrimaryCamera = null;
         }
 
         void ISystem.Event(object e)

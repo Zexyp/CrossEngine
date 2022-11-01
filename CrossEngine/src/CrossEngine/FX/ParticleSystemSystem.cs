@@ -14,20 +14,18 @@ using CrossEngine.Rendering.Culling;
 
 namespace CrossEngine.FX.Particles
 {
-    class ParticleSystemSystem : System<ParticleSystemComponent>
+    class ParticleSystemSystem : SimpleSystem<ParticleSystemComponent>, IRenderableSystem
     {
-        // TODO: implement filtered list of enabled
-
         public override SystemThreadMode ThreadMode => SystemThreadMode.Async;
 
-        (IRenderable Renderable, IList Objects) Data;
+        public (IRenderable Renderable, IList Objects) RenderData { get; private set; }
 
         private readonly ParallelOptions _parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 20 };
+        private List<ParticleSystemComponent> _filtered = new List<ParticleSystemComponent>();
 
-        public ParticleSystemSystem(SceneLayerRenderData renderData) : base()
+        public ParticleSystemSystem() : base()
         {
-            Data = (new ParticleSystemRenderable(), Components);
-            renderData.Data.Add(Data);
+            RenderData = (new ParticleSystemRenderable(), _filtered);
         }
 
         public override void Update()
@@ -37,6 +35,28 @@ namespace CrossEngine.FX.Particles
             Parallel.ForEach(Components, _parallelOptions, (component) => { if (component.Enabled) component.Update(); });
 
             Profiler.EndScope();
+        }
+
+        public override void Register(ParticleSystemComponent component)
+        {
+            base.Register(component);
+            if (component.Enabled)
+                _filtered.Add(component);
+        }
+
+        public override void Unregister(ParticleSystemComponent component)
+        {
+            component.OnEnabledChanged += Component_OnEnabledChanged;
+            base.Unregister(component);
+            _filtered.Remove(component);
+        }
+
+        private void Component_OnEnabledChanged(Component obj)
+        {
+            if (obj.Enabled)
+                _filtered.Add((ParticleSystemComponent)obj);
+            else
+                _filtered.Remove((ParticleSystemComponent)obj);
         }
     }
 }

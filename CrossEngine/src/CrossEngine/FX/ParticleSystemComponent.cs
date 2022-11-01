@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using CrossEngine.ECS;
-using CrossEngine.ComponentSystems;
+using CrossEngine.Systems;
 using CrossEngine.FX.Particles;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
@@ -222,6 +222,7 @@ namespace CrossEngine.FX.Particles
             var cameraUp = Vector3.Transform(Vector3.UnitY, viewMatrix);
             var cameraLook = tr?.WorldPosition ?? Vector3.Zero;
             var matrixLocal = (tr != null) ? Matrix4x4.CreateScale(tr.WorldScale) * Matrix4x4.CreateTranslation(tr.WorldPosition) : Matrix4x4.Identity;
+            var entId = Entity.Id.GetHashCode();
 
             for (int i = 0; i < _particlePool.Length; i++)
             {
@@ -249,7 +250,7 @@ namespace CrossEngine.FX.Particles
                 matrix *= Matrix4x4.CreateRotationZ(particle.rotation) * Matrix4x4Extension.CreateBillboard(cameraRight, cameraUp, cameraLook, particle.position);
                 if (Space == ParticleSpace.Local)
                     matrix *= matrixLocal;
-                Renderer2D.DrawQuad(matrix, color, Entity.Id);
+                Renderer2D.DrawQuad(matrix, color, entId);
             }
 
             Emitter?.DebugDraw(tr?.WorldTransformMatrix ?? Matrix4x4.Identity);
@@ -289,7 +290,8 @@ namespace CrossEngine.FX.Particles
             particle.velocity = Vector3Extension.RandomSphereVolume() * Properties.velocityVariation + Properties.velocity;
             // rotation
             particle.rotation = ((float)random.NextDouble() * 2.0f - 1.0f) * (float)Math.PI * Properties.rotationVariation + Properties.rotation;
-            particle.rotationVelocity = ((float)random.NextDouble() * 2.0f - 1.0f) * Properties.rotationVelocityVariation + Properties.rotationVelocity;
+            particle.rotationVelocity = Properties.rotationVelocity;
+            particle.rotationVelocity += ((float)random.NextDouble() * 2.0f - 1.0f) * Properties.rotationVelocityVariation;
 
             return particle;
         }

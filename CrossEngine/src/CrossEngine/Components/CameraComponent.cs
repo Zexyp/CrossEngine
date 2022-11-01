@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using CrossEngine.ECS;
-using CrossEngine.ComponentSystems;
+using CrossEngine.Systems;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Serialization;
@@ -24,13 +24,13 @@ namespace CrossEngine.Components
             get
             {
                 if (_boundTo != null)
-                    return this == _boundTo.Primary;
+                    return this == _boundTo.PrimaryCamera;
                 return _primary;
             }
             set
             {
                 if (_boundTo != null)
-                    _boundTo.Primary = value ? this : null;
+                    _boundTo.PrimaryCamera = value ? this : null;
                 _primary = value;
             }
         }

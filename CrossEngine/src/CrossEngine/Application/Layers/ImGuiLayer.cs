@@ -28,7 +28,7 @@ namespace CrossEngine.Layers
 
         IntPtr ImGuiContext = IntPtr.Zero;
 
-        public unsafe override void OnAttach()
+        protected internal override unsafe void Attach()
         {
             ThreadManager.ExecuteOnRenderThread(() =>
             {
@@ -92,14 +92,14 @@ namespace CrossEngine.Layers
             //
         }
 
-        public override void OnRender()
+        protected internal override void Render()
         {
             Begin();
-            Application.Instance.OnEvent(new ImGuiRenderEvent());
+            Application.Instance.Event(new ImGuiRenderEvent());
             End();
         }
 
-        public override void OnDetach()
+        protected internal override void Detach()
         {
             ThreadManager.ExecuteOnRenderThread(() =>
             {
@@ -112,7 +112,7 @@ namespace CrossEngine.Layers
             });
         }
 
-        public override void OnEvent(Event e)
+        protected internal override void Event(Event e)
         {
             if (BlockEvents)
             {

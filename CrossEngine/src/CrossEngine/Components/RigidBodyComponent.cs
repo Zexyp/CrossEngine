@@ -10,7 +10,7 @@ using CrossEngine.Utils.Editor;
 using CrossEngine.Utils.Bullet;
 using CrossEngine.Serialization;
 using CrossEngine.ECS;
-using CrossEngine.ComponentSystems;
+using CrossEngine.Systems;
 
 namespace CrossEngine.Components
 {

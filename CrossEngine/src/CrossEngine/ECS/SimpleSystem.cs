@@ -22,12 +22,17 @@ namespace CrossEngine.ECS
         void Init();
         void Shutdown();
         void Update();
-        // mby move to renderable system interface
         virtual void Render() { }
         virtual void Event(object e) { }
     }
 
-    public abstract class System<T> : ISystem where T : Component
+    public interface ISystem<T> : ISystem where T : Component
+    {
+        void Register(T component);
+        void Unregister(T component);
+    }
+
+    public abstract class SimpleSystem<T> : ISystem<T> where T : Component
     {
         public virtual SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 
@@ -49,11 +54,11 @@ namespace CrossEngine.ECS
 
         public virtual void Init() { }
         public virtual void Shutdown() { }
-        public virtual void Update() { }
         public virtual void Render() { }
+        public virtual void Update() { }
     }
 
-    public abstract class ParallelSystem<T> : System<T> where T : Component
+    public abstract class ParallelSystem<T> : SimpleSystem<T> where T : Component
     {
         protected ParallelOptions ParallelOptions = new ParallelOptions();
 

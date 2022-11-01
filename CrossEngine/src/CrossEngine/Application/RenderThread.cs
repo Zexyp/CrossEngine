@@ -98,8 +98,7 @@ namespace CrossEngine
 
                 _rapi.Clear();
 
-                while (ThreadManager.RenderThreadActionQueue.TryDequeue(out Action action))
-                    action.Invoke();
+                ThreadManager.ProcessRenderThread();
 
                 OnRender?.Invoke();
 

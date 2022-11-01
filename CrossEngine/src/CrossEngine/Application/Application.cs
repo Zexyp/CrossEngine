@@ -20,25 +20,31 @@ namespace CrossEngine
         public static Logger Log;
 
         public static Application Instance { get; private set; } = null;
-        public Window Window => _renderThread?.Window;
         public RendererAPI RendererAPI { get; private set; }
+        public Window Window => _renderThread?.Window;
 
         private readonly RenderThread _renderThread;
-        private readonly LayerStack LayerStack;
+        private readonly LayerStack _layerStack = new LayerStack();
         private ConcurrentQueue<Event> _events = new ConcurrentQueue<Event>();
         //private double _fixedUpdateAggregate = 0;
 
         public Application(string title = "Window", int width = 1600, int height = 900)
         {
+            if (Instance != null)
+                Debug.Assert(false, "There can be only one Application!");
+            Instance = this;
+
+            // logs
             CoreLog = new Logger("CORE");
             Log = new Logger("APP");
 
+            // render thread
             RendererAPI = RendererAPI.Create();
             _renderThread = new RenderThread(RendererAPI);
             _renderThread.OnEvent += (e) =>
             {
-                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.OnEvent)}");
-                OnEvent(e);
+                Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Event)}");
+                Event(e);
                 Profiler.EndScope();
             };
             _renderThread.OnRender += () =>
@@ -48,14 +54,7 @@ namespace CrossEngine
                 Profiler.EndScope();
             };
             _renderThread.OnInit += RenderInit;
-            _renderThread.OnDestroy += RenderDestry;
-
-            if (Instance != null)
-                Debug.Assert(false, "There can be only one Application!");
-
-            Instance = this;
-
-            LayerStack = new LayerStack();
+            _renderThread.OnDestroy += RenderDestroy;
 
             ThreadManager.SetMainThread(Thread.CurrentThread);
             ThreadManager.ConfigureCurrentThread();
@@ -71,7 +70,7 @@ namespace CrossEngine
             LoadContent();
             Profiler.EndScope();
 
-            OnEvent(new WindowResizeEvent(Window.Width, Window.Height));
+            Event(new WindowResizeEvent(Window.Width, Window.Height));
 
             while (!(Window?.ShouldClose != false))
             {
@@ -89,8 +88,7 @@ namespace CrossEngine
 
                 Time.Update(Window.Time);
 
-                while (ThreadManager.MainThreadActionQueue.TryDequeue(out Action action))
-                    action.Invoke();
+                ThreadManager.ProcessMainThread();
 
                 Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Update)}");
                 Update();
@@ -108,10 +106,6 @@ namespace CrossEngine
                 //}
 
                 Input.Update();
-
-                //Event de;
-                //while ((de = _renderThread.DequeueEvent()) != null)
-                //    OnEvent(de);
 
                 _renderThread.Wait();
 
@@ -139,10 +133,11 @@ namespace CrossEngine
         protected virtual void Init()
         {
             _renderThread.Start();
+
             _renderThread.Wait();
         }
 
-        protected virtual void RenderInit() { }
+        protected virtual void RenderInit() { Event(new ApplicationRenderInitEvent()); }
 
         protected virtual void Destroy()
         {
@@ -150,7 +145,7 @@ namespace CrossEngine
             _renderThread.Wait();
         }
 
-        protected virtual void RenderDestry() { }
+        protected virtual void RenderDestroy() { Event(new ApplicationRenderDestroyEvent()); }
 
         protected virtual void LoadContent()
         {
@@ -159,38 +154,38 @@ namespace CrossEngine
 
         protected virtual void UnloadContent()
         {
-            LayerStack.PopAll();
+            _layerStack.PopAll();
             //GC.Collect();
             //Assets.GC.GPUGarbageCollector.Collect();
         }
 
         protected virtual void Update()
         {
-            for (int i = 0; i < LayerStack.Layers.Count; i++)
+            for (int i = 0; i < _layerStack.Layers.Count; i++)
             {
-                LayerStack.Layers[i].OnUpdate();
+                _layerStack.Layers[i].Update();
             }
         }
 
         public virtual void Render()
         {
-            for (int i = 0; i < LayerStack.Layers.Count; i++)
+            for (int i = 0; i < _layerStack.Layers.Count; i++)
             {
-                LayerStack.Layers[i].OnRender();
+                _layerStack.Layers[i].Render();
             }
         }
 
-        public virtual void OnEvent(Event e)
+        public virtual void Event(Event e)
         {
-            Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.OnEvent)}({e.GetType().Name})(base)");
+            Profiler.BeginScope($"{nameof(Application)}.{nameof(Application.Event)}({e.GetType().Name})(base)");
 
-            var layers = LayerStack.Layers;
+            var layers = _layerStack.Layers;
             lock (layers)
             {
                 for (int i = layers.Count - 1; i >= 0; i--)
                 {
                     if (e.Handled) break;
-                    layers[i].OnEvent(e);
+                    layers[i].Event(e);
                 }
             }
 
@@ -207,17 +202,17 @@ namespace CrossEngine
         #endregion
 
         #region Layer Operations Methods
-        public void PushLayer(Layer layer) => LayerStack.PushLayer(layer);
-        public void PushOverlay(Layer overlay) => LayerStack.PushOverlay(overlay);
+        public void PushLayer(Layer layer) => _layerStack.PushLayer(layer);
+        public void PushOverlay(Layer overlay) => _layerStack.PushOverlay(overlay);
 
-        public void PopLayer(Layer layer) => LayerStack.PopLayer(layer);
-        public void PopOverlay(Layer overlay) => LayerStack.PopOverlay(overlay);
+        public void PopLayer(Layer layer) => _layerStack.PopLayer(layer);
+        public void PopOverlay(Layer overlay) => _layerStack.PopOverlay(overlay);
 
         public T GetLayer<T>() where T : Layer
         {
-            for (int i = 0; i < LayerStack.Layers.Count; i++)
+            for (int i = 0; i < _layerStack.Layers.Count; i++)
             {
-                if (LayerStack.Layers[i] is T) return (T)LayerStack.Layers[i];
+                if (_layerStack.Layers[i] is T) return (T)_layerStack.Layers[i];
             }
             return null;
         }

@@ -69,8 +69,9 @@ namespace CrossEngine.Serialization.Json.Converters
         {
             //value.Enabled = reader.GetProperty("Enabled").GetBoolean();
 
-            value.Id = reader.ReadInt32("Id");
-            if (reader.TryReadInt32("Parent", out int parentId))
+            ((SceneConvertorContext)serializer.Settings.Context).scene.SetEntityId(value, reader.ReadGuid("Id"));
+
+            if (reader.TryReadGuid("Parent", out Guid parentId))
                 ((SceneConvertorContext)serializer.Settings.Context).postSceneDeserializationActionsQueue.Enqueue(() =>
                 {
                     value.Parent = ((SceneConvertorContext)serializer.Settings.Context).scene.GetEntityById(parentId);
@@ -86,9 +87,12 @@ namespace CrossEngine.Serialization.Json.Converters
         public override void WriteJson(Utf8JsonWriter writer, Entity value, JsonSerializer serializer)
         {
             //writer.WriteBoolean("Enabled", value.Enabled);
-            writer.WriteNumber("Id", value.Id);
+
+            writer.WriteString("Id", value.Id);
+
             if (value.Parent != null)
-                writer.WriteNumber("Parent", value.Parent.Id);
+                writer.WriteString("Parent", value.Parent.Id);
+
             writer.WritePropertyName("Components");
             serializer.Serialize(writer, value.Components);
         }

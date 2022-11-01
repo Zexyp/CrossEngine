@@ -13,17 +13,17 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Renderables;
 using CrossEngine.Profiling;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.Systems
 {
-    class SpriteRendererSystem : System<SpriteRendererComponent>
+    class SpriteRendererSystem : SimpleSystem<SpriteRendererComponent>, IRenderableSystem
     {
-        List<ISpriteRenderData> _filtered = new List<ISpriteRenderData>();
-        (IRenderable Renderable, IList Objects) Data;
+        public (IRenderable Renderable, IList Objects) RenderData { get; private set; }
 
-        public SpriteRendererSystem(SceneLayerRenderData renderData) : base()
+        private List<ISpriteRenderData> _filtered = new List<ISpriteRenderData>();
+
+        public SpriteRendererSystem() : base()
         {
-            Data = (new SpriteRenderable(), _filtered);
-            renderData.Data.Add(Data);
+            RenderData = (new SpriteRenderable(), _filtered);
         }
 
         public override void Register(SpriteRendererComponent component)

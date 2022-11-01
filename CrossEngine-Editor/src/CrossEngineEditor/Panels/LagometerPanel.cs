@@ -43,7 +43,7 @@ namespace CrossEngineEditor.Panels
                     frames = 0;
                 }
                 ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, Math.Min((float)lastFrames / 30, 1), (float)lastFrames / 60, 1));
-                ImGui.Text($"FPS: {lastFrames:F1}");
+                ImGui.Text($"FPS: {lastFrames}");
                 ImGui.PopStyleColor();
             }
 
@@ -64,7 +64,7 @@ namespace CrossEngineEditor.Panels
                 }
                 average /= (float)frameTimePlot.Length;
 
-                ImGui.PlotHistogram("Frame times", ref frameTimePlot[0], frameTimePlot.Length, frameTimePlotOffset, $"avg {average:F2} ms", 0, max, new Vector2(0, 80.0f));
+                ImGui.PlotLines("Frame times", ref frameTimePlot[0], frameTimePlot.Length, frameTimePlotOffset, $"avg {average:F2} ms", 0, max, new Vector2(0, 60.0f));
                 updateFrameTimePlot = !(ImGui.IsItemHovered() && ImGui.IsMouseDown(ImGuiMouseButton.Left));
             }
 

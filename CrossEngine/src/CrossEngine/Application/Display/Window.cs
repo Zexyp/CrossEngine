@@ -29,6 +29,7 @@ namespace CrossEngine.Display
         protected struct WindowData
         {
             public uint Width, Height;
+            public bool VSync, Fullscreen;
             public string Title;
 
             public EventCallbackFunction EventCallback;
@@ -36,15 +37,21 @@ namespace CrossEngine.Display
 
         protected WindowData Data;
 
-        public uint Width { get => Data.Width; set { Data.Width = value; if (Handle != IntPtr.Zero) UpdateWindowSize(); } }
-        public uint Height { get => Data.Height; set { Data.Height = value; if (Handle != IntPtr.Zero) UpdateWindowSize(); } }
-        public string Title { get => Data.Title; set { Data.Title = value; if (Handle != IntPtr.Zero) UpdateWindowTitle(); } }
+        public uint Width { get => Data.Width; set { Data.Width = value; if (Handle != IntPtr.Zero) UpdateSize(); } }
+        public uint Height { get => Data.Height; set { Data.Height = value; if (Handle != IntPtr.Zero) UpdateSize(); } }
+        public string Title { get => Data.Title; set { Data.Title = value; if (Handle != IntPtr.Zero) UpdateTitle(); } }
+        public bool VSync { get => Data.VSync; set { Data.VSync = value; if (Handle != IntPtr.Zero) UpdateVSync(); } }
+        public bool Fullscreen { get => Data.Fullscreen; set { Data.Fullscreen = value; if (Handle != IntPtr.Zero) UpdateFullscreen(); } }
 
         public abstract double Time { get; }
         public abstract bool ShouldClose { get; set; }
-        public abstract bool VSync { get; set; }
         public abstract IntPtr Handle { get; }
 
+        public Window()
+        {
+            Data.VSync = true;
+            Data.Fullscreen = false;
+        }
 
         //public abstract void SetIcon(System.Drawing.Image image);
         protected internal abstract void CreateWindow();
@@ -53,9 +60,18 @@ namespace CrossEngine.Display
         protected internal abstract void PollWindowEvents();
         protected internal abstract unsafe void SetIcon(void* data, uint width, uint height);
 
-        protected abstract void UpdateWindowSize();
-        protected abstract void UpdateWindowTitle();
+        protected abstract void UpdateSize();
+        protected abstract void UpdateTitle();
+        protected abstract void UpdateVSync();
+        protected abstract void UpdateFullscreen();
 
         protected internal abstract void SetEventCallback(EventCallbackFunction callback);
+
+        public void Resize(uint width, uint height)
+        {
+            Data.Width = width;
+            Data.Height = height;
+            UpdateSize();
+        }
     }
 }

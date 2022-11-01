@@ -12,15 +12,13 @@ using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
-using CrossEngine.Rendering;
+using CrossEngine.Systems;
 using CrossEngine.Inputs;
 
 namespace CrossEngineEditor.Panels
 {
     class GamePanel : SceneViewPanel
     {
-        Vector2 viewportSize;
-
         public GamePanel()
         {
             WindowName = "Game";
@@ -33,7 +31,15 @@ namespace CrossEngineEditor.Panels
             //Drawing = !Context.Playmode;
             //if (Context.Playmode)
             //    SceneManager.Render();
-            base.DrawWindowContent();
+
+            if (Context.Scene.GetSystem<RendererSystem>().PrimaryCamera != null)
+                base.DrawWindowContent();
+            else
+            {
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, .5f, .5f, 1));
+                ImGui.Text("No primary camera");
+                ImGui.PopStyleColor();
+            }
 
             if (!Context.Playmode)
                 return;

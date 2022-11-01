@@ -68,7 +68,7 @@ namespace CrossEngine.Rendering
                 LineRenderer.EndScene();
             }
 
-            //scene.Render();
+            scene.Render();
 
             scenRendereData.Output?.Value.Unbind();
 

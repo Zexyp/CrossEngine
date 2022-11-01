@@ -46,10 +46,7 @@ namespace CrossEngineEditor
         static public EditorLayer Instance;
 
         // contexts
-        //public EditorCamera EditorCamera = new EditorCamera();
-        
         public readonly EditorContext Context = new EditorContext();
-
         private Scene workingScene = null;
         //public bool SceneUpdate = true;
 
@@ -91,7 +88,7 @@ namespace CrossEngineEditor
             AddPanel(new ViewportPanel());
             AddPanel(new LagometerPanel());
             AddPanel(new ConfigPanel());
-            AddPanel(new ImageViewerPanel());
+            //AddPanel(new ImageViewerPanel());
         }
 
         private bool LoadConfig(IniFile config)
@@ -146,7 +143,7 @@ namespace CrossEngineEditor
 
         bool corruptedConfig = false;
 
-        public override void OnAttach()
+        protected override void Attach()
         {
             //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());
             //dockspaceIconTexture.SetFilterParameter(Rendering.Textures.FilterParameter.Nearest);
@@ -162,7 +159,7 @@ namespace CrossEngineEditor
             gre = new Gradient<Vector4>(vals);
         }
 
-        public override void OnDetach()
+        protected override void Detach()
         {
             //Scene = null;
             //AssetManager.Textures.Purge();
@@ -176,7 +173,7 @@ namespace CrossEngineEditor
         Gradient<Vector4> gre;
 
         int profFrames = 0;
-        public override void OnUpdate()
+        protected override void Update()
         {
             if (profFrames > 0)
             {
@@ -192,9 +189,9 @@ namespace CrossEngineEditor
             SceneManager.Update();
         }
 
-        public override void OnEvent(Event e)
+        protected override void Event(Event e)
         {
-            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.OnEvent)}");
+            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.Event)}");
 
             for (int i = _panels.Count - 1; i >= 0; i--)
             {
@@ -221,7 +218,7 @@ namespace CrossEngineEditor
 
             if (e is not ImGuiRenderEvent) return;
 
-            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.OnRender)}");
+            Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.Render)}");
 
             SetupDockspace();
 
@@ -239,15 +236,25 @@ namespace CrossEngineEditor
 
             // debug
             ImGui.Begin("Debug");
+
+            var cvsync = Application.Instance.Window.VSync;
+            if (ImGui.Checkbox("VSync", ref cvsync))
+                Application.Instance.Window.VSync = cvsync;
+            var cfullscreen = Application.Instance.Window.Fullscreen;
+            if (ImGui.Checkbox("Fullscreen", ref cfullscreen))
+                Application.Instance.Window.Fullscreen = cfullscreen;
+            (int, int) res = ((int)Application.Instance.Window.Width, (int)Application.Instance.Window.Height);
+            if (ImGui.SliderInt2("resoulution", ref res.Item1, 0, 2000))
+                Application.Instance.Window.Resize((uint)res.Item1, (uint)res.Item2);
+            ImGui.SliderInt("upd sleep", ref updSleep, 0, 1000);
+            ImGui.SliderInt("rnd sleep", ref rndSleep, 0, 1000);
+            if (updSleep > 0) ThreadManager.ExecuteOnMianThread(() => Thread.Sleep(updSleep));
+            if (rndSleep > 0) ThreadManager.ExecuteOnRenderThread(() => Thread.Sleep(rndSleep));
+
             ImGradient.Manipulate(gre);
 
             if (Context.Scene != null)
             {
-                ImGui.SliderInt("upd sleep", ref updSleep, 0, 1000);
-                ImGui.SliderInt("rnd sleep", ref rndSleep, 0, 1000);
-                if (updSleep > 0) ThreadManager.ExecuteOnMianThread(() => Thread.Sleep(updSleep));
-                if (rndSleep > 0) ThreadManager.ExecuteOnRenderThread(() => Thread.Sleep(rndSleep));
-
                 // test seri
                 if (ImGui.Button("seri test"))
                 {
@@ -274,6 +281,7 @@ namespace CrossEngineEditor
             {
                 Console.WriteLine(Environment.CurrentDirectory);
             }
+
             ImGui.End();
 
 
@@ -286,7 +294,7 @@ namespace CrossEngineEditor
             Profiler.EndScope();
         }
 
-#region Dockspace
+        #region Dockspace
         private unsafe void SetupDockspace()
         {
             ImGuiIOPtr io = ImGui.GetIO();
@@ -330,7 +338,7 @@ namespace CrossEngineEditor
         {
             ImGui.End();
         }
-#endregion
+        #endregion
 
         private void DrawPanels()
         {
@@ -346,7 +354,7 @@ namespace CrossEngineEditor
         {
             if (ImGui.BeginMainMenuBar())
             {
-#region File Menu
+                #region File Menu
                 if (ImGui.BeginMenu("File"))
                 {
                     if (ImGui.MenuItem("New Project..."))
@@ -427,9 +435,9 @@ namespace CrossEngineEditor
 
                     ImGui.EndMenu();
                 }
-#endregion
+                #endregion
 
-#region Edit Menu
+                #region Edit Menu
                 if (ImGui.BeginMenu("Edit"))
                 {
                     ImGui.Separator();
@@ -441,9 +449,9 @@ namespace CrossEngineEditor
 
                     ImGui.EndMenu();
                 }
-#endregion
+                #endregion
 
-#region Window Menu
+                #region Window Menu
                 if (ImGui.BeginMenu("Window"))
                 {
                     if (ImGui.BeginMenu("Panels"))
@@ -475,7 +483,7 @@ namespace CrossEngineEditor
 
                     ImGui.EndMenu();
                 }
-#endregion
+                #endregion
 
                 if (ImGui.BeginMenu("Resources", Context.Project != null))
                 {
@@ -543,7 +551,7 @@ namespace CrossEngineEditor
             }
         }
 
-#region Panel Methods
+        #region Panel Methods
         private void AddPanel(EditorPanel panel)
         {
             _panels.Add(panel);
@@ -575,9 +583,9 @@ namespace CrossEngineEditor
             }
             return null;
         }
-#endregion
+        #endregion
 
-#region Modal Methods
+        #region Modal Methods
         private void DrawModals()
         {
             for (int i = 0; i < _modals.Count; i++)
@@ -609,9 +617,9 @@ namespace CrossEngineEditor
         {
             _modals.Remove(modal);
         }
-#endregion
+        #endregion
 
-#region Real Magic
+        #region Real Magic
         private void StartPlaymode()
         {
             EditorApplication.Log.Info("starting playmode");
@@ -653,9 +661,9 @@ namespace CrossEngineEditor
 
             EditorApplication.Log.Info("playmode ended");
         }
-#endregion
+        #endregion
 
-#region File Menu Actions
+        #region File Menu Actions
         private void FileMenu_NewProject()
         {
             if (Dialog.FolderBrowser(out string dir, initialDirectory: Environment.CurrentDirectory))
@@ -779,7 +787,7 @@ namespace CrossEngineEditor
         //        }
         //    }
         //}
-#endregion
+        #endregion
 
         /*
 #region Assemblies Menu Actions

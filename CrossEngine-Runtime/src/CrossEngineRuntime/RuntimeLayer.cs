@@ -19,7 +19,7 @@ namespace CrossEngineRuntime
 {
     class RuntimeLayer : Layer
     {
-        public override void OnAttach()
+        protected override void Attach()
         {
             IniFile ini = new IniFile("ce");
             var assembliesDir = ini.Read("", "Assemblies");
@@ -36,7 +36,7 @@ namespace CrossEngineRuntime
                 string[] scenes = Directory.GetDirectories(sceneDir);
                 for (int i = 0; i < scenes.Length; i++)
                 {
-                    SceneManager.Add(scenes[i]);
+                    SceneManager.Add(scenes[i], Path.GetFileName(scenes[i]));
                 }
             }
             catch (Exception ex)
@@ -50,24 +50,24 @@ namespace CrossEngineRuntime
                 Application.Log.Fatal("entry scene not found!");
         }
 
-        public override void OnDetach()
+        protected override void Detach()
         {
             SceneManager.End();
 
             AssemblyLoader.UnloadAll();
         }
 
-        public override void OnUpdate()
+        protected override void Update()
         {
             SceneManager.Update();
         }
 
-        public override void OnRender()
+        protected override void Render()
         {
             SceneManager.Render();
         }
 
-        public override void OnEvent(Event e)
+        protected override void Event(Event e)
         {
             SceneManager.OnEvent(e);
         }

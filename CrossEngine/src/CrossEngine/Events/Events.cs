@@ -17,52 +17,6 @@ namespace CrossEngine.Events
         }
     }
 
-    #region Application
-    public class FixedUpdateEvent : Event
-    {
-        public override bool Handled { get => false; set { if (value) throw new InvalidOperationException($"{nameof(FixedUpdateEvent)} cannot be handled"); } }
-    }
-
-
-
-    public abstract class ApplicationEvent : Event { }
-
-    public class ApplicationUpdateEvent : ApplicationEvent
-    {
-        public readonly float Timestep;
-
-        public ApplicationUpdateEvent(float ts)
-        {
-            Timestep = ts;
-        }
-    }
-
-    public class ApplicationEarlyUpdate : ApplicationEvent
-    {
-
-    }
-
-    public class ApplicationLateUpdateEvent : ApplicationEvent
-    {
-
-    }
-
-    public class ApplicationRenderEvent : ApplicationEvent
-    {
-
-    }
-
-    public class ApplicationEarlyRenderEvent : ApplicationEvent
-    {
-
-    }
-
-    public class ApplicationLateRenderEvent : ApplicationEvent
-    {
-
-    }
-    #endregion
-
     #region Window
     public abstract class WindowEvent : Event { }
 
