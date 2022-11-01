@@ -17,7 +17,7 @@ namespace CrossEngine.Platform.OpenGL
         public override void Init()
         {
             var window = Application.Instance.Window;
-            if (window is GLFWWindow)
+            if (window is GlfwWindow)
                 Import(Glfw.GetProcAddress);
             else
                 Debug.Assert(false, "Window is not supported");

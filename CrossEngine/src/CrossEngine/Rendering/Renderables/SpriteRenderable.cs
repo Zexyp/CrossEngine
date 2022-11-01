@@ -24,11 +24,9 @@ namespace CrossEngine.Rendering.Renderables
 
     class SpriteRenderable : Renderable<ISpriteRenderData>
     {
-        Camera camera;
-        public override void Begin(Camera camera)
+        public override void Begin(ICamera camera)
         {
             Application.Instance.RendererAPI.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
-            this.camera = camera;
         }
 
         public override void Submit(ISpriteRenderData data)

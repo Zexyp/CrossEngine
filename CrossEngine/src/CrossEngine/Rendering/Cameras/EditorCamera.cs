@@ -1,17 +1,29 @@
 ﻿using System.Numerics;
-
+using CrossEngine.Rendering.Culling;
 using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Rendering.Cameras
 {
-    public class EditorCamera : Camera
+    public class EditorCamera : ICamera
     {
-        private Matrix4x4 _viewMatrix = Matrix4x4.Identity;
-        private Vector3 _position = Vector3.Zero;
-        private Quaternion _rotation = Quaternion.Identity;
-        private bool _viewDirty = true;
+        public Matrix4x4 ProjectionMatrix { get; set; }
 
-        [EditorVector3Value]
+        public virtual Matrix4x4 ViewMatrix
+        {
+            get
+            {
+                if (_viewDirty)
+                {
+                    _viewMatrix = Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
+                    _viewDirty = false;
+                }
+                return _viewMatrix;
+            }
+        }
+
+        public Frustum Frustum { get; set; }
+
+        [EditorDrag]
         public Vector3 Position
         {
             get => _position;
@@ -37,17 +49,9 @@ namespace CrossEngine.Rendering.Cameras
             }
         }
 
-        public override Matrix4x4 ViewMatrix
-        {
-            get
-            {
-                if (_viewDirty)
-                {
-                    _viewMatrix = Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
-                    _viewDirty = false;
-                }
-                return _viewMatrix;
-            }
-        }
+        private Matrix4x4 _viewMatrix = Matrix4x4.Identity;
+        private Vector3 _position = Vector3.Zero;
+        private Quaternion _rotation = Quaternion.Identity;
+        private bool _viewDirty = true;
     }
 }

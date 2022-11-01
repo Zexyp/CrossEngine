@@ -137,15 +137,37 @@ namespace CrossEngine
             _renderThread.Wait();
         }
 
-        protected virtual void RenderInit() { Event(new ApplicationRenderInitEvent()); }
+        protected virtual void RenderInit()
+        {
+            Event(new ApplicationRenderInitEvent());
+
+            var layers = _layerStack.Layers;
+            for (int i = 0; i < layers.Count; i++)
+            {
+                layers[i].RenderAttach();
+            }
+        }
 
         protected virtual void Destroy()
         {
             _renderThread.Stop();
             _renderThread.Wait();
+
+            _layerStack.PopAll();
+            //GC.Collect();
+            //Assets.GC.GPUGarbageCollector.Collect();
         }
 
-        protected virtual void RenderDestroy() { Event(new ApplicationRenderDestroyEvent()); }
+        protected virtual void RenderDestroy()
+        {
+            var layers = _layerStack.Layers;
+            for (int i = 0; i < layers.Count; i++)
+            {
+                layers[i].RenderDetach();
+            }
+
+            Event(new ApplicationRenderDestroyEvent());
+        }
 
         protected virtual void LoadContent()
         {
@@ -154,24 +176,24 @@ namespace CrossEngine
 
         protected virtual void UnloadContent()
         {
-            _layerStack.PopAll();
-            //GC.Collect();
-            //Assets.GC.GPUGarbageCollector.Collect();
+            
         }
 
         protected virtual void Update()
         {
-            for (int i = 0; i < _layerStack.Layers.Count; i++)
+            var layers = _layerStack.Layers;
+            for (int i = 0; i < layers.Count; i++)
             {
-                _layerStack.Layers[i].Update();
+                layers[i].Update();
             }
         }
 
         public virtual void Render()
         {
-            for (int i = 0; i < _layerStack.Layers.Count; i++)
+            var layers = _layerStack.Layers;
+            for (int i = 0; i < layers.Count; i++)
             {
-                _layerStack.Layers[i].Render();
+                layers[i].Render();
             }
         }
 
@@ -202,17 +224,34 @@ namespace CrossEngine
         #endregion
 
         #region Layer Operations Methods
-        public void PushLayer(Layer layer) => _layerStack.PushLayer(layer);
-        public void PushOverlay(Layer overlay) => _layerStack.PushOverlay(overlay);
+        public void PushLayer(Layer layer)
+        {
+            _layerStack.PushLayer(layer);
+            if (_renderThread.Running) ThreadManager.ExecuteOnRenderThread(layer.RenderAttach);
+        }
+        public void PushOverlay(Layer overlay)
+        {
+            _layerStack.PushOverlay(overlay);
+            if (_renderThread.Running) ThreadManager.ExecuteOnRenderThread(overlay.RenderAttach);
+        }
 
-        public void PopLayer(Layer layer) => _layerStack.PopLayer(layer);
-        public void PopOverlay(Layer overlay) => _layerStack.PopOverlay(overlay);
+        public void PopLayer(Layer layer)
+        {
+            if (_renderThread.Running) ThreadManager.ExecuteOnRenderThread(layer.RenderDetach);
+            _layerStack.PopLayer(layer);
+        }
+        public void PopOverlay(Layer overlay)
+        {
+            if (_renderThread.Running) ThreadManager.ExecuteOnRenderThread(overlay.RenderDetach);
+            _layerStack.PopOverlay(overlay);
+        }
 
         public T GetLayer<T>() where T : Layer
         {
-            for (int i = 0; i < _layerStack.Layers.Count; i++)
+            var layers = _layerStack.Layers;
+            for (int i = 0; i < layers.Count; i++)
             {
-                if (_layerStack.Layers[i] is T) return (T)_layerStack.Layers[i];
+                if (layers[i] is T) return (T)layers[i];
             }
             return null;
         }

@@ -9,9 +9,9 @@ using CrossEngine.Rendering.Cameras;
 
 namespace CrossEngineEditor.Panels
 {
-    class SceneViewPanel : EditorPanel
+    abstract class SceneViewPanel : EditorPanel
     {
-        protected Camera DrawCamera;
+        protected ICamera DrawCamera;
 
         protected Vector2 ViewportSize { get; private set; }
         protected Ref<Framebuffer> Framebuffer { get; private set; }
@@ -47,8 +47,6 @@ namespace CrossEngineEditor.Panels
                         ThreadManager.ExecuteOnRenderThread(() => ((Framebuffer)Framebuffer).Resize((uint)ViewportSize.X, (uint)ViewportSize.Y));
                     else
                         ((Framebuffer)Framebuffer).Resize((uint)ViewportSize.X, (uint)ViewportSize.Y);
-
-                    DrawCamera?.Resize(ViewportSize.X, ViewportSize.Y);
 
                     ViewportResized = true;
                 }

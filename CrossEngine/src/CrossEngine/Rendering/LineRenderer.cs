@@ -15,31 +15,35 @@ namespace CrossEngine.Rendering
     {
         #region Shader Sources
         const string VertexShaderSource =
-            "#version 330 core\n" +
-            "\n" +
-            "layout(location = 0) in vec3 aPosition;\n" +
-            "layout(location = 1) in vec4 aColor;\n" +
-            "\n" +
-            "uniform mat4 uViewProjection;\n" +
-            "\n" +
-            "out vec4 vColor;\n" +
-            "\n" +
-            "void main()\n" +
-            "{\n" +
-            "   vColor = aColor;\n" +
-            "   gl_Position = uViewProjection * vec4(aPosition, 1.0);\n" +
-            "}\n";
+@"#version 330 core
+
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec4 aColor;
+
+uniform mat4 uViewProjection;
+
+out vec4 vColor;
+
+void main()
+{
+   gl_Position = uViewProjection * vec4(aPosition, 1.0);
+   vColor = aColor;
+}";
+
+        const string GeometryShaderSource =
+@"";
+
         const string FragmentShaderSource =
-            "#version 330 core\n" +
-            "\n" +
-            "layout(location = 0) out vec4 oColor;\n" +
-            "\n" +
-            "in vec4 vColor;\n" +
-            "\n" +
-            "void main()\n" +
-            "{\n" +
-            "   oColor = vColor;\n" +
-            "}\n";
+@"#version 330 core
+
+layout(location = 0) out vec4 oColor;
+
+in vec4 vColor;
+
+void main()
+{
+   oColor = vColor;
+}";
         #endregion
 
         struct LineVertex

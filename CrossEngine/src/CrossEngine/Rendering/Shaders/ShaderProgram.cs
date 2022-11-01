@@ -123,6 +123,27 @@ namespace CrossEngine.Rendering.Shaders
             GetParameters();
         }
 
+        public ShaderProgram(Shader vertex, Shader fragment, Shader geometry) : this()
+        {
+            if (vertex.Type != ShaderType.Vertex || fragment.Type != ShaderType.Fragment || geometry.Type != ShaderType.Geometry) throw new InvalidOperationException();
+
+            glAttachShader(_rendererId, vertex.RendererId);
+            glAttachShader(_rendererId, fragment.RendererId);
+            glAttachShader(_rendererId, geometry.RendererId);
+
+            glLinkProgram(_rendererId);
+            bool linkSuccess = !CheckLinkingErrors();
+
+            // cleanup
+            glDetachShader(_rendererId, vertex.RendererId);
+            glDetachShader(_rendererId, fragment.RendererId);
+            glDetachShader(_rendererId, geometry.RendererId);
+
+            if (!linkSuccess) return;
+
+            GetParameters();
+        }
+
         public void Use()
         {
             Profiler.Function();

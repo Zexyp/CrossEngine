@@ -8,13 +8,40 @@ using System.Diagnostics;
 using CrossEngine.ECS;
 using CrossEngine.Components;
 using CrossEngine.Profiling;
+using CrossEngine.Rendering;
+using System.Collections;
 
 namespace CrossEngine.Systems
 {
-    class TransformSystem : SimpleSystem<TransformComponent>
+    class TransformRenderable : IRenderable
     {
+        void IRenderable.Begin(Rendering.Cameras.ICamera camera)
+        {
+            LineRenderer.BeginScene(camera.ViewProjectionMatrix);
+        }
+
+        void IRenderable.End()
+        {
+            LineRenderer.EndScene();
+        }
+
+        public void Submit(object data)
+        {
+            LineRenderer.DrawAxies(((TransformComponent)data).WorldTransformMatrix);
+        }
+    }
+
+    class TransformSystem : SimpleSystem<TransformComponent>, IRenderableSystem
+    {
+        public (IRenderable Renderable, IList Objects) RenderData { get; private set; }
+
         private readonly List<TransformComponent> _roots = new List<TransformComponent>();
         private readonly ParallelOptions _parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 20 };
+
+        public TransformSystem()
+        {
+            RenderData = (new TransformRenderable(), Components);
+        }
 
         private void ParentCheck(TransformComponent component)
         {
@@ -64,14 +91,6 @@ namespace CrossEngine.Systems
             //});
 
             Profiler.EndScope();
-        }
-
-        public override void Render()
-        {
-            for (int i = 0; i < Components.Count; i++)
-            {
-                Rendering.LineRenderer.DrawAxies(Components[i].WorldTransformMatrix);
-            }
         }
     }
 }

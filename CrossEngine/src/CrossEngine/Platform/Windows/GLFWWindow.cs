@@ -10,7 +10,7 @@ namespace CrossEngine.Platform.Windows
 {
     using WindowHandle = GLFW.Window;
 
-    class GLFWWindow : CrossEngine.Display.Window
+    class GlfwWindow : CrossEngine.Display.Window
     {
         public override double Time => Glfw.Time;
         public override bool ShouldClose
@@ -23,7 +23,7 @@ namespace CrossEngine.Platform.Windows
 
         private WindowHandle _nativeHandle = WindowHandle.None;
 
-        public GLFWWindow(uint width = 1600, uint height = 900, string title = "Pew")
+        public GlfwWindow(uint width = 1600, uint height = 900, string title = "Pew")
         {
             Width = width;
             Height = height;
@@ -32,7 +32,7 @@ namespace CrossEngine.Platform.Windows
 
         protected internal override void CreateWindow()
         {
-            Glfw.SetErrorCallback(GLFWErrorCallback);
+            Glfw.SetErrorCallback(GlfwErrorCallback);
 
             Glfw.WindowHint(Hint.ClientApi, ClientApi.OpenGL);
             Glfw.WindowHint(Hint.ContextVersionMajor, 3);
@@ -42,15 +42,18 @@ namespace CrossEngine.Platform.Windows
             //Glfw.WindowHint(Hint.Decorated, true);
             //Glfw.WindowHint(Hint.OpenglForwardCompatible, true);
 
-            _nativeHandle = Glfw.CreateWindow((int)Data.Width, (int)Data.Height, Data.Title, Monitor.None, WindowHandle.None);
+            _nativeHandle = Glfw.CreateWindow(
+                (int)Data.Width,
+                (int)Data.Height,
+                Data.Title, Data.Fullscreen ? Glfw.PrimaryMonitor : Monitor.None,
+                WindowHandle.None);
 
             Glfw.MakeContextCurrent(_nativeHandle);
 
             SetupCallbacks();
 
+            // vsync
             Glfw.SwapInterval(Data.VSync ? 1 : 0);
-
-
         }
 
         protected internal override void DestroyWindow()
@@ -74,7 +77,7 @@ namespace CrossEngine.Platform.Windows
             Glfw.PollEvents();
         }
 
-        protected internal override unsafe void SetIcon(void* data, uint width, uint height)
+        public override unsafe void SetIcon(void* data, uint width, uint height)
         {
             GLFW.Image iconImage = new GLFW.Image((int)width, (int)height, new IntPtr(data));
             Glfw.SetWindowIcon(_nativeHandle, 1, new GLFW.Image[] { iconImage });
@@ -97,10 +100,12 @@ namespace CrossEngine.Platform.Windows
 
         protected override void UpdateFullscreen()
         {
-            Glfw.SetWindowMonitor(_nativeHandle, Data.Fullscreen ? Glfw.PrimaryMonitor : Monitor.None, 0, 0, (int)Data.Width, (int)Data.Height, 60);
+            Glfw.SetWindowMonitor(_nativeHandle, Data.Fullscreen ? Glfw.PrimaryMonitor : Monitor.None, Glfw.PrimaryMonitor.WorkArea.X, Glfw.PrimaryMonitor.WorkArea.Y, (int)Data.Width, (int)Data.Height, 60);
         }
 
-        private void GLFWErrorCallback(ErrorCode code, IntPtr message)
+        protected override (uint Width, uint Height) GetMonitorSize() => ((uint)Glfw.PrimaryMonitor.WorkArea.Width, (uint)Glfw.PrimaryMonitor.WorkArea.Height);
+
+        private void GlfwErrorCallback(ErrorCode code, IntPtr message)
         {
             Application.CoreLog.Error("[GLFW] " + (int)code + " (" + code.ToString() + "): " + Marshal.PtrToStringAnsi(message));
         }

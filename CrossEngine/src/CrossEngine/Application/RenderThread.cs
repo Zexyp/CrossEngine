@@ -20,6 +20,7 @@ namespace CrossEngine
     class RenderThread
     {
         public Window Window { get; private set; } = null;
+        public bool Running { get; private set; } = false;
 
         private readonly Thread _thread;
         private readonly EventWaitHandle _waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
@@ -39,7 +40,7 @@ namespace CrossEngine
 
             _thread = new Thread(Loop);
 
-            Window = new GLFWWindow();
+            Window = new GlfwWindow();
 
             ThreadManager.SetRenderThread(_thread);
         }
@@ -51,6 +52,8 @@ namespace CrossEngine
 
             _waitHandle.Reset();
             _thread.Start();
+
+            Running = true;
         }
 
         public void Wait()
@@ -65,6 +68,8 @@ namespace CrossEngine
 
         public void Stop()
         {
+            Running = false;
+
             if (_thread.ThreadState == ThreadingThreadState.Unstarted)
                 throw new InvalidOperationException("Thread wasn't started.");
 

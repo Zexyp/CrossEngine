@@ -26,11 +26,21 @@ namespace CrossEngineEditor
 
         protected override void RenderInit()
         {
+            base.RenderInit();
+
             GLDebugging.EnableGLDebugging(LogLevel.Warn);
             Renderer2D.Init();
             LineRenderer.Init();
             RendererAPI.SetDepthFunc(DepthFunc.Default);
             RendererAPI.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
+        }
+
+        protected override void RenderDestroy()
+        {
+            base.RenderDestroy();
+
+            Renderer2D.Shutdown();
+            LineRenderer.Shutdown();
         }
     }
 }

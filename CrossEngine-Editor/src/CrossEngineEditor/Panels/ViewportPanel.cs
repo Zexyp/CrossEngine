@@ -32,15 +32,15 @@ namespace CrossEngineEditor.Panels
                 if (DrawCamera is OrthographicControllableEditorCamera) _projectionMode = ProjectionMode.Orthographic;
                 else if (DrawCamera is PerspectiveControllableEditorCamera) _projectionMode = ProjectionMode.Perspective;
                 else _projectionMode = ProjectionMode.Undefined;
-                DrawCamera?.Resize(ViewportSize.X, ViewportSize.Y);
+                ((ControllableEditorCamera)DrawCamera)?.Resize(ViewportSize.X, ViewportSize.Y);
             }
         }
 
         [EditorDrag(Min = 0.25f)]
         public float _cameraMovementSpeed = 2;
 
-        OrthographicControllableEditorCamera orthographicCamera;
-        PerspectiveControllableEditorCamera perspectiveCamera;
+        private OrthographicControllableEditorCamera _orthographicCamera;
+        private PerspectiveControllableEditorCamera _perspectiveCamera;
 
         public enum ProjectionMode
         {
@@ -68,9 +68,9 @@ namespace CrossEngineEditor.Panels
                 _projectionMode = value;
                 switch (_projectionMode)
                 {
-                    case ProjectionMode.Orthographic: CurrentCamera = orthographicCamera;
+                    case ProjectionMode.Orthographic: CurrentCamera = _orthographicCamera;
                         break;
-                    case ProjectionMode.Perspective: CurrentCamera = perspectiveCamera;
+                    case ProjectionMode.Perspective: CurrentCamera = _perspectiveCamera;
                         break;
                 }
             }
@@ -108,8 +108,8 @@ namespace CrossEngineEditor.Panels
 
             WindowFlags |= ImGuiWindowFlags.MenuBar;
 
-            orthographicCamera = new OrthographicControllableEditorCamera();
-            perspectiveCamera = new PerspectiveControllableEditorCamera();
+            _orthographicCamera = new OrthographicControllableEditorCamera();
+            _perspectiveCamera = new PerspectiveControllableEditorCamera();
             ProjectioMode = ProjectionMode.Orthographic;
         }
 
@@ -167,6 +167,9 @@ namespace CrossEngineEditor.Panels
                 return;
 
             base.DrawWindowContent();
+
+            if (ViewportResized)
+                ((ControllableEditorCamera)DrawCamera)?.Resize(ViewportSize.X, ViewportSize.Y);
 
             bool disableSelect = false;
             if (Context.ActiveEntity?.Transform != null)
