@@ -10,36 +10,36 @@ using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Renderables;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.Systems
 {
-    class TextRendererSystem : System<TextRendererComponent>
+    class TextRendererSystem : SimpleSystem<TextRendererComponent>, IRenderableSystem
     {
-        List<ITextRenderData> _filtered = new List<ITextRenderData>();
-        (IRenderable Renderable, IList Objects) Data;
+        public (IRenderable Renderable, IList Objects) RenderData { get; private set; }
+        
+        private List<ITextRenderData> _filtered = new List<ITextRenderData>();
 
-        public TextRendererSystem(SceneLayerRenderData renderData) : base()
+        public TextRendererSystem() : base()
         {
-            Data = (new TextRenderable(), _filtered);
-            renderData.Data.Add(Data);
+            RenderData = (new TextRenderable(), _filtered);
         }
 
         public override void Register(TextRendererComponent component)
         {
             base.Register(component);
 
-            EnabledChange(component);
-            component.OnEnabledChanged += EnabledChange;
+            Component_OnEnabledChanged(component);
+            component.OnEnabledChanged += Component_OnEnabledChanged;
         }
 
         public override void Unregister(TextRendererComponent component)
         {
             base.Unregister(component);
 
-            component.OnEnabledChanged -= EnabledChange;
+            component.OnEnabledChanged -= Component_OnEnabledChanged;
             _filtered.Remove(component);
         }
 
-        private void EnabledChange(Component sender)
+        private void Component_OnEnabledChanged(Component sender)
         {
             if (sender.Enabled)
                 _filtered.Add((TextRendererComponent)sender);

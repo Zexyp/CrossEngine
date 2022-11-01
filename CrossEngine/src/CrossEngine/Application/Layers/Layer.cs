@@ -6,17 +6,12 @@ namespace CrossEngine.Layers
 {
     public abstract class Layer
     {
-        public Layer()
-        {
-
-        }
-
-        public bool Attached { get; internal set; } = false;
-
-        public virtual void OnAttach() { }
-        public virtual void OnDetach() { }
-        public virtual void OnUpdate() { }
-        public virtual void OnRender() { }
-        public virtual void OnEvent(Event e) { }
+        protected internal virtual void Attach() { }
+        protected internal virtual void Detach() { }
+        protected internal virtual void Update() { }
+        protected internal virtual void Render() { }
+        protected internal virtual void RenderAttach() { }
+        protected internal virtual void RenderDetach() { }
+        protected internal virtual void Event(Event e) { }
     }
 }

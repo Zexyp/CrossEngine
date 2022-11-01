@@ -7,7 +7,7 @@ using System.Numerics;
 
 using CrossEngine.ECS;
 using CrossEngine.Events;
-using CrossEngine.ComponentSystems;
+using CrossEngine.Systems;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Rendering;
@@ -24,6 +24,7 @@ namespace CrossEngine.Components
         [EditorColor]
         public Vector4 Color { get; set; } = Vector4.One;
         Matrix4x4 IObjectRenderData.Transform => Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity;
+        int IObjectRenderData.EntityId => Entity.Id.GetHashCode();
 
         protected internal override void Attach(World world)
         {
@@ -61,7 +62,7 @@ namespace CrossEngine.Rendering.Renderables
     {
         public override void Submit(ITextRenderData data)
         {
-            TextRendererUtil.DrawText(data.Transform, data.Text, data.Color, ((TextRendererComponent)data).Entity.Id);
+            TextRendererUtil.DrawText(data.Transform, data.Text, data.Color, data.EntityId);
         }
     }
 }

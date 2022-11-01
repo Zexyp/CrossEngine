@@ -366,6 +366,7 @@ namespace CrossEngine.Serialization.Json
         public static sbyte ReadSByte(this JsonElement element, string id) => element.GetProperty(id).GetSByte();
         public static byte ReadByte(this JsonElement element, string id) => element.GetProperty(id).GetByte();
         public static string ReadString(this JsonElement element, string id) => element.GetProperty(id).GetString();
+        public static Guid ReadGuid(this JsonElement element, string id) => element.GetProperty(id).GetGuid();
 
         public static bool TryReadBoolean(this JsonElement element, string id, out bool value)
         {
@@ -483,6 +484,16 @@ namespace CrossEngine.Serialization.Json
             if (element.TryGetProperty(id, out var el))
             {
                 value = el.GetString();
+                return true;
+            }
+            return false;
+        }
+        public static bool TryReadGuid(this JsonElement element, string id, out Guid value)
+        {
+            value = default;
+            if (element.TryGetProperty(id, out var el))
+            {
+                value = el.GetGuid();
                 return true;
             }
             return false;

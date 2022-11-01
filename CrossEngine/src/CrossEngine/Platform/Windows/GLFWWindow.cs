@@ -18,22 +18,10 @@ namespace CrossEngine.Platform.Windows
             get => Glfw.WindowShouldClose(_nativeHandle);
             set => Glfw.SetWindowShouldClose(_nativeHandle, value);
         }
-        public override bool VSync
-        {
-            get => _vsync;
-            set
-            {
-                _vsync = value;
-                if (_nativeHandle == WindowHandle.None)
-                    return;
-                Glfw.SwapInterval(_vsync ? 1 : 0);
-            }
-        }
 
         public override IntPtr Handle => _nativeHandle;
 
         private WindowHandle _nativeHandle = WindowHandle.None;
-        private bool _vsync;
 
         public GLFWWindow(uint width = 1600, uint height = 900, string title = "Pew")
         {
@@ -60,7 +48,9 @@ namespace CrossEngine.Platform.Windows
 
             SetupCallbacks();
 
-            VSync = true;
+            Glfw.SwapInterval(Data.VSync ? 1 : 0);
+
+
         }
 
         protected internal override void DestroyWindow()
@@ -90,14 +80,24 @@ namespace CrossEngine.Platform.Windows
             Glfw.SetWindowIcon(_nativeHandle, 1, new GLFW.Image[] { iconImage });
         }
 
-        protected override void UpdateWindowSize()
+        protected override void UpdateSize()
         {
             Glfw.SetWindowSize(_nativeHandle, (int)Data.Width, (int)Data.Height);
         }
 
-        protected override void UpdateWindowTitle()
+        protected override void UpdateTitle()
         {
             Glfw.SetWindowTitle(_nativeHandle, Title);
+        }
+
+        protected override void UpdateVSync()
+        {
+            Glfw.SwapInterval(Data.VSync ? 1 : 0);
+        }
+
+        protected override void UpdateFullscreen()
+        {
+            Glfw.SetWindowMonitor(_nativeHandle, Data.Fullscreen ? Glfw.PrimaryMonitor : Monitor.None, 0, 0, (int)Data.Width, (int)Data.Height, 60);
         }
 
         private void GLFWErrorCallback(ErrorCode code, IntPtr message)

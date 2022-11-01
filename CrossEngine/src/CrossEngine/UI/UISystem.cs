@@ -10,7 +10,7 @@ using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.Events;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.Systems
 {
     class UISystem : ISystem
     {

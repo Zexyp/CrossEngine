@@ -93,7 +93,7 @@ namespace CrossEngineEditor.Panels
         {
             ThreadManager.ExecuteOnRenderThread(() =>
             {
-                ((Framebuffer?)Framebuffer).Dispose();
+                Framebuffer.Value.Dispose();
                 Framebuffer = null;
             });
         }

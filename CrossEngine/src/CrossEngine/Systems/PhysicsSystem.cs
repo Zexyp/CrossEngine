@@ -13,8 +13,9 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Utils.Bullet;
 using CrossEngine.Utils;
+using System.Collections;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.Systems
 {
     using BulletVector3 = BulletSharp.Math.Vector3;
     using Vector3 = System.Numerics.Vector3;
@@ -40,7 +41,7 @@ namespace CrossEngine.ComponentSystems
         LocalOffsets = 1 << 1,
     }
 
-    class PhysicsSystem : ISystem
+    class PhysicsSystem : ISystem, IRenderableSystem
     {
         static readonly Dictionary<Type, Func<ColliderComponent, CollisionShape>> ShapeConvertors = new Dictionary<Type, Func<ColliderComponent, CollisionShape>>()
         {
@@ -453,6 +454,8 @@ namespace CrossEngine.ComponentSystems
 
         public static Vector4 ColliderRepresentationColor = new Vector4(1.0f, 0.4f, 0.0f, 1.0f);
 
+        public (IRenderable Renderable, IList Objects) RenderData { get; private set; }
+
         List<ColliderComponent> _colliders = new List<ColliderComponent>();
 
         Dictionary<RigidBodyComponent, SyncedRBData> _pairs = new Dictionary<RigidBodyComponent, SyncedRBData>();
@@ -475,9 +478,9 @@ namespace CrossEngine.ComponentSystems
         }
         List<RigidBodyWorld> _debugDrawData = new List<RigidBodyWorld>();
 
-        public PhysicsSystem(SceneLayerRenderData sceneLayerRenderData)
+        public PhysicsSystem()
         {
-            sceneLayerRenderData.Data.Add((new RigidBodyWorldDebugRenderable(), _debugDrawData));
+            RenderData = (new RigidBodyWorldDebugRenderable(), _debugDrawData);
         }
 
         public void Init()

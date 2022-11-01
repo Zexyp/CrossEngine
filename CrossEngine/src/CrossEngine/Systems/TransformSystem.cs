@@ -9,9 +9,9 @@ using CrossEngine.ECS;
 using CrossEngine.Components;
 using CrossEngine.Profiling;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.Systems
 {
-    class TransformSystem : System<TransformComponent>
+    class TransformSystem : SimpleSystem<TransformComponent>
     {
         private readonly List<TransformComponent> _roots = new List<TransformComponent>();
         private readonly ParallelOptions _parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 20 };

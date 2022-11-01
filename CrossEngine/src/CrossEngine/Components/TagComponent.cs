@@ -1,14 +1,30 @@
-﻿using CrossEngine.ECS;
+﻿using System;
+
+using CrossEngine.ECS;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Serialization;
-using CrossEngine.ComponentSystems;
+using CrossEngine.Systems;
 
 namespace CrossEngine.Components
 {
     public class TagComponent : Component
     {
         [EditorString(256)]
-        public string Tag = "";
+        public string Tag
+        {
+            get => _tag;
+            set
+            {
+                if (value == _tag) return;
+
+                var old = _tag;
+                _tag = value;
+                OnTagChanged?.Invoke(this, old, value);
+            }
+        }
+
+        public event Action<TagComponent, string, string> OnTagChanged;
+        private string _tag = "";
 
         public TagComponent()
         {
@@ -42,7 +58,7 @@ namespace CrossEngine.Components
 
         protected internal override void Deserialize(SerializationInfo info)
         {
-            Tag = info.GetValue<string>(nameof(Tag));
+            Tag = info.GetValue(nameof(Tag), Tag);
         }
     }
 }

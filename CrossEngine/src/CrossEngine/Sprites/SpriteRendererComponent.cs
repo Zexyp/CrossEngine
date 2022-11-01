@@ -8,7 +8,7 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Events;
 using CrossEngine.ECS;
 using CrossEngine.Utils.Editor;
-using CrossEngine.ComponentSystems;
+using CrossEngine.Systems;
 using CrossEngine.Rendering.Renderables;
 using CrossEngine.Serialization;
 using CrossEngine.Rendering.Culling;
@@ -80,7 +80,7 @@ namespace CrossEngine.Components
         // ISpriteRenderData
         Matrix4x4 IObjectRenderData.Transform => this.LocalOffsetMatrix * (this.Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity);
         Vector4 ISpriteRenderData.Color => this.Color;
-        int IObjectRenderData.EntityId => this.Entity.Id;
+        int IObjectRenderData.EntityId => this.Entity.Id.GetHashCode();
         Vector4 ISpriteRenderData.TextureOffsets => this.TextureOffsets;
         Sphere? ISpriteRenderData.Bounds
         {

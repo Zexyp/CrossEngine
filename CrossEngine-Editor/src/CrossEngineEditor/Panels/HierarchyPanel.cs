@@ -56,7 +56,7 @@ namespace CrossEngineEditor.Panels
 
         void DrawEntityNode(Entity node, string id, int i = 0)
         {
-            ImGui.PushID(node.Id);
+            ImGui.PushID(node.Id.GetHashCode());
             // drag drop
             unsafe
             {

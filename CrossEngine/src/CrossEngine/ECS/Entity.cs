@@ -14,9 +14,10 @@ using CrossEngine.Components;
 
 namespace CrossEngine.ECS
 {
+    // TODO: add cloning
     public class Entity
     {
-        public int Id { get; internal set; }
+        public Guid Id { get; internal set; } = Guid.Empty;
 
         private readonly List<Component> _components = new List<Component>();
         private readonly List<Entity> _children = new List<Entity>();

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using CrossEngine.ECS;
-using CrossEngine.ComponentSystems;
+using CrossEngine.Systems;
 using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.Events;
@@ -24,16 +24,14 @@ namespace CrossEngine.Scenes
     {
         public readonly ReadOnlyCollection<Entity> Entities;
         public readonly ReadOnlyCollection<Entity> HierarchyRoot;
-        public ECSWorld ECSWorld { get; private set; } = new ECSWorld();
         public SceneRenderData RenderData { get; private set; }
         public AssetRegistry AssetRegistry;
         
+        private readonly ECSWorld _ecsWorld = new ECSWorld();
         private readonly List<Entity> _roots = new List<Entity>();
-        private readonly Dictionary<int, Entity> _entityIds = new Dictionary<int, Entity>();
+        private readonly Dictionary<Guid, Entity> _entityIds = new Dictionary<Guid, Entity>();
         private readonly List<Entity> _entities = new List<Entity>();
         private SceneLayerRenderData _defaultRenderLayer;
-        // lol i wonder when this will overflow
-        private int _lastId;
 
 
         public Scene()
@@ -43,15 +41,15 @@ namespace CrossEngine.Scenes
 
             _defaultRenderLayer = new SceneLayerRenderData();
 
-            ECSWorld.RegisterSystem(new ScriptableSystem());
+            AddSystem(new ScriptableSystem());
             //_ecsWorld.RegisterSystem(new UISystem(_renderData));
-            ECSWorld.RegisterSystem(new SpriteRendererSystem(_defaultRenderLayer));
-            ECSWorld.RegisterSystem(new TextRendererSystem(_defaultRenderLayer));
-            ECSWorld.RegisterSystem(new ParticleSystemSystem(_defaultRenderLayer));
-            ECSWorld.RegisterSystem(new PhysicsSystem(_defaultRenderLayer));
-            ECSWorld.RegisterSystem(new TransformSystem());
-            ECSWorld.RegisterSystem(new RendererSystem());
-            ECSWorld.RegisterSystem(new TagSystem());
+            AddSystem(new SpriteRendererSystem());
+            AddSystem(new TextRendererSystem());
+            AddSystem(new ParticleSystemSystem());
+            AddSystem(new PhysicsSystem());
+            AddSystem(new TransformSystem());
+            AddSystem(new RendererSystem());
+            AddSystem(new TagSystem());
 
             RenderData = new SceneRenderData();
             RenderData.Layers.Add(_defaultRenderLayer);
@@ -61,7 +59,7 @@ namespace CrossEngine.Scenes
 
         public SceneRenderData UpdateRenderData()
         {
-            var camComp = ECSWorld.GetSystem<RendererSystem>().Primary;
+            var camComp = _ecsWorld.GetSystem<RendererSystem>().PrimaryCamera;
 
             _defaultRenderLayer.Camera = camComp?.Camera;
 
@@ -80,40 +78,35 @@ namespace CrossEngine.Scenes
 
         public void Start()
         {
-            ECSWorld.Init();
+            _ecsWorld.Init();
         }
 
         public void Stop()
         {
-            ECSWorld.Shutdown();
+            _ecsWorld.Shutdown();
         }
 
         public void Update()
         {
-            ECSWorld.Update();
+            _ecsWorld.Update();
         }
 
         public void Render()
         {
-            ECSWorld.Render();
+            _ecsWorld.Render();
         }
 
         public void OnEvent(Event e)
         {
-            ECSWorld.Event(e);
+            _ecsWorld.Event(e);
         }
 
         public Entity CreateEmptyEntity()
         {
-            Entity entity = new Entity(ECSWorld);
+            Entity entity = new Entity(_ecsWorld);
 
-            entity.Id = ++_lastId;
-            _entityIds.Add(entity.Id, entity);
-
-            _entities.Add(entity);
-
-            if (entity.Parent == null) _roots.Add(entity);
-            entity.OnParentChanged += Entity_OnParentChanged;
+            entity.Id = Guid.NewGuid();
+            AddEntity(entity);
             
             return entity;
         }
@@ -127,20 +120,26 @@ namespace CrossEngine.Scenes
 
         public void DestroyEntity(Entity entity)
         {
-            entity.OnParentChanged += Entity_OnParentChanged;
-            _roots.Remove(entity);
-
             while (entity.Components.Count > 0) entity.RemoveComponent(entity.Components[0]);
-            _entityIds.Remove(entity.Id);
-            entity.Id = 0;
-            
-            _entities.Remove(entity);
+            entity.Id = Guid.Empty;
+
+            RemoveEntity(entity);
         }
 
-        public Entity GetEntityById(int id)
+        public Entity? GetEntityById(Guid id)
         {
             if (_entityIds.ContainsKey(id))
                 return _entityIds[id];
+            return null;
+        }
+
+        public Entity? GetEntityById(int idhash)
+        {
+            foreach (var item in _entityIds)
+            {
+                if (item.Key.GetHashCode() == idhash)
+                    return item.Value;
+            }
             return null;
         }
 
@@ -166,10 +165,55 @@ namespace CrossEngine.Scenes
             _roots.Insert(destinationIndex, child);
         }
 
+        public void AddSystem(ISystem system)
+        {
+            if (system is IRenderableSystem)
+                _defaultRenderLayer.Data.Add(((IRenderableSystem)system).RenderData);
+            _ecsWorld.RegisterSystem(system);
+        }
+
+        public void RemoveSystem(ISystem system)
+        {
+            if (system is IRenderableSystem)
+                _defaultRenderLayer.Data.Remove(((IRenderableSystem)system).RenderData);
+            _ecsWorld.UnregisterSystem(system);
+        }
+
+        public T GetSystem<T>() where T : ISystem => _ecsWorld.GetSystem<T>();
+
+        internal void SetEntityId(Entity entity, Guid id)
+        {
+            if (!_entities.Contains(entity))
+                throw new InvalidOperationException();
+
+            RemoveEntity(entity);
+            entity.Id = id;
+            AddEntity(entity);
+        }
+
         private void Entity_OnParentChanged(Entity sender)
         {
             if (sender.Parent == null) _roots.Add(sender);
             else _roots.Remove(sender);
+        }
+
+        private void AddEntity(Entity entity)
+        {
+            _entityIds.Add(entity.Id, entity);
+
+            _entities.Add(entity);
+
+            if (entity.Parent == null)
+                _roots.Add(entity);
+            entity.OnParentChanged += Entity_OnParentChanged;
+        }
+
+        private void RemoveEntity(Entity entity)
+        {
+            entity.OnParentChanged += Entity_OnParentChanged;
+            _roots.Remove(entity);
+            _entityIds.Remove(entity.Id);
+            _entities.Remove(entity);
         }
     }
 }

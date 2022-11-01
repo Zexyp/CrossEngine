@@ -8,9 +8,9 @@ using System.Diagnostics;
 using CrossEngine.ECS;
 using CrossEngine.Components;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.Systems
 {
-    class ScriptableSystem : System<ScriptableComponent>
+    class ScriptableSystem : SimpleSystem<ScriptableComponent>
     {
         public override void Update()
         {

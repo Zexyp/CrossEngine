@@ -31,16 +31,18 @@ namespace CrossEngine.ECS
 
         public void Update()
         {
+            var tasks = _systems
+                .Where(s => s.ThreadMode == SystemThreadMode.Async)
+                .Select(s => Task.Run(s.Update))
+                .ToArray();
+
             for (int i = 0; i < _systems.Count; i++)
             {
                 if (_systems[i].ThreadMode == SystemThreadMode.Sync)
                     _systems[i].Update();
             }
 
-            Task.WaitAll(_systems
-                .Where(s => s.ThreadMode == SystemThreadMode.Async)
-                .Select(s => Task.Run(s.Update))
-                .ToArray());
+            Task.WaitAll(tasks);
         }
 
         public void Render()
