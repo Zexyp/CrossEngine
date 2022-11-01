@@ -24,12 +24,24 @@ namespace CrossEngine
 
         public static void ExecuteOnMianThread(Action action)
         {
+            if (IsMainThread)
+            {
+                action.Invoke();
+                return;
+            }
+
             _mainMutex.WaitOne();
             MainThreadActionQueue.Enqueue(action);
             _mainMutex.ReleaseMutex();
         }
         public static void ExecuteOnRenderThread(Action action)
         {
+            if (IsRenderThread)
+            {
+                action.Invoke();
+                return;
+            }
+
             _renderMutex.WaitOne();
             RenderThreadActionQueue.Enqueue(action);
             _renderMutex.ReleaseMutex();

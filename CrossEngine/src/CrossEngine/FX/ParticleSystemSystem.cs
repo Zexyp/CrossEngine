@@ -72,8 +72,8 @@ namespace CrossEngine.FX.Particles
 
     class ParticleSystemRenderable : Renderable<IParticleSystemRenderData>
     {
-        Camera camera;
-        public override void Begin(Camera camera)
+        ICamera camera;
+        public override void Begin(ICamera camera)
         {
             this.camera = camera;
         }

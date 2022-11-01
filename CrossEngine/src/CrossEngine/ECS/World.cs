@@ -45,14 +45,6 @@ namespace CrossEngine.ECS
             Task.WaitAll(tasks);
         }
 
-        public void Render()
-        {
-            for (int i = 0; i < _systems.Count; i++)
-            {
-                _systems[i].Render();
-            }
-        }
-
         public void Event(object e)
         {
             for (int i = 0; i < _systems.Count; i++)

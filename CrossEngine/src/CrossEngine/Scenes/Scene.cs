@@ -91,11 +91,6 @@ namespace CrossEngine.Scenes
             _ecsWorld.Update();
         }
 
-        public void Render()
-        {
-            _ecsWorld.Render();
-        }
-
         public void OnEvent(Event e)
         {
             _ecsWorld.Event(e);

@@ -23,7 +23,7 @@ namespace CrossEngine.Rendering
     public class SceneLayerRenderData
     {
         //public Matrix4x4 ProjectionViewMatrix = Matrix4x4.Identity;
-        public Camera Camera;
+        public ICamera Camera;
 
         public List<(IRenderable Renderable, IList Objects)> Data = new List<(IRenderable, IList)>();
     }

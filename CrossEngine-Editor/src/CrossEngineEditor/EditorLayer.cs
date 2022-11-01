@@ -148,15 +148,15 @@ namespace CrossEngineEditor
             //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());
             //dockspaceIconTexture.SetFilterParameter(Rendering.Textures.FilterParameter.Nearest);
 
-            ThreadManager.ExecuteOnRenderThread(() =>
-            {
-                if (!LoadConfig(EditorConfig)) corruptedConfig = true;
-                if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfig = true;
-            });
-
             var n = 7;
             Vector4[] vals = Enumerable.Range(0, n).Select(e => new Vector4(Color.HSVToRGB(new(e * (1f / n), 1, 1)), 1)).ToArray();
             gre = new Gradient<Vector4>(vals);
+        }
+
+        protected override void RenderAttach()
+        {
+            if (!LoadConfig(EditorConfig)) corruptedConfig = true;
+            if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfig = true;
         }
 
         protected override void Detach()
@@ -242,7 +242,9 @@ namespace CrossEngineEditor
                 Application.Instance.Window.VSync = cvsync;
             var cfullscreen = Application.Instance.Window.Fullscreen;
             if (ImGui.Checkbox("Fullscreen", ref cfullscreen))
-                Application.Instance.Window.Fullscreen = cfullscreen;
+            {
+                Application.Instance.Window.SetFullscreen(cfullscreen);
+            }
             (int, int) res = ((int)Application.Instance.Window.Width, (int)Application.Instance.Window.Height);
             if (ImGui.SliderInt2("resoulution", ref res.Item1, 0, 2000))
                 Application.Instance.Window.Resize((uint)res.Item1, (uint)res.Item2);

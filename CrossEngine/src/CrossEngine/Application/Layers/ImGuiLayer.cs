@@ -28,39 +28,36 @@ namespace CrossEngine.Layers
 
         IntPtr ImGuiContext = IntPtr.Zero;
 
-        protected internal override unsafe void Attach()
+        protected internal override unsafe void RenderAttach()
         {
-            ThreadManager.ExecuteOnRenderThread(() =>
-            {
-                ImGuiContext = ImGui.CreateContext();
-                //ImGui.SetCurrentContext(context);
-                ImGuizmo.SetImGuiContext(ImGuiContext);
+            ImGuiContext = ImGui.CreateContext();
+            //ImGui.SetCurrentContext(context);
+            ImGuizmo.SetImGuiContext(ImGuiContext);
 
-                Application app = Application.Instance;
+            Application app = Application.Instance;
 
-                var window = app.Window;
-                if (!(window is CrossEngine.Platform.Windows.GLFWWindow)) throw new NotImplementedException();
+            var window = app.Window;
+            if (!(window is CrossEngine.Platform.Windows.GlfwWindow)) throw new NotImplementedException();
 
-                GLFW.Window windowHandle = (GLFW.Window)((CrossEngine.Platform.Windows.GLFWWindow)window).Handle;
+            GLFW.Window windowHandle = (GLFW.Window)((CrossEngine.Platform.Windows.GlfwWindow)window).Handle;
 
-                if (ImGuiController.ImGui_ImplGlfw_InitForOpenGL(windowHandle, true)) Application.CoreLog.Info("ImGui GLFW part initialized");
-                if (ImGuiController.ImGui_ImplOpenGL3_Init("#version 330 core")) Application.CoreLog.Info("ImGui OpenGL part initialized");
+            if (ImGuiController.ImGui_ImplGlfw_InitForOpenGL(windowHandle, true)) Application.CoreLog.Info("ImGui GLFW part initialized");
+            if (ImGuiController.ImGui_ImplOpenGL3_Init("#version 330 core")) Application.CoreLog.Info("ImGui OpenGL part initialized");
 
-                ImGuiIOPtr io = ImGui.GetIO();
-                io.DisplaySize = new Vector2(
-                    window.Width / Vector2.One.X,
-                    window.Height / Vector2.One.Y);
-                io.DisplayFramebufferScale = Vector2.One;
-                io.DeltaTime = 1.0f / 60.0f;
+            ImGuiIOPtr io = ImGui.GetIO();
+            io.DisplaySize = new Vector2(
+                window.Width / Vector2.One.X,
+                window.Height / Vector2.One.Y);
+            io.DisplayFramebufferScale = Vector2.One;
+            io.DeltaTime = 1.0f / 60.0f;
 
-                // base theme
-                //ImGui.StyleColorsClassic();
-                //ImGui.StyleColorsLight();
-                ImGui.StyleColorsDark();
-                SetDarkThemeColors();
+            // base theme
+            //ImGui.StyleColorsClassic();
+            //ImGui.StyleColorsLight();
+            ImGui.StyleColorsDark();
+            SetDarkThemeColors();
 
-                io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
-            });
+            io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
 
             //io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;       // Enable Keyboard Controls
             ////io.ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;      // Enable Gamepad Controls
@@ -99,17 +96,14 @@ namespace CrossEngine.Layers
             End();
         }
 
-        protected internal override void Detach()
+        protected internal override void RenderDetach()
         {
-            ThreadManager.ExecuteOnRenderThread(() =>
-            {
-                ImGui.DestroyPlatformWindows();
-                //ImGui.*DestroyContext*(ImGuiContext); // this somehow destroys to much
-                ImGuiContext = IntPtr.Zero;
-                Application.CoreLog.Info("ImGui context destroyed");
-                ImGuiController.ImGui_ImplOpenGL3_Shutdown();
-                ImGuiController.ImGui_ImplGlfw_Shutdown();
-            });
+            ImGui.DestroyPlatformWindows();
+            //ImGui.*DestroyContext*(ImGuiContext); // this somehow destroys to much
+            ImGuiContext = IntPtr.Zero;
+            Application.CoreLog.Info("ImGui context destroyed");
+            ImGuiController.ImGui_ImplOpenGL3_Shutdown();
+            ImGuiController.ImGui_ImplGlfw_Shutdown();
         }
 
         protected internal override void Event(Event e)

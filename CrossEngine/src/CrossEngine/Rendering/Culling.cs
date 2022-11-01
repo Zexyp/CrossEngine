@@ -69,26 +69,27 @@ namespace CrossEngine.Rendering.Culling
     public struct Frustum
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
-        public readonly Plane[] Planes;
-        public Plane Left => Planes[0];
-        public Plane Right => Planes[1];
-        public Plane Bottom => Planes[2];
-        public Plane Top => Planes[3];
-        public Plane Near => Planes[4];
-        public Plane Far => Planes[5];
+        public Plane Left;
+        public Plane Right;
+        public Plane Bottom;
+        public Plane Top;
+        public Plane Near;
+        public Plane Far;
+
+        private unsafe Plane* Planes;
 
         // for debug perpouses
         Vector3 centrus;
 
-        public Frustum(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
+        public unsafe void Prepare(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
         {
-            Planes = new Plane[6];
             var inv = Matrix4x4Extension.Invert(viewMatrix);
-            ExtractPlanes(Planes, projectionMatrix, inv, true);
+            fixed (Plane* p = &Left)
+                ExtractPlanes(Planes = p, projectionMatrix, inv, true);
             centrus = Vector3.Transform(Vector3.One, inv);
         }
 
-        public Halfspace IsPointIn(Vector3 p)
+        public unsafe Halfspace IsPointIn(Vector3 p)
         {
             var result = Halfspace.Inside;
             for (int i = 0; i < 6; i++)
@@ -99,7 +100,7 @@ namespace CrossEngine.Rendering.Culling
             return result;
         }
 
-        public Halfspace IsSphereIn(Vector3 p, float radius)
+        public unsafe Halfspace IsSphereIn(Vector3 p, float radius)
         {
             var result = Halfspace.Inside;
             float distance;
@@ -114,7 +115,7 @@ namespace CrossEngine.Rendering.Culling
             return result;
         }
 
-        public Halfspace IsAABoxIn(AABox b)
+        public unsafe Halfspace IsAABoxIn(AABox b)
         {
             var result = Halfspace.Inside;
             for (int i = 0; i < 6; i++)
@@ -127,7 +128,7 @@ namespace CrossEngine.Rendering.Culling
             return result;
         }
 
-        public void Draw()
+        public unsafe void Draw()
         {
             LineRenderer.DrawLine(centrus, centrus + Planes[0].Normal * -Planes[0].D, new Vector4(0, 1, 1, 1));
             LineRenderer.DrawLine(centrus, centrus + Planes[1].Normal * -Planes[1].D, new Vector4(1, 0, 0, 1));
@@ -146,7 +147,7 @@ namespace CrossEngine.Rendering.Culling
 
         // idk the *exact* source but...
         // please god make this work cuz somehow the D3D version of this works on OGL
-        private static void ExtractPlanes(Plane[] planes, Matrix4x4 matrix, Matrix4x4 transform, bool normalize)
+        private static unsafe void ExtractPlanes(Plane* planes, Matrix4x4 matrix, Matrix4x4 transform, bool normalize)
         {
             // Left clipping plane
             planes[0].Normal.X = matrix.M14 + matrix.M11;

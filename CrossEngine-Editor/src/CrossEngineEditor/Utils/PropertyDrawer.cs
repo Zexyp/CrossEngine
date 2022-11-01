@@ -231,10 +231,19 @@ namespace CrossEngineEditor.Utils
             } },
         };
 
-
+        // ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
         static readonly Dictionary<Type, EditorValueRepresentationFunction> AttributeHandlers = new Dictionary<Type, EditorValueRepresentationFunction>()
         {
+            { typeof(EditorHintAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                throw new NotImplementedException();
+            } },
+
+            { typeof(EditorDisplayAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
+                ImGui.Text($"{name}: {value.ToString()}");
+                return false;
+            } },
+
             { typeof(EditorValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 if (ValueHandlers.ContainsKey(value.GetType()))
                     return ValueHandlers[value.GetType()](name, ref value);

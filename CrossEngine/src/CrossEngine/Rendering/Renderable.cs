@@ -9,22 +9,25 @@ using CrossEngine.Rendering.Cameras;
 
 namespace CrossEngine.Rendering
 {
+    // bare bones 💀
     public interface IRenderable
     {
-        virtual void Begin(Camera camera) { }
+        virtual void Begin(ICamera camera) { }
         virtual void End() { }
 
-        void Submit(IObjectRenderData data);
+        void Submit(object data);
     }
 
     public abstract class Renderable<T> : IRenderable where T : IObjectRenderData
     {
-        public virtual void Begin(Camera camera) { }
+        public virtual void Begin(ICamera camera) { }
         public virtual void End() { }
 
         public abstract void Submit(T data);
 
         public void Submit(IObjectRenderData data) => Submit((T)data);
+
+        void IRenderable.Submit(object data) => Submit((IObjectRenderData)data);
     }
 
     //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]

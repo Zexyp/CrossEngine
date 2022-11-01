@@ -15,9 +15,6 @@ namespace CrossEngine.Components
 {
     public class CameraComponent : Component
     {
-        public Camera Camera;
-
-        private bool _primary;
         [EditorValue]
         public bool Primary
         {
@@ -34,7 +31,10 @@ namespace CrossEngine.Components
                 _primary = value;
             }
         }
+        [EditorInnerDraw]
+        public Camera Camera = new Camera();
 
+        private bool _primary;
         private RendererSystem _boundTo;
         private TransformComponent _transformBinding;
         private TransformComponent TransformBinding
@@ -63,7 +63,7 @@ namespace CrossEngine.Components
         
         public CameraComponent()
         {
-            Camera = new Camera();
+            
         }
 
         protected internal override void Attach(World world)

@@ -41,11 +41,13 @@ namespace CrossEngineEditor.Panels
                 ImGui.PopStyleColor();
             }
 
-            if (!Context.Playmode)
-                return;
-
             if (ViewportResized)
-                Context.Scene.OnEvent(new WindowResizeEvent((uint)ViewportSize.X, (uint)ViewportSize.Y));
+            {
+                if (!Context.Playmode)
+                    Context.Scene.GetSystem<RendererSystem>().PrimaryCamera?.Camera.Resize(ViewportSize.X, ViewportSize.Y);
+                else
+                    OnEvent(new WindowResizeEvent((uint)ViewportSize.X, (uint)ViewportSize.Y));
+            }
         }
 
         public override void OnEvent(Event e)

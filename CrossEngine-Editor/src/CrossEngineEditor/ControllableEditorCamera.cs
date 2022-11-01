@@ -31,7 +31,7 @@ namespace CrossEngineEditor
         public abstract void Fly(Vector3 delta, Vector2 mouse);
         protected abstract Matrix4x4 CreateProjectionMatrix();
 
-        public override void Resize(float width, float height)
+        public void Resize(float width, float height)
         {
             ViewportSize = new Vector2(width, height);
             AspectRatio = ViewportSize.X / ViewportSize.Y;

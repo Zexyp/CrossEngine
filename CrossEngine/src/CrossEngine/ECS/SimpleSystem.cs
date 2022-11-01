@@ -22,7 +22,6 @@ namespace CrossEngine.ECS
         void Init();
         void Shutdown();
         void Update();
-        virtual void Render() { }
         virtual void Event(object e) { }
     }
 
@@ -54,7 +53,6 @@ namespace CrossEngine.ECS
 
         public virtual void Init() { }
         public virtual void Shutdown() { }
-        public virtual void Render() { }
         public virtual void Update() { }
     }
 

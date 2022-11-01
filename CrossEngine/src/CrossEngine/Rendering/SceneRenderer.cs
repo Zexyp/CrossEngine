@@ -14,7 +14,7 @@ namespace CrossEngine.Rendering
 {
     public static class SceneRenderer
     {
-        public static void DrawScene(Scene scene, Camera overrideEditorCamera = null)
+        public static void DrawScene(Scene scene, ICamera overrideEditorCamera = null)
         {
             Profiler.BeginScope();
 
@@ -31,14 +31,14 @@ namespace CrossEngine.Rendering
             for (int layerIndex = 0; layerIndex < scenRendereData.Layers.Count; layerIndex++)
             {
                 SceneLayerRenderData layerData = scenRendereData.Layers[layerIndex];
-                Camera activeCamera = overrideEditorCamera ?? layerData.Camera;
+                ICamera activeCamera = overrideEditorCamera ?? layerData.Camera;
 
                 if (activeCamera == null)
                 {
                     Application.Log.Warn("skipping render layer: no camere to render with");
                     continue;
                 }
-                activeCamera.PrepareFrustum();
+                activeCamera.Frustum.Prepare(activeCamera.ProjectionMatrix, activeCamera.ProjectionMatrix);
 
                 Renderer2D.BeginScene(activeCamera.ViewProjectionMatrix);
                 LineRenderer.BeginScene(activeCamera.ViewProjectionMatrix);
@@ -54,7 +54,7 @@ namespace CrossEngine.Rendering
                     for (int objectIndex = 0; objectIndex < objs.Count; objectIndex++)
                     {
                         Debug.Assert(objs[objectIndex] != null);
-                        rndbl.Submit((IObjectRenderData)objs[objectIndex]);
+                        rndbl.Submit(objs[objectIndex]);
                     }
                     rndbl.End();
 
@@ -67,8 +67,6 @@ namespace CrossEngine.Rendering
                 Renderer2D.EndScene();
                 LineRenderer.EndScene();
             }
-
-            scene.Render();
 
             scenRendereData.Output?.Value.Unbind();
 

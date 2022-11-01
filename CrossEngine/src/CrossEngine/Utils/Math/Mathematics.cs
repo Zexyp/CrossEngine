@@ -185,15 +185,16 @@ namespace CrossEngine.Utils
             matrix.M42 = -(top + bottom) / (top - bottom);
             return matrix;
         }
+                                                                                        // i swapped this (mby fixed)
         public static Matrix4x4 Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
         {
             Matrix4x4 matrix = Matrix4x4.Identity;
             matrix.M11 = 2 / (right - left);
             matrix.M22 = 2 / (top - bottom);
-            matrix.M33 = 2 / (zFar - zNear);
+            matrix.M33 = 2 / (zNear - zFar);
             matrix.M41 = -(right + left) / (right - left);
             matrix.M42 = -(top + bottom) / (top - bottom);
-            matrix.M43 = -(zFar + zNear) / (zFar - zNear);
+            matrix.M43 = -(zNear + zFar) / (zNear - zFar);
             //matrix.M44 = 1;
             return matrix;
         }
