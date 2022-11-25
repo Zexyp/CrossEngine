@@ -50,11 +50,13 @@ namespace CrossEngine.Systems
                 PrimaryCamera = null;
         }
 
-        void ISystem.Event(object e)
+        public void Resize(float width, float height)
         {
-            if (e is WindowResizeEvent)
+            for (int i = 0; i < _cameras.Count; i++)
             {
-                Application.CoreLog.Debug("TODO: camera window resize event");
+                var cam = _cameras[i];
+                if (cam.Resizeable)
+                    cam.Camera.Resize(width, height);
             }
         }
     }

@@ -6,6 +6,7 @@ using System.Diagnostics;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Rendering;
+using CrossEngine.Debugging;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -26,6 +27,9 @@ namespace CrossEngine.Platform.OpenGL
 
             fixed (uint* p = &_rendererId)
                 glGenTextures(1, p);
+
+            GC.KeepAlive(this);
+            GPUGC.Register(this);
 
             RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
@@ -50,6 +54,9 @@ namespace CrossEngine.Platform.OpenGL
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 glDeleteTextures(1, p);
+
+            GC.ReRegisterForFinalize(this);
+            GPUGC.Unregister(this);
 
             RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 

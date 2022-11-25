@@ -28,6 +28,8 @@ namespace CrossEngine.Layers
 
         IntPtr ImGuiContext = IntPtr.Zero;
 
+        bool ra = false;
+
         protected internal override unsafe void RenderAttach()
         {
             ImGuiContext = ImGui.CreateContext();
@@ -87,10 +89,14 @@ namespace CrossEngine.Layers
             //    style.Colors[(int)ImGuiCol.WindowBg].W = 1.0f;
             //}
             //
+
+            ra = true;
         }
 
         protected internal override void Render()
         {
+            if (!ra) return;
+
             Begin();
             Application.Instance.Event(new ImGuiRenderEvent());
             End();
@@ -98,6 +104,8 @@ namespace CrossEngine.Layers
 
         protected internal override void RenderDetach()
         {
+            ra = false;
+
             ImGui.DestroyPlatformWindows();
             //ImGui.*DestroyContext*(ImGuiContext); // this somehow destroys to much
             ImGuiContext = IntPtr.Zero;
@@ -108,6 +116,8 @@ namespace CrossEngine.Layers
 
         protected internal override void Event(Event e)
         {
+            if (!ra) return;
+
             if (BlockEvents)
             {
                 ImGuiIOPtr io = ImGui.GetIO();

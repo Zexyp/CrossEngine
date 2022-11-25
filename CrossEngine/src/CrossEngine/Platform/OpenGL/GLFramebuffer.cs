@@ -7,8 +7,10 @@ using System.Diagnostics;
 
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Logging;
+using CrossEngine.Rendering;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering.Buffers;
+using CrossEngine.Debugging;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -90,6 +92,11 @@ namespace CrossEngine.Platform.OpenGL
             }
 
             Invalidate();
+
+            GC.KeepAlive(this);
+            GPUGC.Register(this);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         protected override unsafe void Dispose(bool disposing)
@@ -111,6 +118,11 @@ namespace CrossEngine.Platform.OpenGL
                 glDeleteTextures(_colorAttachments.Count, p);
             fixed (uint* p = &_depthAttachment)
                 glDeleteTextures(1, p);
+
+            GC.ReRegisterForFinalize(this);
+            GPUGC.Unregister(this);
+
+            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }

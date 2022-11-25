@@ -40,14 +40,16 @@ namespace CrossEngineEditor.Panels
                 ImGui.Text("No primary camera");
                 ImGui.PopStyleColor();
             }
+        }
 
-            if (ViewportResized)
-            {
-                if (!Context.Playmode)
-                    Context.Scene.GetSystem<RendererSystem>().PrimaryCamera?.Camera.Resize(ViewportSize.X, ViewportSize.Y);
-                else
-                    OnEvent(new WindowResizeEvent((uint)ViewportSize.X, (uint)ViewportSize.Y));
-            }
+        protected override void Resized()
+        {
+            if (Context.Scene == null) return;
+
+            if (!Context.Playmode)
+                Context.Scene.GetSystem<RendererSystem>().Resize(ViewportSize.X, ViewportSize.Y);
+            else
+                OnEvent(new WindowResizeEvent((uint)ViewportSize.X, (uint)ViewportSize.Y));
         }
 
         public override void OnEvent(Event e)

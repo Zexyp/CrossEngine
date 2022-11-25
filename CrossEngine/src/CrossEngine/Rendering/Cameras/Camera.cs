@@ -33,8 +33,6 @@ namespace CrossEngine.Rendering.Cameras
         
         [EditorEnum]
         public ProjectionType Projection { get => _projection; set { _projection = value; RecreateProjection(); } }
-        [EditorValue]
-        public bool Resizeable { get => _resize; set { _resize = value; RecreateProjection(); } }
         [EditorDrag(Min = float.Epsilon)]
         public float Width { get => _width; set { _width = value; RecreateProjection(); } }
         [EditorDrag(Min = float.Epsilon)]
@@ -78,8 +76,6 @@ namespace CrossEngine.Rendering.Cameras
 
         public virtual void Resize(float width, float height)
         {
-            if (!Resizeable) return;
-
             _width = width;
             _height = height;
             RecreateProjection();
@@ -96,7 +92,6 @@ namespace CrossEngine.Rendering.Cameras
         public void GetObjectData(SerializationInfo info)
         {
             info.AddValue(nameof(Projection), Projection);
-            info.AddValue(nameof(Resizeable), Resizeable);
             info.AddValue(nameof(Width), Width);
             info.AddValue(nameof(Height), Height);
             info.AddValue(nameof(Near), Near);
@@ -108,7 +103,6 @@ namespace CrossEngine.Rendering.Cameras
         public void SetObjectData(SerializationInfo info)
         {
             Projection = info.GetValue(nameof(Projection), Projection);
-            Resizeable = info.GetValue(nameof(Resizeable), Resizeable);
             Width = info.GetValue(nameof(Width), Width);
             Height = info.GetValue(nameof(Height), Height);
             Near = info.GetValue(nameof(Near), Near);

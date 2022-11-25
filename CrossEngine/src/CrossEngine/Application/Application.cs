@@ -11,6 +11,7 @@ using CrossEngine.Logging;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using System.Collections.Concurrent;
+using CrossEngine.Debugging;
 
 namespace CrossEngine
 {
@@ -135,37 +136,31 @@ namespace CrossEngine
             _renderThread.Start();
 
             _renderThread.Wait();
+
+            Event(new ApplicationInitEvent());
         }
 
         protected virtual void RenderInit()
         {
             Event(new ApplicationRenderInitEvent());
-
-            var layers = _layerStack.Layers;
-            for (int i = 0; i < layers.Count; i++)
-            {
-                layers[i].RenderAttach();
-            }
         }
 
         protected virtual void Destroy()
         {
+            _layerStack.PopAll();
+
             _renderThread.Stop();
             _renderThread.Wait();
 
-            _layerStack.PopAll();
+            GPUGC.PrintCollected();
+
             //GC.Collect();
-            //Assets.GC.GPUGarbageCollector.Collect();
+
+            Event(new ApplicationDestroyEvent());
         }
 
         protected virtual void RenderDestroy()
         {
-            var layers = _layerStack.Layers;
-            for (int i = 0; i < layers.Count; i++)
-            {
-                layers[i].RenderDetach();
-            }
-
             Event(new ApplicationRenderDestroyEvent());
         }
 
@@ -186,6 +181,8 @@ namespace CrossEngine
             {
                 layers[i].Update();
             }
+
+            Event(new ApplicationUpdateEvent(Time.DeltaTimeF));
         }
 
         public virtual void Render()
@@ -195,6 +192,8 @@ namespace CrossEngine
             {
                 layers[i].Render();
             }
+
+            Event(new ApplicationRenderEvent());
         }
 
         public virtual void Event(Event e)

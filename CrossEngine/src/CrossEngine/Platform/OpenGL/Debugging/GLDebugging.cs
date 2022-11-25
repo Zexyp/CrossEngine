@@ -1,6 +1,7 @@
 ﻿using System;
 using static OpenGL.GL;
 using OpenGL;
+using OpenGL.Extensions;
 using static OpenGL.Extensions.Debug;
 
 using System.Runtime.InteropServices;
@@ -47,7 +48,7 @@ namespace OpenGL.Extensions
     }
 }
 
-namespace CrossEngine.Debugging
+namespace CrossEngine.Platform.OpenGL.Debugging
 {
     public static class GLDebugging
     {
@@ -102,7 +103,7 @@ namespace CrossEngine.Debugging
 
         public static unsafe void EnableGLDebugging(LogLevel level = LogLevel.Trace)
         {
-            OpenGL.Extensions.Debug.Import(GLFW.Glfw.GetProcAddress);
+            Debug.Import(GLFW.Glfw.GetProcAddress);
 
             GLLog.LogLevel = level;
             glDebugMessageCallback(GLMessage, null);

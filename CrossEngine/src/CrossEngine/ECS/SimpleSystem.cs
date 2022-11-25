@@ -22,7 +22,6 @@ namespace CrossEngine.ECS
         void Init();
         void Shutdown();
         void Update();
-        virtual void Event(object e) { }
     }
 
     public interface ISystem<T> : ISystem where T : Component
