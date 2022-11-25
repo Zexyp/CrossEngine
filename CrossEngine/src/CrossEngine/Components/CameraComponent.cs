@@ -31,6 +31,8 @@ namespace CrossEngine.Components
                 _primary = value;
             }
         }
+        [EditorValue]
+        public bool Resizeable { get; set; } = true;
         [EditorInnerDraw]
         public Camera Camera = new Camera();
 
@@ -103,14 +105,16 @@ namespace CrossEngine.Components
 
         protected internal override void Serialize(SerializationInfo info)
         {
-            info.AddValue("Primary", Primary);
-            info.AddValue("Camera", Camera);
+            info.AddValue(nameof(Primary), Primary);
+            info.AddValue(nameof(Resizeable), Resizeable);
+            info.AddValue(nameof(Camera), Camera);
         }
 
         protected internal override void Deserialize(SerializationInfo info)
         {
-            Primary = info.GetValue("Primary", Primary);
-            Camera = info.GetValue("Camera", Camera);
+            Primary = info.GetValue(nameof(Primary), Primary);
+            Resizeable = info.GetValue(nameof(Resizeable), Resizeable);
+            Camera = info.GetValue(nameof(Camera), Camera);
         }
     }
 }

@@ -6,6 +6,7 @@ using CrossEngine;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Events;
 
 namespace CrossEngineEditor.Panels
 {
@@ -15,7 +16,6 @@ namespace CrossEngineEditor.Panels
 
         protected Vector2 ViewportSize { get; private set; }
         protected Ref<Framebuffer> Framebuffer { get; private set; }
-        protected bool ViewportResized;
         protected bool Drawing = true;
 
         public SceneViewPanel()
@@ -37,7 +37,6 @@ namespace CrossEngineEditor.Panels
         {
             // resize check
             {
-                ViewportResized = false;
                 Vector2 viewportPanelSize = ImGui.GetContentRegionAvail();
                 if (viewportPanelSize != ViewportSize && viewportPanelSize.X > 0 && viewportPanelSize.Y > 0)
                 {
@@ -48,7 +47,7 @@ namespace CrossEngineEditor.Panels
                     else
                         ((Framebuffer)Framebuffer).Resize((uint)ViewportSize.X, (uint)ViewportSize.Y);
 
-                    ViewportResized = true;
+                    Resized();
                 }
             }
 
@@ -94,6 +93,11 @@ namespace CrossEngineEditor.Panels
                 Framebuffer.Value.Dispose();
                 Framebuffer = null;
             });
+        }
+
+        protected virtual void Resized()
+        {
+
         }
     }
 }

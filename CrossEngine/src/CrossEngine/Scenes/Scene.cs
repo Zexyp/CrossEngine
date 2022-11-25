@@ -93,7 +93,7 @@ namespace CrossEngine.Scenes
 
         public void OnEvent(Event e)
         {
-            _ecsWorld.Event(e);
+            //_ecsWorld.Event(e);
         }
 
         public Entity CreateEmptyEntity()

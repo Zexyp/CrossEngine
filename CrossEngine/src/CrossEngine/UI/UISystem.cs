@@ -54,7 +54,7 @@ namespace CrossEngine.Systems
             _layers.Remove(canvas);
         }
 
-        void ISystem.Event(object e)
+        public void Event(Event e)
         {
             Event cee = e as Event;
             foreach (var item in _layers.Keys)

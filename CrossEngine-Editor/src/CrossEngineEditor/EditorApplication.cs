@@ -11,6 +11,7 @@ using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Profiling;
 using CrossEngine.Debugging;
+using CrossEngine.Platform.OpenGL.Debugging;
 
 using CrossEngineEditor.Utils;
 
@@ -20,6 +21,11 @@ namespace CrossEngineEditor
     {
         public EditorApplication() : base("CrossEngine Editor")
         {
+        }
+
+        protected override void Init()
+        {
+            base.Init();
             PushOverlay(new ImGuiLayer());
             PushLayer(new EditorLayer());
         }
@@ -37,10 +43,10 @@ namespace CrossEngineEditor
 
         protected override void RenderDestroy()
         {
-            base.RenderDestroy();
-
             Renderer2D.Shutdown();
             LineRenderer.Shutdown();
+
+            base.RenderDestroy();
         }
     }
 }

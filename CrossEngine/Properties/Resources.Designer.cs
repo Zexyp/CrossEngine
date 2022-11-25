@@ -22,7 +22,7 @@ namespace CrossEngine.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -73,7 +73,7 @@ namespace CrossEngine.Properties {
         /// <summary>
         ///   Vyhledává lokalizovaný prostředek typu System.Drawing.Icon podobný (Ikona).
         /// </summary>
-        internal static System.Drawing.Icon DefaultWindowIcon {
+        public static System.Drawing.Icon DefaultWindowIcon {
             get {
                 object obj = ResourceManager.GetObject("DefaultWindowIcon", resourceCulture);
                 return ((System.Drawing.Icon)(obj));

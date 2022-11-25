@@ -14,7 +14,7 @@ namespace CrossEngine.Assets
 {
     public static class TextureLoader
     {
-        // wtf, how is this not crashing the whole thing?
+        // wtf, how is this not crashing the whole thing? (needs to be invoked on a specific thread)
         public static readonly Ref<Texture> DefaultTexture;
 
         static unsafe TextureLoader()

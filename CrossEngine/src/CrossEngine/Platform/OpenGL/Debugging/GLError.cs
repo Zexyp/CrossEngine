@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 using CrossEngine.Logging;
 
-namespace CrossEngine.Debugging
+namespace CrossEngine.Platform.OpenGL.Debugging
 {
     public static class GLError
     {

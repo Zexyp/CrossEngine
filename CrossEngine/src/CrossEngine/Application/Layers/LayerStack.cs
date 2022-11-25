@@ -11,7 +11,7 @@ namespace CrossEngine.Layers
     public class LayerStack
     {
         private readonly List<Layer> _layers = new List<Layer>();
-        public ReadOnlyCollection<Layer> Layers;
+        public readonly ReadOnlyCollection<Layer> Layers;
 
         int _lastLayerIndex = 0;
 

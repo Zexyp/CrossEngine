@@ -168,9 +168,6 @@ namespace CrossEngineEditor.Panels
 
             base.DrawWindowContent();
 
-            if (ViewportResized)
-                ((ControllableEditorCamera)DrawCamera)?.Resize(ViewportSize.X, ViewportSize.Y);
-
             bool disableSelect = false;
             if (Context.ActiveEntity?.Transform != null)
             {
@@ -314,6 +311,11 @@ namespace CrossEngineEditor.Panels
             TransformComponent transform = null;
             if (Context.ActiveEntity?.TryGetComponent(out transform) == true)
                 CurrentCamera.Position = transform.Position;
+        }
+
+        protected override void Resized()
+        {
+            ((ControllableEditorCamera)DrawCamera)?.Resize(ViewportSize.X, ViewportSize.Y);
         }
     }
 }

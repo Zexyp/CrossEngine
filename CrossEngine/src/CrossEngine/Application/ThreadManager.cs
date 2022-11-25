@@ -19,9 +19,6 @@ namespace CrossEngine
         private static Thread _renderThread;
         private static Thread _mainThread;
 
-        private static readonly Mutex _mainMutex = new Mutex();
-        private static readonly Mutex _renderMutex = new Mutex();
-
         public static void ExecuteOnMianThread(Action action)
         {
             if (IsMainThread)
@@ -30,9 +27,8 @@ namespace CrossEngine
                 return;
             }
 
-            _mainMutex.WaitOne();
-            MainThreadActionQueue.Enqueue(action);
-            _mainMutex.ReleaseMutex();
+            lock (MainThreadActionQueue)
+                MainThreadActionQueue.Enqueue(action);
         }
         public static void ExecuteOnRenderThread(Action action)
         {
@@ -42,9 +38,8 @@ namespace CrossEngine
                 return;
             }
 
-            _renderMutex.WaitOne();
-            RenderThreadActionQueue.Enqueue(action);
-            _renderMutex.ReleaseMutex();
+            lock (RenderThreadActionQueue)
+                RenderThreadActionQueue.Enqueue(action);
         }
 
         internal static void SetMainThread(Thread main)
@@ -58,22 +53,16 @@ namespace CrossEngine
 
         internal static void ProcessMainThread()
         {
-            _mainMutex.WaitOne();
-            while (MainThreadActionQueue.Count > 0)
-            {
-                MainThreadActionQueue.Dequeue().Invoke();
-            }
-            _mainMutex.ReleaseMutex();
+            lock (MainThreadActionQueue)
+                while (MainThreadActionQueue.Count > 0)
+                    MainThreadActionQueue.Dequeue().Invoke();
         }
 
         internal static void ProcessRenderThread()
         {
-            _renderMutex.WaitOne();
-            while (RenderThreadActionQueue.Count > 0)
-            {
-                RenderThreadActionQueue.Dequeue().Invoke();
-            }
-            _renderMutex.ReleaseMutex();
+            lock (RenderThreadActionQueue)
+                while (RenderThreadActionQueue.Count > 0)
+                    RenderThreadActionQueue.Dequeue().Invoke();
         }
 
         // it's not possible to clone a culture info of a given thread

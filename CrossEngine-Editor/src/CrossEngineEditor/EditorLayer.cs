@@ -32,16 +32,18 @@ using CrossEngineEditor.Utils.Gui;
 using CrossEngineEditor.Panels;
 using CrossEngineEditor.Modals;
 using CrossEngine.Utils.Editor;
+using CrossEngine.Rendering.Textures;
+using CrossEngine.Assets;
 
 namespace CrossEngineEditor
 {
-    static class EditorConfigSections
-    {
-        public static readonly string PanelsOpen = "panels.open";
-    }
-
     public class EditorLayer : Layer
     {
+        static class EditorConfigSections
+        {
+            public static readonly string PanelsOpen = "panels.open";
+        }
+
         // instatnce
         static public EditorLayer Instance;
 
@@ -53,7 +55,7 @@ namespace CrossEngineEditor
         // ui things
         private List<EditorPanel> _panels = new List<EditorPanel>();
         private List<EditorModal> _modals = new List<EditorModal>();
-        //Texture dockspaceIconTexture;
+        Ref<Texture> dockspaceIconTexture;
 
         // files
         readonly internal IniFile EditorConfig = new IniFile("editor");
@@ -81,14 +83,6 @@ namespace CrossEngineEditor
                 EditorApplication.Log.Warn("there should be only one editor layer");
 
             Instance = this;
-
-            AddPanel(new InspectorPanel());
-            AddPanel(new HierarchyPanel());
-            AddPanel(new GamePanel());
-            AddPanel(new ViewportPanel());
-            AddPanel(new LagometerPanel());
-            AddPanel(new ConfigPanel());
-            //AddPanel(new ImageViewerPanel());
         }
 
         private bool LoadConfig(IniFile config)
@@ -141,12 +135,24 @@ namespace CrossEngineEditor
             }
         }
 
-        bool corruptedConfig = false;
+        bool corruptedConfigFlag = false;
 
         protected override void Attach()
         {
-            //dockspaceIconTexture = new Rendering.Textures.Texture(Properties.Resources.DefaultWindowIcon.ToBitmap());
-            //dockspaceIconTexture.SetFilterParameter(Rendering.Textures.FilterParameter.Nearest);
+            AddPanel(new InspectorPanel());
+            AddPanel(new HierarchyPanel());
+            AddPanel(new GamePanel());
+            AddPanel(new ViewportPanel());
+            AddPanel(new LagometerPanel());
+            AddPanel(new ConfigPanel());
+            //AddPanel(new ImageViewerPanel());
+
+            // load config
+            if (!LoadConfig(EditorConfig)) corruptedConfigFlag = true;
+            ThreadManager.ExecuteOnRenderThread(() =>
+            {
+                if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfigFlag = true;
+            });
 
             var n = 7;
             Vector4[] vals = Enumerable.Range(0, n).Select(e => new Vector4(Color.HSVToRGB(new(e * (1f / n), 1, 1)), 1)).ToArray();
@@ -155,8 +161,7 @@ namespace CrossEngineEditor
 
         protected override void RenderAttach()
         {
-            if (!LoadConfig(EditorConfig)) corruptedConfig = true;
-            if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfig = true;
+            InitDockspace();
         }
 
         protected override void Detach()
@@ -165,6 +170,14 @@ namespace CrossEngineEditor
             //AssetManager.Textures.Purge();
             //GC.Collect();
             //CrossEngine.Assets.GC.GPUGarbageCollector.Collect();
+
+            while (_panels.Count > 0)
+                RemovePanel(_panels[0]);
+        }
+
+        protected override void RenderDetach()
+        {
+            DestroyDockspace();
         }
 
         // test pcode
@@ -226,12 +239,12 @@ namespace CrossEngineEditor
 
             DrawMainMenuBar();
 
-            ImGui.ShowDemoWindow(); // purely dev thing
+            ImGui.ShowDemoWindow(); // purely dev thing - no shit
 
-            if (corruptedConfig)
+            if (corruptedConfigFlag)
             {
                 PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
-                corruptedConfig = false;
+                corruptedConfigFlag = false;
             }
 
             // debug
@@ -297,6 +310,18 @@ namespace CrossEngineEditor
         }
 
         #region Dockspace
+        private void InitDockspace()
+        {
+            dockspaceIconTexture = TextureLoader.LoadTexture(CrossEngine.Properties.Resources.DefaultWindowIcon.ToBitmap());
+            dockspaceIconTexture.Value.SetFilterParameter(FilterParameter.Nearest);
+        }
+
+        private void DestroyDockspace()
+        {
+            dockspaceIconTexture.Value.Dispose();
+            dockspaceIconTexture = null;
+        }
+
         private unsafe void SetupDockspace()
         {
             ImGuiIOPtr io = ImGui.GetIO();
@@ -323,10 +348,10 @@ namespace CrossEngineEditor
 
             ImGui.PopStyleVar(3);
 
-            //Vector2 lastCurPos = ImGui.GetCursorPos();
-            //ImGui.SetCursorPos((ImGui.GetWindowSize() - new Vector2(256, 256)) * 0.5f);
-            //ImGui.Image(new IntPtr(dockspaceIconTexture.ID), new Vector2(256, 256), new Vector2(0, 1), new Vector2(1, 0), new Vector4(1, 1, 1, 0.75f));
-            //ImGui.SetCursorPos(lastCurPos);
+            Vector2 lastCurPos = ImGui.GetCursorPos();
+            ImGui.SetCursorPos((ImGui.GetWindowSize() - new Vector2(256, 256)) * 0.5f);
+            ImGui.Image(new IntPtr(dockspaceIconTexture.Value.RendererId), new Vector2(256, 256), new Vector2(0, 1), new Vector2(1, 0), new Vector4(1, 1, 1, 0.25f));
+            ImGui.SetCursorPos(lastCurPos);
             Vector4 col = *ImGui.GetStyleColorVec4(ImGuiCol.DockingEmptyBg);
             col.W *= 0.1f;
             ImGui.PushStyleColor(ImGuiCol.DockingEmptyBg, col);

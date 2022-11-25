@@ -64,18 +64,20 @@ namespace CrossEngine
         public void Begin()
         {
             _runWaitHandle.Set();
+            _waitHandle.Reset();
         }
 
         public void Stop()
         {
             Running = false;
 
+            _waitHandle.Reset();
+
             if (_thread.ThreadState == ThreadingThreadState.Unstarted)
                 throw new InvalidOperationException("Thread wasn't started.");
 
-            Begin();
-
             _shouldStop = true;
+            Begin();
         }
 
         private unsafe void Loop()
@@ -84,18 +86,14 @@ namespace CrossEngine
             Init();
             Profiler.EndScope();
 
-            // handle is reset in the start method
-            _waitHandle.Set();
-
             _runWaitHandle.Set();
 
             while (!_shouldStop)
             {
+                _waitHandle.Set();
                 _runWaitHandle.WaitOne();
+                _runWaitHandle.Reset();
 
-                _waitHandle.Reset();
-                
-                _runWaitHandle.Set();
                 if (_shouldStop)
                     continue;
 
@@ -111,12 +109,7 @@ namespace CrossEngine
                 Window.UpdateWindow();
 
                 Profiler.EndScope();
-
-                _waitHandle.Set();
             }
-
-            // a way to wait until the windows closes
-            _waitHandle.Reset();
 
             Profiler.BeginScope($"{nameof(RenderThread)}.{nameof(RenderThread.Destroy)}");
             Destroy();
@@ -159,10 +152,12 @@ namespace CrossEngine
             _rapi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
 
             OnInit?.Invoke();
+            ThreadManager.ProcessRenderThread();
         }
 
         private void Destroy()
         {
+            ThreadManager.ProcessRenderThread();
             OnDestroy?.Invoke();
 
             Window.DestroyWindow();
