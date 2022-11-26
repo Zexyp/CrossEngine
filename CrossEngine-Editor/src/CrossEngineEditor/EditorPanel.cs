@@ -23,6 +23,7 @@ namespace CrossEngineEditor
                 UpdateOpenState();
             }
         }
+        public bool IsOpen => _open == null || (bool)_open;
 
         public bool Attached { get; internal set; }
 
@@ -95,16 +96,14 @@ namespace CrossEngineEditor
             ImGui.PopID();
         }
 
-        public bool IsOpen => _open == null || (bool)_open;
-
         protected virtual void PrepareWindow() { }
         protected virtual void EndPrepareWindow() { }
         protected abstract void DrawWindowContent();
-        public virtual void OnEvent(Event e) { }
         public virtual void OnAttach() { }
         public virtual void OnDetach() { }
         public virtual void OnOpen() { }
         public virtual void OnClose() { }
+        public virtual void OnEvent(Event e) { }
 
         private void UpdateOpenState()
         {

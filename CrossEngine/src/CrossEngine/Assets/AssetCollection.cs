@@ -23,15 +23,20 @@ namespace CrossEngine.Assets
         public void AddAsset(T asset)
         {
             _assetDict.Add(asset.RelativePath, asset);
+
             if (Loaded)
             {
-                //asset.Active = true;
                 asset.Load();
             }
         }
 
         public bool RemoveAsset(T asset)
         {
+            if (Loaded)
+            {
+                asset.Unload();
+            }
+
             if (_assetDict.ContainsKey(asset.RelativePath))
                 return _assetDict.Remove(asset.RelativePath);
             return false;
@@ -50,7 +55,6 @@ namespace CrossEngine.Assets
         {
             foreach (var item in _assetDict)
             {
-                //item.Value.Active = false;
                 item.Value.Unload();
             }
             Loaded = false;

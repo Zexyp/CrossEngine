@@ -10,9 +10,9 @@ using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.Events;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.ComponentSystems
 {
-    class UISystem : ISystem
+    class UISystem : IComponentSystem
     {
         public SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 

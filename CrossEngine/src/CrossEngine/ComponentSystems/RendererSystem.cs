@@ -11,9 +11,9 @@ using CrossEngine.Components;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Events;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.ComponentSystems
 {
-    public class RendererSystem : ISystem
+    public class RendererSystem : IComponentSystem
     {
         public SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 

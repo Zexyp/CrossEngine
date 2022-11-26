@@ -105,7 +105,7 @@ namespace CrossEngine.Rendering.Shaders
                 glGetShaderiv(_rendererId, GL_INFO_LOG_LENGTH, &length);
 
                 char[] infoLog = new char[length];
-                Application.CoreLog.Error($"{Type} shader compilation failed!\n" + glGetShaderInfoLog(_rendererId, length));
+                RendererAPI.Log.Error($"{Type} shader compilation failed!\n" + glGetShaderInfoLog(_rendererId, length));
 
                 return true;
             }

@@ -10,40 +10,45 @@ namespace CrossEngine.Utils
 {
     public class IniFile
     {
-        [DllImport("kernel32", CharSet = CharSet.Unicode)]
+        [DllImport("kernel32")]
         static extern int WritePrivateProfileString(string section, string key, string value, string filepath);
-        [DllImport("kernel32", CharSet = CharSet.Unicode)]
+        [DllImport("kernel32")]
         static extern int GetPrivateProfileString(string section, string key, string defaultValue, StringBuilder retVal, int size, string filepath);
 
         public string Path;
         public int LineCapacity = 255;
 
-        public IniFile(string path, bool isFileName = false)
+        public IniFile(string path)
         {
-            if (!isFileName) path += ".ini";
             Path = new FileInfo(path).FullName;
         }
 
-        public string Read(string section, string key)
+        public string this[string key]
+        {
+            get => ReadValue(key);
+            set => WriteValue(key, value);
+        }
+
+        public string? ReadSectionValue(string section, string key)
         {
             var retVal = new StringBuilder(LineCapacity);
             GetPrivateProfileString(section, key, "", retVal, LineCapacity, Path);
             return retVal.ToString();
         }
 
-        public void Write(string section, string key, string value)
+        public void WriteSectionValue(string section, string key, string? value)
         {
             WritePrivateProfileString(section, key, value, Path);
         }
 
-        public void DeleteKey(string section, string key)
+        public void WriteValue(string key, string value)
         {
-            Write(section, key, null);
+            WriteSectionValue(null, key, value);
         }
 
-        public void DeleteSection(string section)
+        public string? ReadValue(string key)
         {
-            Write(section, null, null);
+            return ReadSectionValue(null, key);
         }
     }
 }

@@ -30,7 +30,7 @@ namespace CrossEngine.Assets
         {
             if (!File.Exists(path))
             {
-                Application.CoreLog.Error($"texture not found ('{path}')");
+                Log.Default.Error($"texture not found ('{path}')");
                 return DefaultTexture;
             }
 
@@ -41,7 +41,7 @@ namespace CrossEngine.Assets
             }
             catch (ArgumentException ex)
             {
-                Application.CoreLog.Error($"invalid image format ('{path}'): {ex.Message}");
+                Log.Default.Error($"invalid image format ('{path}'): {ex.Message}");
                 return DefaultTexture;
             }
 
@@ -104,7 +104,7 @@ namespace CrossEngine.Assets
                             desired = ColorFormat.RGB;
                         }
 
-                        Application.CoreLog.Trace($"image format converted (from '{image.PixelFormat}' to '{converted.PixelFormat}')");
+                        Log.Default.Trace($"image format converted (from '{image.PixelFormat}' to '{converted.PixelFormat}')");
                     }
                     break;
             }

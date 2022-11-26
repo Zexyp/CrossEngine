@@ -83,6 +83,9 @@ namespace CrossEngine.Assets
 
         string IPathProvider.GetActualPath(string relativePath, AssetType type = AssetType.None)
         {
+            return Path.Combine(HomeDirectory, relativePath);
+
+            /*
             switch (type)
             {
                 case AssetType.None: return Path.Combine(HomeDirectory, relativePath);
@@ -91,6 +94,7 @@ namespace CrossEngine.Assets
                     Debug.Assert(false, "Unknown type");
                     return null;
             }
+            */
         }
     }
 

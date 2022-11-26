@@ -67,9 +67,10 @@ namespace CrossEngine.Serialization.Json
                 writer.WriteNumberValue((decimal)value);
             } },
 
-            //{ typeof(char), (writer, value) => {
-            //    writer.((char)value);
-            //} },
+            { typeof(char), (writer, value) => {
+                throw new NotImplementedException();
+                //writer.((char)value);
+            } },
 
             { typeof(string), (writer, value) => {
                 writer.WriteStringValue((string)value);
@@ -117,9 +118,10 @@ namespace CrossEngine.Serialization.Json
                 return reader.GetDecimal();
             } },
 
-            //{ typeof(char), (reader) => {
-            //    return reader.();
-            //} },
+            { typeof(char), (reader) => {
+                throw new NotImplementedException();
+                //return reader.();
+            } },
 
             { typeof(string), (reader) => {
                 return reader.GetString();

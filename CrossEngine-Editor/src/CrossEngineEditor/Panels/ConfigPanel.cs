@@ -52,7 +52,7 @@ namespace CrossEngineEditor.Panels
                                 Dialog.Filters.IniFile,
                                 Dialog.Filters.AllFiles }))
                         {
-                            if (!ImGuiStyleConfig.Load(new IniFile(path, true))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
+                            if (!ImGuiStyleConfig.Load(new IniFile(path))) EditorLayer.Instance.PushModal(new ActionModal("Config seems to be corrupted!", "Ouha!", ActionModal.ButtonFlags.OK));
                         }
                     }
 

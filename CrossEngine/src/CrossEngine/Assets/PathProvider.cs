@@ -21,7 +21,6 @@ namespace CrossEngine.Assets
     {
         string GetActualPath(string relativePath, AssetType type = AssetType.None);
 
-        private static IPathProvider _default = new DefaultPathProvider();
-        public static IPathProvider Default => _default;
+        public static readonly IPathProvider Default = new DefaultPathProvider();
     }
 }

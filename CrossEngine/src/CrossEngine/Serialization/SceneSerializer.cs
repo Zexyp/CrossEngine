@@ -10,7 +10,6 @@ using System.IO;
 using CrossEngine.Scenes;
 using CrossEngine.Serialization.Json;
 using CrossEngine.Serialization.Json.Converters;
-using CrossEngine.Assemblies;
 
 namespace CrossEngine.Serialization
 {
@@ -38,7 +37,7 @@ namespace CrossEngine.Serialization
         {
             public override Type ResolveType(string typeName)
             {
-                return Type.GetType(typeName) ?? AssemblyLoader.GetType(typeName);
+                return Type.GetType(typeName);// ?? AssemblyLoader.GetType(typeName);
             }
         }
 

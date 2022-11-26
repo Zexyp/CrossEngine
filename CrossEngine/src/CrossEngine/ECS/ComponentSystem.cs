@@ -16,7 +16,7 @@ namespace CrossEngine.ECS
         Async,
     }
 
-    public interface ISystem
+    public interface IComponentSystem
     {
         SystemThreadMode ThreadMode { get; }
         void Init();
@@ -24,13 +24,7 @@ namespace CrossEngine.ECS
         void Update();
     }
 
-    public interface ISystem<T> : ISystem where T : Component
-    {
-        void Register(T component);
-        void Unregister(T component);
-    }
-
-    public abstract class SimpleSystem<T> : ISystem<T> where T : Component
+    public abstract class SimpleComponentSystem<T> : IComponentSystem where T : Component
     {
         public virtual SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 
@@ -55,7 +49,7 @@ namespace CrossEngine.ECS
         public virtual void Update() { }
     }
 
-    public abstract class ParallelSystem<T> : SimpleSystem<T> where T : Component
+    public abstract class ParallelComponentSystem<T> : SimpleComponentSystem<T> where T : Component
     {
         protected ParallelOptions ParallelOptions = new ParallelOptions();
 

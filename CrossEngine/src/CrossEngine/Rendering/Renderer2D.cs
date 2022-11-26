@@ -379,6 +379,7 @@ namespace CrossEngine.Rendering
             data.currentShader = enable ? data.discardingShader : data.regularShader;
         }
 
+        #region Quads
         public static unsafe void DrawQuad(Matrix4x4 transform, Vector4 color, int entityID = 0)
         {
             const float textureIndex = 0.0f; // white texture index
@@ -482,7 +483,9 @@ namespace CrossEngine.Rendering
 
             data.quads.Stats.ItemCount++;
         }
+        #endregion
 
+        #region Tris
         public static unsafe void DrawTri(Vector3 p1, Vector3 p2, Vector3 p3, Vector4 color, int entityID = 0)
         {
             if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
@@ -589,6 +592,8 @@ namespace CrossEngine.Rendering
 
             data.tris.Stats.ItemCount++;
         }
+        #endregion
+
 
         //// simple
         //public static void DrawQuad(Vector2 position, Vector2 size, Vector4 color) => DrawQuad(new Vector3(position, 0.0f), size, color);

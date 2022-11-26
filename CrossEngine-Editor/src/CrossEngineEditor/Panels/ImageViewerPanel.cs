@@ -103,7 +103,7 @@ namespace CrossEngineEditor.Panels
 
                 var tex = selectedTextureAsset.Texture.Value;
                 var cursorScreenCenter = (WindowContentAreaMax - WindowContentAreaMin) / 2;
-                var imgTransMat = Matrix3x2.CreateTranslation(viewPos) * Matrix3x2.CreateScale(viewZoom) * Matrix3x2.CreateTranslation(ImGui.GetCursorPos() + cursorScreenCenter + WindowContentAreaMin);
+                var imgTransMat = Matrix3x2.CreateScale(viewZoom) * Matrix3x2.CreateTranslation(viewPos) * Matrix3x2.CreateTranslation(ImGui.GetCursorPos() + cursorScreenCenter + WindowContentAreaMin);
                 var min = Vector2.Transform(-tex.Size / 2, imgTransMat);
                 var max = Vector2.Transform( tex.Size / 2, imgTransMat);
 

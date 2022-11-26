@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
 
-using CrossEngine.Assemblies;
 using CrossEngine.Serialization;
 using CrossEngine.Events;
 using CrossEngine.Rendering;

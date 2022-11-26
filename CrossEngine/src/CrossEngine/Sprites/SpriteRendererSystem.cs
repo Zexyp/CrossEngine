@@ -13,9 +13,9 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Renderables;
 using CrossEngine.Profiling;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.ComponentSystems
 {
-    class SpriteRendererSystem : SimpleSystem<SpriteRendererComponent>, IRenderableSystem
+    class SpriteRendererSystem : SimpleComponentSystem<SpriteRendererComponent>, IRenderableComponentSystem
     {
         public (IRenderable Renderable, IList Objects) RenderData { get; private set; }
 

@@ -34,7 +34,7 @@ namespace CrossEngineEditor
         {
             base.RenderInit();
 
-            GLDebugging.EnableGLDebugging(LogLevel.Warn);
+            GLDebugging.Enable(LogLevel.Warn);
             Renderer2D.Init();
             LineRenderer.Init();
             RendererAPI.SetDepthFunc(DepthFunc.Default);

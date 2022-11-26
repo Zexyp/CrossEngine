@@ -151,6 +151,7 @@ namespace CrossEngine
             _rapi.Init();
             _rapi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
 
+            ThreadManager.ProcessRenderThread();
             OnInit?.Invoke();
             ThreadManager.ProcessRenderThread();
         }
@@ -159,6 +160,7 @@ namespace CrossEngine
         {
             ThreadManager.ProcessRenderThread();
             OnDestroy?.Invoke();
+            ThreadManager.ProcessRenderThread();
 
             Window.DestroyWindow();
             Window = null;

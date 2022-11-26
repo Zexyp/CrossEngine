@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using CrossEngine.Logging;
+using CrossEngine.Rendering;
 
 namespace CrossEngine.Platform.OpenGL.Debugging
 {
@@ -22,7 +23,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             int error;
             while ((error = glGetError()) != GL_NO_ERROR)
             {
-                Application.CoreLog.Error("(" + error + ")");
+                RendererAPI.Log.Error("(" + error + ")");
                 return false;
             }
             return true;
@@ -33,7 +34,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             int error;
             while ((error = glGetError()) != GL_NO_ERROR)
             {
-                Application.CoreLog.Error("(" + error + ")");
+                RendererAPI.Log.Error("(" + error + ")");
                 //error.ToString("X")
             }
         }
@@ -45,7 +46,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             if (!CheckError())
             {
                 string errorString = "at " + caller + " in " + filepath + ":line " + line;
-                Application.CoreLog.Error(errorString);
+                RendererAPI.Log.Error(errorString);
                 if (activeAssert) Debug.Assert(false, errorString);
             }
         }

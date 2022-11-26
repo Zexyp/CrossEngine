@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using CrossEngine.ECS;
-using CrossEngine.Systems;
+using CrossEngine.ComponentSystems;
 using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.Events;
@@ -160,21 +160,21 @@ namespace CrossEngine.Scenes
             _roots.Insert(destinationIndex, child);
         }
 
-        public void AddSystem(ISystem system)
+        public void AddSystem(IComponentSystem system)
         {
-            if (system is IRenderableSystem)
-                _defaultRenderLayer.Data.Add(((IRenderableSystem)system).RenderData);
+            if (system is IRenderableComponentSystem)
+                _defaultRenderLayer.Data.Add(((IRenderableComponentSystem)system).RenderData);
             _ecsWorld.RegisterSystem(system);
         }
 
-        public void RemoveSystem(ISystem system)
+        public void RemoveSystem(IComponentSystem system)
         {
-            if (system is IRenderableSystem)
-                _defaultRenderLayer.Data.Remove(((IRenderableSystem)system).RenderData);
+            if (system is IRenderableComponentSystem)
+                _defaultRenderLayer.Data.Remove(((IRenderableComponentSystem)system).RenderData);
             _ecsWorld.UnregisterSystem(system);
         }
 
-        public T GetSystem<T>() where T : ISystem => _ecsWorld.GetSystem<T>();
+        public T GetSystem<T>() where T : IComponentSystem => _ecsWorld.GetSystem<T>();
 
         internal void SetEntityId(Entity entity, Guid id)
         {

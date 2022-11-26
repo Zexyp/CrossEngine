@@ -25,7 +25,6 @@ using CrossEngine.Profiling;
 using CrossEngine.Inputs;
 using CrossEngine.Components;
 using CrossEngine.Debugging;
-using CrossEngine.Assemblies;
 
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Utils.Gui;
@@ -58,7 +57,7 @@ namespace CrossEngineEditor
         Ref<Texture> dockspaceIconTexture;
 
         // files
-        readonly internal IniFile EditorConfig = new IniFile("editor");
+        readonly internal IniFile EditorConfig = new IniFile("editor.ini");
         //private string _scenePath = null;
         //private string ScenePath
         //{
@@ -85,58 +84,6 @@ namespace CrossEngineEditor
             Instance = this;
         }
 
-        private bool LoadConfig(IniFile config)
-        {
-            bool success = true;
-
-            // panels
-            {
-                bool valid = true;
-                for (int i = 0; i < _panels.Count; i++)
-                {
-                    EditorPanel panel = _panels[i];
-
-                    string stringValue = config.Read(EditorConfigSections.PanelsOpen, panel.GetType().Name);
-
-                    if (String.IsNullOrEmpty(stringValue)) continue;
-
-                    if (bool.TryParse(stringValue, out bool val))
-                    {
-                        panel.Open = val;
-                    }
-                    else if (stringValue == "null")
-                    {
-                        panel.Open = null;
-                    }
-                    else
-                    {
-                        valid = false;
-                        continue;
-                    }
-                }
-
-                if (!valid) EditorApplication.Log.Trace($"invalid config section '{EditorConfigSections.PanelsOpen}'");
-
-                success = success && valid;
-            }
-
-            return success;
-        }
-
-        private void SaveConfig(IniFile config)
-        {
-            // panels
-            {
-                for (int i = 0; i < _panels.Count; i++)
-                {
-                    EditorPanel panel = _panels[i];
-                    config.Write(EditorConfigSections.PanelsOpen, panel.GetType().Name, (panel.Open != null) ? panel.Open.ToString() : "null" );
-                }
-            }
-        }
-
-        bool corruptedConfigFlag = false;
-
         protected override void Attach()
         {
             AddPanel(new InspectorPanel());
@@ -145,13 +92,13 @@ namespace CrossEngineEditor
             AddPanel(new ViewportPanel());
             AddPanel(new LagometerPanel());
             AddPanel(new ConfigPanel());
-            //AddPanel(new ImageViewerPanel());
+            AddPanel(new ImageViewerPanel());
 
             // load config
             if (!LoadConfig(EditorConfig)) corruptedConfigFlag = true;
             ThreadManager.ExecuteOnRenderThread(() =>
             {
-                if (!ImGuiStyleConfig.Load(new IniFile("style"))) corruptedConfigFlag = true;
+                if (!ImGuiStyleConfig.Load(new IniFile("style.ini"))) corruptedConfigFlag = true;
             });
 
             var n = 7;
@@ -216,7 +163,7 @@ namespace CrossEngineEditor
             if (e is WindowCloseEvent)
             {
 #if DEBUG
-                EditorApplication.Log.Debug("TODO: since you are using DEBUG build the window closed rly easily");
+                EditorApplication.Log.Warn("since you are using DEBUG build the window closed rly easily");
                 return;
 #else
                 PushModal(new ActionModal("Do you want to exti?", "Exit?", ActionModal.ButtonFlags.OK | ActionModal.ButtonFlags.No,
@@ -367,16 +314,6 @@ namespace CrossEngineEditor
         }
         #endregion
 
-        private void DrawPanels()
-        {
-            for (int i = 0; i < _panels.Count; i++)
-            {
-                ImGui.PushID(_panels[i].GetHashCode());
-                _panels[i].Draw();
-                ImGui.PopID();
-            }
-        }
-
         private void DrawMainMenuBar()
         {
             if (ImGui.BeginMainMenuBar())
@@ -511,7 +448,7 @@ namespace CrossEngineEditor
                     ImGui.EndMenu();
                 }
                 #endregion
-
+                /*
                 if (ImGui.BeginMenu("Resources", Context.Project != null))
                 {
                     //if (ImGui.BeginMenu("Import Assets"))
@@ -543,6 +480,7 @@ namespace CrossEngineEditor
                 
                     ImGui.EndMenu();
                 }
+                */
 
                 if (Context.Scene != null)
                 {
@@ -578,7 +516,17 @@ namespace CrossEngineEditor
             }
         }
 
-        #region Panel Methods
+        #region Panels
+        private void DrawPanels()
+        {
+            for (int i = 0; i < _panels.Count; i++)
+            {
+                ImGui.PushID(_panels[i].GetHashCode());
+                _panels[i].Draw();
+                ImGui.PopID();
+            }
+        }
+
         private void AddPanel(EditorPanel panel)
         {
             _panels.Add(panel);
@@ -610,6 +558,60 @@ namespace CrossEngineEditor
             }
             return null;
         }
+        #endregion
+
+        #region Config
+        private bool LoadConfig(IniFile config)
+        {
+            bool success = true;
+
+            // panels
+            {
+                bool valid = true;
+                for (int i = 0; i < _panels.Count; i++)
+                {
+                    EditorPanel panel = _panels[i];
+
+                    string stringValue = config.ReadSectionValue(EditorConfigSections.PanelsOpen, panel.GetType().Name);
+
+                    if (String.IsNullOrEmpty(stringValue)) continue;
+
+                    if (bool.TryParse(stringValue, out bool val))
+                    {
+                        panel.Open = val;
+                    }
+                    else if (stringValue == "null")
+                    {
+                        panel.Open = null;
+                    }
+                    else
+                    {
+                        valid = false;
+                        continue;
+                    }
+                }
+
+                if (!valid) EditorApplication.Log.Trace($"invalid config section '{EditorConfigSections.PanelsOpen}'");
+
+                success = success && valid;
+            }
+
+            return success;
+        }
+
+        private void SaveConfig(IniFile config)
+        {
+            // panels
+            {
+                for (int i = 0; i < _panels.Count; i++)
+                {
+                    EditorPanel panel = _panels[i];
+                    config.WriteSectionValue(EditorConfigSections.PanelsOpen, panel.GetType().Name, (panel.Open != null) ? panel.Open.ToString() : "null");
+                }
+            }
+        }
+
+        bool corruptedConfigFlag = false;
         #endregion
 
         #region Modal Methods
@@ -708,7 +710,8 @@ namespace CrossEngineEditor
                 var ass = Directory.GetFiles(Path.Combine(Context.Project.Directory, "assemblies"));
                 for (int i = 0; i < ass.Length; i++)
                 {
-                    AssemblyLoader.Load(ass[i]);
+                    Application.Log.Debug("ah sh*et");
+                    //AssemblyLoader.Load(ass[i]); // don't forget to load assemblies
                 }
             }
         }
