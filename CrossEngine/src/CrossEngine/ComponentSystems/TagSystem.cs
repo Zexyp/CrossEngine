@@ -9,9 +9,9 @@ using System.Diagnostics;
 using CrossEngine.ECS;
 using CrossEngine.Components;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.ComponentSystems
 {
-    public class TagSystem : ISystem<TagComponent>
+    public class TagSystem : IComponentSystem
     {
         public SystemThreadMode ThreadMode => SystemThreadMode.Sync;
 

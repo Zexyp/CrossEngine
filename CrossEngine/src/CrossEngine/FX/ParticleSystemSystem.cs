@@ -14,7 +14,7 @@ using CrossEngine.Rendering.Culling;
 
 namespace CrossEngine.FX.Particles
 {
-    class ParticleSystemSystem : SimpleSystem<ParticleSystemComponent>, IRenderableSystem
+    class ParticleSystemSystem : SimpleComponentSystem<ParticleSystemComponent>, IRenderableComponentSystem
     {
         public override SystemThreadMode ThreadMode => SystemThreadMode.Async;
 

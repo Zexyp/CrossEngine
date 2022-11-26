@@ -12,7 +12,7 @@ using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
-using CrossEngine.Systems;
+using CrossEngine.ComponentSystems;
 using CrossEngine.Inputs;
 
 namespace CrossEngineEditor.Panels

@@ -129,7 +129,7 @@ namespace CrossEngine.Rendering.Buffers
         }
     }
 
-    public abstract class VertexArray
+    public abstract class VertexArray : IDisposable
     {
         public bool Disposed { get; protected set; } = false;
 

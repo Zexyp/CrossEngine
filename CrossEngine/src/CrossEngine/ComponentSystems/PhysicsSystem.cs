@@ -15,7 +15,7 @@ using CrossEngine.Utils.Bullet;
 using CrossEngine.Utils;
 using System.Collections;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.ComponentSystems
 {
     using BulletVector3 = BulletSharp.Math.Vector3;
     using Vector3 = System.Numerics.Vector3;
@@ -41,7 +41,7 @@ namespace CrossEngine.Systems
         LocalOffsets = 1 << 1,
     }
 
-    class PhysicsSystem : ISystem, IRenderableSystem
+    class PhysicsSystem : IComponentSystem, IRenderableComponentSystem
     {
         static readonly Dictionary<Type, Func<ColliderComponent, CollisionShape>> ShapeConvertors = new Dictionary<Type, Func<ColliderComponent, CollisionShape>>()
         {

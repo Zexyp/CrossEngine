@@ -10,7 +10,6 @@ using System.Numerics;
 
 using CrossEngine.ECS;
 using CrossEngine.Utils.Editor;
-using CrossEngine.Assemblies;
 
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Modals;
@@ -51,14 +50,14 @@ namespace CrossEngineEditor.Panels
                         
                         ImGui.Separator();
 
-                        var comps = AssemblyLoader.GetSubclassesOf(typeof(Component));
-                        for (int i = 0; i < comps.Length; i++)
-                        {
-                            if (ImGui.MenuItem(comps[i].Name))
-                            {
-                                Context.ActiveEntity.AddComponent(SpawnComponent(comps[i]));
-                            }
-                        }
+                        //var comps = AssemblyLoader.GetSubclassesOf(typeof(Component));
+                        //for (int i = 0; i < comps.Length; i++)
+                        //{
+                        //    if (ImGui.MenuItem(comps[i].Name))
+                        //    {
+                        //        Context.ActiveEntity.AddComponent(SpawnComponent(comps[i]));
+                        //    }
+                        //}
                         ImGui.EndMenu();
                     }
                     ImGui.Separator();

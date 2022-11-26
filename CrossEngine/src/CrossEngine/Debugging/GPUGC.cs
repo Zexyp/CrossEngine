@@ -17,15 +17,15 @@ namespace CrossEngine.Debugging
             public StackTrace Trace;
         }
 
-        private static readonly Dictionary<object, GPUObjectCreationInfo> _objs = new Dictionary<object, GPUObjectCreationInfo>();
+        private static readonly Dictionary<IDisposable, GPUObjectCreationInfo> _objs = new Dictionary<IDisposable, GPUObjectCreationInfo>();
 
-        public static void Register(object obj)
+        public static void Register(IDisposable obj)
         {
             lock (_objs)
                 _objs.Add(obj, new() { Time = DateTime.Now, Trace = new StackTrace() });
         }
 
-        public static void Unregister(object obj)
+        public static void Unregister(IDisposable obj)
         {
             lock (_objs)
                 _objs.Remove(obj);
@@ -38,6 +38,20 @@ namespace CrossEngine.Debugging
                 {
                     Log.Warn($"{item.Key.ToString()} at [{item.Value.Time}]:\n{item.Value.Trace.ToString()}");
                 }
+        }
+
+        public static void Collect()
+        {
+            lock (_objs)
+            {
+                Log.Trace("disposing...");
+                int c = _objs.Count;
+                foreach (var item in _objs)
+                {
+                    item.Key.Dispose();
+                }
+                Log.Trace($"disposed {c} objects");
+            }    
         }
     }
 }

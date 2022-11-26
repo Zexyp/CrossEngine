@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using CrossEngine.ECS;
-using CrossEngine.Systems;
+using CrossEngine.ComponentSystems;
 
 namespace CrossEngine.Components
 {

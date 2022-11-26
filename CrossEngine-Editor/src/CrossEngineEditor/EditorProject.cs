@@ -41,7 +41,7 @@ namespace CrossEngineEditor
             IODirectory.CreateDirectory(Directory);
             IODirectory.CreateDirectory(Path.Combine(Directory, "scenes"));
             IODirectory.CreateDirectory(Path.Combine(Directory, "assemblies"));
-            _ini.Write("", "EntryScene", EntryScene);
+            _ini["EntryScene"] = EntryScene;
         }
 
         public Scene CreateScene(string name)
@@ -65,7 +65,7 @@ namespace CrossEngineEditor
         public static EditorProject Read(string directory)
         {
             var project = new EditorProject(directory);
-            project.EntryScene = project._ini.Read("", "EntryScene");
+            project.EntryScene = project._ini["EntryScene"];
             project._sceneNames.AddRange(IODirectory.GetDirectories(Path.Combine(directory, "scenes")).Select(p => Path.GetFileName(p)));
             return project;
         }

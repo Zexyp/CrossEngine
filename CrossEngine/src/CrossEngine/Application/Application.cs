@@ -130,6 +130,11 @@ namespace CrossEngine
             Profiler.EndScope();
         }
 
+        public void Close()
+        {
+            Window.ShouldClose = true;
+        }
+
         #region Virtual Methods
         protected virtual void Init()
         {
@@ -147,12 +152,10 @@ namespace CrossEngine
 
         protected virtual void Destroy()
         {
-            _layerStack.PopAll();
+            PopAllLayers();
 
             _renderThread.Stop();
             _renderThread.Wait();
-
-            GPUGC.PrintCollected();
 
             //GC.Collect();
 
@@ -162,6 +165,9 @@ namespace CrossEngine
         protected virtual void RenderDestroy()
         {
             Event(new ApplicationRenderDestroyEvent());
+
+            GPUGC.PrintCollected();
+            GPUGC.Collect();
         }
 
         protected virtual void LoadContent()
@@ -215,7 +221,7 @@ namespace CrossEngine
 
             if (e is WindowCloseEvent && !e.Handled)
             {
-                Window.ShouldClose = true;
+                Close();
             }
 
             Profiler.EndScope();
@@ -226,23 +232,38 @@ namespace CrossEngine
         public void PushLayer(Layer layer)
         {
             _layerStack.PushLayer(layer);
-            if (_renderThread.Running) ThreadManager.ExecuteOnRenderThread(layer.RenderAttach);
+            ThreadManager.ExecuteOnRenderThread(layer.RenderAttach);
         }
         public void PushOverlay(Layer overlay)
         {
             _layerStack.PushOverlay(overlay);
-            if (_renderThread.Running) ThreadManager.ExecuteOnRenderThread(overlay.RenderAttach);
+            ThreadManager.ExecuteOnRenderThread(overlay.RenderAttach);
         }
 
         public void PopLayer(Layer layer)
         {
-            if (_renderThread.Running) ThreadManager.ExecuteOnRenderThread(layer.RenderDetach);
+            ThreadManager.ExecuteOnRenderThread(layer.RenderDetach);
             _layerStack.PopLayer(layer);
         }
         public void PopOverlay(Layer overlay)
         {
-            if (_renderThread.Running) ThreadManager.ExecuteOnRenderThread(overlay.RenderDetach);
+            ThreadManager.ExecuteOnRenderThread(overlay.RenderDetach);
             _layerStack.PopOverlay(overlay);
+        }
+
+        public void PopAllLayers()
+        {
+            var lays = System.Linq.Enumerable.ToArray(_layerStack.Layers);
+            if (_renderThread.Running)
+                ThreadManager.ExecuteOnRenderThread(() =>
+                {
+                    for (int i = 0; i < lays.Length; i++)
+                    {
+                        lays[i].RenderDetach();
+                    }
+                });
+
+            _layerStack.PopAll();
         }
 
         public T GetLayer<T>() where T : Layer

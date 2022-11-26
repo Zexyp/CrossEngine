@@ -305,7 +305,7 @@ namespace CrossEngine.Rendering.Shaders
             if (location != -1)
                 _uniformLocationCache.Add(name, location);
             else
-                Application.CoreLog.Warn($"no uniform named '{name}' found");
+                RendererAPI.Log.Warn($"no uniform named '{name}' found");
 
             return location;
         }
@@ -321,7 +321,7 @@ namespace CrossEngine.Rendering.Shaders
                 glGetProgramiv(_rendererId, GL_INFO_LOG_LENGTH, &length);
 
                 char[] infoLog = new char[length];
-                Application.CoreLog.Error("Shader program linking failed!\n" + glGetProgramInfoLog(_rendererId, length));
+                RendererAPI.Log.Error("Shader program linking failed!\n" + glGetProgramInfoLog(_rendererId, length));
 
                 return true;
             }
@@ -345,7 +345,7 @@ namespace CrossEngine.Rendering.Shaders
                 var attribute = new AttributeParameter(GLUtils.ToShaderDataType(type), name, location, _rendererId);
                 _attributes.Add(name, attribute);
 
-                Application.CoreLog.Trace("shader attribute parameter: {0} {1}", attribute.Type, attribute.Name);
+                RendererAPI.Log.Trace("shader attribute parameter: {0} {1}", attribute.Type, attribute.Name);
             }
         
             int uniformCount;
@@ -361,7 +361,7 @@ namespace CrossEngine.Rendering.Shaders
                 var uniform = new UniformParameter(GLUtils.ToShaderDataType(type), name, location, _rendererId);
                 _uniforms.Add(name, uniform);
 
-                Application.CoreLog.Trace("shader uniform parameter: {0} {1}", uniform.Type, uniform.Name);
+                RendererAPI.Log.Trace("shader uniform parameter: {0} {1}", uniform.Type, uniform.Name);
             }
         }
     }

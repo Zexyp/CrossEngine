@@ -10,9 +10,9 @@ using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Renderables;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.ComponentSystems
 {
-    class TextRendererSystem : SimpleSystem<TextRendererComponent>, IRenderableSystem
+    class TextRendererSystem : SimpleComponentSystem<TextRendererComponent>, IRenderableComponentSystem
     {
         public (IRenderable Renderable, IList Objects) RenderData { get; private set; }
         

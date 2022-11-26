@@ -101,7 +101,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             }
         }
 
-        public static unsafe void EnableGLDebugging(LogLevel level = LogLevel.Trace)
+        public static unsafe void Enable(LogLevel level = LogLevel.Trace)
         {
             Debug.Import(GLFW.Glfw.GetProcAddress);
 

@@ -11,7 +11,7 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using System.Collections;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.ComponentSystems
 {
     class TransformRenderable : IRenderable
     {
@@ -31,7 +31,7 @@ namespace CrossEngine.Systems
         }
     }
 
-    class TransformSystem : SimpleSystem<TransformComponent>, IRenderableSystem
+    class TransformSystem : SimpleComponentSystem<TransformComponent>, IRenderableComponentSystem
     {
         public (IRenderable Renderable, IList Objects) RenderData { get; private set; }
 

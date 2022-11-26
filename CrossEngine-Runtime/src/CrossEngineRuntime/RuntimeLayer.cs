@@ -21,9 +21,9 @@ namespace CrossEngineRuntime
     {
         protected override void Attach()
         {
-            IniFile ini = new IniFile("ce");
-            var assembliesDir = ini.Read("", "Assemblies");
-            var sceneDir = ini.Read("", "Scenes");
+            IniFile ini = new IniFile("ce.ini");
+            var assembliesDir = ini["Assemblies"];
+            var sceneDir = ini["Scenes"];
 
             try
             {
@@ -45,7 +45,7 @@ namespace CrossEngineRuntime
                 return;
             }
 
-            string entry = ini.Read("", "EntryScene");
+            string entry = ini["EntryScene"];
             if (!SceneManager.Load(entry))
                 Application.Log.Fatal("entry scene not found!");
         }

@@ -11,7 +11,7 @@ namespace CrossEngine.ECS
 {
     public class World
     {
-        List<ISystem> _systems = new List<ISystem>();
+        List<IComponentSystem> _systems = new List<IComponentSystem>();
 
         public void Init()
         {
@@ -45,17 +45,17 @@ namespace CrossEngine.ECS
             Task.WaitAll(tasks);
         }
 
-        public void RegisterSystem(ISystem system)
+        public void RegisterSystem(IComponentSystem system)
         {
             _systems.Add(system);
         }
 
-        public void UnregisterSystem(ISystem system)
+        public void UnregisterSystem(IComponentSystem system)
         {
             _systems.Remove(system);
         }
 
-        public T GetSystem<T>() where T : ISystem
+        public T GetSystem<T>() where T : IComponentSystem
         {
             for (int i = 0; i < _systems.Count; i++)
             {

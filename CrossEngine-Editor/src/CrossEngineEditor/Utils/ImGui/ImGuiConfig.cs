@@ -120,12 +120,12 @@ namespace CrossEngineEditor.Utils.Gui
                 {
                     Vector4 col = style.Colors[i];
                     string name = ImGui.GetStyleColorName((ImGuiCol)i);
-                    config.Write(ImGuiStyleConfigSections.Colors, name, $"{col.X};{col.Y};{col.Z};{col.W}");
+                    config.WriteSectionValue(ImGuiStyleConfigSections.Colors, name, $"{col.X};{col.Y};{col.Z};{col.W}");
                 }
             }
             // sizes
             {
-                Action<string, string> writer = (key, value) => config.Write(ImGuiStyleConfigSections.Sizes, key, value);
+                Action<string, string> writer = (key, value) => config.WriteSectionValue(ImGuiStyleConfigSections.Sizes, key, value);
                 foreach (var propinfo in style.GetType().GetProperties().Where(propinfo => propinfo.PropertyType.IsByRef))
                 {
                     if (refWriters.ContainsKey(propinfo.PropertyType))
@@ -148,7 +148,7 @@ namespace CrossEngineEditor.Utils.Gui
                 for (int i = 0; i < (int)ImGuiCol.COUNT; i++)
                 {
                     string name = ImGui.GetStyleColorName((ImGuiCol)i);
-                    string stringValue = config.Read(ImGuiStyleConfigSections.Colors, name);
+                    string stringValue = config.ReadSectionValue(ImGuiStyleConfigSections.Colors, name);
 
                     if (String.IsNullOrEmpty(stringValue)) continue;
 
@@ -178,7 +178,7 @@ namespace CrossEngineEditor.Utils.Gui
             unsafe
             {
                 bool valid = true;
-                Func<string, string> reader = (key) => config.Read(ImGuiStyleConfigSections.Sizes, key);
+                Func<string, string> reader = (key) => config.ReadSectionValue(ImGuiStyleConfigSections.Sizes, key);
                 byte* baseAddress = (byte*)style.NativePtr;
                 foreach (var propinfo in style.GetType().GetProperties().Where(propinfo => propinfo.PropertyType.IsByRef))
                 {
