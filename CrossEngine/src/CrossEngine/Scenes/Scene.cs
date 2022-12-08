@@ -179,7 +179,7 @@ namespace CrossEngine.Scenes
         internal void SetEntityId(Entity entity, Guid id)
         {
             if (!_entities.Contains(entity))
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("Entity is not a part of this scene.");
 
             RemoveEntity(entity);
             entity.Id = id;

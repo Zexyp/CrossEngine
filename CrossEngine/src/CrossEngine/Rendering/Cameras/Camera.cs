@@ -33,21 +33,21 @@ namespace CrossEngine.Rendering.Cameras
         
         [EditorEnum]
         public ProjectionType Projection { get => _projection; set { _projection = value; RecreateProjection(); } }
-        [EditorDrag(Min = float.Epsilon)]
+        [EditorDrag(float.Epsilon, float.MaxValue)]
         public float Width { get => _width; set { _width = value; RecreateProjection(); } }
-        [EditorDrag(Min = float.Epsilon)]
+        [EditorDrag(float.Epsilon, float.MaxValue)]
         public float Height { get => _height; set { _height = value; RecreateProjection(); } }
         [EditorDisplay]
         public float AspectRatio { get => _width / _height; }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float Near { get => _near; set { _near = value; RecreateProjection(); } }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float Far { get => _far; set { _far = value; RecreateProjection(); } }
         [EditorSection("Perspective")]
-        [EditorDrag(Min = float.Epsilon, Max = 179.999985f)]
+        [EditorDrag(float.Epsilon, 179.999985f)]
         public float FOV { get => _p_fov; set { _p_fov = value; RecreateProjection(); } }
         [EditorSection("Orthographic")]
-        [EditorDrag(Min = float.Epsilon)]
+        [EditorDrag(float.Epsilon, float.MaxValue)]
         public float OrthoSize { get => _o_size; set { _o_size = value; RecreateProjection(); } }
 
         // TODO: finish this

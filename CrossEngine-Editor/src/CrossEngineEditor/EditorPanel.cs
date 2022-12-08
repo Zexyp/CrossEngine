@@ -58,20 +58,15 @@ namespace CrossEngineEditor
             PrepareWindow();
 
             var lastOpen = _open;
-            if (!ImGuiExtension.BeginNullableOpen(WindowName, ref _open, WindowFlags))
-            {
-                EndPrepareWindow();
+            bool drawContent = ImGuiExtension.BeginNullableOpen(WindowName, ref _open, WindowFlags);
 
-                ImGui.End();
-            }
-            else
-            {
-                EndPrepareWindow();
+            EndPrepareWindow();
 
+            if (drawContent)
+            {
                 WindowSize = ImGui.GetWindowSize();
                 WindowPos = ImGui.GetWindowPos();
 
-                // content area calculation
                 WindowContentAreaMin = ImGui.GetWindowContentRegionMin();
                 WindowContentAreaMax = ImGui.GetWindowContentRegionMax();
 
@@ -87,9 +82,10 @@ namespace CrossEngineEditor
                 InnerBeforeDrawCallback?.Invoke(this);
                 DrawWindowContent();
                 InnerAfterDrawCallback?.Invoke(this);
-
-                ImGui.End();
             }
+
+            ImGui.End();
+
             if (lastOpen != _open)
                 UpdateOpenState();
 

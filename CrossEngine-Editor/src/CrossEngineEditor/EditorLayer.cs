@@ -149,6 +149,10 @@ namespace CrossEngineEditor
             SceneManager.Update();
         }
 
+        // this breaks the shit out of it
+        [EditorValue]
+        public int simpleTestingValue = 0;
+
         protected override void Event(Event e)
         {
             Profiler.BeginScope($"{nameof(EditorLayer)}.{nameof(EditorLayer.Event)}");
@@ -196,6 +200,12 @@ namespace CrossEngineEditor
 
             // debug
             ImGui.Begin("Debug");
+
+            PropertyDrawer.DrawEditorValue(this.GetType().GetField(nameof(simpleTestingValue)), this, null, Context.Operations);
+            if (ImGui.Button("Undo"))
+                Context.Operations.Undo();
+            if (ImGui.Button("Redo"))
+                Context.Operations.Redo();
 
             var cvsync = Application.Instance.Window.VSync;
             if (ImGui.Checkbox("VSync", ref cvsync))
@@ -482,35 +492,35 @@ namespace CrossEngineEditor
                 }
                 */
 
-                if (Context.Scene != null)
-                {
-                    // play mode button
-                    Vector2 cp = ImGui.GetCursorPos();
-                    cp.X += ImGui.GetColumnWidth() / 2;
-                    ImGui.SetCursorPos(cp);
-                    bool colorPushed = Context.Playmode == true;
-                    if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000dd/*new Vector4(1, 0.2f, 0.1f, 1)*/);
-                    if (ImGui.ArrowButton("##play", Context.Playmode ? ImGuiDir.Down : ImGuiDir.Right))
-                    {
-                        if (!Context.Playmode)
-                        {
-                            StartPlaymode();
-                            var gamePanel = GetPanel<GamePanel>();
-                            if (gamePanel != null)
-                            {
-                                ImGui.SetWindowFocus(gamePanel.WindowName);
-                            }
-                        }
-                        else
-                        {
-                            EndPlaymode();
-                            ImGui.SetWindowFocus(GetPanel<ViewportPanel>()?.WindowName);
-                        }
-                    }
-                    if (colorPushed) ImGui.PopStyleColor();
-
-                    //ImGui.Checkbox("##update", ref EditorLayer.Instance.SceneUpdate);
-                }
+                //if (Context.Scene != null)
+                //{
+                //    // play mode button
+                //    Vector2 cp = ImGui.GetCursorPos();
+                //    cp.X += ImGui.GetColumnWidth() / 2;
+                //    ImGui.SetCursorPos(cp);
+                //    bool colorPushed = Context.Playmode == true;
+                //    if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000dd/*new Vector4(1, 0.2f, 0.1f, 1)*/);
+                //    if (ImGui.ArrowButton("##play", Context.Playmode ? ImGuiDir.Down : ImGuiDir.Right))
+                //    {
+                //        if (!Context.Playmode)
+                //        {
+                //            StartPlaymode();
+                //            var gamePanel = GetPanel<GamePanel>();
+                //            if (gamePanel != null)
+                //            {
+                //                ImGui.SetWindowFocus(gamePanel.WindowName);
+                //            }
+                //        }
+                //        else
+                //        {
+                //            EndPlaymode();
+                //            ImGui.SetWindowFocus(GetPanel<ViewportPanel>()?.WindowName);
+                //        }
+                //    }
+                //    if (colorPushed) ImGui.PopStyleColor();
+                //
+                //    //ImGui.Checkbox("##update", ref EditorLayer.Instance.SceneUpdate);
+                //}
 
                 ImGui.EndMainMenuBar();
             }

@@ -17,7 +17,7 @@ namespace CrossEngine.Components
     {
         [EditorValue]
         public bool DynamicSize;
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector2 Size
         {
             get => _size;

@@ -19,7 +19,7 @@ namespace CrossEngine.Components
 
         private Matrix4x4 _localOffsets = Matrix4x4.Identity;
 
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 PositionOffset
         {
             get => _localOffsets.Translation;
@@ -48,7 +48,7 @@ namespace CrossEngine.Components
             }
         }
 
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 EulerRotationOffset
         {
             get

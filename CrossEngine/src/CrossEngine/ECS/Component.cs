@@ -72,12 +72,14 @@ namespace CrossEngine.ECS
 
     }
 
+    [Obsolete("Not implemented")]
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class RequireComponentAttribute : Attribute
     {
         public readonly Type RequiredComponentType;
         public RequireComponentAttribute(Type componentType)
         {
+            // this is very stupid, this should never happen
             if (!componentType.IsSubclassOf(typeof(Component))) throw new InvalidOperationException($"Given type '{componentType.Name}' is not a subclass of '{nameof(Component)}'.");
             
             RequiredComponentType = componentType;

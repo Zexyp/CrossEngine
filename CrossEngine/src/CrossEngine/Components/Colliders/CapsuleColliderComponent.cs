@@ -11,7 +11,7 @@ namespace CrossEngine.Components
         float _radius = 0.5f;
         float _length = 1;
 
-        [EditorDrag(Min = float.Epsilon)]
+        [EditorDrag(float.Epsilon, float.MaxValue)]
         public float Radius
         {
             get => _radius;
@@ -24,7 +24,7 @@ namespace CrossEngine.Components
             }
         }
 
-        [EditorDrag(Min = float.Epsilon)]
+        [EditorDrag(float.Epsilon, float.MaxValue)]
         public float Length
         {
             get => _length;

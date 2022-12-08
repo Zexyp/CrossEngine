@@ -23,7 +23,7 @@ namespace CrossEngine.Rendering.Cameras
 
         public Frustum Frustum { get; set; }
 
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 Position
         {
             get => _position;

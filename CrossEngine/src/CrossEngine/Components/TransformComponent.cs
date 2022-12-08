@@ -50,7 +50,7 @@ namespace CrossEngine.Components
         public event Action<TransformComponent> OnTransformChanged;
 
         #region Properties
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 Position
         {
             get
@@ -80,7 +80,7 @@ namespace CrossEngine.Components
                 MarkForUpdate();
             }
         }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 EulerRotation
         {
             get
@@ -97,7 +97,7 @@ namespace CrossEngine.Components
                 MarkForUpdate();
             }
         }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 Scale
         {
             get

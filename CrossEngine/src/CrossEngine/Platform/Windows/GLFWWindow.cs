@@ -54,6 +54,9 @@ namespace CrossEngine.Platform.Windows
 
             // vsync
             Glfw.SwapInterval(Data.VSync ? 1 : 0);
+
+            // oh funny that was ez
+            Glfw.RequestWindowAttention(_nativeHandle);
         }
 
         protected internal override void DestroyWindow()
@@ -117,6 +120,7 @@ namespace CrossEngine.Platform.Windows
         private MouseButtonCallback _mouseButtonCallbackHolder;
         private MouseCallback _scrollCallbackHolder;
         private MouseCallback _cursorPositionCallbackHolder;
+        private FocusCallback _focusCallbackHolder;
 
         private void SetupCallbacks()
         {
@@ -131,6 +135,11 @@ namespace CrossEngine.Platform.Windows
             Glfw.SetCloseCallback(_nativeHandle, _closeCallbackHolder = (WindowHandle window) =>
             {
                 Data.EventCallback?.Invoke(new WindowCloseEvent());
+            });
+
+            Glfw.SetWindowFocusCallback(_nativeHandle, _focusCallbackHolder = (WindowHandle window, bool focused) =>
+            {
+                Data.EventCallback?.Invoke(new WindowFucusEvent(focused));
             });
 
             Glfw.SetKeyCallback(_nativeHandle, _keyCallbackHolder = (WindowHandle window, Keys key, int scanCode, InputState state, ModifierKeys mods) =>

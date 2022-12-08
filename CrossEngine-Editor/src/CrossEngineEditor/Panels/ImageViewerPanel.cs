@@ -1,5 +1,6 @@
 ﻿using System;
 using ImGuiNET;
+using ImGuizmoNET;
 
 using System.Numerics;
 using System.Text;
@@ -10,6 +11,7 @@ using CrossEngine.Scenes;
 using CrossEngine.Logging;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
+using CrossEngine.Rendering.Textures;
 
 using CrossEngineEditor.Utils;
 
@@ -19,7 +21,7 @@ namespace CrossEngineEditor.Panels
     {
         public ImageViewerPanel() : base("Image Viewer")
         {
-            this.WindowFlags |= ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.HorizontalScrollbar;
+            this.WindowFlags |= ImGuiWindowFlags.MenuBar;
         }
 
         AssetCollection<TextureAsset> textureAssets = null;
@@ -49,6 +51,9 @@ namespace CrossEngineEditor.Panels
             ImGui.PopStyleVar();
         }
         #endregion
+
+        Ref<Texture> selectedBoi;
+        private bool moveStarted = false;
 
         protected override void DrawWindowContent()
         {
@@ -83,32 +88,40 @@ namespace CrossEngineEditor.Panels
                 ImGui.EndMenuBar();
             }
 
-            if (!Ref.IsNull(selectedTextureAsset?.Texture))
+            if (!Ref.IsNull(selectedBoi))
             {
-                //ImGui.SetCursorPos(WindowSize / 2 - currentTexture.Texture.Size / 2);
-
-                if (Focused)
+                var cursorStartPos = ImGui.GetCursorPos();
+                ImGui.InvisibleButton("##interactor", WindowContentAreaMax - WindowContentAreaMin);
+                bool mouseDrag = ImGui.IsMouseDragging(ImGuiMouseButton.Left) || ImGui.IsMouseDragging(ImGuiMouseButton.Middle);
+                if (Focused && ImGui.IsItemHovered())
+                    moveStarted = true;
+                else if (!mouseDrag)
+                    moveStarted = false;
+                if (moveStarted)
                 {
                     var io = ImGui.GetIO();
-                    if (ImGui.IsMouseDragging(ImGuiMouseButton.Left) || ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
+                    if (mouseDrag)
                     {
                         viewPos += 1 / viewZoom * io.MouseDelta;
                     }
-                    if (io.MouseWheel != 0.0f && ImGui.GetIO().KeyCtrl)
+                    if (io.MouseWheel != 0.0f)
                     {
                         viewZoom += io.MouseWheel * 0.25f * viewZoom;
                         viewZoom = Math.Max(viewZoom, 1.0f / 8);
                     }
                 }
+                ImGui.SetCursorPos(cursorStartPos);
 
-                var tex = selectedTextureAsset.Texture.Value;
-                var cursorScreenCenter = (WindowContentAreaMax - WindowContentAreaMin) / 2;
-                var imgTransMat = Matrix3x2.CreateScale(viewZoom) * Matrix3x2.CreateTranslation(viewPos) * Matrix3x2.CreateTranslation(ImGui.GetCursorPos() + cursorScreenCenter + WindowContentAreaMin);
+                var tex = selectedBoi.Value;
+                var cursorScreenCenter = (WindowContentAreaMax + WindowContentAreaMin) / 2;
+                var imgTransMat = Matrix3x2.CreateTranslation(viewPos) * Matrix3x2.CreateScale(viewZoom) * Matrix3x2.CreateTranslation(cursorScreenCenter);
                 var min = Vector2.Transform(-tex.Size / 2, imgTransMat);
                 var max = Vector2.Transform( tex.Size / 2, imgTransMat);
 
-                ImGui.GetWindowDrawList().AddImage(new IntPtr(selectedTextureAsset.Texture.Value.RendererId), min, max, new (0, 1), new (1, 0));
-                
+                ImGui.GetWindowDrawList().AddImage(new IntPtr(tex.RendererId), min, max, new (0, 1), new (1, 0));
+                ImGui.GetWindowDrawList().AddCircle(WindowContentAreaMin, 20, 0xff00ffff);
+                ImGui.GetWindowDrawList().AddCircle(WindowContentAreaMax, 20, 0xff00ffff);
+
                 Vector2 bakus = Vector2.Zero;
                 if (min.X - WindowContentAreaMin.X < 0)
                     bakus.X += WindowContentAreaMin.X - min.X;
@@ -121,23 +134,23 @@ namespace CrossEngineEditor.Panels
                 if (bakus != Vector2.Zero)
                     bakus += new Vector2(ImGui.GetStyle().ScrollbarSize);
 
-                ImGui.InvisibleButton("##interactor", WindowContentAreaMax - WindowContentAreaMin);
-
+                
+                var funnyOrthoViewport = (WindowContentAreaMax - WindowContentAreaMin) / 2 / viewZoom;
                 ImGuizmoNET.ImGuizmo.SetOrthographic(true);
-                var projMat = Matrix4x4Extension.Ortho(1 / viewZoom * -cursorScreenCenter.X,
-                                                       1 / viewZoom * cursorScreenCenter.X,
-                                                       1 / viewZoom * -cursorScreenCenter.Y,
-                                                       1 / viewZoom * cursorScreenCenter.Y,
+                var projMat = Matrix4x4Extension.Ortho(-funnyOrthoViewport.X,
+                                                       funnyOrthoViewport.X,
+                                                       -funnyOrthoViewport.Y,
+                                                       funnyOrthoViewport.Y,
                                                        -1, 1);
                 var viewMat = Matrix4x4.CreateTranslation(new Vector3(viewPos.X, -viewPos.Y, 0));
                 var modeMat = Matrix4x4.CreateScale(new Vector3(1, 1, 0));
                 var identity = Matrix4x4.Identity;
-                ImGuizmoNET.ImGuizmo.SetRect(WindowContentAreaMin.X,
+                ImGuizmo.SetRect(WindowContentAreaMin.X,
                                     WindowContentAreaMin.Y,
                                     WindowContentAreaMax.X - WindowContentAreaMin.X,
                                     WindowContentAreaMax.Y - WindowContentAreaMin.Y);
-                ImGuizmoNET.ImGuizmo.SetDrawlist();
-                ImGuizmoNET.ImGuizmo.Manipulate(ref viewMat.M11, ref projMat.M11, ImGuizmoNET.OPERATION.TRANSLATE, ImGuizmoNET.MODE.WORLD, ref modeMat.M11);
+                ImGuizmo.SetDrawlist();
+                ImGuizmo.Manipulate(ref viewMat.M11, ref projMat.M11, ImGuizmoNET.OPERATION.TRANSLATE, ImGuizmoNET.MODE.WORLD, ref modeMat.M11);
 
                 //if (ImGui.hovered())
                 //{
@@ -168,6 +181,23 @@ namespace CrossEngineEditor.Panels
                 //    viewPos.Y = ImGui.GetScrollY() + WindowSize.Y / 2;
                 //}
             }
+        }
+
+        public override void OnOpen()
+        {
+            ThreadManager.ExecuteOnRenderThread(() =>
+            {
+                selectedBoi = TextureLoader.LoadTexture(CrossEngine.Properties.Resources.DefaultWindowIcon.ToBitmap());
+            });
+        }
+
+        public override void OnClose()
+        {
+            ThreadManager.ExecuteOnRenderThread(() =>
+            {
+                selectedBoi.Value.Dispose();
+                selectedBoi = null;
+            });
         }
 
         private void ResetView()

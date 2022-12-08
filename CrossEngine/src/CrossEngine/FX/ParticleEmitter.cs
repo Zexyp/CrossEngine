@@ -29,7 +29,7 @@ namespace CrossEngine.FX.Particles
 
     public class BoxParticleEmitter : ParticleEmitter
     {
-        [EditorDrag(Min = 0)]
+        [EditorDrag(0, float.MaxValue)]
         public Vector3 Size = Vector3.One;
 
         public override void Emit(ref Particle particle)
@@ -55,7 +55,7 @@ namespace CrossEngine.FX.Particles
 
     public class SphereParticleEmitter : ParticleEmitter
     {
-        [EditorDrag(Min = 0)]
+        [EditorDrag(0, float.MaxValue)]
         public Vector3 Size = Vector3.One;
 
         public override void Emit(ref Particle particle)

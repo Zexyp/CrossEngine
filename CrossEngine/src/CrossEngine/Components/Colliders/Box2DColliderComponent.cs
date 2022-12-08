@@ -10,7 +10,7 @@ namespace CrossEngine.Components
     {
         Vector2 _size = Vector2.One;
 
-        [EditorDrag(Min = float.Epsilon)]
+        [EditorDrag(float.Epsilon, float.MaxValue)]
         public Vector2 Size
         {
             get => _size;
