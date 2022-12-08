@@ -15,35 +15,35 @@ namespace CrossEngine.FX.Particles
     public class ParticleProperties : ISerializable
     {
         [EditorSection("Life")]
-        [EditorDrag(Min = 0)]
+        [EditorDrag(0, float.MaxValue)]
         public float lifeTime;
-        [EditorDrag(Min = 0, Max = 1)]
+        [EditorDrag(0, 1)]
         public float lifeTimeVariation;
 
         [EditorSection("Velocity")]
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 velocity;
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 velocityVariation;
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float gravityEffect;
 
         [EditorSection("Color")]
         [EditorGradient]
         public Gradient<Vector4> colorGradient = new Gradient<Vector4>((0, Vector4.One));
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 colorVariation; // hsv
 
         [EditorSection("Size")]
         [EditorGradient]
         public Gradient<float> sizeGradient = new Gradient<float>(1, 0);
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float sizeVariation;
 
         [EditorSection("Rotation")]
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float rotation;
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float rotationVariation, rotationVelocity, rotationVelocityVariation;
 
         public static ParticleProperties CreateSimple()

@@ -47,7 +47,7 @@ namespace CrossEngineEditor
         private float _zFar = 1.0f;
 
         #region Properies
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float OrthographicSize
         {
             get => _orthographicSize;
@@ -58,7 +58,7 @@ namespace CrossEngineEditor
                 ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float ZNear
         {
             get => _zNear;
@@ -69,7 +69,7 @@ namespace CrossEngineEditor
                 ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float ZFar
         {
             get => _zFar;
@@ -126,7 +126,7 @@ namespace CrossEngineEditor
         public override Matrix4x4 ViewMatrix => base.ViewMatrix * Matrix4x4.CreateTranslation(new Vector3(0, 0, _zoom));
 
         #region Properies
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float ZNear
         {
             get => _zNear;
@@ -137,7 +137,7 @@ namespace CrossEngineEditor
                 ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float ZFar
         {
             get => _zFar;
@@ -148,7 +148,7 @@ namespace CrossEngineEditor
                 ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorDrag(Min = 1, Max = 179.999985f)]
+        [EditorDrag(1, 179.999985f)]
         public float FOV
         {
             get => _fov;
@@ -159,7 +159,7 @@ namespace CrossEngineEditor
                 ProjectionMatrix = CreateProjectionMatrix();
             }
         }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public float ZoomDistance
         {
             get => _zoom;

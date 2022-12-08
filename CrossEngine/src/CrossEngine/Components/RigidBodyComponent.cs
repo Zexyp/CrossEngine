@@ -43,7 +43,7 @@ namespace CrossEngine.Components
             }
         }
 
-        [EditorDrag(Min = float.Epsilon)]
+        [EditorDrag(float.Epsilon, float.MaxValue)]
         public float Mass
         {
             get => _mass;
@@ -59,7 +59,7 @@ namespace CrossEngine.Components
         }
 
         [EditorSection("Velocities")]
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 Velocity
         {
             get => _velocity;
@@ -72,7 +72,7 @@ namespace CrossEngine.Components
             }
         }
 
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 AngularVelocity
         {
             get => _angularVelocity;
@@ -85,7 +85,7 @@ namespace CrossEngine.Components
             }
         }
 
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 LinearFactor
         {
             get => _linearFactor;
@@ -98,7 +98,7 @@ namespace CrossEngine.Components
             }
         }
 
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector3 AngularFactor
         {
             get => _angularFactor;

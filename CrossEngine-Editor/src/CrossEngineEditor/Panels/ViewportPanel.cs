@@ -36,7 +36,7 @@ namespace CrossEngineEditor.Panels
             }
         }
 
-        [EditorDrag(Min = 0.25f)]
+        [EditorDrag(0.25f, float.MaxValue)]
         public float _cameraMovementSpeed = 2;
 
         private OrthographicControllableEditorCamera _orthographicCamera;
@@ -169,7 +169,8 @@ namespace CrossEngineEditor.Panels
             base.DrawWindowContent();
 
             bool disableSelect = false;
-            if (Context.ActiveEntity?.Transform != null)
+            var transformComponent = Context.ActiveEntity?.Transform;
+            if (transformComponent != null)
             {
                 ImGuizmo.SetOrthographic(ProjectioMode == ViewportPanel.ProjectionMode.Orthographic);
 
@@ -181,14 +182,21 @@ namespace CrossEngineEditor.Panels
 
                 var cameraView = CurrentCamera.ViewMatrix;
                 var cameraProjection = CurrentCamera.ProjectionMatrix;
-                var transformMat = Context.ActiveEntity.Transform.WorldTransformMatrix;
+                var transformMat = transformComponent.WorldTransformMatrix;
 
                 ImGuizmo.SetDrawlist();
                 if (ImGuizmo.Manipulate(ref cameraView.M11, ref cameraProjection.M11, _currentGizmoOperation, (_currentGizmoOperation != OPERATION.SCALE) ? _currentGizmoMode : MODE.LOCAL, ref transformMat.M11))
                 {
-                    // safety feature
-                    if (!Matrix4x4Extension.HasNaNElement(transformMat))
-                        Context.ActiveEntity.Transform.SetWorldTransform(transformMat);
+                    var parentTransformComponent = Context.ActiveEntity.Parent?.Transform;
+                    var matrix = transformMat;
+
+                    if (parentTransformComponent != null)
+                        matrix = matrix * Matrix4x4Extension.Invert(parentTransformComponent.WorldTransformMatrix); // omg, finally fixed it
+                    // this makes sense: https://blender.stackexchange.com/questions/169416/does-a-child-object-inherit-the-matrix-from-the-parent
+
+                    // safety feature - no filter is perfect (garbage in, garbage out)
+                    if (!Matrix4x4Extension.HasNaNElement(matrix))
+                        transformComponent.SetTransform(matrix);
                 }
 
                 disableSelect |= ImGuizmo.IsOver();

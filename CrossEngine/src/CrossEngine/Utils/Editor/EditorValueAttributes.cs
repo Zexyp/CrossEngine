@@ -56,108 +56,70 @@ namespace CrossEngine.Utils.Editor
         }
     }
 
-    public interface IRangeValue
+    public interface IValueRange
     {
-
+        public float Min { get; set; }
+        public float Max { get; set; }
     }
 
-    public interface IRangeValue<T> : IRangeValue where T : IComparable<T>, IComparable
-    {
-        public T Min { get; set; }
-        public T Max { get; set; }
-        public T SoftMin { get; set; }
-        public T SoftMax { get; set; }
-    }
-
-    public interface ISteppedRangeValue
-    {
-
-    }
-
-    public interface ISteppedRangeValue<TRange> : ISteppedRangeValue, IRangeValue<TRange> where TRange : IComparable<TRange>, IComparable
+    public interface ISteppedValueRange : IValueRange
     {
         public float Step { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorRangeAttribute : EditorValueAttribute, IRangeValue<float>
+    public class EditorRangeAttribute : EditorValueAttribute, IValueRange
     {
-        public float Min { get; set; } = float.MinValue;
-        public float Max { get; set; } = float.MaxValue;
-        public float SoftMin { get; set; }
-        public float SoftMax { get; set; }
+        public float Min { get; set; }
+        public float Max { get; set; }
 
-        public EditorRangeAttribute()
+        public EditorRangeAttribute(float min, float max)
         {
-            SoftMin = Min;
-            SoftMax = Max;
+            Min = min;
+            Max = max;
         }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorRangeIntAttribute : EditorValueAttribute, IRangeValue<int>
-    {
-        public int Min { get; set; } = int.MinValue;
-        public int Max { get; set; } = int.MaxValue;
-        public int SoftMin { get; set; }
-        public int SoftMax { get; set; }
-
-        public EditorRangeIntAttribute()
-        {
-            SoftMin = Min;
-            SoftMax = Max;
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorDragAttribute : EditorRangeAttribute, ISteppedRangeValue<float>
+    public class EditorDragAttribute : EditorRangeAttribute, ISteppedValueRange
     {
         public float Step { get; set; } = 0.1f;
+
+        public EditorDragAttribute(float min, float max) : base(min, max) { }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorSliderAttribute : EditorRangeAttribute, IRangeValue<float>
+    public class EditorSliderAttribute : EditorRangeAttribute, IValueRange
     {
-        //public float Step { get; set; } = 0.1f;
+        public EditorSliderAttribute(float min, float max) : base(min, max) { }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorDragIntAttribute : EditorRangeIntAttribute, ISteppedRangeValue<int>
-    {
-        public float Step { get; set; } = 0.1f;
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorSliderIntAttribute : EditorRangeIntAttribute, IRangeValue<int>
-    {
-        //public int Step { get; set; } = 1;
-    }
-
     public class EditorEnumAttribute : EditorValueAttribute
     {
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorColorAttribute : EditorValueAttribute
     {
         public bool HDR = true;
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorInnerDrawAttribute : EditorValueAttribute
     {
         public EditorInnerDrawAttribute() { }
         public EditorInnerDrawAttribute(string name) : base(name) { }
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorGradientAttribute : EditorValueAttribute
     {
         public EditorGradientAttribute() { }
         public EditorGradientAttribute(string name) : base(name) { }
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorAssetAttribute : EditorValueAttribute
     {
         public Type AssetType;
@@ -182,7 +144,7 @@ namespace CrossEngine.Utils.Editor
 
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public abstract class EditorNumberValueAttribute : EditorValueAttribute
     {
         public NumberInputType NumberInputType = NumberInputType.Drag;
@@ -201,79 +163,7 @@ namespace CrossEngine.Utils.Editor
             : base(name) { }
     }
 
-    #region Number
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorInt32ValueAttribute : EditorNumberValueAttribute
-    {
-        public EditorInt32ValueAttribute() { }
-        public EditorInt32ValueAttribute(string name) : base(name) { }
-        public EditorInt32ValueAttribute(
-            string name = null,
-            NumberInputType numberInputType = NumberInputType.Drag,
-            float max = float.MaxValue,
-            float min = float.MinValue,
-            float step = 0.1f)
-            : base(name, numberInputType, max, min, step) { }
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorSingleValueAttribute : EditorNumberValueAttribute
-    {
-        public EditorSingleValueAttribute() { }
-        public EditorSingleValueAttribute(string name) : base(name) { }
-        public EditorSingleValueAttribute(
-            string name = null,
-            NumberInputType numberInputType = NumberInputType.Drag,
-            float max = float.MaxValue,
-            float min = float.MinValue,
-            float step = 0.1f)
-            : base(name, numberInputType, max, min, step) { }
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorVector2ValueAttribute : EditorNumberValueAttribute
-    {
-        public EditorVector2ValueAttribute() { }
-        public EditorVector2ValueAttribute(string name) : base(name) { }
-        public EditorVector2ValueAttribute(
-            string name = null,
-            NumberInputType numberInputType = NumberInputType.Drag,
-            float max = float.MaxValue,
-            float min = float.MinValue,
-            float step = 0.1f)
-            : base(name, numberInputType, max, min, step) { }
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorVector3ValueAttribute : EditorNumberValueAttribute
-    {
-        public EditorVector3ValueAttribute() { }
-        public EditorVector3ValueAttribute(string name) : base(name) { }
-        public EditorVector3ValueAttribute(
-            string name = null,
-            NumberInputType numberInputType = NumberInputType.Drag,
-            float max = float.MaxValue,
-            float min = float.MinValue,
-            float step = 0.1f)
-            : base(name, numberInputType, max, min, step) { }
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class EditorVector4ValueAttribute : EditorNumberValueAttribute
-    {
-        public EditorVector4ValueAttribute() { }
-        public EditorVector4ValueAttribute(string name) : base(name) { }
-        public EditorVector4ValueAttribute(
-            string name = null,
-            NumberInputType numberInputType = NumberInputType.Drag,
-            float max = float.MaxValue,
-            float min = float.MinValue,
-            float step = 0.1f)
-            : base(name, numberInputType, max, min, step) { }
-    }
-    #endregion
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorStringAttribute : EditorValueAttribute
     {
         public EditorStringAttribute() { }
@@ -292,7 +182,7 @@ namespace CrossEngine.Utils.Editor
         public uint MaxLength = 256;
     }
 
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorBooleanValueAttribute : EditorValueAttribute
     {
         public EditorBooleanValueAttribute() { }
@@ -300,7 +190,7 @@ namespace CrossEngine.Utils.Editor
     }
 
     [Obsolete("No longer supported")]
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorAssetValueAttribute : EditorValueAttribute
     {
         public Type Type;

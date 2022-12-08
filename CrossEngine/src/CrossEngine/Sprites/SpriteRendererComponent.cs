@@ -26,7 +26,7 @@ namespace CrossEngine.Components
         //    Blending = 2
         //}
 
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector4 DrawOffsets
         {
             get => _drawOffsets;
@@ -37,7 +37,7 @@ namespace CrossEngine.Components
                 _localOffsetMatrixDirty = true;
             }
         }
-        [EditorDrag]
+        [EditorDrag(float.MinValue, float.MaxValue)]
         public Vector4 TextureOffsets = new Vector4(0f, 0f, 1f, 1f);
 
         [EditorColor]

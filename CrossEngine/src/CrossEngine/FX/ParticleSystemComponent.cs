@@ -45,7 +45,7 @@ namespace CrossEngine.FX.Particles
 
         AABox IParticleSystemRenderData.Bounds => AABox.CreateFromExtents(min, max);
 
-        [EditorDragInt(Min = 1)]
+        [EditorDrag(1, uint.MaxValue)]
         public uint ParticlePoolSize
         {
             get => _particlePoolSize;
@@ -75,9 +75,9 @@ namespace CrossEngine.FX.Particles
                 _emitAggregate = 0;
             }
         }
-        [EditorDragInt(Min = 0)]
+        [EditorDrag(0, float.MaxValue)]
         public int EmitCount = 1;
-        [EditorDrag(Min = 0)]
+        [EditorDrag(0, float.MaxValue)]
         public float EmitEvery = 0.1f;
 
         [EditorEnum]

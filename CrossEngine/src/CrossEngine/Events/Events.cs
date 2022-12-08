@@ -36,6 +36,16 @@ namespace CrossEngine.Events
     {
 
     }
+
+    public class WindowFucusEvent : WindowEvent
+    {
+        public readonly bool Focused;
+
+        public WindowFucusEvent(bool focused)
+        {
+           this.Focused = focused;
+        }
+    }
     #endregion
 
     #region Key
