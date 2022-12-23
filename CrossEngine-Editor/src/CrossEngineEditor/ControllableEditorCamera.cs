@@ -111,7 +111,7 @@ namespace CrossEngineEditor
         public override void Fly(Vector3 delta, Vector2 mouse)
         {
             Position += new Vector3(delta.X, delta.Z, delta.Y) * OrthographicSize;
-            Zoom(mouse.X * 0.05f);
+            Zoom(mouse.Y * 0.05f);
         }
     }
 

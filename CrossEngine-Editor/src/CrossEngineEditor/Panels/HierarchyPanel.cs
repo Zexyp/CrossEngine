@@ -8,13 +8,15 @@ using CrossEngine.ECS;
 using CrossEngine.Utils;
 using CrossEngine.Components;
 
+using CrossEngineEditor.Operations;
+
 namespace CrossEngineEditor.Panels
 {
     public class HierarchyPanel : EditorPanel
     {
-        private const string DragDropIdentifier = "_TREENODE<ENTITY>";
+        private const string DragDropIdentifier = nameof(TreeNode<Entity>);
 
-        public HierarchyPanel() : base("Outliner")
+        public HierarchyPanel() : base("Hierarchy")
         {
             WindowFlags = ImGuiWindowFlags.MenuBar;
         }
@@ -25,14 +27,21 @@ namespace CrossEngineEditor.Panels
             {
                 if (ImGui.BeginMenu("Edit", Context.Scene != null))
                 {
-                    if (ImGui.MenuItem("Add Entity"))
+                    if (ImGui.MenuItem("Add Entity", Context.Scene != null))
                     {
-                        if (Context != null)
-                            Context.Scene.CreateEntity();
+                        var ent = Context.Scene.CreateEntity();
+                        var op = new EntityAddOperation(ent, Context.Scene);
+                        Context.Operations.Push(op);
                     }
                     if (ImGui.MenuItem("Remove Entity", Context.ActiveEntity != null))
                     {
-                        Context.Scene.DestroyEntity(Context.ActiveEntity);
+                        var entToRemove = Context.ActiveEntity;
+                        var op = new EntityRemoveOperation(entToRemove, Context.Scene, entToRemove.Parent, System.Linq.Enumerable.ToArray(entToRemove.Children),
+                            Context.Scene.GetEntityIndex(entToRemove),
+                            entToRemove.Parent == null ? Context.Scene.GetRootEntityIndex(entToRemove) : entToRemove.Parent.GetChildIndex(entToRemove));
+                        Context.Operations.Push(op);
+                        // we need to only remove because of the undo, redo
+                        Context.Scene.RemoveEntity(entToRemove);
                         Context.ActiveEntity = null;
                     }
 
@@ -43,11 +52,13 @@ namespace CrossEngineEditor.Panels
 
             if (Context.Scene != null)
             {
+                ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(4));
                 var ents = Context.Scene.HierarchyRoot;
                 for (int i = 0; i < ents.Count; i++)
                 {
                     DrawEntityNode(ents[i], i.ToString());
                 }
+                ImGui.PopStyleVar();
             }
         }
 
@@ -67,7 +78,7 @@ namespace CrossEngineEditor.Panels
                 {
                     ImGui.Button("##target", new Vector2(ImGui.GetColumnWidth(), 2.5f));
             
-                    if (ImGui.IsItemHovered()) resetTarget = true;
+                    if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) resetTarget = true;
                 }
             
                 // dropped next to
@@ -83,23 +94,45 @@ namespace CrossEngineEditor.Panels
                         if (!targetedNode.IsParentedBy(selectedDragNDropNode))
                         {
                             if (selectedDragNDropNode.Parent != targetedNode.Parent)
+                            {
+                                var op = new EntityParentChangeOperation(selectedDragNDropNode, selectedDragNDropNode.Parent, targetedNode.Parent);
+                                Context.Operations.Push(op);
                                 selectedDragNDropNode.Parent = targetedNode.Parent;
-            
+                            }
+
+                            int prevSelectedDND = Context.Scene.GetEntityIndex(selectedDragNDropNode);
                             int tnei = Context.Scene.GetEntityIndex(targetedNode);
-                            if (tnei > Context.Scene.GetEntityIndex(selectedDragNDropNode)) tnei--;
-                            Context.Scene.ShiftEntity(selectedDragNDropNode, tnei);
+                            if (tnei > prevSelectedDND) tnei--;
+                            if (prevSelectedDND != tnei)
+                            {
+                                Context.Scene.ShiftEntity(selectedDragNDropNode, tnei);
+                                var op = new SceneShiftEntityOperation(Context.Scene, selectedDragNDropNode, tnei, prevSelectedDND);
+                                Context.Operations.Push(op);
+                            }
             
                             if (targetedNode.Parent != null)
                             {
+                                int prevSelectedDNDi = targetedNode.Parent.GetChildIndex(selectedDragNDropNode);
                                 int tnci = targetedNode.Parent.GetChildIndex(targetedNode);
-                                if (tnci > targetedNode.Parent.GetChildIndex(selectedDragNDropNode)) tnci--;
-                                targetedNode.Parent.ShiftChild(selectedDragNDropNode, tnci);
+                                if (tnci > prevSelectedDNDi) tnci--;
+                                if (prevSelectedDNDi != tnei)
+                                {
+                                    targetedNode.Parent.ShiftChild(selectedDragNDropNode, tnci);
+                                    var op = new EntityShiftChildOperation(targetedNode.Parent, selectedDragNDropNode, tnei, prevSelectedDNDi);
+                                    Context.Operations.Push(op);
+                                }
                             }
                             else
                             {
+                                int prevSelectedDNDi = Context.Scene.GetRootEntityIndex(selectedDragNDropNode);
                                 int tnci = Context.Scene.GetRootEntityIndex(targetedNode);
                                 if (tnci > Context.Scene.GetRootEntityIndex(selectedDragNDropNode)) tnci--;
-                                Context.Scene.ShiftRootEntity(selectedDragNDropNode, tnci);
+                                if (prevSelectedDNDi != tnei)
+                                {
+                                    Context.Scene.ShiftRootEntity(selectedDragNDropNode, tnci);
+                                    var op = new SceneShiftRootEntityOperation(Context.Scene, selectedDragNDropNode, tnei, prevSelectedDNDi);
+                                    Context.Operations.Push(op);
+                                }
                             }
                         }
                         else EditorApplication.Log.Trace($"drop failed (cyclic tree prevented)");
@@ -114,10 +147,11 @@ namespace CrossEngineEditor.Panels
             }
 
             ImGuiTreeNodeFlags flags = ((node == Context.ActiveEntity) ? ImGuiTreeNodeFlags.Selected : ImGuiTreeNodeFlags.None) |
+                                       ((node.Children.Count <= 0) ? ImGuiTreeNodeFlags.Leaf : ImGuiTreeNodeFlags.None) |
                                        ImGuiTreeNodeFlags.OpenOnArrow |
                                        ImGuiTreeNodeFlags.OpenOnDoubleClick |
                                        ImGuiTreeNodeFlags.DefaultOpen |
-                                       ((node.Children.Count <= 0) ? ImGuiTreeNodeFlags.Leaf : ImGuiTreeNodeFlags.None);
+                                       ImGuiTreeNodeFlags.FramePadding;
             
             if (node == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
 
@@ -128,7 +162,15 @@ namespace CrossEngineEditor.Panels
             if (node == Context.ActiveEntity) ImGui.PopStyleColor();
 
             if (ImGui.IsItemClicked())
-                Context.ActiveEntity = node;
+            {
+
+                if (Context.ActiveEntity != node)
+                {
+                    var op = new EntitySelectOpertion(Context, Context.ActiveEntity, node);
+                    Context.Operations.Push(op);
+                    Context.ActiveEntity = node;
+                }
+            }
 
             // drag drop
             unsafe
@@ -152,39 +194,20 @@ namespace CrossEngineEditor.Panels
                         EditorApplication.Log.Trace("dropped " +
                             $"{((selectedDragNDropNode != null) ? selectedDragNDropNode.Id : "null")} onto " +
                             $"{((node != null) ? node.Id : "null")}");
-            
-                        if (!node.IsParentedBy(selectedDragNDropNode)) selectedDragNDropNode.Parent = node;
-                        else EditorApplication.Log.Trace($"drop failed (cyclic tree prevented)");
+
+                        if (!node.IsParentedBy(selectedDragNDropNode))
+                        {
+                            var op = new EntityParentChangeOperation(selectedDragNDropNode, selectedDragNDropNode.Parent, node);
+                            Context.Operations.Push(op);
+                            selectedDragNDropNode.Parent = node;
+                        }
+                        else
+                            EditorApplication.Log.Trace($"drop failed (cyclic tree prevented)");
             
                         selectedDragNDropNode = null;
                         targetedNode = null;
                     }
                     ImGui.EndDragDropTarget();
-                }
-            }
-
-            // context menu
-            {
-                if (ImGui.BeginPopupContextItem())
-                {
-                    if (ImGui.MenuItem("Add child"))
-                    {
-                        var newboi = Context.Scene.CreateEntity();
-                        newboi.Parent = node;
-                    }
-                    if (ImGui.MenuItem("Add empty child"))
-                    {
-                        var newboi = Context.Scene.CreateEmptyEntity();
-                        newboi.Parent = node;
-                    }
-                    ImGui.Separator();
-                    if (ImGui.MenuItem("Remove entity", node != null))
-                    {
-                        Context.Scene.DestroyEntity(node);
-                        Context.ActiveEntity = null;
-                    }
-
-                    ImGui.EndPopup();
                 }
             }
 

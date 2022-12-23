@@ -95,9 +95,6 @@ namespace CrossEngineEditor.Panels
             });
         }
 
-        protected virtual void Resized()
-        {
-
-        }
+        protected abstract void Resized();
     }
 }

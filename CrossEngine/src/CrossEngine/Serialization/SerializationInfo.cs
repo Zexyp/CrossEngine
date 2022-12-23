@@ -4,17 +4,17 @@ namespace CrossEngine.Serialization
 {
     public abstract class SerializationInfo
     {
-        protected enum Operation
+        public enum OperationState
         {
             Read,
             Write,
         }
 
-        protected readonly Operation operation;
+        protected readonly OperationState State;
 
-        protected SerializationInfo(Operation operation)
+        protected SerializationInfo(OperationState operation)
         {
-            this.operation = operation;
+            this.State = operation;
         }
 
         public abstract void AddValue(string name, object? value);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace CrossEngineEditor.UndoRedo
 {
@@ -13,7 +14,12 @@ namespace CrossEngineEditor.UndoRedo
 
     public class OperationStack : IOperationHistory
     {
-        private int HistoryLength = 32;
+        public IReadOnlyCollection<IOperationShard> History => _operations;
+
+        public IOperationShard RecentLast => _lastShard?.Value;
+        public IOperationShard RecentNext => _nextShard?.Value;
+
+        private int HistoryLength = 64;
         private LinkedList<IOperationShard> _operations = new LinkedList<IOperationShard>();
         private LinkedListNode<IOperationShard> _lastShard;
         private LinkedListNode<IOperationShard> _nextShard;
@@ -21,6 +27,11 @@ namespace CrossEngineEditor.UndoRedo
 
         public void Push(IOperationShard shard)
         {
+            if (shard == null)
+                throw new ArgumentNullException("The fok u think u are doin");
+            if (_operations.Contains(shard))
+                throw new ArgumentException();
+
             // remove pending edits
             for (int i = 0; i < _depth; i++)
             {
@@ -59,6 +70,54 @@ namespace CrossEngineEditor.UndoRedo
             _nextShard = _nextShard.Next;
 
             _depth--;
+        }
+
+        public void JumpAfter(IOperationShard shard)
+        {
+            if (shard == null)
+                throw new ArgumentNullException("The fok u think u are doin");
+            if (!_operations.Contains(shard))
+                throw new InvalidOperationException("Shard is not a part of the history.");
+
+            var before = _lastShard;
+            var after = _nextShard;
+
+            while (shard != before?.Value && shard != after?.Value)
+            {
+                before = before?.Previous;
+                after = after?.Next;
+            }
+
+            if (before?.Value == shard)
+                while (_lastShard?.Value != shard)
+                    Undo();
+            if (after?.Value == shard)
+                while (_lastShard?.Value != shard)
+                    Redo();
+        }
+
+        public void JumpBefore(IOperationShard shard)
+        {
+            if (shard == null)
+                throw new ArgumentNullException("The fok u think u are doin");
+            if (!_operations.Contains(shard))
+                throw new InvalidOperationException("Shard is not a part of the history.");
+
+            var before = _lastShard;
+            var after = _nextShard;
+
+            while (shard != before?.Value && shard != after?.Value)
+            {
+                before = before?.Previous;
+                after = after?.Next;
+            }
+
+            if (before?.Value == shard)
+                while (_nextShard?.Value != shard)
+                    Undo();
+            if (after?.Value == shard)
+                while (_nextShard?.Value != shard)
+                    Redo();
         }
     }
 

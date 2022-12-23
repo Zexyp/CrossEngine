@@ -59,11 +59,36 @@ namespace CrossEngine.ECS
 
         private World _world;
 
-        internal Entity(World world)
+        public Entity()
         {
-            _world = world;
             Components = _components.AsReadOnly();
             Children = _children.AsReadOnly();
+        }
+
+        public void Attach(World world)
+        {
+            if (_world != null)
+                throw new InvalidOperationException();
+
+            _world = world;
+
+            for (int i = 0; i < _components.Count; i++)
+            {
+                _components[i].Attach(_world);
+            }
+        }
+
+        public void Detach(World world)
+        {
+            if (_world == null || _world != world)
+                throw new InvalidOperationException();
+
+            for (int i = 0; i < _components.Count; i++)
+            {
+                _components[i].Detach(_world);
+            }
+
+            _world = null;
         }
 
         #region Component Methods
@@ -88,7 +113,7 @@ namespace CrossEngine.ECS
             _components.Add(component);
             component.Entity = this;
 
-            component.Attach(_world);
+            if (_world != null) component.Attach(_world);
 
             OnComponentAdded?.Invoke(this, component);
 
@@ -111,7 +136,7 @@ namespace CrossEngine.ECS
         {
             OnComponentRemoved?.Invoke(this, component);
 
-            component.Detach(_world);
+            if (_world != null) component.Detach(_world);
 
             component.Entity = null;
             _components.Remove(component);
@@ -225,5 +250,10 @@ namespace CrossEngine.ECS
             return this.Parent.IsParentedBy(potpar);
         }
         #endregion
+
+        public override string ToString()
+        {
+            return $"Entity {{{nameof(Id)}: {Id}}}";
+        }
     }
 }

@@ -3,6 +3,7 @@ using ImGuiNET;
 using ImGuizmoNET;
 
 using System.Numerics;
+using System.Diagnostics;
 
 using CrossEngine;
 using CrossEngine.Rendering.Buffers;
@@ -15,13 +16,28 @@ using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Components;
+using CrossEngine.ECS;
 
 using CrossEngineEditor.Utils;
+using CrossEngineEditor.Operations;
 
 namespace CrossEngineEditor.Panels
 {
     class ViewportPanel : SceneViewPanel
     {
+        public enum ProjectionMode
+        {
+            Undefined = default,
+            Orthographic,
+            Perspective,
+        }
+        public enum ViewMode
+        {
+            Solid,
+            Wireframe,
+            Points,
+        }
+
         [EditorInnerDraw]
         public ControllableEditorCamera CurrentCamera
         {
@@ -41,20 +57,6 @@ namespace CrossEngineEditor.Panels
 
         private OrthographicControllableEditorCamera _orthographicCamera;
         private PerspectiveControllableEditorCamera _perspectiveCamera;
-
-        public enum ProjectionMode
-        {
-            Undefined = default,
-            Orthographic,
-            Perspective,
-        }
-
-        public enum ViewMode
-        {
-            Solid,
-            Wireframe,
-            Points,
-        }
 
         private ProjectionMode _projectionMode = ProjectionMode.Orthographic;
         private ViewMode _viewMode = ViewMode.Solid;
@@ -121,6 +123,9 @@ namespace CrossEngineEditor.Panels
         {
         }
 
+        private bool gizmoUsed = false;
+        private bool lastGizmoUsed = false;
+        private EntityTransformChangeOperation transformOperation = null;
         protected override void DrawWindowContent()
         {
             #region MenuBar
@@ -184,20 +189,33 @@ namespace CrossEngineEditor.Panels
                 var cameraProjection = CurrentCamera.ProjectionMatrix;
                 var transformMat = transformComponent.WorldTransformMatrix;
 
+                bool manipulated;
+
+                var prevTransform = transformComponent.TransformMatrix;
+
                 ImGuizmo.SetDrawlist();
-                if (ImGuizmo.Manipulate(ref cameraView.M11, ref cameraProjection.M11, _currentGizmoOperation, (_currentGizmoOperation != OPERATION.SCALE) ? _currentGizmoMode : MODE.LOCAL, ref transformMat.M11))
+                if (manipulated = ImGuizmo.Manipulate(ref cameraView.M11, ref cameraProjection.M11, _currentGizmoOperation, (_currentGizmoOperation != OPERATION.SCALE) ? _currentGizmoMode : MODE.LOCAL, ref transformMat.M11))
                 {
-                    var parentTransformComponent = Context.ActiveEntity.Parent?.Transform;
-                    var matrix = transformMat;
-
-                    if (parentTransformComponent != null)
-                        matrix = matrix * Matrix4x4Extension.Invert(parentTransformComponent.WorldTransformMatrix); // omg, finally fixed it
-                    // this makes sense: https://blender.stackexchange.com/questions/169416/does-a-child-object-inherit-the-matrix-from-the-parent
-
-                    // safety feature - no filter is perfect (garbage in, garbage out)
-                    if (!Matrix4x4Extension.HasNaNElement(matrix))
-                        transformComponent.SetTransform(matrix);
+                    if (!Matrix4x4Extension.HasNaNElement(transformMat))
+                        transformComponent.SetWorldTransform(transformMat);
                 }
+
+                gizmoUsed = ImGuizmo.IsUsing();
+                if (gizmoUsed != lastGizmoUsed && gizmoUsed)
+                {
+                    Debug.Assert(transformOperation == null);
+                    transformOperation = new EntityTransformChangeOperation(transformComponent, prevTransform);
+                }
+                if (gizmoUsed != lastGizmoUsed && !gizmoUsed)
+                {
+                    if (!Matrix4x4Extension.HasNaNElement(transformMat) && transformOperation.PreviousTransform != transformMat)
+                    {
+                        transformOperation.NextTransform = transformMat;
+                        Context.Operations?.Push(transformOperation);
+                    }
+                    transformOperation = null;
+                }
+                lastGizmoUsed = gizmoUsed;
 
                 disableSelect |= ImGuizmo.IsOver();
             }
@@ -279,7 +297,7 @@ namespace CrossEngineEditor.Panels
                         CurrentCamera?.Zoom(io.MouseWheel);
                 }
                 
-                // gizmo selection
+                // keyboard shorcuts
                 else
                 {
                     if (ImGui.IsKeyPressed('F'))
@@ -300,6 +318,7 @@ namespace CrossEngineEditor.Panels
                     }
                 }
 
+                // selection
                 if (!disableSelect && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                 {
                     Vector2 texpos = ImGui.GetMousePos() - new Vector2(WindowContentAreaMin.X, WindowContentAreaMax.Y);
@@ -309,7 +328,13 @@ namespace CrossEngineEditor.Panels
                     ((Framebuffer)Framebuffer).Unbind();
                     EditorApplication.Log.Trace($"selected entity id {result}");
 
-                    Context.ActiveEntity = Context.Scene.GetEntityById(result);
+                    var selectedEnt = Context.Scene.GetEntityById(result);
+                    if (selectedEnt != Context.ActiveEntity)
+                    {
+                        var op = new EntitySelectOpertion(Context, Context.ActiveEntity, selectedEnt);
+                        Context.Operations.Push(op);
+                        Context.ActiveEntity = selectedEnt;
+                    }
                 }
             }
         }

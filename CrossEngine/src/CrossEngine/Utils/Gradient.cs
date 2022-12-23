@@ -250,15 +250,15 @@ namespace CrossEngine.Utils
 
         public void GetObjectData(SerializationInfo info)
         {
-            info.AddValue(nameof(Elements), elements);
+            info.AddValue(nameof(Elements), elements.ToArray());
         }
 
         public void SetObjectData(SerializationInfo info)
         {
-            var els = info.GetValue<List<GradientElement>>(nameof(Elements));
+            var els = info.GetValue(nameof(Elements), elements.ToArray());
 
             elements.Clear();
-            for (int i = 0; i < els.Count; i++)
+            for (int i = 0; i < els.Length; i++)
             {
                 AddElement(els[i].position, els[i].value);
             }
