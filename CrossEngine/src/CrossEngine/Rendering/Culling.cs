@@ -1,6 +1,9 @@
 ﻿using System;
+
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
+
 using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Culling
@@ -65,36 +68,104 @@ namespace CrossEngine.Rendering.Culling
     }
 
     // should be called Frustrum becase it's frustrating
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct Frustum
+    public unsafe struct Frustum
     {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
-        public Plane Left;
-        public Plane Right;
-        public Plane Bottom;
-        public Plane Top;
-        public Plane Near;
-        public Plane Far;
+        const int SIZEOF_PLANE = 16;//sizeof(Plane)
+        private fixed float _planes[6 * (SIZEOF_PLANE / sizeof(float))];
 
-        private unsafe Plane* Planes;
+        #region Props
+        public Plane Left
+        {
+            get
+            {
+                fixed (void* p = &_planes[sizeof(Plane) * 0])
+                {
+                    Plane pp = *(Plane*)p;
+                    return pp;
+                }
+            }
+        }
+        public Plane Right
+        {
+            get
+            {
+                fixed (void* p = &_planes[sizeof(Plane) * 1])
+                {
+                    Plane pp = *(Plane*)p;
+                    return pp;
+                }
+            }
+        }
+        public Plane Bottom
+        {
+            get
+            {
+                fixed (void* p = &_planes[sizeof(Plane) * 2])
+                {
+                    Plane pp = *(Plane*)p;
+                    return pp;
+                }
+            }
+        }
+        public Plane Top
+        {
+            get
+            {
+                fixed (void* p = &_planes[sizeof(Plane) * 3])
+                {
+                    Plane pp = *(Plane*)p;
+                    return pp;
+                }
+            }
+        }
+        public Plane Near
+        {
+            get
+            {
+                fixed (void* p = &_planes[sizeof(Plane) * 4])
+                {
+                    Plane pp = *(Plane*)p;
+                    return pp;
+                }
+            }
+        }
+        public Plane Far
+        {
+            get
+            {
+                fixed (void* p = &_planes[sizeof(Plane) * 5])
+                {
+                    Plane pp = *(Plane*)p;
+                    return pp;
+                }
+            }
+        }
+        #endregion
 
-        // for debug perpouses
+#if DEBUG // for debug perpouses
         Vector3 centrus;
+#endif
 
         public unsafe void Prepare(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
         {
-            var inv = Matrix4x4Extension.Invert(viewMatrix);
-            fixed (Plane* p = &Left)
-                ExtractPlanes(Planes = p, projectionMatrix, inv, true);
-            centrus = Vector3.Transform(Vector3.One, inv);
+            Debug.Assert(Matrix4x4.Invert(viewMatrix, out var inv));
+            fixed (void* pl = &_planes[0])
+                ExtractPlanes((Plane*)pl, projectionMatrix, inv, true);
+#if DEBUG
+            centrus = Vector3.Transform(Vector3.Zero, inv);
+#endif
         }
 
         public unsafe Halfspace IsPointIn(Vector3 p)
         {
+            Plane* pp;
+            fixed (void* pl = &_planes[0])
+                pp = (Plane*)pl;
+
             var result = Halfspace.Inside;
             for (int i = 0; i < 6; i++)
             {
-                if (DistanceToPlane(p, Planes[i]) < 0)
+                if (DistanceToPlane(p, pp[i]) < 0)
                     return Halfspace.Outside;
             }
             return result;
@@ -102,11 +173,15 @@ namespace CrossEngine.Rendering.Culling
 
         public unsafe Halfspace IsSphereIn(Vector3 p, float radius)
         {
+            Plane* pp;
+            fixed (void* pl = &_planes[0])
+                pp = (Plane*)pl;
+
             var result = Halfspace.Inside;
             float distance;
             for (int i = 0; i < 6; i++)
             {
-                distance = DistanceToPlane(p, Planes[i]);
+                    distance = DistanceToPlane(p, pp[i]);
                 if (distance < -radius)
                     return Halfspace.Outside;
                 else if (distance < radius)
@@ -117,26 +192,36 @@ namespace CrossEngine.Rendering.Culling
 
         public unsafe Halfspace IsAABoxIn(AABox b)
         {
+            Plane* pp;
+            fixed (void* pl = &_planes[0])
+                pp = (Plane*)pl;
+
             var result = Halfspace.Inside;
             for (int i = 0; i < 6; i++)
             {
-                if (DistanceToPlane(b.GetVertexP(Planes[i].Normal), Planes[i]) < 0)
+                if (DistanceToPlane(b.GetVertexP(pp[i].Normal), pp[i]) < 0)
                     return Halfspace.Outside;
-                else if (DistanceToPlane(b.GetVertexN(Planes[i].Normal), Planes[i]) < 0)
+                else if (DistanceToPlane(b.GetVertexN(pp[i].Normal), pp[i]) < 0)
                     result = Halfspace.Intersect;
             }
             return result;
         }
 
+#if DEBUG
         public unsafe void Draw()
         {
-            LineRenderer.DrawLine(centrus, centrus + Planes[0].Normal * -Planes[0].D, new Vector4(0, 1, 1, 1));
-            LineRenderer.DrawLine(centrus, centrus + Planes[1].Normal * -Planes[1].D, new Vector4(1, 0, 0, 1));
-            LineRenderer.DrawLine(centrus, centrus + Planes[2].Normal * -Planes[2].D, new Vector4(1, 0, 1, 1));
-            LineRenderer.DrawLine(centrus, centrus + Planes[3].Normal * -Planes[3].D, new Vector4(0, 1, 0, 1));
-            LineRenderer.DrawLine(centrus, centrus + Planes[4].Normal * -Planes[4].D, new Vector4(1, 1, 0, 1));
-            LineRenderer.DrawLine(centrus, centrus + Planes[5].Normal * -Planes[5].D, new Vector4(0, 0, 1, 1));
+            Plane* pp;
+            fixed (void* pl = &_planes[0])
+                pp = (Plane*)pl;
+
+            LineRenderer.DrawLine(centrus, centrus + pp[0].Normal * -pp[0].D, new Vector4(0, 1, 1, 1));
+            LineRenderer.DrawLine(centrus, centrus + pp[1].Normal * -pp[1].D, new Vector4(1, 0, 0, 1));
+            LineRenderer.DrawLine(centrus, centrus + pp[2].Normal * -pp[2].D, new Vector4(1, 0, 1, 1));
+            LineRenderer.DrawLine(centrus, centrus + pp[3].Normal * -pp[3].D, new Vector4(0, 1, 0, 1));
+            LineRenderer.DrawLine(centrus, centrus + pp[4].Normal * -pp[4].D, new Vector4(1, 1, 0, 1));
+            LineRenderer.DrawLine(centrus, centrus + pp[5].Normal * -pp[5].D, new Vector4(0, 0, 1, 1));
         }
+#endif
 
 
 

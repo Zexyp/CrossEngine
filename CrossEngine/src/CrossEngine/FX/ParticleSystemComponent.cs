@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
+using System.Diagnostics;
 
 using CrossEngine.ECS;
 using CrossEngine.ComponentSystems;
@@ -217,7 +218,7 @@ namespace CrossEngine.FX.Particles
         {
             var tr = Entity.Transform;
             viewMatrix.Translation = Vector3.Zero;
-            viewMatrix = Matrix4x4Extension.Invert(viewMatrix);
+            Debug.Assert(Matrix4x4.Invert(viewMatrix, out viewMatrix));
             var cameraRight = Vector3.Transform(Vector3.UnitX, viewMatrix);
             var cameraUp = Vector3.Transform(Vector3.UnitY, viewMatrix);
             var cameraLook = tr?.WorldPosition ?? Vector3.Zero;

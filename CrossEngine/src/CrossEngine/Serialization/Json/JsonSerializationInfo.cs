@@ -10,13 +10,13 @@ namespace CrossEngine.Serialization.Json
 
         private JsonSerializer serializer;
 
-        public JsonSerializationInfo(JsonSerializer serializer, Utf8JsonWriter writer) : base(Operation.Write)
+        public JsonSerializationInfo(JsonSerializer serializer, Utf8JsonWriter writer) : base(OperationState.Write)
         {
             this.writer = writer;
             this.serializer = serializer;
         }
 
-        public JsonSerializationInfo(JsonSerializer serializer, JsonElement reader) : base(Operation.Read)
+        public JsonSerializationInfo(JsonSerializer serializer, JsonElement reader) : base(OperationState.Read)
         {
             this.reader = reader;
             this.serializer = serializer;
@@ -24,7 +24,7 @@ namespace CrossEngine.Serialization.Json
 
         public override void AddValue(string name, object? value)
         {
-            if (operation != Operation.Write) throw new InvalidOperationException();
+            if (State != OperationState.Write) throw new InvalidOperationException();
 
             writer.WritePropertyName(name);
             serializer.Serialize(writer, value);
@@ -32,14 +32,14 @@ namespace CrossEngine.Serialization.Json
 
         public override object? GetValue(string name, Type typeOfValue)
         {
-            if (operation != Operation.Read) throw new InvalidOperationException();
+            if (State != OperationState.Read) throw new InvalidOperationException();
 
             return serializer.Deserialize(reader.GetProperty(name), typeOfValue);
         }
 
         public override bool TryGetValue(string name, Type typeOfValue, out object value)
         {
-            if (operation != Operation.Read) throw new InvalidOperationException();
+            if (State != OperationState.Read) throw new InvalidOperationException();
 
             if (reader.TryGetProperty(name, out JsonElement propEl))
             {

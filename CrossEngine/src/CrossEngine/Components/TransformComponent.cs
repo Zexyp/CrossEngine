@@ -35,7 +35,7 @@ namespace CrossEngine.Components
         private Vector3 _worldScale;
 
         // matrices
-        //private Matrix4x4 _transformMatrix; // TODO: conmsider local matrix cache
+        private Matrix4x4 _transformMatrix;
         private Matrix4x4 _worldTransformMatrix;
 
         bool _dirty = true;
@@ -113,6 +113,18 @@ namespace CrossEngine.Components
             }
         }
 
+        public Matrix4x4 TransformMatrix
+        {
+            get
+            {
+                if (_dirty)
+                {
+                    UpdateWorldTransform();
+                }
+                return _transformMatrix;
+            }
+        }
+
         public Matrix4x4 WorldTransformMatrix
         {
             get
@@ -144,7 +156,8 @@ namespace CrossEngine.Components
                 }
                 else
                 {
-                    Position = Vector3.Transform(value, Matrix4x4Extension.Invert(_parent.WorldTransformMatrix));
+                    Debug.Assert(Matrix4x4.Invert(_parent.WorldTransformMatrix, out var mat));
+                    Position = Vector3.Transform(value, mat);
                 }
             }
         }
@@ -223,6 +236,8 @@ namespace CrossEngine.Components
         {
             Matrix4x4 transform = CalculateLocalTransform();
 
+            _transformMatrix = transform;
+
             if (_parent == null)
             {
                 _worldTransformMatrix = transform;
@@ -246,44 +261,46 @@ namespace CrossEngine.Components
             return Matrix4x4.CreateScale(_scale) * Matrix4x4.CreateFromQuaternion(_rotation) * Matrix4x4.CreateTranslation(_translation);
         }
 
-        public void SetTransformUseEuler(Matrix4x4 matrix)
-        {
-            Matrix4x4Extension.EulerDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, matrix);
-
-            _translation = translation;
-            EulerRotation = rotation; // ! TODO: this causes two dirty updates
-            _scale = scale;
-
-            //Log.Core.Debug("tr: {0}; rt: {1}; sc: {2}", _position, _eulerAngles, _scale);
-            MarkForUpdate();
-        }
+        //public void SetTransformUseEuler(Matrix4x4 matrix)
+        //{
+        //    Matrix4x4Extension.EulerDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, matrix);
+        //
+        //    _translation = translation;
+        //    EulerRotation = rotation; // ! TODO: this causes two dirty updates
+        //    _scale = scale;
+        //
+        //    //Log.Core.Debug("tr: {0}; rt: {1}; sc: {2}", _position, _eulerAngles, _scale);
+        //    MarkForUpdate();
+        //}
 
         public void SetTransform(Matrix4x4 matrix)
         {
-            Matrix4x4.Decompose(matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation);
+            Debug.Assert(Matrix4x4.Decompose(matrix, out Vector3 scale, out Quaternion rotation, out Vector3 position));
 
             _scale = scale;
             Rotation = rotation; // ! TODO: this causes two dirty updates
-            _translation = translation;
+            _translation = position;
 
             MarkForUpdate();
         }
 
         public void SetWorldTransform(Matrix4x4 matrix)
         {
-            Matrix4x4.Decompose(matrix, out Vector3 scale, out Quaternion rotation, out Vector3 translation);
+            // this makes sense: https://blender.stackexchange.com/questions/169416/does-a-child-object-inherit-the-matrix-from-the-parent
+            // but also doesn't *want* to work and it's nuts
 
-            // ! TODO: also causes multiple dirty updates
-            WorldScale = scale;
-            WorldRotation = rotation;
-            WorldPosition = translation;
-
-            MarkForUpdate();
+            if (this.Parent != null)
+            {
+                Debug.Assert(Matrix4x4.Invert(this.Parent.WorldTransformMatrix, out Matrix4x4 invParentMat));
+                matrix = invParentMat * matrix;
+            }
+            
+            this.SetTransform(matrix);
         }
 
         public void SetTranslationRotation(Matrix4x4 matrix)
         {
-            Matrix4x4.Decompose(matrix, out _, out Quaternion rotation, out Vector3 translation);
+            Debug.Assert(Matrix4x4.Decompose(matrix, out _, out Quaternion rotation, out Vector3 translation));
 
             Rotation = rotation; // ! TODO: this causes two dirty updates
             _translation = translation;
@@ -293,7 +310,7 @@ namespace CrossEngine.Components
 
         public void SetWorldTranslationRotation(Matrix4x4 matrix)
         {
-            Matrix4x4.Decompose(matrix, out _, out Quaternion rotation, out Vector3 translation);
+            Debug.Assert(Matrix4x4.Decompose(matrix, out _, out Quaternion rotation, out Vector3 translation));
 
             // ! TODO: also causes multiple dirty updates
             WorldRotation = rotation;

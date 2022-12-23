@@ -93,6 +93,7 @@ namespace CrossEngineEditor
             AddPanel(new LagometerPanel());
             AddPanel(new ConfigPanel());
             AddPanel(new ImageViewerPanel());
+            AddPanel(new OperationHistoryPanel());
 
             // load config
             if (!LoadConfig(EditorConfig)) corruptedConfigFlag = true;
@@ -104,6 +105,10 @@ namespace CrossEngineEditor
             var n = 7;
             Vector4[] vals = Enumerable.Range(0, n).Select(e => new Vector4(Color.HSVToRGB(new(e * (1f / n), 1, 1)), 1)).ToArray();
             gre = new Gradient<Vector4>(vals);
+
+            Context.Scene = new Scene();
+            var ent = Context.Scene.CreateEntity();
+            ent.AddComponent<SpriteRendererComponent>();
         }
 
         protected override void RenderAttach()
@@ -203,9 +208,9 @@ namespace CrossEngineEditor
 
             PropertyDrawer.DrawEditorValue(this.GetType().GetField(nameof(simpleTestingValue)), this, null, Context.Operations);
             if (ImGui.Button("Undo"))
-                Context.Operations.Undo();
+                Context.Operations?.Undo();
             if (ImGui.Button("Redo"))
-                Context.Operations.Redo();
+                Context.Operations?.Redo();
 
             var cvsync = Application.Instance.Window.VSync;
             if (ImGui.Checkbox("VSync", ref cvsync))
@@ -414,6 +419,11 @@ namespace CrossEngineEditor
                 #region Edit Menu
                 if (ImGui.BeginMenu("Edit"))
                 {
+                    if (ImGui.MenuItem("Undo", Context.Operations != null))
+                        Context.Operations.Undo();
+                    if (ImGui.MenuItem("Redo", Context.Operations != null))
+                        Context.Operations.Redo();
+
                     ImGui.Separator();
 
                     if (ImGui.MenuItem("Config"))

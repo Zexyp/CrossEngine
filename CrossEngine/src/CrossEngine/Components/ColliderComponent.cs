@@ -53,7 +53,7 @@ namespace CrossEngine.Components
         {
             get
             {
-                Matrix4x4Extension.EulerDecompose(out var _, out var rotation, out var _, _localOffsets);
+                Matrix4x4Extension.EulerDecompose(_localOffsets, out _, out var rotation, out _);
                 return rotation;
             }
             set

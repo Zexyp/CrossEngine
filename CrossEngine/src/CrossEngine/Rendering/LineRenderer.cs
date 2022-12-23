@@ -31,7 +31,7 @@ void main()
 }";
 
         const string GeometryShaderSource =
-@"";
+@"you got jebaited";
 
         const string FragmentShaderSource =
 @"#version 330 core

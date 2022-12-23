@@ -3,8 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Numerics;
+using System.Diagnostics;
 
 using CrossEngine.ECS;
 using CrossEngine.ComponentSystems;
@@ -98,7 +97,7 @@ namespace CrossEngine.Scenes
 
         public Entity CreateEmptyEntity()
         {
-            Entity entity = new Entity(_ecsWorld);
+            Entity entity = new Entity();
 
             entity.Id = Guid.NewGuid();
             AddEntity(entity);
@@ -192,8 +191,15 @@ namespace CrossEngine.Scenes
             else _roots.Remove(sender);
         }
 
-        private void AddEntity(Entity entity)
+        public void AddEntity(Entity entity)
         {
+            Debug.Assert(entity.Parent == null);
+            Debug.Assert(entity.Children.Count == 0);
+            Debug.Assert(entity.Id == Guid.Empty);
+            Debug.Assert(!_entityIds.ContainsKey(entity.Id));
+
+            entity.Attach(_ecsWorld);
+
             _entityIds.Add(entity.Id, entity);
 
             _entities.Add(entity);
@@ -203,12 +209,22 @@ namespace CrossEngine.Scenes
             entity.OnParentChanged += Entity_OnParentChanged;
         }
 
-        private void RemoveEntity(Entity entity)
+        public void RemoveEntity(Entity entity)
         {
-            entity.OnParentChanged += Entity_OnParentChanged;
+            if (entity.Parent != null || entity.Children.Count > 0)
+                Application.Log.Trace("cleaning entity before remove");
+
+            // cleanup
+            while (entity.Children.Count > 0)
+                entity.Children[0].Parent = null;
+            entity.Parent = null;
+
+            entity.OnParentChanged -= Entity_OnParentChanged;
             _roots.Remove(entity);
             _entityIds.Remove(entity.Id);
             _entities.Remove(entity);
+
+            entity.Detach(_ecsWorld);
         }
     }
 }

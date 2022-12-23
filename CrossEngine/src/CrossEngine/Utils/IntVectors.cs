@@ -1,6 +1,8 @@
 ﻿using System;
-
+using System.Globalization;
 using System.Numerics;
+
+// comma is a stupid decimal sepearator in programming
 
 namespace CrossEngine.Utils
 {
@@ -40,7 +42,17 @@ namespace CrossEngine.Utils
         public override bool Equals(object obj) => obj is IntVec2 && this == (IntVec2) obj;
         public bool Equals(IntVec2 other) => this == other;
 
-        public string ToString(string format, IFormatProvider formatProvider) => $"({X.ToString(format, formatProvider)}, {Y.ToString(format, formatProvider)})";
+        public override readonly string ToString()
+        {
+            return ToString("G", CultureInfo.CurrentCulture);
+        }
+
+        public readonly string ToString(string format, IFormatProvider formatProvider)
+        {
+            string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
+
+            return $"({X.ToString(format, formatProvider)}{separator} {Y.ToString(format, formatProvider)})";
+        }
     }
 
     public struct IntVec3 : IEquatable<IntVec3>, IFormattable
@@ -88,7 +100,17 @@ namespace CrossEngine.Utils
         public override bool Equals(object obj) => obj is IntVec3 && this == (IntVec3)obj;
         public bool Equals(IntVec3 other) => this == other;
 
-        public string ToString(string format, IFormatProvider formatProvider) => $"({X.ToString(format, formatProvider)}, {Y.ToString(format, formatProvider)}, {Z.ToString(format, formatProvider)})";
+        public override readonly string ToString()
+        {
+            return ToString("G", CultureInfo.CurrentCulture);
+        }
+
+        public readonly string ToString(string format, IFormatProvider formatProvider)
+        {
+            string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
+
+            return $"({X.ToString(format, formatProvider)}{separator} {Y.ToString(format, formatProvider)}{separator} {Z.ToString(format, formatProvider)})";
+        }
     }
 
     public struct BoolVec2 : IEquatable<BoolVec2>
@@ -120,7 +142,17 @@ namespace CrossEngine.Utils
         public override bool Equals(object obj) => obj is BoolVec2 && this == (BoolVec2)obj;
         public bool Equals(BoolVec2 other) => this == other;
 
-        public string ToString(IFormatProvider formatProvider) => $"({X.ToString(formatProvider)}, {Y.ToString(formatProvider)})";
+        public override readonly string ToString()
+        {
+            return ToString(CultureInfo.CurrentCulture);
+        }
+
+        public readonly string ToString(IFormatProvider formatProvider)
+        {
+            string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
+
+            return $"({X.ToString(formatProvider)}{separator} {Y.ToString(formatProvider)})";
+        }
     }
 
     public struct BoolVec3 : IEquatable<BoolVec3>
@@ -155,6 +187,16 @@ namespace CrossEngine.Utils
         public override bool Equals(object obj) => obj is BoolVec3 && this == (BoolVec3)obj;
         public bool Equals(BoolVec3 other) => this == other;
 
-        public string ToString(IFormatProvider formatProvider) => $"({X.ToString(formatProvider)}, {Y.ToString(formatProvider)}, {Z.ToString(formatProvider)})";
+        public override readonly string ToString()
+        {
+            return ToString(CultureInfo.CurrentCulture);
+        }
+
+        public readonly string ToString(IFormatProvider formatProvider)
+        {
+            string separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
+
+            return $"({X.ToString(formatProvider)}{separator} {Y.ToString(formatProvider)}{separator} {Z.ToString(formatProvider)})";
+        }
     }
 }

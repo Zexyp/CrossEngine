@@ -83,11 +83,14 @@ namespace CrossEngine.Utils
         }
     }
 
-    public static class Vector3Extension
+    public static class Vector3Extensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 XY(this Vector3 v) => new Vector2(v.X, v.Y);
+    }
 
+    public static class Vector3Extension
+    {
         static Random random = new Random();
 
         // vectors between 1 and -1;
@@ -113,11 +116,14 @@ namespace CrossEngine.Utils
         }
     }
 
-    static class Vector4Extension
+    public static class Vector4Extensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 XYZ(this Vector4 v) => new Vector3(v.X, v.Y, v.Z);
+    }
 
+    static class Vector4Extension
+    {
         public static Vector4 FromColor(System.Drawing.Color color)
         {
             return new Vector4((float)color.R / byte.MaxValue, (float)color.G / byte.MaxValue, (float)color.B / byte.MaxValue, (float)color.A / byte.MaxValue);
@@ -217,15 +223,8 @@ namespace CrossEngine.Utils
             return result;
         }
 
-        static public Matrix4x4 Invert(Matrix4x4 matrix)
-        {
-            if (Matrix4x4.Invert(matrix, out Matrix4x4 result))
-                return result;
-            else
-                throw new InvalidOperationException("The matrix is not invertible.");
-        }
-
-        static public void EulerDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, Matrix4x4 matrix)
+        // forgot where i stole it
+        static public void EulerDecompose(Matrix4x4 matrix, out Vector3 translation, out Vector3 rotation, out Vector3 scale)
         {
             Vector4 matvright = new Vector4(matrix.M11, matrix.M12, matrix.M13, matrix.M14);
             Vector4 matvup = new Vector4(matrix.M21, matrix.M22, matrix.M23, matrix.M34);
@@ -248,6 +247,51 @@ namespace CrossEngine.Utils
             translation.X = matvposition.X;
             translation.Y = matvposition.Y;
             translation.Z = matvposition.Z;
+        }
+        
+        static public unsafe void Decompose(Matrix4x4 matrix, out Vector3 position, out Quaternion quaternion, out Vector3 scale)
+        {
+            float* te = (float*)&matrix;
+
+            Vector3 _v1;
+
+            float sx = new Vector3(te[0], te[1], te[2]).Length();
+            float sy = new Vector3(te[4], te[5], te[6]).Length();
+            float sz = new Vector3(te[8], te[9], te[10]).Length();
+
+            // if determine is negative, we need to invert one scale
+            float det = matrix.GetDeterminant();
+            if (det < 0) sx = -sx;
+
+            position.X = te[12];
+            position.Y = te[13];
+            position.Z = te[14];
+
+            // scale the rotation part
+            Matrix4x4 _m1_hold = matrix;
+            float* _m1 = (float*)&_m1_hold;
+
+            float invSX = 1 / sx;
+            float invSY = 1 / sy;
+            float invSZ = 1 / sz;
+
+            _m1[0] *= invSX;
+            _m1[1] *= invSX;
+            _m1[2] *= invSX;
+
+            _m1[4] *= invSY;
+            _m1[5] *= invSY;
+            _m1[6] *= invSY;
+
+            _m1[8] *= invSZ;
+            _m1[9] *= invSZ;
+            _m1[10] *= invSZ;
+
+            quaternion = Quaternion.CreateFromRotationMatrix(_m1_hold);
+
+            scale.X = sx;
+            scale.Y = sy;
+            scale.Z = sz;
         }
 
         public static bool HasNaNElement(Matrix4x4 matrix)

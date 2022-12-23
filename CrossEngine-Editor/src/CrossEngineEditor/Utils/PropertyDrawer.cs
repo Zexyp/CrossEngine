@@ -17,6 +17,8 @@ using CrossEngine;
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Utils.Gui;
 using CrossEngineEditor.UndoRedo;
+using CrossEngineEditor.Operations;
+using CrossEngine.Serialization;
 
 namespace CrossEngineEditor.Utils
 {
@@ -51,6 +53,64 @@ namespace CrossEngineEditor.Utils
 
     public static class PropertyDrawer
     {
+        /*
+        class PropertyDrawerSerializationInfo : SerializationInfo
+        {
+            private Dictionary<string, object> _data = new Dictionary<string, object>();
+            private Stack<int> _prefixStack = new Stack<int>();
+            private string _prefix = "";
+
+            public PropertyDrawerSerializationInfo() : base(OperationState.Undefined)
+            {
+
+            }
+
+            public void MarkRead() => State = OperationState.Read;
+            public void MarkWrite() => State = OperationState.Write;
+            public void PushID(int id)
+            {
+                _prefixStack.Push(id);
+                RebuildPrefix();
+            }
+            public void PopID()
+            {
+                _prefixStack.Pop();
+                RebuildPrefix();
+            }
+
+            public override void AddValue(string name, object value)
+            {
+                if (State != OperationState.Write) throw new InvalidOperationException();
+                _data.Add(_prefix + name, value);
+            }
+
+            public override object GetValue(string name, Type typeOfValue)
+            {
+                if (State != OperationState.Read) throw new InvalidOperationException();
+                return _data[_prefix + name];
+            }
+
+            public override bool TryGetValue(string name, Type typeOfValue, out object value)
+            {
+                if (State != OperationState.Read) throw new InvalidOperationException();
+                value = null;
+                if (!_data.ContainsKey(_prefix + name))
+                    return false;
+                value = _data[_prefix + name];
+                return true;
+            }
+
+            private unsafe void RebuildPrefix()
+            {
+                _prefix = "";
+                foreach (var item in _prefixStack)
+                {
+                    _prefix += item;
+                }
+            }
+        }
+        */
+
         [Flags]
         enum EditResult
         {
@@ -76,6 +136,15 @@ namespace CrossEngineEditor.Utils
             ImGui.PopStyleColor();
         }
 
+        private static EditResult AssembleResult()
+        {
+            EditResult editResult = 0;
+            editResult |= ImGui.IsItemDeactivatedAfterEdit() ? EditResult.DoneEditing : 0;
+            editResult |= ImGui.IsItemActivated() ? EditResult.Started : 0;
+            editResult |= ImGui.IsItemDeactivated() ? EditResult.Ended : 0;
+            return editResult;
+        }
+
         private static EditResult ExecuteFromDict(IDictionary dict, string name, ref object value, Attribute attribute = null)
         {
             if (dict.Contains(value.GetType()))
@@ -85,10 +154,7 @@ namespace CrossEngineEditor.Utils
                 
                 value = result.Value;
 
-                EditResult editResult = 0;
-                editResult |= ImGui.IsItemDeactivatedAfterEdit() ? EditResult.DoneEditing : 0;
-                editResult |= ImGui.IsItemActivated() ? EditResult.Started : 0;
-                editResult |= ImGui.IsItemDeactivated() ? EditResult.Ended : 0;
+                EditResult editResult = AssembleResult();
                 editResult |= result.Success ? EditResult.Changed : 0;
                 return editResult;
             }
@@ -319,7 +385,7 @@ namespace CrossEngineEditor.Utils
                 ImGuiUtils.SmartSeparator(3);
                 return EditResult.None;
             } },
-            /*
+
             { typeof(EditorEnumAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 var cattribt = (EditorEnumAttribute)attribute;
                 bool success = false;
@@ -345,7 +411,7 @@ namespace CrossEngineEditor.Utils
                 ImGui.PopID();
                 
                 if (success) value = v;
-                return success;
+                return success ? EditResult.Started | EditResult.Ended | EditResult.DoneEditing | EditResult.Changed : EditResult.None;
             } },
 
             { typeof(EditorGradientAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
@@ -356,11 +422,18 @@ namespace CrossEngineEditor.Utils
                 else if (value is Gradient<float>) ImGradient.Manipulate((Gradient<float>)value);
                 else
                 {
+                    Debug.Assert(false);
                     PrintInvalidUI(name);
                 }
-                return false;
+                if (ImGui.IsItemActivated())
+                    Console.WriteLine("ac");
+                if (ImGui.IsItemDeactivated())
+                    Console.WriteLine("deac");
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                    Console.WriteLine("edi dun");
+                return EditResult.None;
             } },
-
+            /*
             { typeof(EditorAssetAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 var cattribt = (EditorAssetAttribute)attribute;
                 bool success = false;
@@ -398,6 +471,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = v;
                 return success;
             } },
+            */
 
             #region Primitives
             { typeof(EditorBooleanValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
@@ -405,7 +479,7 @@ namespace CrossEngineEditor.Utils
                 bool v = (bool)value;
                 bool success = ImGui.Checkbox(name, ref v);
                 if (success) value = v;
-                return success;
+                return AssembleResult() | (success ? EditResult.Changed : EditResult.None);
             } },
             { typeof(EditorStringAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 var cattribt = (EditorStringAttribute)attribute;
@@ -413,23 +487,9 @@ namespace CrossEngineEditor.Utils
                 Encoding.UTF8.GetBytes((string)value).CopyTo(v, 0);
                 bool success = ImGui.InputText(name, v, cattribt.MaxLength);
                 if (success) value = Encoding.UTF8.GetString(v).TrimEnd('\0');
-                return success;
+                return AssembleResult() | (success ? EditResult.Changed : EditResult.None);
             } },
             #endregion
-            */
-            /*
-            { typeof(EditorEnumValueAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
-                var cattribt = (EditorEnumValueAttribute)attribute;
-                bool success;
-                int v = (int)value;
-                string[] items = Enum.GetValues(value.GetType()).OfType<object>().Select(o => o.ToString()).ToArray();
-                ImGui.PushID(name);
-                success = ImGui.Combo(name, ref v, items, items.Length);
-                ImGui.PopID();
-                if (success) value = v;
-                return success;
-            } },
-            */
 
             { typeof(EditorInnerDrawAttribute), (EditorValueAttribute attribute, string name, ref object value) => {
                 var cattribt = (EditorInnerDrawAttribute)attribute;
@@ -452,26 +512,9 @@ namespace CrossEngineEditor.Utils
             } },
         };
 
-        class ValueChangedOperation : IOperationShard
-        {
-            public MemberInfo Member;
-            public object Target;
-
-            public object PreviousValue;
-            public object NextValue;
-
-            public void Redo()
-            {
-                Member.SetFieldOrPropertyValue(Target, NextValue);
-            }
-
-            public void Undo()
-            {
-                Member.SetFieldOrPropertyValue(Target, PreviousValue);
-            }
-        }
-
-        static ValueChangedOperation _inprogress = null;
+        //static ValueChangedOperation _inprogress = null;
+        // the order of drawing matters so this should fix it but i think this will break it
+        static Queue<MemberValueChangeOperation> _inprogops = new Queue<MemberValueChangeOperation>();
 
         // TODO: this mess can't handle null value :(
         public static void DrawEditorValue(MemberInfo memberInfo, object target, Action<Exception> errorCallback = null, IOperationHistory history = null)
@@ -493,21 +536,14 @@ namespace CrossEngineEditor.Utils
                     if (AttributeHandlers.ContainsKey(attribType))
                     {
                         object value = memberInfo.GetFieldOrPropertyValue(target);
+                        object prevvalue = value;
                         var result = AttributeHandlers[attribType](attrib, (attrib.Name != null) ? attrib.Name : memberInfo.Name, ref value);
                         if ((result & EditResult.Changed) != 0)
                             memberInfo.SetFieldOrPropertyValue(target, value);
 
                         if (history != null)
                         {
-                            if ((result & EditResult.Started) != 0)
-                            {
-                                Debug.Assert(_inprogress == null);
-
-                                _inprogress = new ValueChangedOperation();
-                                _inprogress.Member = memberInfo;
-                                _inprogress.Target = target;
-                                _inprogress.PreviousValue = value;
-                            }
+                            /*
                             if ((result & EditResult.DoneEditing) != 0)
                             {
                                 Debug.Assert(_inprogress != null);
@@ -522,6 +558,37 @@ namespace CrossEngineEditor.Utils
                                 Debug.Assert(_inprogress != null);
                                 _inprogress = null;
                             }
+                            if ((result & EditResult.Started) != 0)
+                            {
+                                Debug.Assert(_inprogress == null);
+
+                                _inprogress = new ValueChangedOperation();
+                                _inprogress.Member = memberInfo;
+                                _inprogress.Target = target;
+                                _inprogress.PreviousValue = value;
+                            }
+                            */
+                            Debug.Assert(_inprogops.Count <= 2);
+                            
+                            if ((result & EditResult.DoneEditing) != 0)
+                            {
+                                var op = _inprogops.Peek();
+                                op.NextValue = value;
+                                history.Push(op);
+                            }
+                            if ((result & EditResult.Ended) != 0)
+                            {
+                                _inprogops.Dequeue();
+                            }
+                            if ((result & EditResult.Started) != 0)
+                            {
+                                var op = new MemberValueChangeOperation();
+                                op.Member = memberInfo;
+                                op.Target = target;
+                                op.PreviousValue = prevvalue;
+
+                                _inprogops.Enqueue(op);
+                            }
                         }
                     }
                     else
@@ -530,11 +597,12 @@ namespace CrossEngineEditor.Utils
                     }
                 }
             }
+            catch (NotImplementedException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                if (ex is NotImplementedException)
-                    throw;
-
                 Application.Log.Warn($"while drawing ui a wild exception appears:\n{ex}");
                 errorCallback?.Invoke(ex);
             }

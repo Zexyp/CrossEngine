@@ -23,7 +23,8 @@ namespace CrossEngineEditor
                 _scene = value;
 
                 ActiveEntity = null;
-                
+
+                Operations = _scene == null ? null : new OperationStack();
                 OnSceneChanged?.Invoke();
             }
         }
@@ -39,7 +40,7 @@ namespace CrossEngineEditor
             }
         }
         public EditorProject Project;
-        public readonly OperationStack Operations = new OperationStack();
+        public OperationStack Operations { get; private set; }
 
         // no sender parameter since editor context is read-only and only one
         public event Action OnActiveEntityChanged;

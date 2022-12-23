@@ -74,9 +74,15 @@ namespace CrossEngineEditor
                 WindowContentAreaMax += WindowPos;
 
                 if (ImGui.IsWindowHovered() &&
+                    // for windows that need the dragging mouse
                     !ImGui.IsMouseDragging(ImGuiMouseButton.Left) &&
                     !ImGui.IsMouseDragging(ImGuiMouseButton.Right) &&
-                    !ImGui.IsMouseDragging(ImGuiMouseButton.Middle)) ImGui.SetWindowFocus();
+                    !ImGui.IsMouseDragging(ImGuiMouseButton.Middle) &&
+                    // when editing fields
+                    !ImGui.IsAnyItemActive())
+                {
+                    ImGui.SetWindowFocus();
+                }
                 Focused = ImGui.IsWindowFocused();
 
                 InnerBeforeDrawCallback?.Invoke(this);
