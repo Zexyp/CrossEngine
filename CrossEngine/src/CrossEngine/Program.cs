@@ -1,6 +1,5 @@
 ﻿using System;
-using Evergine.Bindings.OpenGL;
-using static Evergine.Bindings.OpenGL.GL;
+using static OpenGL.GL;
 using static Evergine.Bindings.Imgui.ImguiNative;
 using Evergine.Bindings.Imgui;
 
@@ -20,7 +19,7 @@ namespace CrossEngine
 
             window.CreateWindow();
 
-            LoadAllFunctions(GLFW.Glfw.GetProcAddress);
+            Import(GLFW.Glfw.GetProcAddress);
 
             // Setup Dear ImGui context
             igCreateContext(null);
@@ -50,15 +49,15 @@ namespace CrossEngine
             // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
             glBindVertexArray(VAO);
 
-            glBindBuffer(BufferTargetARB.ArrayBuffer, VBO);
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
             fixed (void* p = &vertices[0])
-                glBufferData(BufferTargetARB.ArrayBuffer, sizeof(float) * vertices.Length, p, BufferUsageARB.StaticDraw);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.Length, p, GL_STATIC_DRAW);
 
-            glVertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * sizeof(float), (void*)0);
             glEnableVertexAttribArray(0);
 
             // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-            glBindBuffer(BufferTargetARB.ArrayBuffer, 0); 
+            glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
             // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
             // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
@@ -76,10 +75,10 @@ namespace CrossEngine
                 // ------
 
                 glClearColor(MathF.Sin((float)window.Time), 0.3f, 0.3f, 1.0f);
-                glClear((int)(AttribMask.ColorBufferBit | AttribMask.DepthBufferBit));
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-                glDrawArrays(PrimitiveType.Triangles, 0, 3);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
                 glBindVertexArray(0); // no need to unbind it every time 
 
                 byte o = 1;
