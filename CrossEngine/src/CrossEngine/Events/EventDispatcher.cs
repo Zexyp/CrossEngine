@@ -9,7 +9,6 @@ namespace CrossEngine.Events
         public readonly Event Event;
         public readonly Type TypeOfEvent;
         public bool Exact;
-        public bool Silent = false;
 
         public EventDispatcher(Event e, bool exact = false)
         {
@@ -26,34 +25,25 @@ namespace CrossEngine.Events
                 Exact ? TypeOfEvent == typeof(T) : Event is T)
             {
                 func?.Invoke((T)Event);
-                if (!Silent)
-                    Event.Handled = true;
             }
             return this;
         }
 
-        public EventDispatcher Dispatch<T>(Action func) where T : Event
+        public EventDispatcher Dispatch(OnEventFunction<Event> func)
         {
-            if (!Event.Handled &&
-                Exact ? TypeOfEvent == typeof(T) : Event is T)
+            if (!Event.Handled)
             {
-                func?.Invoke();
-                Event.Handled = true;
-                if (!Silent)
-                    Event.Handled = true;
+                func?.Invoke(Event);
             }
             return this;
         }
 
-        public EventDispatcher Dispatch(Action func, Type eventType)
+        public EventDispatcher Dispatch(OnEventFunction<Event> func, Type eventType)
         {
             if (!Event.Handled &&
                 Exact ? TypeOfEvent == eventType : eventType.IsSubclassOf(TypeOfEvent))
             {
-                func?.Invoke();
-                Event.Handled = true;
-                if (!Silent)
-                    Event.Handled = true;
+                func?.Invoke(Event);
             }
             return this;
         }
