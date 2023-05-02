@@ -54,7 +54,7 @@ namespace CrossEngine.Profiling
         static StreamWriter streamWriter;
         static ProfilerSession? currentSession = null;
         static readonly NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = ".", NumberDecimalDigits = 3 };
-        static DateTime appStarted = DateTime.Now;
+        static Stopwatch stopwatch = Stopwatch.StartNew();
         static ConcurrentDictionary<int, Stack<ProfileResult>> profileResultsStacks = new ConcurrentDictionary<int, Stack<ProfileResult>>();
         #endregion
 
@@ -114,7 +114,7 @@ namespace CrossEngine.Profiling
             }
 
             int ctid = Thread.CurrentThread.ManagedThreadId;
-            ProfileResult result = new ProfileResult(name, ctid, (float)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
+            ProfileResult result = new ProfileResult(name, ctid, stopwatch.Elapsed.TotalMilliseconds);
 
             mutex.WaitOne();
 
@@ -144,7 +144,7 @@ namespace CrossEngine.Profiling
             mutex.WaitOne();
 
             ProfileResult result = GetThreadProfileResultsStack(Thread.CurrentThread.ManagedThreadId).Pop();
-            result.ElapsedTime = ((double)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond) - result.Start;
+            result.ElapsedTime = stopwatch.Elapsed.TotalMilliseconds - result.Start;
             WriteProfile(ref result);
 
             mutex.ReleaseMutex();
@@ -161,7 +161,7 @@ namespace CrossEngine.Profiling
 
             mutex.WaitOne();
 
-            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, (double)(DateTime.Now - appStarted).Ticks / TimeSpan.TicksPerMillisecond);
+            ProfileResult result = new ProfileResult(name, Thread.CurrentThread.ManagedThreadId, stopwatch.Elapsed.TotalMilliseconds);
             WriteProfile(ref result);
 
             mutex.ReleaseMutex();

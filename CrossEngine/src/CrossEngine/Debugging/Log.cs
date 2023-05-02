@@ -23,18 +23,9 @@ namespace CrossEngine.Logging
     {
         public static Logger Default;
 
-        private static LogLevel _globalLevel = LogLevel.Trace;
-
         private static Mutex mutex = new Mutex();
 
-        public static LogLevel GlobalLevel
-        {
-            get { return _globalLevel; }
-            set
-            {
-                _globalLevel = value;
-            }
-        }
+        public static LogLevel GlobalLevel;
 
         static Log()
         {
@@ -46,7 +37,7 @@ namespace CrossEngine.Logging
         {
             mutex.WaitOne();
 
-            if (_globalLevel <= level)
+            if (GlobalLevel <= level)
             {
                 switch (level)
                 {
