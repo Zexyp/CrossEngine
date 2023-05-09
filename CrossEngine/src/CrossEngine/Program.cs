@@ -74,7 +74,6 @@ namespace CrossEngine
                         Renderer2D.Init(rapi);
                         LineRenderer.Init(rapi);
 
-                        CrossEngine.Platform.OpenGL.Debugging.GLDebugging.Enable();
                         rapi.SetClearColor(System.Numerics.Vector4.One / 2);
                     }
                 });
@@ -127,6 +126,10 @@ namespace CrossEngine
                 if (e is WindowCloseEvent)
                 {
                     Close();
+                }
+                if (e is WindowResizeEvent wre)
+                {
+                    Manager.GetService<RenderService>().RendererAPI.SetViewport(0, 0, wre.Width, wre.Height);
                 }
             }
         }

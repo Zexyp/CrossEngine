@@ -9,12 +9,15 @@ using System.Threading.Tasks;
 using CrossEngine.Display;
 using CrossEngine.Rendering;
 using CrossEngine.Profiling;
+using CrossEngine.Platform.OpenGL;
+using CrossEngine.Platform.Windows;
 
 namespace CrossEngine.Services
 {
     internal class RenderService : Service
     {
         public RendererAPI RendererAPI { get; private set; }
+        public GraphicsContext Context { get; private set; }
         public Window Window { get; private set; }
         public event Action Frame;
 
@@ -43,10 +46,14 @@ namespace CrossEngine.Services
         private void Loop()
         {
             // setup
-            RendererAPI = RendererAPI.Create();
+            RendererAPI = RendererAPI.Create(RendererAPI.API.OpenGL);
             Window = new CrossEngine.Platform.Windows.GlfwWindow();
 
             Window.CreateWindow();
+
+            Context = new CrossEngine.Platform.OpenGL.GLContext(((GlfwWindow)Window).NativeHandle);
+
+            Context.Init();
 
             RendererAPI.Init();
             RendererAPI.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
@@ -61,9 +68,9 @@ namespace CrossEngine.Services
                 Frame?.Invoke();
 
                 Profiler.EndScope();
-                Profiler.BeginScope("Wait");
+                Profiler.BeginScope("Swap");
 
-                Window.UpdateWindow();
+                Context.SwapBuffers();
                 
                 Profiler.EndScope();
                 Profiler.BeginScope("Poll Events");

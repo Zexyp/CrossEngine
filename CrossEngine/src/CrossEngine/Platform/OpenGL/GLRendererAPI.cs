@@ -16,12 +16,9 @@ namespace CrossEngine.Platform.OpenGL
     {
         public override void Init()
         {
-            // TODO: this could be better
-            //var window = Application.Instance.Window;
-            if (/*window is GlfwWindow*/true)
-                Import(Glfw.GetProcAddress);
-            else
-                Debug.Assert(false, "Window is not supported");
+#if DEBUG
+            Debugging.GLDebugging.Enable();
+#endif
         }
 
         public override unsafe void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)
