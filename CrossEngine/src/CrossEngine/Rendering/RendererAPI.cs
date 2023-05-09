@@ -19,7 +19,7 @@ namespace CrossEngine.Rendering
             OpenGL,
         }
 
-        private static API _api = API.OpenGL;
+        private static API _api;
 
         public virtual void Dispose()
         {
@@ -28,8 +28,9 @@ namespace CrossEngine.Rendering
 
         public static API GetAPI() => _api;
 
-        public static RendererAPI Create()
+        public static RendererAPI Create(API api)
         {
+            _api = api;
             switch (_api)
             {
                 case API.None: Debug.Assert(false, $"No API is not supported"); return null;

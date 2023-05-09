@@ -76,11 +76,6 @@ namespace CrossEngine.Platform.Windows
             _eventCallback = callback;
         }
 
-        public override void UpdateWindow()
-        {
-            Glfw.SwapBuffers(_nativeHandle);
-        }
-
         public override void PollWindowEvents()
         {
             Glfw.PollEvents();

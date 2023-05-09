@@ -57,7 +57,6 @@ namespace CrossEngine.Display
         //public abstract void SetIcon(System.Drawing.Image image);
         public abstract void CreateWindow();
         public abstract void DestroyWindow();
-        public abstract void UpdateWindow();
         public abstract void PollWindowEvents();
         public abstract unsafe void SetIcon(void* data, uint width, uint height);
 
