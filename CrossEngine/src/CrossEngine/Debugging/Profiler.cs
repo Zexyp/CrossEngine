@@ -181,7 +181,10 @@ namespace CrossEngine.Profiling
         private static Stack<ProfileResult> GetThreadProfileResultsStack(int currentThreadId)
         {
             if (!profileResultsStacks.ContainsKey(currentThreadId))
-                Debug.Assert(profileResultsStacks.TryAdd(currentThreadId, new Stack<ProfileResult>()), "this should work");
+            {
+                var sus = profileResultsStacks.TryAdd(currentThreadId, new Stack<ProfileResult>());
+                Debug.Assert(sus, "this should work");
+            }
             return profileResultsStacks[currentThreadId];
         }
 

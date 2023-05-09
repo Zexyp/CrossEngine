@@ -6,6 +6,11 @@ using Evergine.Bindings.Imgui;
 using CrossEngine.Display;
 using CrossEngine.Platform.Windows;
 using CrossEngine.Utils.ImGui;
+using CrossEngine.Rendering;
+using CrossEngine.Rendering.Buffers;
+using CrossEngine.Utils;
+using CrossEngine.Services;
+using CrossEngine.Events;
 
 namespace CrossEngine
 {
@@ -14,84 +19,115 @@ namespace CrossEngine
         static unsafe void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
+            System.Runtime.CompilerServices.Unsafe.AsRef<bool>(null);
+            var app = new SusQ();
+            app.Run();
+        }
 
-            GlfwWindow window = new GlfwWindow();
-
-            window.CreateWindow();
-
-            Import(GLFW.Glfw.GetProcAddress);
-
-            // Setup Dear ImGui context
-            igCreateContext(null);
-            var io = igGetIO();
-            io->ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;   // Enable Keyboard Controls
-            //io->ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;    // Enable Gamepad Controls
-
-            // Setup Dear ImGui style
-            igStyleColorsDark(igGetStyle());
-            //ImGui::StyleColorsClassic();
-
-            // Setup Platform/Renderer backends
-            ImplGlfw.ImGui_ImplGlfw_InitForOpenGL(window.NativeHandle, true);
-            ImplOpenGL.ImGui_ImplOpenGL3_Init("#version 330 core");
-
-            // set up vertex data (and buffer(s)) and configure vertex attributes
-            // ------------------------------------------------------------------
-            float[] vertices = {
-                -0.5f, -0.5f, 0.0f, // left  
-                 0.5f, -0.5f, 0.0f, // right 
-                 0.0f,  0.5f, 0.0f  // top   
-            }; 
-
-            uint VBO, VAO;
-            glGenVertexArrays(1, &VAO);
-            glGenBuffers(1, &VBO);
-            // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-            glBindVertexArray(VAO);
-
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            fixed (void* p = &vertices[0])
-                glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.Length, p, GL_STATIC_DRAW);
-
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * sizeof(float), (void*)0);
-            glEnableVertexAttribArray(0);
-
-            // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-            glBindBuffer(GL_ARRAY_BUFFER, 0); 
-
-            // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-            // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-            glBindVertexArray(0);
-
-            while (!window.ShouldClose)
+        class SusQ : Application
+        {
+            public SusQ()
             {
-                window.PollWindowEvents();
+                Manager.Register(new TimeSevice());
+                Manager.Register(new RenderService());
+                Manager.Register(new InputService());
+                Manager.GetService<InputService>().OnEvent += OnEvent;
+            }
 
-                ImplOpenGL.ImGui_ImplOpenGL3_NewFrame();
-                ImplGlfw.ImGui_ImplGlfw_NewFrame();
-                igNewFrame();
+            VertexArray va;
 
-                // render
-                // ------
+            protected override void OnInit()
+            {
+                Manager.GetService<RenderService>().Execute(() =>
+                {
+                    unsafe
+                    {
+                        var rapi = Manager.GetService<RenderService>().RendererAPI;
+                        var window = Manager.GetService<RenderService>().Window as GlfwWindow;
 
-                glClearColor(MathF.Sin((float)window.Time), 0.3f, 0.3f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                        // Setup Dear ImGui context
+                        igCreateContext(null);
+                        var io = igGetIO();
+                        io->ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;   // Enable Keyboard Controls
+                                                                                 //io->ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;    // Enable Gamepad Controls
 
-                glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-                glBindVertexArray(0); // no need to unbind it every time 
+                        // Setup Dear ImGui style
+                        igStyleColorsDark(igGetStyle());
+                        //ImGui::StyleColorsClassic();
 
-                byte o = 1;
-                ImguiNative.igShowDemoWindow(&o);
-                igBegin("sus", &o, ImGuiWindowFlags.None);
-                igEnd();
+                        // Setup Platform/Renderer backends
+                        ImplGlfw.ImGui_ImplGlfw_InitForOpenGL(window.NativeHandle, true);
+                        ImplOpenGL.ImGui_ImplOpenGL3_Init("#version 330 core");
 
-                igRender();
-                ImplOpenGL.ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
-                //igUpdatePlatformWindows();
-                //igRenderPlatformWindowsDefault(null, null);
+                        float[] vertices = {
+                            -0.5f, -0.5f, 0.0f, // left  
+                                0.5f, -0.5f, 0.0f, // right 
+                                0.0f,  0.5f, 0.0f  // top   
+                        };
+                        va = VertexArray.Create().GetValue();
+                        VertexBuffer vb;
+                        fixed (void* p = &vertices[0])
+                            vb = VertexBuffer.Create(p, (uint)(vertices.Length * sizeof(float))).GetValue();
+                        vb.SetLayout(new BufferLayout(new BufferElement(Rendering.Shaders.ShaderDataType.Float3, "pos")));
+                        va.AddVertexBuffer(new WeakReference<VertexBuffer>(vb));
 
-                window.UpdateWindow();
+                        Renderer2D.Init(rapi);
+                        LineRenderer.Init(rapi);
+
+                        CrossEngine.Platform.OpenGL.Debugging.GLDebugging.Enable();
+                        rapi.SetClearColor(System.Numerics.Vector4.One / 2);
+                    }
+                });
+
+                Manager.GetService<RenderService>().Frame += () =>
+                {
+                    unsafe
+                    {
+                        var rapi = Manager.GetService<RenderService>().RendererAPI;
+
+                        ImplOpenGL.ImGui_ImplOpenGL3_NewFrame();
+                        ImplGlfw.ImGui_ImplGlfw_NewFrame();
+                        igNewFrame();
+
+                        CrossEngine.Platform.OpenGL.Debugging.GLError.Call(() =>
+                        {
+                            rapi.Clear();
+                            rapi.DrawArray(new WeakReference<VertexArray>(va), 3);
+                        });
+
+                        Renderer2D.BeginScene(System.Numerics.Matrix4x4.Identity);
+                        Renderer2D.DrawQuad(System.Numerics.Matrix4x4.Identity, System.Numerics.Vector4.One);
+                        Renderer2D.EndScene();
+
+                        LineRenderer.BeginScene(System.Numerics.Matrix4x4.Identity);
+                        LineRenderer.DrawCircle(System.Numerics.Matrix4x4.Identity, System.Numerics.Vector4.UnitX);
+                        LineRenderer.EndScene();
+                        System.Runtime.CompilerServices.Unsafe.AsRef<bool>(null);
+
+                        byte o = 1;
+                        ImguiNative.igShowDemoWindow(&o);
+                        igBegin("sus", &o, ImGuiWindowFlags.None);
+                        igEnd();
+
+                        igRender();
+                        ImplOpenGL.ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
+                        //igUpdatePlatformWindows();
+                        //igRenderPlatformWindowsDefault(null, null);
+                    }
+                };
+            }
+
+            protected override void OnDestroy()
+            {
+                
+            }
+
+            protected virtual void OnEvent(Event e)
+            {
+                if (e is WindowCloseEvent)
+                {
+                    Close();
+                }
             }
         }
     }

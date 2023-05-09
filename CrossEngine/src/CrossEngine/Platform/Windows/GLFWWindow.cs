@@ -196,12 +196,12 @@ namespace CrossEngine.Platform.Windows
                 {
                     case InputState.Press:
                         {
-                            _eventCallback?.Invoke(new MouseButtonPressedEvent((CrossEngine.Inputs.Mouse)button));
+                            _eventCallback?.Invoke(new MousePressedEvent((CrossEngine.Inputs.Mouse)button));
                         }
                         break;
                     case InputState.Release:
                         {
-                            _eventCallback?.Invoke(new MouseButtonReleasedEvent((CrossEngine.Inputs.Mouse)button));
+                            _eventCallback?.Invoke(new MouseReleasedEvent((CrossEngine.Inputs.Mouse)button));
                         }
                         break;
                 }

@@ -22,7 +22,7 @@ namespace CrossEngine.Display
         }
     }
 
-    public abstract class Window
+    public abstract class Window : IDisposable
     {
         protected struct WindowData
         {
@@ -47,6 +47,11 @@ namespace CrossEngine.Display
         {
             Data.VSync = true;
             Data.Fullscreen = false;
+        }
+
+        public virtual void Dispose()
+        {
+            GC.SuppressFinalize(this);
         }
 
         //public abstract void SetIcon(System.Drawing.Image image);
