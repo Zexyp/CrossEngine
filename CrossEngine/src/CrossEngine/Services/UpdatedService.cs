@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Services
 {
-    internal abstract class UpdatableService : Service
+    internal abstract class UpdatedService : Service
     {
-        protected abstract void OnUpdate();
+        public abstract void OnUpdate();
     }
 }

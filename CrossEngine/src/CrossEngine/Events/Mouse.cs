@@ -40,17 +40,17 @@ namespace CrossEngine.Events
         }
     }
 
-    public class MouseButtonPressedEvent : MouseButtonEvent
+    public class MousePressedEvent : MouseButtonEvent
     {
-        public MouseButtonPressedEvent(Mouse buttonCode) : base(buttonCode)
+        public MousePressedEvent(Mouse code) : base(code)
         {
 
         }
     }
 
-    public class MouseButtonReleasedEvent : MouseButtonEvent
+    public class MouseReleasedEvent : MouseButtonEvent
     {
-        public MouseButtonReleasedEvent(Mouse buttonCode) : base(buttonCode)
+        public MouseReleasedEvent(Mouse code) : base(code)
         {
 
         }

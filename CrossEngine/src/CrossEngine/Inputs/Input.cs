@@ -2,6 +2,7 @@
 
 using System.Numerics;
 using System.Linq;
+using System.Collections.Generic;
 
 using CrossEngine.Events;
 
@@ -9,13 +10,13 @@ namespace CrossEngine.Inputs
 {
     public static class Input
     {
-        static bool[] keys = new bool[(int)Enum.GetValues(typeof(Key)).Cast<Key>().Max()];
-        static bool[] keysDown = new bool[(int)Enum.GetValues(typeof(Key)).Cast<Key>().Max()];
-        static bool[] keysUp = new bool[(int)Enum.GetValues(typeof(Key)).Cast<Key>().Max()];
+        static readonly HashSet<Key> keys = new();
+        static readonly HashSet<Key> keysDown = new();
+        static readonly HashSet<Key> keysUp = new();
 
-        static bool[] buttons = new bool[(int)Enum.GetValues(typeof(Mouse)).Cast<Mouse>().Max()];
-        static bool[] buttonsDown = new bool[(int)Enum.GetValues(typeof(Mouse)).Cast<Mouse>().Max()];
-        static bool[] buttonsUp = new bool[(int)Enum.GetValues(typeof(Mouse)).Cast<Mouse>().Max()];
+        static readonly HashSet<Mouse> buttons = new();
+        static readonly HashSet<Mouse> buttonsDown = new();
+        static readonly HashSet<Mouse> buttonsUp = new();
 
         static Vector2 mousePosition;
         static Vector2 mouseDelta;
@@ -25,38 +26,27 @@ namespace CrossEngine.Inputs
 
         static internal void Update()
         {
-            mouseDelta.X = mouseDelta.Y = 0.0f;
+            mouseDelta = Vector2.Zero;
             mouseLastPosition = mousePosition;
 
-            for (int i = 0; i < keys.Length; i++)
-            {
-                keysDown[i] = false;
-                keysUp[i] = false;
-            }
+            keysDown.Clear();
+            keysUp.Clear();
 
-            for (int i = 0; i < buttons.Length; i++)
-            {
-                buttonsDown[i] = false;
-                buttonsUp[i] = false;
-            }
+            buttonsDown.Clear();
+            buttonsUp.Clear();
         }
 
         static public void ForceReset()
         {
-            mouseDelta.X = mouseDelta.Y = 0.0f;
+            mouseDelta = Vector2.Zero;
 
-            for (int i = 0; i < keys.Length; i++)
-            {
-                keys[i] = false;
-                keysDown[i] = false;
-                keysUp[i] = false;
-            }
-            for (int i = 0; i < buttons.Length; i++)
-            {
-                buttons[i] = false;
-                buttonsDown[i] = false;
-                buttonsUp[i] = false;
-            }
+            keys.Clear();
+            keysDown.Clear();
+            keysUp.Clear();
+
+            buttons.Clear();
+            buttonsDown.Clear();
+            buttonsUp.Clear();
         }
 
         #region Events
@@ -67,41 +57,35 @@ namespace CrossEngine.Inputs
             new EventDispatcher(e)
                 .Dispatch<KeyPressedEvent>(OnKeyPressed)
                 .Dispatch<KeyReleasedEvent>(OnKeyReleased)
-                .Dispatch<MouseButtonPressedEvent>(OnMouseButtonPressed)
-                .Dispatch<MouseButtonReleasedEvent>(OnMouseButtonReleased)
+                .Dispatch<MousePressedEvent>(OnMousePressed)
+                .Dispatch<MouseReleasedEvent>(OnMouseReleased)
                 .Dispatch<MouseScrolledEvent>(OnMouseScrolled)
                 .Dispatch<MouseMovedEvent>(OnMouseMoved);
         }
 
         static void OnKeyPressed(KeyPressedEvent e)
         {
-            if ((int)e.KeyCode > 0)
-            {
-                keys[(int)e.KeyCode] = true;
-                keysDown[(int)e.KeyCode] = e.RepeatCount == 0;
-            }
+            keys.Add(e.KeyCode);
+            if (e.RepeatCount == 0) keysDown.Add(e.KeyCode);
         }
         static void OnKeyReleased(KeyReleasedEvent e)
         {
-            if ((int)e.KeyCode > 0)
-            {
-                keys[(int)e.KeyCode] = false;
-                keysUp[(int)e.KeyCode] = true;
-            }
+            keys.Add(e.KeyCode);
+            keysUp.Add(e.KeyCode);
         }
-        static void OnMouseButtonPressed(MouseButtonPressedEvent e)
+        static void OnMousePressed(MousePressedEvent e)
         {
-            buttons[(int)e.ButtonCode] = true;
-            buttonsDown[(int)e.ButtonCode] = true;
+            buttons.Add(e.ButtonCode);
+            buttonsDown.Add(e.ButtonCode);
         }
-        static void OnMouseButtonReleased(MouseButtonReleasedEvent e)
+        static void OnMouseReleased(MouseReleasedEvent e)
         {
-            buttons[(int)e.ButtonCode] = false;
-            buttonsUp[(int)e.ButtonCode] = true;
+            buttons.Add(e.ButtonCode);
+            buttonsUp.Add(e.ButtonCode);
         }
         static void OnMouseScrolled(MouseScrolledEvent e)
         {
-
+            
         }
         static void OnMouseMoved(MouseMovedEvent e)
         {
@@ -111,37 +95,35 @@ namespace CrossEngine.Inputs
         #endregion
 
         #region Get
+        #region Key
         public static bool GetKey(Key key)
         {
-            if (key == Key.Unknown)
-                throw new Exception();
-            return keys[(int)key];
+            return keys.Contains(key);
         }
         public static bool GetKeyDown(Key key)
         {
-            if (key == Key.Unknown)
-                throw new Exception();
-            return keysDown[(int)key];
+            return keysDown.Contains(key);
         }
         public static bool GetKeyUp(Key key)
         {
-            if (key == Key.Unknown)
-                throw new Exception();
-            return keysUp[(int)key];
+            return keysUp.Contains(key);
         }
+        #endregion
 
-        public static bool GetMouseButton(Mouse button)
+        #region Mouse
+        public static bool GetMouse(Mouse button)
         {
-            return buttons[(int)button];
+            return buttons.Contains(button);
         }
-        public static bool GetMouseButtonDown(Mouse button)
+        public static bool GetMouseDown(Mouse button)
         {
-            return buttonsDown[(int)button];
+            return buttonsDown.Contains(button);
         }
-        public static bool GetMouseButtonUp(Mouse button)
+        public static bool GetMouseUp(Mouse button)
         {
-            return buttonsUp[(int)button];
+            return buttonsUp.Contains(button);
         }
+        #endregion
         #endregion
 
         #region Is
@@ -151,7 +133,7 @@ namespace CrossEngine.Inputs
             //InputState state = Glfw.GetKey(Application.Instance.Window.Handle, (Keys)key);
             //return state == InputState.Press || state == InputState.Repeat;
         }
-        public static bool IsMouseButtonPressed(Mouse button)
+        public static bool IsMousePressed(Mouse button)
         {
             throw new NotImplementedException();
             //InputState state = Glfw.GetMouseButton(Application.Instance.Window.Handle, (MouseButton)button);
@@ -159,24 +141,12 @@ namespace CrossEngine.Inputs
         }
         #endregion
 
-        //public static Vector2 GetMousePosition()
-        //{
-        //    Glfw.GetCursorPosition(Application.Instance.Window.Handle, out double x, out double y);
-        //    return new Vector2((float)x, (float)y);
-        //}
-
         public static Vector2 GetMousePosition()
         {
             return mousePosition;
         }
-        public static float GetMouseX()
-        {
-            return mousePosition.X;
-        }
-        public static float GetMouseY()
-        {
-            return mousePosition.Y;
-        }
+        public static Vector2 GetMouseScroll() => throw new NotImplementedException();
+        public static Vector2 GetMouseDelta() => throw new NotImplementedException();
 
         //public static float GetProjectedMouseX(Rendering.Cameras.Camera camera)
         //{

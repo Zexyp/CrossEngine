@@ -8,13 +8,9 @@ namespace CrossEngine.Services
 {
     internal abstract class Service
     {
-        public bool Active;
+        public ServiceManager Manager { get; internal set; }
 
-        protected abstract void OnActivate();
-        protected abstract void OnDeactivate();
-        protected abstract void OnAttach();
-        protected abstract void OnDetach();
-        protected abstract void OnStart();
-        protected abstract void OnDestroy();
+        public abstract void OnStart();
+        public abstract void OnDestroy();
     }
 }
