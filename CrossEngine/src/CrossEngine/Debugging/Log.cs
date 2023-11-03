@@ -21,7 +21,7 @@ namespace CrossEngine.Logging
 
     public static class Log
     {
-        public static Logger Default;
+        public static readonly Logger Default;
 
         private static Mutex mutex = new Mutex();
 

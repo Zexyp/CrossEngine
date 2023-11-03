@@ -1,5 +1,4 @@
 ﻿using System;
-using static OpenGL.GL;
 
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,6 +8,8 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
 using CrossEngine.Rendering;
+using static CrossEngine.Platform.OpenGL.GLContext;
+using Silk.NET.OpenGL;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -23,7 +24,7 @@ namespace CrossEngine.Platform.OpenGL
             Profiler.Function();
 
             fixed (uint* p = &_rendererId)
-                glGenBuffers(1, p);
+                gl.GenBuffers(1, p);
 
             GC.KeepAlive(this);
             GPUGC.Register(this);
@@ -37,8 +38,8 @@ namespace CrossEngine.Platform.OpenGL
             Count = count;
             _bufferUsage = bufferUsage;
 
-            glBindBuffer(GL_ARRAY_BUFFER, _rendererId);
-            glBufferData(GL_ARRAY_BUFFER, (int)Count * GetIndexDataTypeSize(DataType), indices, GLUtils.ToGLBufferUsage(_bufferUsage));
+            gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
+            gl.BufferData(GLEnum.ArrayBuffer, Count * GetIndexDataTypeSize(DataType), indices, GLUtils.ToGLBufferUsage(_bufferUsage));
         }
 
         protected override unsafe void Dispose(bool disposing)
@@ -55,7 +56,7 @@ namespace CrossEngine.Platform.OpenGL
 
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
-                glDeleteBuffers(1, p);
+                gl.DeleteBuffers(1, p);
 
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
@@ -69,25 +70,25 @@ namespace CrossEngine.Platform.OpenGL
         {
             Profiler.Function();
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _rendererId);
+            gl.BindBuffer(GLEnum.ElementArrayBuffer, _rendererId);
         }
 
         public override void Unbind()
         {
             Profiler.Function();
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
         }
 
         public override unsafe void SetData(void* data, uint count, uint offset = 0)
         {
             Profiler.Function();
 
-            glBindBuffer(GL_ARRAY_BUFFER, _rendererId);
-            glBufferSubData(GL_ARRAY_BUFFER, (int)offset, (int)Count * GetIndexDataTypeSize(DataType), data);
+            gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
+            gl.BufferSubData(GLEnum.ArrayBuffer, (int)offset, Count * GetIndexDataTypeSize(DataType), data);
         }
 
-        private static int GetIndexDataTypeSize(IndexDataType dataType)
+        private static uint GetIndexDataTypeSize(IndexDataType dataType)
         {
             switch (dataType)
             {

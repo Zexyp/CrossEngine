@@ -1,5 +1,4 @@
 ﻿using System;
-using static OpenGL.GL;
 
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +9,7 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
 using CrossEngine.Rendering;
 using CrossEngine.Utils;
+using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -25,7 +25,7 @@ namespace CrossEngine.Platform.OpenGL
             Profiler.Function();
 
             fixed (uint* p = &_rendererId)
-                glGenVertexArrays(1, p);
+                gl.GenVertexArrays(1, p);
 
             GC.KeepAlive(this);
             GPUGC.Register(this);
@@ -47,7 +47,7 @@ namespace CrossEngine.Platform.OpenGL
 
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
-                glDeleteVertexArrays(1, p);
+                gl.DeleteVertexArrays(1, p);
 
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
@@ -61,14 +61,14 @@ namespace CrossEngine.Platform.OpenGL
         {
             Profiler.Function();
 
-            glBindVertexArray(_rendererId);
+            gl.BindVertexArray(_rendererId);
         }
 
         public override void Unbind()
         {
             Profiler.Function();
 
-            glBindVertexArray(0);
+            gl.BindVertexArray(0);
         }
 
         public override unsafe void AddVertexBuffer(WeakReference<VertexBuffer> vb)
@@ -79,7 +79,7 @@ namespace CrossEngine.Platform.OpenGL
 
             Debug.Assert(vertexBuffer.GetLayout() != null && vertexBuffer.GetLayout().GetElements().Length > 0);
 
-            glBindVertexArray(_rendererId);
+            gl.BindVertexArray(_rendererId);
             vertexBuffer.Bind();
 
             var layout = vertexBuffer.GetLayout();
@@ -94,14 +94,14 @@ namespace CrossEngine.Platform.OpenGL
                     case ShaderDataType.Float3:
                     case ShaderDataType.Float4:
                         {
-                            glEnableVertexAttribArray(_vertexBufferIndex);
-                            glVertexAttribPointer(_vertexBufferIndex,
+                            gl.EnableVertexAttribArray(_vertexBufferIndex);
+                            gl.VertexAttribPointer(_vertexBufferIndex,
                                 (int)element.GetComponentCount(),
                                 GLUtils.GetGLBaseDataType(element.Type),
                                 element.Normalized,
-                                (int)layout.GetStride(),
+                                layout.GetStride(),
                                 (void*)element.Offset);
-                            glVertexAttribDivisor(_vertexBufferIndex, element.Divisor);
+                            gl.VertexAttribDivisor(_vertexBufferIndex, element.Divisor);
                             _vertexBufferIndex++;
                             break;
                         }
@@ -111,13 +111,13 @@ namespace CrossEngine.Platform.OpenGL
                     case ShaderDataType.Int4:
                     case ShaderDataType.Bool:
                         {
-                            glEnableVertexAttribArray(_vertexBufferIndex);
-                            glVertexAttribIPointer(_vertexBufferIndex,
+                            gl.EnableVertexAttribArray(_vertexBufferIndex);
+                            gl.VertexAttribIPointer(_vertexBufferIndex,
                                 (int)element.GetComponentCount(),
                                 GLUtils.GetGLBaseDataType(element.Type),
-                                (int)layout.GetStride(),
+                                layout.GetStride(),
                                 (void*)element.Offset);
-                            glVertexAttribDivisor(_vertexBufferIndex, element.Divisor);
+                            gl.VertexAttribDivisor(_vertexBufferIndex, element.Divisor);
                             _vertexBufferIndex++;
                             break;
                         }
@@ -127,14 +127,14 @@ namespace CrossEngine.Platform.OpenGL
                             int count = (int)element.GetComponentCount();
                             for (int ii = 0; ii < count; ii++)
                             {
-                                glEnableVertexAttribArray(_vertexBufferIndex);
-                                glVertexAttribPointer(_vertexBufferIndex,
+                                gl.EnableVertexAttribArray(_vertexBufferIndex);
+                                gl.VertexAttribPointer(_vertexBufferIndex,
                                     count,
                                     GLUtils.GetGLBaseDataType(element.Type),
                                     element.Normalized,
-                                    (int)layout.GetStride(),
+                                    layout.GetStride(),
                                     (void*)(element.Offset + sizeof(float) * count * ii));
-                                glVertexAttribDivisor(_vertexBufferIndex, element.Divisor);
+                                gl.VertexAttribDivisor(_vertexBufferIndex, element.Divisor);
                                 _vertexBufferIndex++;
                             }
                             break;
@@ -150,7 +150,7 @@ namespace CrossEngine.Platform.OpenGL
         {
             Profiler.Function();
 
-            glBindVertexArray(_rendererId);
+            gl.BindVertexArray(_rendererId);
             indexBuffer.GetValue().Bind();
 
             _indexBuffer = indexBuffer;

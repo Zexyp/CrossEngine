@@ -1,52 +1,25 @@
 ﻿using System;
-
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 
-using CrossEngine.Logging;
+using CrossEngine.Utils;
+using CrossEngine.Rendering.Shaders;
 using CrossEngine.Platform.OpenGL;
-using CrossEngine.Profiling;
 
-namespace CrossEngine.Rendering.Shaders
+namespace CrossEngine.Rendering.Buffers
 {
-    public enum ShaderDataType
+    public enum IndexDataType
     {
         None = 0,
 
-        Float,
-        Float2,
-        Float3,
-        Float4,
-
-        Mat3,
-        Mat4,
-
-        Int,
-        Int2,
-        Int3,
-        Int4,
-
-        Bool,
-
-        Sampler2D,
+        UInt,
+        UShort,
+        UByte,
     }
 
-    public enum ShaderType
+    public abstract class IndexBuffer : IDisposable
     {
-        None = 0,
-
-        Vertex,
-        Geometry,
-        Fragment,
-    }
-
-    public abstract class Shader : IDisposable
-    {
-        public ShaderType Type { get; private set; }
-
         public bool Disposed { get; protected set; } = false;
 
         public void Dispose()
@@ -57,8 +30,6 @@ namespace CrossEngine.Rendering.Shaders
 
         protected virtual void Dispose(bool disposing)
         {
-            Profiler.Function();
-
             if (Disposed)
                 return;
 
@@ -72,22 +43,25 @@ namespace CrossEngine.Rendering.Shaders
             Disposed = true;
         }
 
-        ~Shader()
+        ~IndexBuffer()
         {
             Dispose(false);
         }
 
-        public Shader(ShaderType type)
-        {
-            Type = type;
-        }
+        public IndexDataType DataType { get; protected set; }
+        public uint Count { get; protected set; }
 
-        public static WeakReference<Shader> Create(string source, ShaderType type)
+        public abstract void Bind();
+        public abstract void Unbind();
+
+        public abstract unsafe void SetData(void* data, uint size, uint offset = 0);
+
+        public static unsafe WeakReference<IndexBuffer> Create(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
             switch (RendererAPI.GetAPI())
             {
                 case RendererAPI.API.None: Debug.Assert(false, $"No API is not supported"); return null;
-                case RendererAPI.API.OpenGL: return new WeakReference<Shader>(new GLShader(source, type));
+                case RendererAPI.API.OpenGL: return new WeakReference<IndexBuffer>(new GLIndexBuffer(indices, count, dataType, bufferUsage));
             }
 
             Debug.Assert(false, $"Udefined {nameof(RendererAPI.API)} value");

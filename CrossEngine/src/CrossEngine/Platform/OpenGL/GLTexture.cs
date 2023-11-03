@@ -1,5 +1,4 @@
 ﻿using System;
-using static OpenGL.GL;
 
 using System.Diagnostics;
 
@@ -7,15 +6,18 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Rendering;
 using CrossEngine.Debugging;
+using static CrossEngine.Platform.OpenGL.GLContext;
+using GLEnum = Silk.NET.OpenGL.GLEnum;
 
 namespace CrossEngine.Platform.OpenGL
 {
     class GLTexture : Texture
     {
         internal uint _rendererId;
-        private int _filtering = GL_LINEAR;
+        private int _filtering = (int)GLEnum.Linear;
         private uint _width, _height;
-        private int _internalFormat, _dataFormat;
+        private GLEnum _dataFormat;
+        private int _internalFormat;
 
         public override uint RendererId => _rendererId;
         public override uint Width => _width;
@@ -26,7 +28,7 @@ namespace CrossEngine.Platform.OpenGL
             Profiler.Function();
 
             fixed (uint* p = &_rendererId)
-                glGenTextures(1, p);
+                gl.GenTextures(1, p);
 
             GC.KeepAlive(this);
             GPUGC.Register(this);
@@ -53,7 +55,7 @@ namespace CrossEngine.Platform.OpenGL
 
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
-                glDeleteTextures(1, p);
+                gl.DeleteTextures(1, p);
 
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
@@ -65,48 +67,48 @@ namespace CrossEngine.Platform.OpenGL
 
         public override void Bind(uint slot = 0)
         {
-            glActiveTexture(GL_TEXTURE0 + (int)slot);
-            glBindTexture(GLUtils.ToGLTextureTarget(Target), _rendererId);
+            gl.ActiveTexture(GLEnum.Texture0 + (int)slot);
+            gl.BindTexture(GLUtils.ToGLTextureTarget(Target), _rendererId);
         }
 
         public override void Unbind()
         {
-            glBindTexture(GLUtils.ToGLTextureTarget(Target), 0);
+            gl.BindTexture(GLUtils.ToGLTextureTarget(Target), 0);
         }
 
         public override unsafe void SetData(void* data, uint size)
         {
             int bpp = 0;
-            switch (_internalFormat)
+            switch ((GLEnum)_internalFormat)
             {
-                case GL_RGB: bpp = 3; break;
-                case GL_RGBA: bpp = 4; break;
+                case GLEnum.Rgb: bpp = 3; break;
+                case GLEnum.Rgba: bpp = 4; break;
             }
             Debug.Assert(size == _width * _height * bpp);
 
-            int gltarg = GLUtils.ToGLTextureTarget(Target);
-            glBindTexture(gltarg, _rendererId);
-            glTexSubImage2D(gltarg, 0, 0, 0, (int)_width, (int)_height, _dataFormat, GL_UNSIGNED_BYTE, data);
+            GLEnum gltarg = GLUtils.ToGLTextureTarget(Target);
+            gl.BindTexture(gltarg, _rendererId);
+            gl.TexSubImage2D(gltarg, 0, 0, 0, _width, _height, _dataFormat, GLEnum.UnsignedByte, data);
         }
 
         public unsafe void SetData(void* data, uint width, uint height, ColorFormat suppliedFormat, ColorFormat internalFormat)
         {
             Target = TextureTarget.Texture2D;
-            int gltarg = GLUtils.ToGLTextureTarget(Target);
+            GLEnum gltarg = GLUtils.ToGLTextureTarget(Target);
 
-            glBindTexture(gltarg, _rendererId);
+            gl.BindTexture(gltarg, _rendererId);
 
             // TODO: add data type
-            _internalFormat = GLUtils.ToGLColorFormat(internalFormat);
+            _internalFormat = (int)GLUtils.ToGLColorFormat(internalFormat);
             _dataFormat = GLUtils.ToGLColorFormat(suppliedFormat);
-            glTexImage2D(gltarg, 0, _internalFormat, (int)width, (int)height, 0, _dataFormat, GL_UNSIGNED_BYTE, data);
+            gl.TexImage2D(gltarg, 0, _internalFormat, width, height, 0, _dataFormat, GLEnum.UnsignedByte, data);
 
             // ! this should be used
             //if (generateMipmaps) glGenerateMipmap((int)_target);
 
             // parameters need to be set
-            glTexParameteri(gltarg, GL_TEXTURE_MIN_FILTER, _filtering);
-            glTexParameteri(gltarg, GL_TEXTURE_MAG_FILTER, _filtering);
+            gl.TexParameter(gltarg, GLEnum.TextureMinFilter, _filtering);
+            gl.TexParameter(gltarg, GLEnum.TextureMagFilter, _filtering);
 
             _width = width;
             _height = height;
@@ -114,21 +116,21 @@ namespace CrossEngine.Platform.OpenGL
 
         public override void SetFilterParameter(FilterParameter filter)
         {
-            int glfilt = GLUtils.ToGLFilterParameter(filter);
-            int gltarg = GLUtils.ToGLTextureTarget(Target);
-            glTexParameteri(gltarg, GL_TEXTURE_MIN_FILTER, glfilt);
-            glTexParameteri(gltarg, GL_TEXTURE_MAG_FILTER, glfilt);
+            int glfilt = (int)GLUtils.ToGLFilterParameter(filter);
+            GLEnum gltarg = GLUtils.ToGLTextureTarget(Target);
+            gl.TexParameter(gltarg, GLEnum.TextureMinFilter, glfilt);
+            gl.TexParameter(gltarg, GLEnum.TextureMagFilter, glfilt);
 
             _filtering = glfilt;
         }
 
         public override void SetWrapParameter(WrapParameter wrap)
         {
-            int glwrap = GLUtils.ToGLWrapParameter(wrap);
-            int gltarg = GLUtils.ToGLTextureTarget(Target);
-            glTexParameteri(gltarg, GL_TEXTURE_WRAP_R, glwrap); // for 3d texture
-            glTexParameteri(gltarg, GL_TEXTURE_WRAP_S, glwrap);
-            glTexParameteri(gltarg, GL_TEXTURE_WRAP_T, glwrap);
+            int glwrap = (int)GLUtils.ToGLWrapParameter(wrap);
+            GLEnum gltarg = GLUtils.ToGLTextureTarget(Target);
+            //gl.TexParameter(gltarg, GLEnum.TextureWrapR, glwrap); // for 3d texture
+            gl.TexParameter(gltarg, GLEnum.TextureWrapS, glwrap);
+            gl.TexParameter(gltarg, GLEnum.TextureWrapT, glwrap);
         }
     }
 }

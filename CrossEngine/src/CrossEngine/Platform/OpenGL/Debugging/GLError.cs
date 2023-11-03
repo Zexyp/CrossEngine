@@ -1,11 +1,12 @@
 ﻿using System;
-using static OpenGL.GL;
+using Silk.NET.OpenGL;
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
+using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL.Debugging
 {
@@ -15,13 +16,13 @@ namespace CrossEngine.Platform.OpenGL.Debugging
 
         public static void ClearError()
         {
-            while (glGetError() != GL_NO_ERROR) ;
+            while (gl.GetError() != GLEnum.NoError) ;
         }
 
         public static bool CheckError()
         {
-            int error;
-            while ((error = glGetError()) != GL_NO_ERROR)
+            GLEnum error;
+            while ((error = gl.GetError()) != GLEnum.NoError)
             {
                 RendererAPI.Log.Error("(" + error + ")");
                 return false;
@@ -31,8 +32,8 @@ namespace CrossEngine.Platform.OpenGL.Debugging
 
         public static void LogError()
         {
-            int error;
-            while ((error = glGetError()) != GL_NO_ERROR)
+            GLEnum error;
+            while ((error = gl.GetError()) != GLEnum.NoError)
             {
                 RendererAPI.Log.Error("(" + error + ")");
                 //error.ToString("X")

@@ -65,7 +65,7 @@ void main()
 
             public WeakReference<VertexArray> lineVertexArray;
             public WeakReference<VertexBuffer> lineVertexBuffer;
-            public ShaderProgram lineShader;
+            public WeakReference<ShaderProgram> lineShader;
 
             public uint lineCount;
             public LineVertex[] lineVertexBufferBase;
@@ -93,16 +93,16 @@ void main()
 
             data.lineVertexBufferBase = new LineVertex[LineRendererData.MaxVertices];
 
-            var vertex = new Shader(VertexShaderSource, ShaderType.Vertex);
-            var fragment = new Shader(FragmentShaderSource, ShaderType.Fragment);
-            data.lineShader = new ShaderProgram(vertex, fragment);
+            var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex).GetValue();
+            var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment).GetValue();
+            data.lineShader = ShaderProgram.Create(vertex, fragment);
             vertex.Dispose();
             fragment.Dispose();
         }
 
         public static void Shutdown()
         {
-            data.lineShader.Dispose();
+            data.lineShader.GetValue().Dispose();
             data.lineVertexArray.GetValue().Dispose();
             data.lineVertexBuffer.GetValue().Dispose();
             data.lineVertexBufferBase = null;
@@ -112,8 +112,9 @@ void main()
 
         public static unsafe void BeginScene(Matrix4x4 viewProjectionMatrix)
         {
-            data.lineShader.Use();
-            data.lineShader.SetMat4("uViewProjection", viewProjectionMatrix);
+            var shader = data.lineShader.GetValue();
+            shader.Use();
+            shader.SetParameterMat4("uViewProjection", viewProjectionMatrix);
 
             StartBatch();
         }
@@ -142,7 +143,7 @@ void main()
                 data.lineVertexBuffer.GetValue().SetData(p, dataSize);
             }
 
-            data.lineShader.Use();
+            data.lineShader.GetValue().Use();
             _rapi.DrawArray(data.lineVertexArray, data.lineCount * 2, DrawMode.Lines);
 
             data.stats.DrawCalls++;

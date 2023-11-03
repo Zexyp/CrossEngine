@@ -17,7 +17,6 @@ namespace CrossEngine.Services
     internal class RenderService : Service
     {
         public RendererAPI RendererAPI { get; private set; }
-        public GraphicsContext Context { get; private set; }
         public Window Window { get; private set; }
         public event Action Frame;
 
@@ -51,10 +50,6 @@ namespace CrossEngine.Services
 
             Window.CreateWindow();
 
-            Context = new CrossEngine.Platform.OpenGL.GLContext(((GlfwWindow)Window).NativeHandle);
-
-            Context.Init();
-
             RendererAPI.Init();
             RendererAPI.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
 
@@ -70,7 +65,7 @@ namespace CrossEngine.Services
                 Profiler.EndScope();
                 Profiler.BeginScope("Swap");
 
-                Context.SwapBuffers();
+                Window.Context.SwapBuffers();
                 
                 Profiler.EndScope();
                 Profiler.BeginScope("Poll Events");

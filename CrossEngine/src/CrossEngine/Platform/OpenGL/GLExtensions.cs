@@ -1,18 +1,21 @@
 ﻿using System;
-using static OpenGL.GL;
+using System.Xml.Linq;
+using Silk.NET.OpenGL;
+using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL
 {
     static class GLExtensions
     {
-        static readonly string[] _extensions;
-        static GLExtensions()
+        static string[] _extensions;
+
+        public static unsafe void Load()
         {
-            var num = glGetInteger(GL_NUM_EXTENSIONS);
+            var num = gl.GetInteger(GLEnum.NumExtensions);
             _extensions = new string[num];
             for (int i = 0; i < num; i++)
             {
-                _extensions[i] = glGetStringi(GL_EXTENSIONS, (uint)i);
+                _extensions[i] = GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Extensions, (uint)i));
             }
         }
 

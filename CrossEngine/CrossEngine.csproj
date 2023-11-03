@@ -20,7 +20,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="vendor\**" />
+    <EmbeddedResource Remove="vendor\**" />
+    <None Remove="vendor\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Evergine.Bindings.Imgui" Version="2023.4.4.966" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.18.0" />
   </ItemGroup>
 
   <ItemGroup>

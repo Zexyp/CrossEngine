@@ -124,9 +124,9 @@ namespace CrossEngine.Rendering
 
             public const uint MaxTextureSlots = 32;
 
-            public ShaderProgram currentShader;
-            public ShaderProgram discardingShader;
-            public ShaderProgram regularShader;
+            public WeakReference<ShaderProgram> currentShader;
+            public WeakReference<ShaderProgram> discardingShader;
+            public WeakReference<ShaderProgram> regularShader;
             public WeakReference<Texture> whiteTexture;
 
             public PrimitivesData quads;
@@ -187,11 +187,11 @@ namespace CrossEngine.Rendering
         {
             _rapi = rapi;
 
-            Shader vertex = new Shader(VertexShaderSource, ShaderType.Vertex);
-            Shader fragment = new Shader(FragmentShaderSource, ShaderType.Fragment);
-            Shader fragmentDiscarding = new Shader(DiscardingFragmentShaderSource, ShaderType.Fragment);
-            data.regularShader = new ShaderProgram(vertex, fragment); //AssetManager.Shaders.GetShader("shaders/batch/texturedbatch.shader");
-            data.discardingShader = new ShaderProgram(vertex, fragmentDiscarding);
+            var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex).GetValue();
+            var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment).GetValue();
+            var fragmentDiscarding = Shader.Create(DiscardingFragmentShaderSource, ShaderType.Fragment).GetValue();
+            data.regularShader = ShaderProgram.Create(vertex, fragment); //AssetManager.Shaders.GetShader("shaders/batch/texturedbatch.shader");
+            data.discardingShader = ShaderProgram.Create(vertex, fragmentDiscarding);
             vertex.Dispose();
             fragment.Dispose();
             fragmentDiscarding.Dispose();
@@ -203,10 +203,12 @@ namespace CrossEngine.Rendering
             int[] samplers = new int[Renderer2DData.MaxTextureSlots];
             for (uint i = 0; i < Renderer2DData.MaxTextureSlots; i++)
                 samplers[i] = (int)i;
-            data.regularShader.Use();
-            data.regularShader.SetIntVec("uTextures", samplers);
-            data.discardingShader.Use();
-            data.discardingShader.SetIntVec("uTextures", samplers);
+            var shader = data.regularShader.GetValue();
+            shader.Use();
+            shader.SetParameter1("uTextures", samplers);
+            shader = data.discardingShader.GetValue();
+            shader.Use();
+            shader.SetParameter1("uTextures", samplers);
 
             data.currentShader = data.regularShader;
 
@@ -271,8 +273,8 @@ namespace CrossEngine.Rendering
 
         public static void Shutdown()
         {
-            data.discardingShader.Dispose();
-            data.regularShader.Dispose();
+            data.discardingShader.GetValue().Dispose();
+            data.regularShader.GetValue().Dispose();
             data.whiteTexture.GetValue().Dispose();
 
             data.quads.VertexArray.GetValue().Dispose();
@@ -289,8 +291,9 @@ namespace CrossEngine.Rendering
 
         public static void BeginScene(Matrix4x4 viewProjectionMatrix)
         {
-            data.currentShader.Use();
-            data.currentShader.SetMat4("uViewProjection", viewProjectionMatrix);
+            var shader = data.currentShader.GetValue();
+            shader.Use();
+            shader.SetParameterMat4("uViewProjection", viewProjectionMatrix);
 
             StartQuadsBatch();
             StartTrisBatch();
@@ -332,7 +335,7 @@ namespace CrossEngine.Rendering
                 if (data.quads.TextureSlots[i]?.GetValue() != null) data.quads.TextureSlots[i].GetValue().Bind(i);
             }
 
-            data.currentShader.Use();
+            data.currentShader.GetValue().Use();
             _rapi.DrawIndexed(data.quads.VertexArray, data.quads.IndexCount/*, DrawMode.Traingles*/);
 
             data.quads.Stats.DrawCalls++;
@@ -367,7 +370,7 @@ namespace CrossEngine.Rendering
                 if (data.tris.TextureSlots[i]?.GetValue() != null) data.tris.TextureSlots[i].GetValue().Bind(i);
             }
 
-            data.currentShader.Use();
+            data.currentShader.GetValue().Use();
             _rapi.DrawArray(data.tris.VertexArray, data.tris.IndexCount/*, DrawMode.Traingles*/);
 
             data.tris.Stats.DrawCalls++;

@@ -1,5 +1,4 @@
 ﻿using System;
-using static OpenGL.GL;
 using GLFW;
 
 using System.Diagnostics;
@@ -9,6 +8,8 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 using CrossEngine.Platform.Windows;
+using static CrossEngine.Platform.OpenGL.GLContext;
+using GLEnum = Silk.NET.OpenGL.GLEnum;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -16,9 +17,7 @@ namespace CrossEngine.Platform.OpenGL
     {
         public override void Init()
         {
-#if DEBUG
-            Debugging.GLDebugging.Enable();
-#endif
+
         }
 
         public override unsafe void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)
@@ -27,49 +26,49 @@ namespace CrossEngine.Platform.OpenGL
             var ib = vb.GetIndexBuffer().GetValue();
             vb.Bind();
             uint count = (indexCount != 0) ? indexCount : ib.Count;
-            glDrawElements(GL_TRIANGLES, (int)count, GLUtils.ToGLIndexDataType(ib.DataType), null);
+            gl.DrawElements(GLEnum.Triangles, count, GLUtils.ToGLIndexDataType(ib.DataType), null);
             // TODO: consider unbinding to keep the vertex array state safe
         }
 
         public override unsafe void DrawArray(WeakReference<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
         {
             vertexArray.GetValue().Bind();
-            glDrawArrays(GLUtils.ToGLDrawMode(mode), 0, (int)verticesCount);
+            gl.DrawArrays(GLUtils.ToGLDrawMode(mode), 0, verticesCount);
             // TODO: consider unbinding to keep the vertex array state safe
         }
 
-        public override void Clear() => glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        public override void Clear() => gl.Clear((uint)(GLEnum.ColorBufferBit | GLEnum.DepthBufferBit));
 
-        public override void SetViewport(uint x, uint y, uint width, uint height) => glViewport((int)x, (int)y, (int)width, (int)height);
+        public override void SetViewport(uint x, uint y, uint width, uint height) => gl.Viewport((int)x, (int)y, width, height);
 
-        public override void SetClearColor(Vector4 color) => glClearColor(color.X, color.Y, color.Z, color.W);
+        public override void SetClearColor(Vector4 color) => gl.ClearColor(color.X, color.Y, color.Z, color.W);
 
-        public override void SetPolygonMode(PolygonMode mode) => glPolygonMode(GL_FRONT_AND_BACK, GLUtils.ToGLPolygonMode(mode));
+        public override void SetPolygonMode(PolygonMode mode) => gl.PolygonMode(GLEnum.FrontAndBack, GLUtils.ToGLPolygonMode(mode));
 
         public override void SetDepthFunc(DepthFunc func)
         {
             if (func == DepthFunc.None)
             {
-                glDisable(GL_DEPTH_TEST);
+                gl.Disable(GLEnum.DepthTest);
                 return;
             }
 
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GLUtils.ToGLDepthFunc(func));
+            gl.Enable(GLEnum.DepthTest);
+            gl.DepthFunc(GLUtils.ToGLDepthFunc(func));
         }
 
         public override void SetBlendFunc(BlendFunc func)
         {
             if (func == BlendFunc.None)
             {
-                glDisable(GL_BLEND);
+                gl.Disable(GLEnum.Blend);
                 return;
             }
 
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GLUtils.ToGLBlendFunc(func));
+            gl.Enable(GLEnum.Blend);
+            gl.BlendFunc(GLEnum.SrcAlpha, GLUtils.ToGLBlendFunc(func));
         }
 
-        public override void SetLineWidth(float width) => glLineWidth(width);
+        public override void SetLineWidth(float width) => gl.LineWidth(width);
     }
 }
