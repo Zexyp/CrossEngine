@@ -1,5 +1,4 @@
 ﻿using System;
-using static OpenGL.GL;
 using OpenGL;
 using OpenGL.Extensions;
 using static OpenGL.Extensions.Debug;
@@ -10,6 +9,9 @@ using System.Text;
 
 using CrossEngine.Logging;
 using CrossEngine.Platform.OpenGL;
+using CrossEngine.Rendering;
+using static CrossEngine.Platform.OpenGL.GLContext;
+using Silk.NET.OpenGL;
 
 namespace OpenGL.Extensions
 {
@@ -40,7 +42,7 @@ namespace OpenGL.Extensions
 
         static GLDEBUGPROC DebugMessageCallbackHolder;
 
-        public static void Import(GetProcAddressHandler loader)
+        public static void Import(Func<string, IntPtr> loader)
         {
             GLExtensions.CheckExtension(ExtensionName);
             _glDebugMessageCallback = Marshal.GetDelegateForFunctionPointer<PFNGLDEBUGMESSAGECALLBACKPROC>(loader.Invoke("glDebugMessageCallback"));
@@ -50,7 +52,7 @@ namespace OpenGL.Extensions
 
 namespace CrossEngine.Platform.OpenGL.Debugging
 {
-    public static class GLDebugging
+    internal static class GLDebugging
     {
         static Logger GLLog;
 
@@ -101,14 +103,14 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             }
         }
 
-        public static unsafe void Enable(LogLevel level = LogLevel.Trace)
+        public static unsafe void Enable(GLContext context, LogLevel level = LogLevel.Trace)
         {
             Debug.Import(GLFW.Glfw.GetProcAddress);
 
             GLLog.LogLevel = level;
             glDebugMessageCallback(GLMessage, null);
-            glEnable(GL_DEBUG_OUTPUT);
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            gl.Enable(GLEnum.DebugOutput);
+            gl.Enable(GLEnum.DebugOutputSynchronous);
 
             GLLog.Trace(": gl debuging enabled");
         }

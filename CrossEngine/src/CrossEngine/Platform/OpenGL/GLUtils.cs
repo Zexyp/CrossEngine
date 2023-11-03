@@ -1,203 +1,202 @@
-﻿using static OpenGL.GL;
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Textures;
 using System;
+using Silk.NET.OpenGL;
 
 namespace CrossEngine.Platform.OpenGL
 {
     static class GLUtils
     {
-        public static int ToGLBufferUsage(BufferUsageHint bufferUsage)
+        public static GLEnum ToGLBufferUsage(BufferUsageHint bufferUsage)
         {
             switch (bufferUsage)
             {
-                case BufferUsageHint.StaticDraw: return GL_STATIC_DRAW;
-                case BufferUsageHint.DynamicDraw: return GL_DYNAMIC_DRAW;
-                case BufferUsageHint.StreamDraw: return GL_STREAM_DRAW;
+                case BufferUsageHint.StaticDraw: return GLEnum.StaticDraw;
+                case BufferUsageHint.DynamicDraw: return GLEnum.DynamicDraw;
+                case BufferUsageHint.StreamDraw: return GLEnum.StreamDraw;
             }
 
             Debug.Assert(false, $"Unknown {nameof(BufferUsageHint)} value");
             return 0;
         }
 
-        public static int ToGLIndexDataType(IndexDataType indexType)
+        public static GLEnum ToGLIndexDataType(IndexDataType indexType)
         {
             switch (indexType)
             {
-                case IndexDataType.UInt: return GL_UNSIGNED_INT;
-                case IndexDataType.UShort: return GL_UNSIGNED_SHORT;
-                case IndexDataType.UByte: return GL_UNSIGNED_BYTE;
+                case IndexDataType.UInt: return GLEnum.UnsignedInt;
+                case IndexDataType.UShort: return GLEnum.UnsignedShort;
+                case IndexDataType.UByte: return GLEnum.UnsignedByte;
             }
 
             Debug.Assert(false, $"Unknown {nameof(IndexDataType)} value");
             return 0;
         }
 
-        public static int GetGLBaseDataType(ShaderDataType dataType)
+        public static GLEnum GetGLBaseDataType(ShaderDataType dataType)
         {
             switch (dataType)
             {
-                case ShaderDataType.Float: return GL_FLOAT;
-                case ShaderDataType.Float2: return GL_FLOAT;
-                case ShaderDataType.Float3: return GL_FLOAT;
-                case ShaderDataType.Float4: return GL_FLOAT;
+                case ShaderDataType.Float: return GLEnum.Float;
+                case ShaderDataType.Float2: return GLEnum.Float;
+                case ShaderDataType.Float3: return GLEnum.Float;
+                case ShaderDataType.Float4: return GLEnum.Float;
 
-                case ShaderDataType.Mat3: return GL_FLOAT;
-                case ShaderDataType.Mat4: return GL_FLOAT;
+                case ShaderDataType.Mat3: return GLEnum.Float;
+                case ShaderDataType.Mat4: return GLEnum.Float;
 
-                case ShaderDataType.Int: return GL_INT;
-                case ShaderDataType.Int2: return GL_INT;
-                case ShaderDataType.Int3: return GL_INT;
-                case ShaderDataType.Int4: return GL_INT;
+                case ShaderDataType.Int: return GLEnum.Int;
+                case ShaderDataType.Int2: return GLEnum.Int;
+                case ShaderDataType.Int3: return GLEnum.Int;
+                case ShaderDataType.Int4: return GLEnum.Int;
 
-                case ShaderDataType.Bool: return GL_BOOL;
+                case ShaderDataType.Bool: return GLEnum.Bool;
             }
 
             Debug.Assert(false, $"Unknown {nameof(ShaderDataType)} value");
             return 0;
         }
 
-        public static int ToGLDrawMode(DrawMode mode)
+        public static GLEnum ToGLDrawMode(DrawMode mode)
         {
             switch (mode)
             {
-                case DrawMode.Lines: return GL_LINES;
-                case DrawMode.Traingles: return GL_TRIANGLES;
-                case DrawMode.Points: return GL_POINTS;
+                case DrawMode.Lines: return GLEnum.Lines;
+                case DrawMode.Traingles: return GLEnum.Triangles;
+                case DrawMode.Points: return GLEnum.Points;
             }
 
             Debug.Assert(false, $"Unknown {nameof(DrawMode)} value");
             return 0;
         }
 
-        public static int ToGLBlendFunc(BlendFunc func)
+        public static GLEnum ToGLBlendFunc(BlendFunc func)
         {
             switch (func)
             {
-                case BlendFunc.OneMinusSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
-                case BlendFunc.One: return GL_ONE;
+                case BlendFunc.OneMinusSrcAlpha: return GLEnum.OneMinusSrcAlpha;
+                case BlendFunc.One: return GLEnum.One;
             }
 
             Debug.Assert(false, $"Unknown {nameof(BlendFunc)} value");
             return 0;
         }
 
-        public static int ToGLDepthFunc(DepthFunc func)
+        public static GLEnum ToGLDepthFunc(DepthFunc func)
         {
             switch (func)
             {
-                case DepthFunc.Never: return GL_NEVER;
-                case DepthFunc.Less: return GL_LESS;
-                case DepthFunc.Equal: return GL_EQUAL;
-                case DepthFunc.LessEqual: return GL_LEQUAL;
-                case DepthFunc.Greater: return GL_GREATER;
-                case DepthFunc.NotEqual: return GL_NOTEQUAL;
-                case DepthFunc.GreaterEqual: return GL_GEQUAL;
-                case DepthFunc.Always: return GL_ALWAYS;
+                case DepthFunc.Never: return GLEnum.Never;
+                case DepthFunc.Less: return GLEnum.Less;
+                case DepthFunc.Equal: return GLEnum.Equal;
+                case DepthFunc.LessEqual: return GLEnum.Lequal;
+                case DepthFunc.Greater: return GLEnum.Greater;
+                case DepthFunc.NotEqual: return GLEnum.Notequal;
+                case DepthFunc.GreaterEqual: return GLEnum.Gequal;
+                case DepthFunc.Always: return GLEnum.Always;
             }
 
             Debug.Assert(false, $"Unknown {nameof(DepthFunc)} value");
             return 0;
         }
 
-        public static int ToGLFilterParameter(FilterParameter filter)
+        public static GLEnum ToGLFilterParameter(FilterParameter filter)
         {
             switch (filter)
             {
-                case FilterParameter.Linear: return GL_LINEAR;
-                case FilterParameter.Nearest: return GL_NEAREST;
+                case FilterParameter.Linear: return GLEnum.Linear;
+                case FilterParameter.Nearest: return GLEnum.Nearest;
             }
 
             Debug.Assert(false, $"Unknown {nameof(FilterParameter)} value");
             return 0;
         }
 
-        internal static int ToGLWrapParameter(WrapParameter param)
+        internal static GLEnum ToGLWrapParameter(WrapParameter param)
         {
             switch (param)
             {
-                case WrapParameter.Repeat: return GL_REPEAT;
-                case WrapParameter.MirroredRepeat: return GL_MIRRORED_REPEAT;
-                case WrapParameter.ClampToEdge: return GL_CLAMP_TO_EDGE;
-                case WrapParameter.ClampToBorder: return GL_CLAMP_TO_BORDER;
+                case WrapParameter.Repeat: return GLEnum.Repeat;
+                case WrapParameter.MirroredRepeat: return GLEnum.MirroredRepeat;
+                case WrapParameter.ClampToEdge: return GLEnum.ClampToEdge;
+                case WrapParameter.ClampToBorder: return GLEnum.ClampToBorder;
             }
 
             Debug.Assert(false, $"Unknown {nameof(WrapParameter)} value");
             return 0;
         }
 
-        public static int ToGLTextureTarget(TextureTarget target)
+        public static GLEnum ToGLTextureTarget(CrossEngine.Rendering.Textures.TextureTarget target)
         {
             switch (target)
             {
-                case TextureTarget.Texture1D: return GL_TEXTURE_1D;
-                case TextureTarget.Texture2D: return GL_TEXTURE_2D;
-                case TextureTarget.Texture3D: return GL_TEXTURE_3D;
-                case TextureTarget.TextureCubeMap: return GL_TEXTURE_CUBE_MAP;
+                case CrossEngine.Rendering.Textures.TextureTarget.Texture1D: return GLEnum.Texture1D;
+                case CrossEngine.Rendering.Textures.TextureTarget.Texture2D: return GLEnum.Texture2D;
+                case CrossEngine.Rendering.Textures.TextureTarget.Texture3D: return GLEnum.Texture3D;
+                case CrossEngine.Rendering.Textures.TextureTarget.TextureCubeMap: return GLEnum.TextureCubeMap;
             }
 
-            Debug.Assert(false, $"Unknown {nameof(TextureTarget)} value");
+            Debug.Assert(false, $"Unknown {nameof(CrossEngine.Rendering.Textures.TextureTarget)} value");
             return 0;
         }
 
-        public static int ToGLPolygonMode(PolygonMode mode)
+        public static GLEnum ToGLPolygonMode(CrossEngine.Rendering.PolygonMode mode)
         {
             switch (mode)
             {
-                case PolygonMode.Fill: return GL_FILL;
-                case PolygonMode.Line: return GL_LINE;
-                case PolygonMode.Point: return GL_POINT;
+                case CrossEngine.Rendering.PolygonMode.Fill: return GLEnum.Fill;
+                case CrossEngine.Rendering.PolygonMode.Line: return GLEnum.Line;
+                case CrossEngine.Rendering.PolygonMode.Point: return GLEnum.Point;
             }
 
-            Debug.Assert(false, $"Unknown {nameof(PolygonMode)} value");
+            Debug.Assert(false, $"Unknown {nameof(CrossEngine.Rendering.PolygonMode)} value");
             return 0;
         }
 
-        public static int ToGLShaderType(ShaderType type)
+        public static GLEnum ToGLShaderType(CrossEngine.Rendering.Shaders.ShaderType type)
         {
             switch (type)
             {
-                case ShaderType.Vertex: return GL_VERTEX_SHADER;
-                case ShaderType.Geometry: return GL_GEOMETRY_SHADER;
-                case ShaderType.Fragment: return GL_FRAGMENT_SHADER;
+                case CrossEngine.Rendering.Shaders.ShaderType.Vertex: return GLEnum.VertexShader;
+                case CrossEngine.Rendering.Shaders.ShaderType.Geometry: return GLEnum.GeometryShader;
+                case CrossEngine.Rendering.Shaders.ShaderType.Fragment: return GLEnum.FragmentShader;
             }
 
-            Debug.Assert(false, $"Unknown {nameof(ShaderType)} value");
+            Debug.Assert(false, $"Unknown {nameof(CrossEngine.Rendering.Shaders.ShaderType)} value");
             return 0;
         }
 
-        public static ShaderDataType ToShaderDataType(int type)
+        public static ShaderDataType ToShaderDataType(GLEnum type)
         {
             switch (type)
             {
-                case GL_FLOAT: return ShaderDataType.Float;
-                case GL_FLOAT_VEC2: return ShaderDataType.Float2;
-                case GL_FLOAT_VEC3: return ShaderDataType.Float3;
-                case GL_FLOAT_VEC4: return ShaderDataType.Float4;
+                case GLEnum.Float: return ShaderDataType.Float;
+                case GLEnum.FloatVec2: return ShaderDataType.Float2;
+                case GLEnum.FloatVec3: return ShaderDataType.Float3;
+                case GLEnum.FloatVec4: return ShaderDataType.Float4;
 
-                case GL_FLOAT_MAT3: return ShaderDataType.Mat3;
-                case GL_FLOAT_MAT4: return ShaderDataType.Mat4;
+                case GLEnum.FloatMat3: return ShaderDataType.Mat3;
+                case GLEnum.FloatMat4: return ShaderDataType.Mat4;
 
-                case GL_INT: return ShaderDataType.Int;
-                case GL_INT_VEC2: return ShaderDataType.Int2;
-                case GL_INT_VEC3: return ShaderDataType.Int3;
-                case GL_INT_VEC4: return ShaderDataType.Int4;
+                case GLEnum.Int: return ShaderDataType.Int;
+                case GLEnum.IntVec2: return ShaderDataType.Int2;
+                case GLEnum.IntVec3: return ShaderDataType.Int3;
+                case GLEnum.IntVec4: return ShaderDataType.Int4;
 
-                case GL_BOOL: return ShaderDataType.Bool;
+                case GLEnum.Bool: return ShaderDataType.Bool;
 
-                case GL_SAMPLER_2D: return ShaderDataType.Sampler2D;
+                case GLEnum.Sampler2D: return ShaderDataType.Sampler2D;
             }
 
             Debug.Assert(false, $"Invalid type or unknown {nameof(ShaderDataType)} value");
             return 0;
         }
 
-        public static int ToGLColorFormat(ColorFormat format)
+        public static GLEnum ToGLColorFormat(ColorFormat format)
         {
             switch (format)
             {
@@ -206,24 +205,24 @@ namespace CrossEngine.Platform.OpenGL
                 //case ColorFormat.SingleB: throw new NotImplementedException();
                 //case ColorFormat.SingleA: throw new NotImplementedException();
                 //case ColorFormat.DoubleRG: return GL_RG;
-                case ColorFormat.RGB: return GL_RGB;
-                case ColorFormat.BGR: return GL_BGR;
-                case ColorFormat.RGBA: return GL_RGBA;
-                case ColorFormat.BGRA: return GL_BGRA;
+                case ColorFormat.RGB: return GLEnum.Rgb;
+                case ColorFormat.BGR: return GLEnum.Bgr;
+                case ColorFormat.RGBA: return GLEnum.Rgba;
+                case ColorFormat.BGRA: return GLEnum.Bgra;
             }
 
             Debug.Assert(false, $"Unknown {nameof(ColorFormat)} value");
             return 0;
         }
 
-        public static int ToGLTextureFormat(TextureFormat format)
+        public static GLEnum ToGLTextureFormat(TextureFormat format)
         {
             switch (format)
             {
-                case TextureFormat.ColorRGBA8: return GL_RGB8;
-                case TextureFormat.ColorR32I: return GL_R32I;
-                case TextureFormat.ColorRGBA32F: return GL_RGBA32F;
-                case TextureFormat.Depth24Stencil8: return GL_DEPTH24_STENCIL8;
+                case TextureFormat.ColorRGBA8: return GLEnum.Rgb8;
+                case TextureFormat.ColorR32I: return GLEnum.R32i;
+                case TextureFormat.ColorRGBA32F: return GLEnum.Rgba32f;
+                case TextureFormat.Depth24Stencil8: return GLEnum.Depth24Stencil8;
             }
 
             Debug.Assert(false, $"Unknown {nameof(TextureFormat)} value");

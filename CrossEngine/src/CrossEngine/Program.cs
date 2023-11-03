@@ -1,5 +1,4 @@
 ﻿using System;
-using static OpenGL.GL;
 using static Evergine.Bindings.Imgui.ImguiNative;
 using Evergine.Bindings.Imgui;
 
@@ -104,8 +103,10 @@ namespace CrossEngine
                         System.Runtime.CompilerServices.Unsafe.AsRef<bool>(null);
 
                         byte o = 1;
-                        ImguiNative.igShowDemoWindow(&o);
+                        igShowDemoWindow(&o);
+
                         igBegin("sus", &o, ImGuiWindowFlags.None);
+                        igText(Time.DeltaTime.ToString());
                         igEnd();
 
                         igRender();
@@ -129,7 +130,8 @@ namespace CrossEngine
                 }
                 if (e is WindowResizeEvent wre)
                 {
-                    Manager.GetService<RenderService>().RendererAPI.SetViewport(0, 0, wre.Width, wre.Height);
+                    var rs = Manager.GetService<RenderService>();
+                    rs.Execute(() => rs.RendererAPI.SetViewport(0, 0, wre.Width, wre.Height));
                 }
             }
         }

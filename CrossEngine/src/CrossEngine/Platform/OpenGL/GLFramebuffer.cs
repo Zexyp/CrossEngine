@@ -1,5 +1,4 @@
 ﻿using System;
-using static OpenGL.GL;
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,6 +10,8 @@ using CrossEngine.Rendering;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Debugging;
+using static CrossEngine.Platform.OpenGL.GLContext;
+using GLEnum = Silk.NET.OpenGL.GLEnum;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -33,25 +34,25 @@ namespace CrossEngine.Platform.OpenGL
                 return false;
             }
 
-            public static int GetColorFormat(TextureFormat format)
+            public static GLEnum GetColorFormat(TextureFormat format)
             {
                 switch (format)
                 {
-                    case TextureFormat.ColorRGBA8: return GL_RGBA;
-                    case TextureFormat.ColorRGBA32F: return GL_RGBA;
-                    case TextureFormat.ColorR32I: return GL_RED_INTEGER;
-                    case TextureFormat.Depth24Stencil8: return GL_DEPTH_STENCIL;
+                    case TextureFormat.ColorRGBA8: return GLEnum.Rgba;
+                    case TextureFormat.ColorRGBA32F: return GLEnum.Rgba;
+                    case TextureFormat.ColorR32I: return GLEnum.RedInteger;
+                    case TextureFormat.Depth24Stencil8: return GLEnum.DepthStencil;
                 }
 
                 Debug.Assert(false, $"Unknown {nameof(TextureFormat)} value");
                 return 0;
             }
 
-            public static int GetAttachmentType(TextureFormat format)
+            public static GLEnum GetAttachmentType(TextureFormat format)
             {
                 switch (format)
                 {
-                    case TextureFormat.Depth24Stencil8: return GL_DEPTH_STENCIL_ATTACHMENT;
+                    case TextureFormat.Depth24Stencil8: return GLEnum.DepthStencilAttachment;
                 }
 
                 Debug.Assert(false, $"Unknown {nameof(TextureFormat)} value");
@@ -113,11 +114,11 @@ namespace CrossEngine.Platform.OpenGL
 
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
-                glDeleteFramebuffers(1, p);
+                gl.DeleteFramebuffers(1, p);
             fixed (uint* p = &_colorAttachments.ToArray()[0])
-                glDeleteTextures(_colorAttachments.Count, p);
+                gl.DeleteTextures((uint)_colorAttachments.Count, p);
             fixed (uint* p = &_depthAttachment)
-                glDeleteTextures(1, p);
+                gl.DeleteTextures(1, p);
 
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
@@ -134,19 +135,19 @@ namespace CrossEngine.Platform.OpenGL
             if (_rendererId != 0)
             {
                 fixed (uint* p = &_rendererId)
-                    glDeleteFramebuffers(1, p);
+                    gl.DeleteFramebuffers(1, p);
                 fixed (uint* p = &_colorAttachments.ToArray()[0])
-                    glDeleteTextures(_colorAttachments.Count, p);
+                    gl.DeleteTextures((uint)_colorAttachments.Count, p);
                 fixed (uint* p = &_depthAttachment)
-                    glDeleteTextures(1, p);
+                    gl.DeleteTextures(1, p);
         
                 _colorAttachments.Clear();
                 _depthAttachment = 0;
             }
             
             fixed (uint* p = &_rendererId)
-                glGenFramebuffers(1, p);
-            glBindFramebuffer(GL_FRAMEBUFFER, _rendererId);
+                gl.GenFramebuffers(1, p);
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
             
             // handle color
             if (colorAttachmentSpecifications.Count > 0)
@@ -154,13 +155,13 @@ namespace CrossEngine.Platform.OpenGL
                 _colorAttachments.Capacity = colorAttachmentSpecifications.Count;
                 uint[] arr = new uint[colorAttachmentSpecifications.Count];
                 fixed (uint* p = &arr[0])
-                    glGenTextures(arr.Length, p);
+                    gl.GenTextures((uint)arr.Length, p);
                 _colorAttachments.AddRange(arr);
 
                 // attachment index begins at 0
                 for (int i = 0; i < _colorAttachments.Count; i++)
                 {
-                    glBindTexture(GL_TEXTURE_2D, _colorAttachments [i]);
+                    gl.BindTexture(GLEnum.Texture2D, _colorAttachments [i]);
                     AttachColorTexture(
                         _colorAttachments[i],
                         colorAttachmentSpecifications[i],
@@ -174,8 +175,8 @@ namespace CrossEngine.Platform.OpenGL
             if (depthAttachmentSpecification.Format != TextureFormat.None)
             {
                 fixed (uint* p = &_depthAttachment)
-                    glGenTextures(1, p);
-                glBindTexture(GL_TEXTURE_2D, _depthAttachment);
+                    gl.GenTextures(1, p);
+                gl.BindTexture(GLEnum.Texture2D, _depthAttachment);
                 switch (depthAttachmentSpecification.Format)
                 {
                     case TextureFormat.Depth24Stencil8:
@@ -191,12 +192,12 @@ namespace CrossEngine.Platform.OpenGL
 
             SetDrawBuffers();
 
-            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            if (gl.CheckFramebufferStatus(GLEnum.Framebuffer) != GLEnum.FramebufferComplete)
             {
                 RendererAPI.Log.Error("framebuffer is incomplete!");
             }
 
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            gl.BindFramebuffer(GLEnum.Framebuffer, 0);
 
             //Log.Core.Trace("invalidated framebuffer (id: {0})", fboid);
             Profiler.EndScope();
@@ -204,61 +205,61 @@ namespace CrossEngine.Platform.OpenGL
 
         private static unsafe void AttachColorTexture(uint texid, FramebufferTextureSpecification spec, uint width, uint height, int index)
         {
-            glTexImage2D(
-                GL_TEXTURE_2D,
+            gl.TexImage2D(
+                GLEnum.Texture2D,
                 0,
-                GLUtils.ToGLTextureFormat(spec.Format),
-                (int)width,
-                (int)height,
+                (int)GLUtils.ToGLTextureFormat(spec.Format),
+                width,
+                height,
                 0,
                 Utils.GetColorFormat(spec.Format),
-                GL_UNSIGNED_BYTE,
+                GLEnum.UnsignedByte,
                 null);
 
-            int filt = GLUtils.ToGLFilterParameter(spec.Filter);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt);
-            int wrap = GLUtils.ToGLWrapParameter(spec.Wrap);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, wrap);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+            int filt = (int)GLUtils.ToGLFilterParameter(spec.Filter);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, filt);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, filt);
+            int wrap = (int)GLUtils.ToGLWrapParameter(spec.Wrap);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, wrap);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapS, wrap);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapT, wrap);
 
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, texid, 0);
+            gl.FramebufferTexture2D(GLEnum.Framebuffer, GLEnum.ColorAttachment0 + index, GLEnum.Texture2D, texid, 0);
         }
 
         private static unsafe void AttachDepthTexture(uint texid, FramebufferTextureSpecification spec, uint width, uint height)
         {
-            glTexImage2D(
-                GL_TEXTURE_2D,
+            gl.TexImage2D(
+                GLEnum.Texture2D,
                 0,
-                GLUtils.ToGLTextureFormat(spec.Format),
-                (int)width,
-                (int)height,
+                (int)GLUtils.ToGLTextureFormat(spec.Format),
+                width,
+                height,
                 0,
                 Utils.GetColorFormat(spec.Format),
-                GL_UNSIGNED_INT_24_8, // we need to care about the type or opengl will get mad
+                GLEnum.UnsignedInt248, // we need to care about the type or opengl will get mad
                 null);
 
-            int filt = GLUtils.ToGLFilterParameter(spec.Filter);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt);
-            int wrap = GLUtils.ToGLWrapParameter(spec.Wrap);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, wrap);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+            int filt = (int)GLUtils.ToGLFilterParameter(spec.Filter);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, filt);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, filt);
+            int wrap = (int)GLUtils.ToGLWrapParameter(spec.Wrap);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, wrap);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapS, wrap);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureWrapT, wrap);
 
-            glFramebufferTexture2D(GL_FRAMEBUFFER, Utils.GetAttachmentType(spec.Format), GL_TEXTURE_2D, texid, 0);
+            gl.FramebufferTexture2D(GLEnum.Framebuffer, Utils.GetAttachmentType(spec.Format), GLEnum.Texture2D, texid, 0);
         }
         
         public override void Bind()
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, _rendererId);
-            glViewport(0, 0, (int)specification.Width, (int)specification.Height);
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
+            gl.Viewport(0, 0, specification.Width, specification.Height);
         }
 
         public override void Unbind()
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            gl.BindFramebuffer(GLEnum.Framebuffer, 0);
         }
 
         public override void Resize(uint width, uint height)
@@ -279,11 +280,11 @@ namespace CrossEngine.Platform.OpenGL
         {
             Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
 
-            glBindFramebuffer(_rendererId);
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
             
-            glReadBuffer(GL_COLOR_ATTACHMENT0 + attachmentIndex);
+            gl.ReadBuffer(GLEnum.ColorAttachment0 + attachmentIndex);
             int pixelData;
-            glReadPixels((int)x, (int)y, 1, 1, Utils.GetColorFormat(colorAttachmentSpecifications[attachmentIndex].Format), GL_INT, &pixelData);
+            gl.ReadPixels((int)x, (int)y, 1, 1, Utils.GetColorFormat(colorAttachmentSpecifications[attachmentIndex].Format), GLEnum.Int, &pixelData);
             return pixelData;
         }
 
@@ -294,9 +295,9 @@ namespace CrossEngine.Platform.OpenGL
             //var spec = colorAttachmentSpecifications[attachmentIndex];
 
             //(int)_colorAttachments[(int)attachmentIndex]
-            glBindFramebuffer(_rendererId);
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
 
-            glClearBufferiv(GL_COLOR, (int)_rendererId, &value);
+            gl.ClearBuffer(GLEnum.Color, (int)_rendererId, &value);
         }
 
         public void EnableColorAttachment(int attachmentIndex, bool enable)
@@ -330,10 +331,10 @@ namespace CrossEngine.Platform.OpenGL
 
         public void CopyToScreen()
         {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, _rendererId);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-            glBlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height,
-                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            gl.BindFramebuffer(GLEnum.ReadFramebuffer, _rendererId);
+            gl.BindFramebuffer(GLEnum.DrawFramebuffer, 0);
+            gl.BlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height,
+                              (int)GLEnum.ColorBufferBit, GLEnum.Nearest);
         }
 
         private unsafe void SetDrawBuffers()
@@ -343,15 +344,15 @@ namespace CrossEngine.Platform.OpenGL
                 int[] buffers = new int[_colorAttachments.Count];
                 for (int i = 0; i < buffers.Length; i++)
                 {
-                    buffers[i] = (colorAttachmentSpecifications[i].dontDraw) ? GL_NONE : GL_COLOR_ATTACHMENT0 + i;
+                    buffers[i] = (int)(colorAttachmentSpecifications[i].dontDraw ? GLEnum.None : GLEnum.ColorAttachment0 + i);
                 }
-                fixed (int* p = &buffers[0])
-                    glDrawBuffers(buffers.Length, p);
+                fixed (void* p = & buffers[0])
+                    gl.DrawBuffers((uint)buffers.Length, (GLEnum*)p);
             }
             else if (_colorAttachments.Count == 0)
             {
                 // Only depth-pass
-                glDrawBuffer(GL_NONE);
+                gl.DrawBuffer(GLEnum.None);
             }
         }
 

@@ -13,14 +13,22 @@ namespace CrossEngine.Services
     {
         Stopwatch sw = new Stopwatch();
 
-        public override void OnStart() { }
-        public override void OnDestroy() { }
+        public override void OnStart()
+        {
+            sw.Start();
+        }
+
+        public override void OnDestroy()
+        {
+            sw.Stop();
+        }
 
         public override void OnUpdate()
         {
-            Time.UnscaledDeltaTime = sw.Elapsed.Seconds;
+            Time.UnscaledDeltaTime = sw.Elapsed.TotalSeconds;
             Time.DeltaTime = Time.TimeScale * Time.UnscaledDeltaTime;
             sw.Reset();
+            sw.Start();
             Time.ElapsedTime += Time.UnscaledDeltaTime;
         }
     }

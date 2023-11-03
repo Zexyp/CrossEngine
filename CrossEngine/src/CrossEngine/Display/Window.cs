@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using CrossEngine.Events;
+using CrossEngine.Rendering;
 
 namespace CrossEngine.Display
 {
@@ -32,6 +33,8 @@ namespace CrossEngine.Display
         }
 
         protected WindowData Data;
+
+        public GraphicsContext Context { get; protected set; }
 
         public uint Width { get => Data.Width; set { Data.Width = value; if (Handle != IntPtr.Zero) UpdateSize(); } }
         public uint Height { get => Data.Height; set { Data.Height = value; if (Handle != IntPtr.Zero) UpdateSize(); } }

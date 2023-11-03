@@ -1,5 +1,5 @@
 ﻿using System;
-using static OpenGL.GL;
+using Silk.NET.OpenGL;
 
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,6 +9,7 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
 using CrossEngine.Rendering;
+using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -25,7 +26,7 @@ namespace CrossEngine.Platform.OpenGL
             Profiler.Function();
 
             fixed (uint* p = &_rendererId)
-                glGenBuffers(1, p);
+                gl.GenBuffers(1, p);
 
             GC.KeepAlive(this);
             GPUGC.Register(this);
@@ -37,8 +38,8 @@ namespace CrossEngine.Platform.OpenGL
         {
             _bufferUsage = bufferUsage;
 
-            glBindBuffer(GL_ARRAY_BUFFER, _rendererId);
-            glBufferData(GL_ARRAY_BUFFER, (int)size, vertices, GLUtils.ToGLBufferUsage(_bufferUsage));
+            gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
+            gl.BufferData(GLEnum.ArrayBuffer, size, vertices, GLUtils.ToGLBufferUsage(_bufferUsage));
         }
 
         protected override unsafe void Dispose(bool disposing)
@@ -55,7 +56,7 @@ namespace CrossEngine.Platform.OpenGL
 
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
-                glDeleteBuffers(1, p);
+                gl.DeleteBuffers(1, p);
 
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
@@ -69,14 +70,14 @@ namespace CrossEngine.Platform.OpenGL
         {
             Profiler.Function();
 
-            glBindBuffer(GL_ARRAY_BUFFER, _rendererId);
+            gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
         }
 
         public override void Unbind()
         {
             Profiler.Function();
 
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            gl.BindBuffer(GLEnum.ArrayBuffer, 0);
         }
 
         public override void SetLayout(BufferLayout layout) => _layout = layout;
@@ -86,8 +87,8 @@ namespace CrossEngine.Platform.OpenGL
         {
             Profiler.Function();
 
-            glBindBuffer(GL_ARRAY_BUFFER, _rendererId);
-            glBufferSubData(GL_ARRAY_BUFFER, (int)offset, (int)size, data);
+            gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
+            gl.BufferSubData(GLEnum.ArrayBuffer, (int)offset, size, data);
         }
     }
 }

@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 using CrossEngine.Events;
 using CrossEngine.Logging;
+using CrossEngine.Rendering;
+using CrossEngine.Platform.OpenGL;
 
 namespace CrossEngine.Platform.Windows
 {
@@ -63,6 +65,9 @@ namespace CrossEngine.Platform.Windows
 
             // oh funny that was ez
             Glfw.RequestWindowAttention(_nativeHandle);
+
+            Context = new GLContext(_nativeHandle);
+            Context.Init();
         }
 
         public override void DestroyWindow()
