@@ -16,7 +16,9 @@ namespace CrossEngine
 
         public void Run()
         {
+#if PROFILING
             Profiler.BeginSession("session", "profiling.json");
+#endif
 
             Manager.InitServices();
 
@@ -27,7 +29,10 @@ namespace CrossEngine
                 Profiler.BeginScope("Update");
 
                 Manager.Update();
-                
+
+                System.Threading.Thread.Sleep(1000);
+                Console.WriteLine("hello");
+
                 Profiler.EndScope();
             }
 
@@ -35,7 +40,9 @@ namespace CrossEngine
 
             Manager.ShutdownServices();
 
+#if PROFILING
             Profiler.EndSession();
+#endif
         }
 
         protected abstract void OnInit();

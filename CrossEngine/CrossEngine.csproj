@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Profiling</Configurations>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -20,14 +20,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="vendor\**" />
-    <EmbeddedResource Remove="vendor\**" />
-    <None Remove="vendor\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Evergine.Bindings.Imgui" Version="2023.4.4.966" />
     <PackageReference Include="Silk.NET.OpenGL" Version="2.18.0" />
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.18.0" />
   </ItemGroup>
 
   <ItemGroup>
