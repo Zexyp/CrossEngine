@@ -3,13 +3,21 @@ using static Evergine.Bindings.Imgui.ImguiNative;
 using Evergine.Bindings.Imgui;
 
 using CrossEngine.Display;
-using CrossEngine.Platform.Windows;
-using CrossEngine.Utils.ImGui;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 using CrossEngine.Services;
 using CrossEngine.Events;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Runtime.InteropServices;
+using CrossEngine.Logging;
+using CrossEngine.Platform.Wasm;
+
+#if WINDOWS
+using CrossEngine.Platform.Windows;
+using CrossEngine.Utils.ImGui;
+#endif
 
 namespace CrossEngine
 {
@@ -18,9 +26,17 @@ namespace CrossEngine
         static unsafe void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            System.Runtime.CompilerServices.Unsafe.AsRef<bool>(null);
-            var app = new SusQ();
-            app.Run();
+            //var app = new SusQ();
+            //app.Run();
+            /*
+            var window = new CrossEngine.Platform.Wasm.CanvasWindow();
+            window.OnEvent += (e) =>
+            {
+                if (e is not WindowRefreshEvent)
+                    Console.WriteLine(e);
+            };
+            window.CreateWindow();
+            */
         }
 
         class SusQ : Application
@@ -29,7 +45,9 @@ namespace CrossEngine
             {
                 Manager.Register(new TimeSevice());
                 Manager.Register(new RenderService());
+#if WINDOWS
                 Manager.Register(new ImGuiService());
+#endif
                 Manager.Register(new InputService());
                 Manager.GetService<InputService>().OnEvent += OnEvent;
             }
@@ -38,12 +56,12 @@ namespace CrossEngine
 
             protected override void OnInit()
             {
+                return;
                 Manager.GetService<RenderService>().Execute(() =>
                 {
                     unsafe
                     {
                         var rapi = Manager.GetService<RenderService>().RendererAPI;
-                        var window = Manager.GetService<RenderService>().Window as GlfwWindow;
 
                         float[] vertices = {
                             -0.5f, -0.5f, 0.0f, // left  
@@ -70,11 +88,13 @@ namespace CrossEngine
                     {
                         var rapi = Manager.GetService<RenderService>().RendererAPI;
 
+#if WINDOWS
                         CrossEngine.Platform.OpenGL.Debugging.GLError.Call(() =>
                         {
                             rapi.Clear();
                             rapi.DrawArray(new WeakReference<VertexArray>(va), 3);
                         });
+#endif
 
                         Renderer2D.BeginScene(System.Numerics.Matrix4x4.Identity);
                         Renderer2D.DrawQuad(System.Numerics.Matrix4x4.Identity, System.Numerics.Vector4.One);
@@ -102,6 +122,7 @@ namespace CrossEngine
 
             protected virtual void OnEvent(Event e)
             {
+                Console.WriteLine(e);
                 if (e is WindowCloseEvent)
                 {
                     Close();

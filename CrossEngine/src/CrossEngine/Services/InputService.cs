@@ -16,13 +16,21 @@ namespace CrossEngine.Services
 
         public override void OnStart()
         {
-            Manager.GetService<RenderService>().Execute(() =>
+            var rs = Manager.GetService<RenderService>();
+            rs.Execute(() =>
             {
-                Manager.GetService<RenderService>().Window.SetEventCallback(HandleEvent);
+                rs.Window.OnEvent += HandleEvent;
             });
         }
 
-        public override void OnDestroy() { }
+        public override void OnDestroy()
+        {
+            var rs = Manager.GetService<RenderService>();
+            rs.Execute(() =>
+            {
+                rs.Window.OnEvent -= HandleEvent;
+            });
+        }
 
         public override void OnUpdate()
         {

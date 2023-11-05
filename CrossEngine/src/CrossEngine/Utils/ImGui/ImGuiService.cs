@@ -1,10 +1,11 @@
 ﻿using CrossEngine.Platform.Windows;
+using CrossEngine.Services;
 using CrossEngine.Utils.ImGui;
 using Evergine.Bindings.Imgui;
 using System;
 using static Evergine.Bindings.Imgui.ImguiNative;
 
-namespace CrossEngine.Services
+namespace CrossEngine.Utils.ImGui
 {
     internal class ImGuiService : Service
     {
@@ -21,12 +22,13 @@ namespace CrossEngine.Services
             rs.BeforeFrame += OnBeforeFrame;
             rs.AfterFrame += OnAfterFrame;
 
-            rs.Execute(() => {
+            rs.Execute(() =>
+            {
                 // Setup Dear ImGui context
                 igCreateContext(null);
                 var io = igGetIO();
                 io->ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;   // Enable Keyboard Controls
-                                                                         //io->ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;    // Enable Gamepad Controls
+                //io->ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;    // Enable Gamepad Controls
 
                 // Setup Dear ImGui style
                 igStyleColorsDark(igGetStyle());

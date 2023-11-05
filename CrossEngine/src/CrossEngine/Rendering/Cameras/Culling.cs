@@ -148,7 +148,8 @@ namespace CrossEngine.Rendering.Culling
 
         public unsafe void Prepare(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
         {
-            Debug.Assert(Matrix4x4.Invert(viewMatrix, out var inv));
+            var result = Matrix4x4.Invert(viewMatrix, out var inv);
+            Debug.Assert(result);
             fixed (void* pl = &_planes[0])
                 ExtractPlanes((Plane*)pl, projectionMatrix, inv, true);
 #if DEBUG

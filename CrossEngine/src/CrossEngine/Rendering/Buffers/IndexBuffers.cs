@@ -5,7 +5,10 @@ using System.Collections.Generic;
 
 using CrossEngine.Utils;
 using CrossEngine.Rendering.Shaders;
+
+#if WINDOWS
 using CrossEngine.Platform.OpenGL;
+#endif
 
 namespace CrossEngine.Rendering.Buffers
 {
@@ -61,7 +64,9 @@ namespace CrossEngine.Rendering.Buffers
             switch (RendererAPI.GetAPI())
             {
                 case RendererAPI.API.None: Debug.Assert(false, $"No API is not supported"); return null;
+#if WINDOWS
                 case RendererAPI.API.OpenGL: return new WeakReference<IndexBuffer>(new GLIndexBuffer(indices, count, dataType, bufferUsage));
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(RendererAPI.API)} value");

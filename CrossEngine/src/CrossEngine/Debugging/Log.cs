@@ -6,6 +6,10 @@ using System.Text;
 using System.Collections.Generic;
 using System.Threading;
 
+#if WASM
+using CrossEngine.Platform.Wasm;
+#endif
+
 namespace CrossEngine.Logging
 {
     public enum LogLevel : int
@@ -39,32 +43,40 @@ namespace CrossEngine.Logging
 
             if (GlobalLevel <= level)
             {
-                switch (level)
-                {
-                    case LogLevel.Trace:
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        break;
-                    case LogLevel.Debug:
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        break;
-                    case LogLevel.Info:
-                        Console.ForegroundColor = ConsoleColor.White;
-                        break;
-                    case LogLevel.Warn:
-                        Console.ForegroundColor = ConsoleColor.DarkYellow;
-                        break;
-                    case LogLevel.Error:
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        break;
-                    case LogLevel.Fatal:
-                        Console.ForegroundColor = ConsoleColor.DarkRed;
-                        break;
-                }
+#if !WASM
+                if (Enum.IsDefined(level))
+                    Console.ForegroundColor = level switch
+                    {
+                        LogLevel.Trace => ConsoleColor.DarkGray,
+                        LogLevel.Debug => ConsoleColor.Cyan,
+                        LogLevel.Info => ConsoleColor.White,
+                        LogLevel.Warn => ConsoleColor.DarkYellow,
+                        LogLevel.Error => ConsoleColor.Red,
+                        LogLevel.Fatal => ConsoleColor.DarkRed
+                    };
 
                 Console.WriteLine(message);
                 Console.ResetColor();
+#else
+                switch (level)
+                {
+                    case LogLevel.Trace:
+                    case LogLevel.Debug:
+                    case LogLevel.Info:
+                    default:
+                        Interop.ConsoleLog(message);
+                        break;
+                    case LogLevel.Warn:
+                        Interop.ConsoleWarn(message);
+                        break;
+                    case LogLevel.Error:
+                    case LogLevel.Fatal:
+                        Interop.ConsoleError(message);
+                        break;
+                }
+#endif
             }
-            
+
             mutex.ReleaseMutex();
         }
     }
