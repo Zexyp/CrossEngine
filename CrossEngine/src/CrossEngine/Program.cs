@@ -29,6 +29,7 @@ namespace CrossEngine
             {
                 Manager.Register(new TimeSevice());
                 Manager.Register(new RenderService());
+                Manager.Register(new ImGuiService());
                 Manager.Register(new InputService());
                 Manager.GetService<InputService>().OnEvent += OnEvent;
             }
@@ -43,20 +44,6 @@ namespace CrossEngine
                     {
                         var rapi = Manager.GetService<RenderService>().RendererAPI;
                         var window = Manager.GetService<RenderService>().Window as GlfwWindow;
-
-                        // Setup Dear ImGui context
-                        igCreateContext(null);
-                        var io = igGetIO();
-                        io->ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;   // Enable Keyboard Controls
-                                                                                 //io->ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;    // Enable Gamepad Controls
-
-                        // Setup Dear ImGui style
-                        igStyleColorsDark(igGetStyle());
-                        //ImGui::StyleColorsClassic();
-
-                        // Setup Platform/Renderer backends
-                        ImplGlfw.ImGui_ImplGlfw_InitForOpenGL(window.NativeHandle, true);
-                        ImplOpenGL.ImGui_ImplOpenGL3_Init("#version 330 core");
 
                         float[] vertices = {
                             -0.5f, -0.5f, 0.0f, // left  
@@ -83,10 +70,6 @@ namespace CrossEngine
                     {
                         var rapi = Manager.GetService<RenderService>().RendererAPI;
 
-                        ImplOpenGL.ImGui_ImplOpenGL3_NewFrame();
-                        ImplGlfw.ImGui_ImplGlfw_NewFrame();
-                        igNewFrame();
-
                         CrossEngine.Platform.OpenGL.Debugging.GLError.Call(() =>
                         {
                             rapi.Clear();
@@ -108,11 +91,6 @@ namespace CrossEngine
                         igBegin("sus", &o, ImGuiWindowFlags.None);
                         igText(Time.DeltaTime.ToString());
                         igEnd();
-
-                        igRender();
-                        ImplOpenGL.ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
-                        //igUpdatePlatformWindows();
-                        //igRenderPlatformWindowsDefault(null, null);
                     }
                 };
             }

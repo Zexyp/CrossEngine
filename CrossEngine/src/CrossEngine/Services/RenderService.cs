@@ -19,6 +19,8 @@ namespace CrossEngine.Services
         public RendererAPI RendererAPI { get; private set; }
         public Window Window { get; private set; }
         public event Action Frame;
+        public event Action BeforeFrame;
+        public event Action AfterFrame;
 
         ConcurrentQueue<Action> _execute = new ConcurrentQueue<Action>();
         Thread _renderThread;
@@ -60,7 +62,9 @@ namespace CrossEngine.Services
                 while (_execute.TryDequeue(out var result))
                     result.Invoke();
 
+                BeforeFrame?.Invoke();
                 Frame?.Invoke();
+                AfterFrame?.Invoke();
 
                 Profiler.EndScope();
                 Profiler.BeginScope("Swap");
