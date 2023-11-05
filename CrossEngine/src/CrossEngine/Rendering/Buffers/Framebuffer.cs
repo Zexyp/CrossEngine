@@ -7,7 +7,10 @@ using System.Diagnostics;
 
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Utils;
+
+#if WINDOWS
 using CrossEngine.Platform.OpenGL;
+#endif
 
 namespace CrossEngine.Rendering.Buffers
 {
@@ -113,7 +116,9 @@ namespace CrossEngine.Rendering.Buffers
             switch (RendererAPI.GetAPI())
             {
                 case RendererAPI.API.None: Debug.Assert(false, $"No API is not supported"); return null;
+#if WINDOWS
                 case RendererAPI.API.OpenGL: return new WeakReference<Framebuffer>(new GLFramebuffer(ref specification));
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(RendererAPI.API)} value");

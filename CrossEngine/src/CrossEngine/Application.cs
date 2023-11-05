@@ -30,9 +30,6 @@ namespace CrossEngine
 
                 Manager.Update();
 
-                System.Threading.Thread.Sleep(1000);
-                Console.WriteLine("hello");
-
                 Profiler.EndScope();
             }
 

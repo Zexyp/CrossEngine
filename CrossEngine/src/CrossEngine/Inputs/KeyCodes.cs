@@ -21,7 +21,7 @@ namespace CrossEngine.Inputs
         Alpha7 = 55,
         Alpha8 = 56,
         Alpha9 = 57,
-        SemiColon = 59,
+        Semicolon = 59,
         Equal = 61,
 
         A = 65,
@@ -137,6 +137,8 @@ namespace CrossEngine.Inputs
 
     public enum Mouse
     {
+        Unknown = -1,
+
         Button1 = 0,
         Button2 = 1,
         Button3 = 2,
@@ -151,7 +153,7 @@ namespace CrossEngine.Inputs
         Middle = Button3,
 
         // the ones used in browser
-        //Back = Button4,
-        //Forward = Button5
+        Back = Button4,
+        Forward = Button5
     }
 }

@@ -46,6 +46,9 @@ namespace CrossEngine.Display
         public abstract bool ShouldClose { get; set; }
         public abstract IntPtr Handle { get; }
 
+        // event emission
+        public abstract event OnEventFunction OnEvent;
+
         public Window()
         {
             Data.VSync = true;
@@ -68,8 +71,6 @@ namespace CrossEngine.Display
         protected abstract void UpdateVSync();
         protected abstract void UpdateFullscreen();
         protected abstract (uint Width, uint Height) GetMonitorSize();
-
-        public abstract void SetEventCallback(OnEventFunction callback);
         
         public void Resize(uint width, uint height)
         {

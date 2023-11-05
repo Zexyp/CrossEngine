@@ -4,11 +4,57 @@ using System.Numerics;
 
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
-using CrossEngine.Platform.OpenGL;
 using CrossEngine.Logging;
+
+#if WINDOWS
+using CrossEngine.Platform.OpenGL;
+#endif
 
 namespace CrossEngine.Rendering
 {
+    class DummyRendererAPI : RendererAPI
+    {
+        public override void Clear()
+        {
+        }
+
+        public override void DrawArray(WeakReference<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
+        {
+        }
+
+        public override void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)
+        {
+        }
+
+        public override void Init()
+        {
+        }
+
+        public override void SetBlendFunc(BlendFunc func)
+        {
+        }
+
+        public override void SetClearColor(Vector4 color)
+        {
+        }
+
+        public override void SetDepthFunc(DepthFunc func)
+        {
+        }
+
+        public override void SetLineWidth(float width)
+        {
+        }
+
+        public override void SetPolygonMode(PolygonMode mode)
+        {
+        }
+
+        public override void SetViewport(uint x, uint y, uint width, uint height)
+        {
+        }
+    }
+
     public abstract class RendererAPI : IDisposable
     {
         internal static Logger Log = new Logger("rapi");
@@ -17,6 +63,7 @@ namespace CrossEngine.Rendering
         {
             None = 0,
             OpenGL,
+            OpenGLES,
         }
 
         private static API _api;
@@ -34,10 +81,14 @@ namespace CrossEngine.Rendering
             switch (_api)
             {
                 case API.None: Debug.Assert(false, $"No API is not supported"); return null;
+#if WINDOWS
                 case API.OpenGL: return new GLRendererAPI();
+#elif WASM
+                case API.OpenGLES: return new DummyRendererAPI();
+#endif
             }
 
-            Debug.Assert(false, $"Udefined {nameof(API)} value");
+            Debug.Assert(false, $"Unknown {nameof(API)} value");
             return null;
         }
 

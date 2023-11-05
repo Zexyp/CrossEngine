@@ -1,7 +1,9 @@
-﻿using CrossEngine.Platform.OpenGL;
-
-using System;
+﻿using System;
 using System.Diagnostics;
+
+#if WINDOWS
+using CrossEngine.Platform.OpenGL;
+#endif
 
 namespace CrossEngine.Rendering.Buffers
 {
@@ -48,7 +50,9 @@ namespace CrossEngine.Rendering.Buffers
             switch (RendererAPI.GetAPI())
             {
                 case RendererAPI.API.None: Debug.Assert(false, $"No API is not supported"); return null;
+#if WINDOWS
                 case RendererAPI.API.OpenGL: return new WeakReference<VertexBuffer>(new GLVertexBuffer(vertices, size, BufferUsageHint.StaticDraw));
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(RendererAPI.API)} value");

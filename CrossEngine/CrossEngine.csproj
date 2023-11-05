@@ -1,41 +1,115 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net7.0</TargetFramework>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Configurations>Debug;Profiling;Wasm</Configurations>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+    </PropertyGroup>
+    
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants>WINDOWS</DefineConstants>
+        <Optimize>False</Optimize>
+    </PropertyGroup>
+    
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|AnyCPU'">
+        <DefineConstants>DEBUG;WINDOWS</DefineConstants>
+        <Optimize>False</Optimize>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Configurations>Debug;Profiling</Configurations>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <IsPublishable>True</IsPublishable>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Wasm|AnyCPU'">
+      <DefineConstants>DEBUG</DefineConstants>
+      <Optimize>False</Optimize>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Evergine.Bindings.Imgui" Version="2023.4.4.966" />
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.18.0" />
+        <PackageReference Include="Silk.NET.OpenGLES" Version="2.18.0" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <Reference Include="GLFW.NET">
+            <HintPath>libs\GLFW.NET.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <ContentWithTargetPath Include="deps\glfw\win64\glfw3.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <TargetPath>glfw.dll</TargetPath>
+        </ContentWithTargetPath>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <Compile Remove="src\CrossEngine\Platform\**" />
+        <EmbeddedResource Remove="src\CrossEngine\Platform\**" />
+        <None Remove="src\CrossEngine\Platform\**" />
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants></DefineConstants>
-    <Optimize>False</Optimize>
-  </PropertyGroup>
+        <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
+        <EmbeddedResource Remove="src\CrossEngine\Utils\ImGui\**" />
+        <None Remove="src\CrossEngine\Utils\ImGui\**" />
+    </ItemGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|AnyCPU'">
-    <DefineConstants>DEBUG</DefineConstants>
-    <Optimize>False</Optimize>
-  </PropertyGroup>
+    <!-- ##### platform stuff ##### -->
+  
+    <Choose>
+        <When Condition="'$(Configuration)'=='Debug'">
+        
+            <ItemGroup>
+                <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
+                <EmbeddedResource Include="src\CrossEngine\Platform\OpenGL\**" />
+                <None Include="src\CrossEngine\Platform\OpenGL\**" />
+                
+                <Compile Include="src\CrossEngine\Platform\Windows\**" />
+                <EmbeddedResource Include="src\CrossEngine\Platform\Windows\**" />
+                <None Include="src\CrossEngine\Platform\Windows\**" />
 
-  <ItemGroup>
-    <PackageReference Include="Evergine.Bindings.Imgui" Version="2023.4.4.966" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.18.0" />
-    <PackageReference Include="Silk.NET.OpenGLES" Version="2.18.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="GLFW.NET">
-      <HintPath>libs\GLFW.NET.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ContentWithTargetPath Include="deps\glfw\win64\glfw3.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <TargetPath>glfw.dll</TargetPath>
-    </ContentWithTargetPath>
-  </ItemGroup>
-
+                <Compile Include="src\CrossEngine\Utils\ImGui\**" />
+                <EmbeddedResource Include="src\CrossEngine\Utils\ImGui\**" />
+                <None Include="src\CrossEngine\Utils\ImGui\**" />
+            </ItemGroup>
+        
+        </When>
+        
+        <When Condition="'$(Configuration)'=='Wasm'">
+        
+            <ItemGroup>
+                <Compile Include="src\CrossEngine\Platform\Wasm\**" />
+                <EmbeddedResource Include="src\CrossEngine\Platform\Wasm\**" />
+                <None Include="src\CrossEngine\Platform\Wasm\**" />
+            </ItemGroup>
+            
+            <PropertyGroup>
+                <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+              
+                <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+                <InvariantGlobalization>true</InvariantGlobalization>
+                <WasmMainJSPath>res/wasm/main.js</WasmMainJSPath>
+              
+                <EmccFlags>-s FULL_ES3=1 -lopenal -lGL -s</EmccFlags>
+                
+                <PublishTrimmed>true</PublishTrimmed>
+                <WasmBuildNative>true</WasmBuildNative>
+                <RunAOTCompilation>true</RunAOTCompilation>
+                <!-- Disable SIMD support as it's prerelease only on Safari -->
+                <!--<WasmEnableSIMD>false</WasmEnableSIMD>-->
+                <!-- Normal,JustInterp,Full,FullInterp,Hybrid,LLVMOnly,LLVMOnlyInterp -->
+                <!--<AOTMode>LLVMOnly</AOTMode>-->
+            </PropertyGroup>
+            
+            <ItemGroup>
+                <NativeFileReference Include="res/wasm/native/libEGL.c" ScanForPInvokes="true" />
+                <NativeFileReference Include="res/wasm/native/openal32.c" ScanForPInvokes="true" />
+                <NativeFileReference Include="res/wasm/native/emscripten.c" ScanForPInvokes="true" />
+              
+                <WasmExtraFilesToDeploy Include="res/wasm/index.html" />
+                <WasmExtraFilesToDeploy Include="res/wasm/main.js" />
+                <!--<WasmExtraFilesToDeploy Include="$(MSBuildThisFileDirectory)Assets\**" TargetPath="Assets/%(RecursiveDir)%(Filename)%(Extension)" />-->
+            </ItemGroup>
+        
+        </When>
+    </Choose>
+  
 </Project>
