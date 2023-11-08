@@ -1,23 +1,28 @@
 ﻿using System;
-using GLFW;
-
-using System.Diagnostics;
 using System.Numerics;
 
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
-using CrossEngine.Platform.Windows;
-using static CrossEngine.Platform.OpenGL.GLContext;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
 using GLEnum = Silk.NET.OpenGL.GLEnum;
+using static CrossEngine.Platform.OpenGL.GLContext;
+#endif
 
 namespace CrossEngine.Platform.OpenGL
 {
-    class GLRendererAPI : RendererAPI
+    class GLRendererApi : RendererApi
     {
-        public override void Init()
+        public override unsafe void Init()
         {
-
+            Log.Trace("opengl info:\nversion: {0}\nrenderer: {1}\nvendor: {2}",
+                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Version)),
+                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Renderer)),
+                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Vendor)));
         }
 
         public override unsafe void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)
@@ -43,7 +48,12 @@ namespace CrossEngine.Platform.OpenGL
 
         public override void SetClearColor(Vector4 color) => gl.ClearColor(color.X, color.Y, color.Z, color.W);
 
-        public override void SetPolygonMode(PolygonMode mode) => gl.PolygonMode(GLEnum.FrontAndBack, GLUtils.ToGLPolygonMode(mode));
+        public override void SetPolygonMode(PolygonMode mode) =>
+#if !OPENGL_ES
+            gl.PolygonMode(GLEnum.FrontAndBack, GLUtils.ToGLPolygonMode(mode));
+#else
+            throw new NotSupportedException();
+#endif
 
         public override void SetDepthFunc(DepthFunc func)
         {

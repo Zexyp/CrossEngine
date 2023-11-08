@@ -6,30 +6,24 @@ using System.Threading.Tasks;
 
 using CrossEngine.Events;
 using CrossEngine.Inputs;
+using CrossEngine.Profiling;
 
 namespace CrossEngine.Services
 {
     internal class InputService : UpdatedService
     {
-        public event OnEventFunction OnEvent;
+        public event OnEventFunction Event;
         Queue<Event> _events = new Queue<Event>();
 
         public override void OnStart()
         {
-            var rs = Manager.GetService<RenderService>();
-            rs.Execute(() =>
-            {
-                rs.Window.OnEvent += HandleEvent;
-            });
+            Manager.GetService<WindowService>().Event += HandleEvent;
+            
         }
 
         public override void OnDestroy()
         {
-            var rs = Manager.GetService<RenderService>();
-            rs.Execute(() =>
-            {
-                rs.Window.OnEvent -= HandleEvent;
-            });
+            Manager.GetService<WindowService>().Event -= HandleEvent;
         }
 
         public override void OnUpdate()
@@ -38,7 +32,7 @@ namespace CrossEngine.Services
             while (_events.TryDequeue(out var e))
             {
                 new EventDispatcher(e)
-                    .Dispatch((e) => OnEvent?.Invoke(e))
+                    .Dispatch((e) => Event?.Invoke(e))
                     .Dispatch(Input.OnEvent);
             }
         }

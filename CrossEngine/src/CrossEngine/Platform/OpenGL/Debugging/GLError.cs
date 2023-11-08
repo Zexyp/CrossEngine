@@ -24,7 +24,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             GLEnum error;
             while ((error = gl.GetError()) != GLEnum.NoError)
             {
-                RendererAPI.Log.Error("(" + error + ")");
+                RendererApi.Log.Error("(" + error + ")");
                 return false;
             }
             return true;
@@ -35,7 +35,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             GLEnum error;
             while ((error = gl.GetError()) != GLEnum.NoError)
             {
-                RendererAPI.Log.Error("(" + error + ")");
+                RendererApi.Log.Error("(" + error + ")");
                 //error.ToString("X")
             }
         }
@@ -47,7 +47,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             if (!CheckError())
             {
                 string errorString = "at " + caller + " in " + filepath + ":line " + line;
-                RendererAPI.Log.Error(errorString);
+                RendererApi.Log.Error(errorString);
                 if (activeAssert) Debug.Assert(false, errorString);
             }
         }

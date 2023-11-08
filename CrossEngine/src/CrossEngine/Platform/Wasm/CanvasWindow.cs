@@ -15,7 +15,7 @@ namespace CrossEngine.Platform.Wasm
         public override double Time => _time;
         public override bool ShouldClose { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public override nint Handle => throw new System.NotImplementedException();
-        public override event OnEventFunction OnEvent;
+        public override event OnEventFunction Event;
 
         private double _time;
         private static CanvasWindow _instance;
@@ -24,14 +24,14 @@ namespace CrossEngine.Platform.Wasm
         {
             Interop.Initialize();
 
-            Context = new EGLContext();
-            Context.Init();
-
             _instance = this;
         }
 
-        public override unsafe void CreateWindow()
+        public override unsafe void Create()
         {
+            Context = new EGLContext();
+            Context.Init();
+
             SetupCallbacks();
 
             // very sketchy
@@ -41,14 +41,16 @@ namespace CrossEngine.Platform.Wasm
             Emscripten.RequestAnimationFrameLoop((delegate* unmanaged<double, nint, int>)&Frame, ptr);
         }
 
-        public override void DestroyWindow()
+        public override void Destroy()
         {
+            Context.Shutdown();
+
             RemoveCallbacks();
         }
 
-        public override void PollWindowEvents()
+        public override void PollEvents()
         {
-            throw new System.NotImplementedException();
+            
         }
 
         public override unsafe void SetIcon(void* data, uint width, uint height)
@@ -93,7 +95,7 @@ namespace CrossEngine.Platform.Wasm
         [UnmanagedCallersOnly]
         static private unsafe int Frame(double time, nint thiz)
         {
-            _instance.OnEvent?.Invoke(new WindowRefreshEvent());
+            _instance.Event?.Invoke(new WindowRefreshEvent());
 
             return 1;
         }
@@ -101,22 +103,24 @@ namespace CrossEngine.Platform.Wasm
         private void SetupCallbacks()
         {
             Interop.KeyDown += keyDown = (bool shift, bool ctrl, bool alt, bool repeat, string code) => {
-                OnEvent?.Invoke(new KeyPressedEvent(JSInput.TranslateKey(code), repeat ? 1 : 0));
+                Event?.Invoke(new KeyPressedEvent(JSInput.TranslateKey(code), repeat ? 1 : 0));
             };
             Interop.KeyUp += keyUp = (bool shift, bool ctrl, bool alt, string code) => {
-                OnEvent?.Invoke(new KeyReleasedEvent(JSInput.TranslateKey(code)));
+                Event?.Invoke(new KeyReleasedEvent(JSInput.TranslateKey(code)));
             };
             Interop.MouseMove += mouseMove = (float x, float y) => {
-                OnEvent?.Invoke(new MouseMovedEvent(x, y));
+                Event?.Invoke(new MouseMovedEvent(x, y));
             };
             Interop.MouseDown += mouseDown = (bool shift, bool ctrl, bool alt, int button) => {
-                OnEvent?.Invoke(new MousePressedEvent(JSInput.TranslateMouse(button)));
+                Event?.Invoke(new MousePressedEvent(JSInput.TranslateMouse(button)));
             };
             Interop.MouseUp += mouseUp = (bool shift, bool ctrl, bool alt, int button) => {
-                OnEvent?.Invoke(new MouseReleasedEvent(JSInput.TranslateMouse(button)));
+                Event?.Invoke(new MouseReleasedEvent(JSInput.TranslateMouse(button)));
             };
             Interop.CanvasResize += canvasResize = (float width, float height) => {
-                OnEvent?.Invoke(new WindowResizeEvent((uint)width, (uint)height));
+                Data.Width = (uint)width;
+                Data.Height = (uint)height;
+                Event?.Invoke(new WindowResizeEvent((uint)width, (uint)height));
             };
         }
 

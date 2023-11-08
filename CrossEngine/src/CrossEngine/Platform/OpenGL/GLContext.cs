@@ -29,19 +29,19 @@ namespace CrossEngine.Platform.OpenGL
             gl = GL.GetApi(loader);
             GLExtensions.Load();
 
-            Log.Default.Trace("opengl context info:\nversion: {0}\nrenderer: {1}\nvendor: {2}",
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Version)),
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Renderer)),
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Vendor)));
-
 #if DEBUG
-            Debugging.GLDebugging.Enable(this);
+            Debugging.GLDebugging.Enable();
 #endif
         }
 
         public override void SwapBuffers()
         {
             Glfw.SwapBuffers(_window);
+        }
+
+        public override void Shutdown()
+        {
+            
         }
     }
 }

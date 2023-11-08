@@ -1,11 +1,17 @@
 ﻿using System;
-using GLEnum = Silk.NET.OpenGL.GLEnum;
 
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Shaders;
-using static CrossEngine.Platform.OpenGL.GLContext;
 using CrossEngine.Debugging;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
+using GLEnum = Silk.NET.OpenGL.GLEnum;
+using static CrossEngine.Platform.OpenGL.GLContext;
+#endif
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -27,7 +33,7 @@ namespace CrossEngine.Platform.OpenGL
 
             CheckCompileErrors();
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         protected override void Dispose(bool disposing)
@@ -42,7 +48,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }
@@ -54,11 +60,16 @@ namespace CrossEngine.Platform.OpenGL
             gl.GetShader(_rendererId, GLEnum.CompileStatus, (int*)&compiled);
             if (compiled == GLEnum.False)
             {
-                int length = 0;
-                
-                char[] infoLog = new char[length];
-                RendererAPI.Log.Error($"{Type} shader compilation failed!\n" + gl.GetShaderInfoLog(_rendererId));
-
+                uint length = 0;
+                gl.GetShader(_rendererId, GLEnum.InfoLogLength, (int*)&length);
+                byte[] infoLog = new byte[length];
+                string message;
+                fixed (byte* p = infoLog)
+                {
+                    gl.GetShaderInfoLog(_rendererId, length, &length, p);
+                    message = GLHelper.PtrToStringUtf8((IntPtr)p);
+                }
+                RendererApi.Log.Error($"{Type} shader compilation failed!\n" + message);
                 return true;
             }
             return false;

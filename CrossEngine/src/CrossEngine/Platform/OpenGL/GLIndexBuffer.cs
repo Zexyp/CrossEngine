@@ -8,8 +8,14 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
 using CrossEngine.Rendering;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
+using GLEnum = Silk.NET.OpenGL.GLEnum;
 using static CrossEngine.Platform.OpenGL.GLContext;
-using Silk.NET.OpenGL;
+#endif
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -29,7 +35,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.KeepAlive(this);
             GPUGC.Register(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         public unsafe GLIndexBuffer(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw) : this()
@@ -61,7 +67,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }

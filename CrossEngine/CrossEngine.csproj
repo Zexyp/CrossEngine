@@ -19,7 +19,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Wasm|AnyCPU'">
-      <DefineConstants>DEBUG</DefineConstants>
+      <DefineConstants>DEBUG;OPENGL_ES</DefineConstants>
       <Optimize>False</Optimize>
     </PropertyGroup>
     
@@ -76,6 +76,10 @@
         <When Condition="'$(Configuration)'=='Wasm'">
         
             <ItemGroup>
+                <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
+                <EmbeddedResource Include="src\CrossEngine\Platform\OpenGL\**" />
+                <None Include="src\CrossEngine\Platform\OpenGL\**" />
+                
                 <Compile Include="src\CrossEngine\Platform\Wasm\**" />
                 <EmbeddedResource Include="src\CrossEngine\Platform\Wasm\**" />
                 <None Include="src\CrossEngine\Platform\Wasm\**" />

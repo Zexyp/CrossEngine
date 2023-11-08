@@ -11,15 +11,22 @@ namespace CrossEngine.Platform.Wasm
 		[JSImport("initialize", "main.js")]
 		public static partial void Initialize();
 
-        [JSImport("globalThis.alert", "main.js")]
+        [JSImport("globalThis.alert")]
         public static partial void Alert([JSMarshalAs<JSType.Any>] object? message);
 
-        [JSImport("consoleLog", "main.js")]
-        public static partial void ConsoleLog([JSMarshalAs<JSType.String>] string message);
-        [JSImport("consoleWarn", "main.js")]
-        public static partial void ConsoleWarn([JSMarshalAs<JSType.String>] string message);
-        [JSImport("consoleError", "main.js")]
-        public static partial void ConsoleError([JSMarshalAs<JSType.String>] string message);
+        public static partial class Console
+		{
+            [JSImport("globalThis.console.log")]
+            public static partial void Log([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.debug")]
+            public static partial void Debug([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.info")]
+            public static partial void Info([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.warn")]
+            public static partial void Warn([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.error")]
+            public static partial void Error([JSMarshalAs<JSType.String>] string message);
+        }
 
         [JSExport]
 		public static void OnKeyDown(bool shift, bool ctrl, bool alt, bool repeat, string code)

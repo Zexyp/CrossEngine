@@ -47,7 +47,7 @@ namespace CrossEngine.Display
         public abstract IntPtr Handle { get; }
 
         // event emission
-        public abstract event OnEventFunction OnEvent;
+        public abstract event OnEventFunction Event;
 
         public Window()
         {
@@ -61,9 +61,9 @@ namespace CrossEngine.Display
         }
 
         //public abstract void SetIcon(System.Drawing.Image image);
-        public abstract void CreateWindow();
-        public abstract void DestroyWindow();
-        public abstract void PollWindowEvents();
+        public abstract void Create();
+        public abstract void Destroy();
+        public abstract void PollEvents();
         public abstract unsafe void SetIcon(void* data, uint width, uint height);
 
         protected abstract void UpdateSize();

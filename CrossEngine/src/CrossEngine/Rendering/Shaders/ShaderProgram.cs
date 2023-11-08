@@ -12,9 +12,7 @@ using CrossEngine.Logging;
 using CrossEngine.Profiling;
 using CrossEngine.Utils;
 
-#if WINDOWS
 using CrossEngine.Platform.OpenGL;
-#endif
 
 namespace CrossEngine.Rendering.Shaders
 {
@@ -73,15 +71,14 @@ namespace CrossEngine.Rendering.Shaders
 
         public static WeakReference<ShaderProgram> Create(Shader vertex, Shader fragment)
         {
-            switch (RendererAPI.GetAPI())
+            switch (RendererApi.GetApi())
             {
-                case RendererAPI.API.None: Debug.Assert(false, $"No API is not supported"); return null;
-#if WINDOWS
-                case RendererAPI.API.OpenGL: return new WeakReference<ShaderProgram>(new GLShaderProgram((GLShader)vertex, (GLShader)fragment));
-#endif
+                case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
+                case GraphicsApi.OpenGLES:
+                case GraphicsApi.OpenGL: return new WeakReference<ShaderProgram>(new GLShaderProgram((GLShader)vertex, (GLShader)fragment));
             }
 
-            Debug.Assert(false, $"Udefined {nameof(RendererAPI.API)} value");
+            Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");
             return null;
         }
 
