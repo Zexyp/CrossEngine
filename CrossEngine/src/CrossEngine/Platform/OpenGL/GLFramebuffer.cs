@@ -10,8 +10,14 @@ using CrossEngine.Rendering;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Debugging;
-using static CrossEngine.Platform.OpenGL.GLContext;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
 using GLEnum = Silk.NET.OpenGL.GLEnum;
+using static CrossEngine.Platform.OpenGL.GLContext;
+#endif
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -97,7 +103,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.KeepAlive(this);
             GPUGC.Register(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         protected override unsafe void Dispose(bool disposing)
@@ -123,7 +129,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }
@@ -186,7 +192,7 @@ namespace CrossEngine.Platform.OpenGL
                             specification.Width,
                             specification.Height);
                         break;
-                    default: RendererAPI.Log.Warn("depth attachment type not implemented!"); break;
+                    default: RendererApi.Log.Warn("depth attachment type not implemented!"); break;
                 }
             }
 
@@ -194,7 +200,7 @@ namespace CrossEngine.Platform.OpenGL
 
             if (gl.CheckFramebufferStatus(GLEnum.Framebuffer) != GLEnum.FramebufferComplete)
             {
-                RendererAPI.Log.Error("framebuffer is incomplete!");
+                RendererApi.Log.Error("framebuffer is incomplete!");
             }
 
             gl.BindFramebuffer(GLEnum.Framebuffer, 0);
@@ -266,7 +272,7 @@ namespace CrossEngine.Platform.OpenGL
         {
             if (width == 0 || height == 0 || width > MaxFramebufferSize || height > MaxFramebufferSize)
             {
-                RendererAPI.Log.Warn($"attempted to rezize framebuffer to {width}, {height}");
+                RendererApi.Log.Warn($"attempted to rezize framebuffer to {width}, {height}");
                 return;
             }
             specification.Width = width;
@@ -352,7 +358,11 @@ namespace CrossEngine.Platform.OpenGL
             else if (_colorAttachments.Count == 0)
             {
                 // Only depth-pass
+#if !OPENGL_ES
                 gl.DrawBuffer(GLEnum.None);
+#else
+                gl.DrawBuffers(0, (GLEnum*)null);
+#endif
             }
         }
 

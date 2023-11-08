@@ -9,9 +9,7 @@ using System.Threading.Tasks;
 using CrossEngine.Logging;
 using CrossEngine.Profiling;
 
-#if WINDOWS
 using CrossEngine.Platform.OpenGL;
-#endif
 
 namespace CrossEngine.Rendering.Shaders
 {
@@ -87,15 +85,14 @@ namespace CrossEngine.Rendering.Shaders
 
         public static WeakReference<Shader> Create(string source, ShaderType type)
         {
-            switch (RendererAPI.GetAPI())
+            switch (RendererApi.GetApi())
             {
-                case RendererAPI.API.None: Debug.Assert(false, $"No API is not supported"); return null;
-#if WINDOWS
-                case RendererAPI.API.OpenGL: return new WeakReference<Shader>(new GLShader(source, type));
-#endif
+                case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
+                case GraphicsApi.OpenGLES:
+                case GraphicsApi.OpenGL: return new WeakReference<Shader>(new GLShader(source, type));
             }
 
-            Debug.Assert(false, $"Udefined {nameof(RendererAPI.API)} value");
+            Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");
             return null;
         }
     }

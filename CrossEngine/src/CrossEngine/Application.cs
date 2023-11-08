@@ -20,30 +20,38 @@ namespace CrossEngine
             Profiler.BeginSession("session", "profiling.json");
 #endif
 
-            Manager.InitServices();
-
             OnInit();
 
             while (running)
             {
                 Profiler.BeginScope("Update");
 
-                Manager.Update();
+                OnUpdate();
 
                 Profiler.EndScope();
             }
 
             OnDestroy();
 
-            Manager.ShutdownServices();
-
 #if PROFILING
             Profiler.EndSession();
 #endif
         }
 
-        protected abstract void OnInit();
-        protected abstract void OnDestroy();
+        public virtual void OnInit()
+        {
+            Manager.InitServices();
+        }
+
+        public virtual void OnDestroy()
+        {
+            Manager.ShutdownServices();
+        }
+
+        public virtual void OnUpdate()
+        {
+            Manager.Update();
+        }
 
         public void Close()
         {

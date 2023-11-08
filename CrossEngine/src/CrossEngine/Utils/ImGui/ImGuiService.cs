@@ -35,7 +35,7 @@ namespace CrossEngine.Utils.ImGui
                 //ImGui::StyleColorsClassic();
 
                 // Setup Platform/Renderer backends
-                ImplGlfw.ImGui_ImplGlfw_InitForOpenGL(((GlfwWindow)rs.Window).NativeHandle, true);
+                ImplGlfw.ImGui_ImplGlfw_InitForOpenGL(((GlfwWindow)Manager.GetService<WindowService>().Window).NativeHandle, true);
                 ImplOpenGL.ImGui_ImplOpenGL3_Init("#version 330 core");
             });
         }

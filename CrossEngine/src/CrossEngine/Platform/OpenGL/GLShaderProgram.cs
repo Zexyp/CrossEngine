@@ -1,15 +1,21 @@
-﻿using GLEnum = Silk.NET.OpenGL.GLEnum;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
 
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Shaders;
-using static CrossEngine.Platform.OpenGL.GLContext;
 using CrossEngine.Debugging;
 using CrossEngine.Utils;
 using System.Diagnostics;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
+using GLEnum = Silk.NET.OpenGL.GLEnum;
+using static CrossEngine.Platform.OpenGL.GLContext;
+#endif
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -55,7 +61,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.KeepAlive(this);
             GPUGC.Register(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         public GLShaderProgram(GLShader vertex, GLShader fragment) : this()
@@ -116,7 +122,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }
@@ -268,7 +274,7 @@ namespace CrossEngine.Platform.OpenGL
             if (location != -1)
                 _uniformLocationCache.Add(name, location);
             else
-                RendererAPI.Log.Warn($"no uniform named '{name}' found");
+                RendererApi.Log.Warn($"no uniform named '{name}' found");
 
             return location;
         }
@@ -280,8 +286,16 @@ namespace CrossEngine.Platform.OpenGL
             gl.GetProgram(_rendererId, GLEnum.LinkStatus, (int*)&status);
             if (status == GLEnum.False)
             {
-                RendererAPI.Log.Error("Shader program linking failed!\n" + gl.GetProgramInfoLog(_rendererId));
-
+                uint length = 0;
+                gl.GetProgram(_rendererId, GLEnum.InfoLogLength, (int*)&length);
+                byte[] infoLog = new byte[length];
+                string message;
+                fixed (byte* p = infoLog)
+                {
+                    gl.GetProgramInfoLog(_rendererId, length, &length, p);
+                    message = GLHelper.PtrToStringUtf8((IntPtr)p);
+                }
+                RendererApi.Log.Error("shader program linking failed!\n" + message);
                 return true;
             }
             return false;
@@ -304,7 +318,7 @@ namespace CrossEngine.Platform.OpenGL
                 var attribute = new ShaderParameter(GLUtils.ToShaderDataType(type), name, location, _rendererId);
                 _attributes.Add(name, attribute);
 
-                RendererAPI.Log.Trace("shader attribute parameter: {0} {1}", attribute.Type, attribute.Name);
+                RendererApi.Log.Trace("shader attribute parameter: {0} {1}", attribute.Type, attribute.Name);
             }
 
             int uniformCount;
@@ -320,7 +334,7 @@ namespace CrossEngine.Platform.OpenGL
                 var uniform = new ShaderParameter(GLUtils.ToShaderDataType(type), name, location, _rendererId);
                 _uniforms.Add(name, uniform);
 
-                RendererAPI.Log.Trace("shader uniform parameter: {0} {1}", uniform.Type, uniform.Name);
+                RendererApi.Log.Trace("shader uniform parameter: {0} {1}", uniform.Type, uniform.Name);
             }
         }
     }

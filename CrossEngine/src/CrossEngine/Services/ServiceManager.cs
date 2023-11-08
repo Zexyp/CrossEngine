@@ -63,7 +63,7 @@ namespace CrossEngine.Services
 
         public void ShutdownServices()
         {
-            for (int i = 0; i < _services.Count; i++)
+            for (int i = _services.Count - 1; i >= 0; i--)
             {
                 _services[i].OnDestroy();
             }

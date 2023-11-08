@@ -58,18 +58,22 @@ namespace CrossEngine.Platform.Wasm
             if (!EGL.MakeCurrent(display, surface, surface, context))
                 throw new Exception("MakeCurrent() failed");
 
-            //_ = EGL.DestroyContext(display, context);
-            //_ = EGL.DestroySurface(display, surface);
-            //_ = EGL.Terminate(display);
-
-            TrampolineFuncs.ApplyWorkaroundFixingInvocations();
+            //TrampolineFuncs.ApplyWorkaroundFixingInvocations();
 
             gl = GL.GetApi(EGL.GetProcAddress);
+            Console.WriteLine(EGL.GetProcAddress("glClearColor"));
+        }
+
+        public override void Shutdown()
+        {
+            _ = EGL.DestroyContext(display, context);
+            _ = EGL.DestroySurface(display, surface);
+            _ = EGL.Terminate(display);
         }
 
         public override void SwapBuffers()
         {
-            throw new NotImplementedException();
+            
         }
     }
 }

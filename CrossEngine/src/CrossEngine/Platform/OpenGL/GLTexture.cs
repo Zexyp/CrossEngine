@@ -6,8 +6,14 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Rendering;
 using CrossEngine.Debugging;
-using static CrossEngine.Platform.OpenGL.GLContext;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
 using GLEnum = Silk.NET.OpenGL.GLEnum;
+using static CrossEngine.Platform.OpenGL.GLContext;
+#endif
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -33,7 +39,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.KeepAlive(this);
             GPUGC.Register(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
         public unsafe GLTexture(uint width, uint height, ColorFormat internalFormat) : this()
@@ -60,7 +66,7 @@ namespace CrossEngine.Platform.OpenGL
             GC.ReRegisterForFinalize(this);
             GPUGC.Unregister(this);
 
-            RendererAPI.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
 
             Disposed = true;
         }

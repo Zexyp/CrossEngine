@@ -13,9 +13,6 @@ var canvas = globalThis.document.getElementById("canvas");
 dotnet.instance.Module["canvas"] = canvas;
 
 setModuleImports("main.js", {
-	consoleLog: console.log,
-	consoleWarn: console.warn,
-	consoleError: console.error,
 	initialize: () => {
 
 		var checkCanvasResize = (dispatch) => {

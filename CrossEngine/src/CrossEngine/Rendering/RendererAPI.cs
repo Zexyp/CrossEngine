@@ -6,13 +6,11 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 using CrossEngine.Logging;
 
-#if WINDOWS
 using CrossEngine.Platform.OpenGL;
-#endif
 
 namespace CrossEngine.Rendering
 {
-    class DummyRendererAPI : RendererAPI
+    class DummyRendererApi : RendererApi
     {
         public override void Clear()
         {
@@ -46,49 +44,41 @@ namespace CrossEngine.Rendering
         {
         }
 
-        public override void SetPolygonMode(PolygonMode mode)
-        {
-        }
-
-        public override void SetViewport(uint x, uint y, uint width, uint height)
-        {
-        }
+        public override void SetPolygonMode(PolygonMode mode) { }
+        public override void SetViewport(uint x, uint y, uint width, uint height) { }
     }
 
-    public abstract class RendererAPI : IDisposable
+    public enum GraphicsApi
+    {
+        None = 0,
+        OpenGL,
+        OpenGLES,
+    }
+
+    public abstract class RendererApi : IDisposable
     {
         internal static Logger Log = new Logger("rapi");
 
-        public enum API
-        {
-            None = 0,
-            OpenGL,
-            OpenGLES,
-        }
-
-        private static API _api;
+        private static GraphicsApi _api;
 
         public virtual void Dispose()
         {
             GC.SuppressFinalize(this);
         }
 
-        public static API GetAPI() => _api;
+        public static GraphicsApi GetApi() => _api;
 
-        public static RendererAPI Create(API api)
+        public static RendererApi Create(GraphicsApi api)
         {
             _api = api;
             switch (_api)
             {
-                case API.None: Debug.Assert(false, $"No API is not supported"); return null;
-#if WINDOWS
-                case API.OpenGL: return new GLRendererAPI();
-#elif WASM
-                case API.OpenGLES: return new DummyRendererAPI();
-#endif
+                case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
+                case GraphicsApi.OpenGLES:
+                case GraphicsApi.OpenGL: return new GLRendererApi();
             }
 
-            Debug.Assert(false, $"Unknown {nameof(API)} value");
+            Debug.Assert(false, $"Unknown {nameof(GraphicsApi)} value");
             return null;
         }
 

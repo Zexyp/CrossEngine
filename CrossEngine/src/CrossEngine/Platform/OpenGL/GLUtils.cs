@@ -5,7 +5,14 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Textures;
 using System;
-using Silk.NET.OpenGL;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
+using GLEnum = Silk.NET.OpenGL.GLEnum;
+using static CrossEngine.Platform.OpenGL.GLContext;
+#endif
 
 namespace CrossEngine.Platform.OpenGL
 {
@@ -134,7 +141,9 @@ namespace CrossEngine.Platform.OpenGL
         {
             switch (target)
             {
+#if !OPENGL_ES
                 case CrossEngine.Rendering.Textures.TextureTarget.Texture1D: return GLEnum.Texture1D;
+#endif
                 case CrossEngine.Rendering.Textures.TextureTarget.Texture2D: return GLEnum.Texture2D;
                 case CrossEngine.Rendering.Textures.TextureTarget.Texture3D: return GLEnum.Texture3D;
                 case CrossEngine.Rendering.Textures.TextureTarget.TextureCubeMap: return GLEnum.TextureCubeMap;
@@ -148,9 +157,11 @@ namespace CrossEngine.Platform.OpenGL
         {
             switch (mode)
             {
+#if !OPENGL_ES
                 case CrossEngine.Rendering.PolygonMode.Fill: return GLEnum.Fill;
                 case CrossEngine.Rendering.PolygonMode.Line: return GLEnum.Line;
                 case CrossEngine.Rendering.PolygonMode.Point: return GLEnum.Point;
+#endif
             }
 
             Debug.Assert(false, $"Unknown {nameof(CrossEngine.Rendering.PolygonMode)} value");
@@ -206,9 +217,11 @@ namespace CrossEngine.Platform.OpenGL
                 //case ColorFormat.SingleA: throw new NotImplementedException();
                 //case ColorFormat.DoubleRG: return GL_RG;
                 case ColorFormat.RGB: return GLEnum.Rgb;
-                case ColorFormat.BGR: return GLEnum.Bgr;
                 case ColorFormat.RGBA: return GLEnum.Rgba;
+#if !OPENGL_ES
+                case ColorFormat.BGR: return GLEnum.Bgr;
                 case ColorFormat.BGRA: return GLEnum.Bgra;
+#endif
             }
 
             Debug.Assert(false, $"Unknown {nameof(ColorFormat)} value");

@@ -62,16 +62,20 @@ namespace CrossEngine.Logging
                 {
                     case LogLevel.Trace:
                     case LogLevel.Debug:
+                        Interop.Console.Debug(message);
+                        break;
                     case LogLevel.Info:
-                    default:
-                        Interop.ConsoleLog(message);
+                        Interop.Console.Info(message);
                         break;
                     case LogLevel.Warn:
-                        Interop.ConsoleWarn(message);
+                        Interop.Console.Warn(message);
                         break;
                     case LogLevel.Error:
                     case LogLevel.Fatal:
-                        Interop.ConsoleError(message);
+                        Interop.Console.Error(message);
+                        break;
+                    default:
+                        Interop.Console.Log(message);
                         break;
                 }
 #endif

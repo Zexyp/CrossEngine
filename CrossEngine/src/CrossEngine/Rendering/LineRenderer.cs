@@ -75,9 +75,9 @@ void main()
         }
 
         static LineRendererData data;
-        static RendererAPI _rapi;
+        static RendererApi _rapi;
 
-        public static unsafe void Init(RendererAPI rapi)
+        public static unsafe void Init(RendererApi rapi)
         {
             _rapi = rapi;
 
