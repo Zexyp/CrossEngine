@@ -22,17 +22,18 @@ namespace CrossEngine.Platform.Wasm
 
         public CanvasWindow()
         {
-            Interop.Initialize();
-
             _instance = this;
         }
 
         public override unsafe void Create()
         {
+            // idk why but context needs to be created before interop initializes
             Context = new EGLContext();
             Context.Init();
 
             SetupCallbacks();
+
+            Interop.Initialize();
 
             // very sketchy
             var holder = this;

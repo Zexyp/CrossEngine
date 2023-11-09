@@ -39,7 +39,7 @@ namespace CrossEngine.Rendering
 			"layout(location = 1) in vec4 aColor;\n" +
 			"layout(location = 2) in vec2 aTexCoord;\n" +
 			"layout(location = 3) in float aTexIndex;\n" +
-			"layout(location = 4) in int aEntityID;\n" +
+            "layout(location = 4) in int aEntityID;\n" +
 			"\n" +
 			"uniform mat4 uViewProjection" +
 #if !OPENGL_ES
@@ -51,7 +51,7 @@ namespace CrossEngine.Rendering
 			"out vec4 vColor;\n" +
 			"out vec2 vTexCoord;\n" +
 			"out float vTexIndex;\n" +
-			"flat out int vEntityID;\n" +
+            "flat out int vEntityID;\n" +
 			"\n" +
 			"void main()\n" +
 			"{\n" +
@@ -71,22 +71,21 @@ namespace CrossEngine.Rendering
 #endif
 			"\n" +
 			"layout(location = 0) out vec4 oColor;\n" +
-			"layout(location = 1) out int oEntityIDColor;\n" +
+            "layout(location = 1) out int oEntityIDColor;\n" +
 			"\n" +
 			"in vec4 vColor;\n" +
 			"in vec2 vTexCoord;\n" +
 			"in float vTexIndex;\n" +
-			"flat in int vEntityID;\n" +
+            "flat in int vEntityID;\n" +
 			"\n" +
            $"uniform sampler2D uTextures[{Renderer2DData.MaxTextureSlots}];\n" +
             "\n" +
 			"void main()\n" +
 			"{\n" +
-#if !OPENGL_ES
             "    vec4 texColor = vColor;\n" +
+#if !OPENGL_ES
 			"    texColor *= texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
 #else
-            "    vec4 texColor;\n" +
             "    switch (int(vTexIndex))\n" +
             "    {\n" +
             String.Join('\n', Enumerable.Range(0, (int)Renderer2DData.MaxTextureSlots).Select((i) =>
@@ -112,7 +111,7 @@ namespace CrossEngine.Rendering
 #endif
 			"\n" +
 			"layout(location = 0) out vec4 oColor;\n" +
-			"layout(location = 1) out int oEntityIDColor;\n" +
+            "layout(location = 1) out int oEntityIDColor;\n" +
 			"\n" +
 			"in vec4 vColor;\n" +
 			"in vec2 vTexCoord;\n" +

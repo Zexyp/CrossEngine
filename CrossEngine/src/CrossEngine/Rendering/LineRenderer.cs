@@ -15,7 +15,13 @@ namespace CrossEngine.Rendering
     {
         #region Shader Sources
         const string VertexShaderSource =
-@"#version 330 core
+#if !OPENGL_ES
+"#version 330 core" +
+#else
+@"#version 300 es
+precision highp float;" +
+#endif
+@"
 
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec4 aColor;
@@ -34,7 +40,13 @@ void main()
 @"you got jebaited";
 
         const string FragmentShaderSource =
-@"#version 330 core
+#if !OPENGL_ES
+"#version 330 core" +
+#else
+@"#version 300 es
+precision highp float;" +
+#endif
+@"
 
 layout(location = 0) out vec4 oColor;
 
@@ -44,7 +56,7 @@ void main()
 {
    oColor = vColor;
 }";
-        #endregion
+#endregion
 
         struct LineVertex
         {

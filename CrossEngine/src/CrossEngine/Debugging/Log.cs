@@ -61,8 +61,10 @@ namespace CrossEngine.Logging
                 switch (level)
                 {
                     case LogLevel.Trace:
+                        Interop.Console.Debug("%c" + message, "color: gray;");
+                        break;
                     case LogLevel.Debug:
-                        Interop.Console.Debug(message);
+                        Interop.Console.Debug("%c" + message, "color: turquoise;");
                         break;
                     case LogLevel.Info:
                         Interop.Console.Info(message);

@@ -44,8 +44,8 @@ namespace CrossEngine.Platform.OpenGL
             Count = count;
             _bufferUsage = bufferUsage;
 
-            gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
-            gl.BufferData(GLEnum.ArrayBuffer, Count * GetIndexDataTypeSize(DataType), indices, GLUtils.ToGLBufferUsage(_bufferUsage));
+            gl.BindBuffer(GLEnum.ElementArrayBuffer, _rendererId);
+            gl.BufferData(GLEnum.ElementArrayBuffer, Count * GetIndexDataTypeSize(DataType), indices, GLUtils.ToGLBufferUsage(_bufferUsage));
         }
 
         protected override unsafe void Dispose(bool disposing)
@@ -90,8 +90,8 @@ namespace CrossEngine.Platform.OpenGL
         {
             Profiler.Function();
 
-            gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
-            gl.BufferSubData(GLEnum.ArrayBuffer, (int)offset, Count * GetIndexDataTypeSize(DataType), data);
+            gl.BindBuffer(GLEnum.ElementArrayBuffer, _rendererId);
+            gl.BufferSubData(GLEnum.ElementArrayBuffer, (int)offset, Count * GetIndexDataTypeSize(DataType), data);
         }
 
         private static uint GetIndexDataTypeSize(IndexDataType dataType)

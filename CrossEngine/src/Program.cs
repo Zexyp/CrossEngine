@@ -14,6 +14,7 @@ using CrossEngine.Utils;
 using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Logging;
+using CrossEngine.Platform.OpenGL.Debugging;
 
 #if WASM
 using CrossEngine.Platform.Wasm;
@@ -40,6 +41,7 @@ namespace CrossEngine
             Log.Print(LogLevel.Warn,  "asd");
             Log.Print(LogLevel.Error, "asd");
             Log.Print(LogLevel.Fatal, "asd");
+
             var app = new SusQ();
 #if WASM
             app.OnInit();
@@ -53,6 +55,7 @@ namespace CrossEngine
             public SusQ()
             {
                 Manager.Register(new TimeSevice());
+                Manager.Register(new InputService());
                 Manager.Register(new WindowService(
 #if WASM
                     WindowService.Mode.Manual
@@ -71,7 +74,6 @@ namespace CrossEngine
 #if WINDOWS
                 Manager.Register(new ImGuiService());
 #endif
-                Manager.Register(new InputService());
                 Manager.GetService<InputService>().Event += OnEvent;
 
 #if WASM
@@ -97,11 +99,9 @@ namespace CrossEngine
                 var rs = Manager.GetService<RenderService>();
                 rs.Execute(() =>
                 {
-#if true
                     unsafe
                     {
                         var rapi = Manager.GetService<RenderService>().RendererApi;
-                        rapi.SetClearColor(Vector4.One / 2);
 
                         float[] vertices = {
                             -0.5f, -0.5f, 0.0f, // left  
@@ -118,56 +118,20 @@ namespace CrossEngine
                         Renderer2D.Init(rapi);
                         //LineRenderer.Init(rapi);
                     }
-#elif WASM
-                    var vertSrc = @"#version 300 es
-
-layout(location = 0) in highp vec2 in_xy;
-layout(location = 1) in highp vec3 in_rgb;
-
-out highp vec3 color;
-
-// GLSL uses the reverse order to a System.Numerics.Matrix3x2
-uniform mat2x3 viewprojection;
-
-void main()
-{
-	gl_Position = vec4(vec3(in_xy, 1.0) * viewprojection, 0.0, 1.0);
-	color = in_rgb;
-}
-";
-                    var fragSrc = @"#version 300 es
-
-in highp vec3 color;
-
-layout(location = 0) out highp vec4 diffuse;
-
-void main()
-{
-	diffuse = vec4(color, 1.0);
-}
-";
-
-                    d = new WebGL.Sample.MeshDemo(CrossEngine.Platform.Wasm.EGLContext.gl, vertSrc, fragSrc);
-
-                    //CrossEngine.Platform.Wasm.EGLContext.gl.Viewport(0, 0, (uint)100, (uint)100);
-#endif
                 });
 
                 rs.Frame += () =>
                 {
                     unsafe
                     {
-#if true
                         var rapi = Manager.GetService<RenderService>().RendererApi;
 
-                        CrossEngine.Platform.OpenGL.Debugging.GLError.Call(() =>
-                        {
-                            rapi.Clear();
-                            rapi.DrawArray(new WeakReference<VertexArray>(va), 3);
-                        });
+                        rapi.Clear();
+                        rapi.DrawArray(new WeakReference<VertexArray>(va), 3);
 
                         Renderer2D.BeginScene(System.Numerics.Matrix4x4.Identity);
-                        Renderer2D.DrawQuad(System.Numerics.Matrix4x4.Identity, System.Numerics.Vector4.One);
+                        Matrix4x4 mat = Matrix4x4.CreateTranslation(Vector3.UnitY * MathF.Sin(Time.ElapsedTimeF));
+                        Renderer2D.DrawQuad(mat, System.Numerics.Vector4.One, 1);
                         Renderer2D.EndScene();
 
                         //LineRenderer.BeginScene(System.Numerics.Matrix4x4.Identity);
@@ -182,9 +146,6 @@ void main()
                         igText(Time.DeltaTime.ToString());
                         igEnd();
                         */
-#elif WASM
-                        d.Render();
-#endif
                     }
                 };
             }

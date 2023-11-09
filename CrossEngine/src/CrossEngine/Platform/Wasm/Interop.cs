@@ -18,14 +18,24 @@ namespace CrossEngine.Platform.Wasm
 		{
             [JSImport("globalThis.console.log")]
             public static partial void Log([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.log")]
+            public static partial void Log([JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.String>] string arg);
             [JSImport("globalThis.console.debug")]
             public static partial void Debug([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.debug")]
+            public static partial void Debug([JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.String>] string arg);
             [JSImport("globalThis.console.info")]
             public static partial void Info([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.info")]
+            public static partial void Info([JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.String>] string arg);
             [JSImport("globalThis.console.warn")]
             public static partial void Warn([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.warn")]
+            public static partial void Warn([JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.String>] string arg);
             [JSImport("globalThis.console.error")]
             public static partial void Error([JSMarshalAs<JSType.String>] string message);
+            [JSImport("globalThis.console.error")]
+            public static partial void Error([JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.String>] string arg);
         }
 
         [JSExport]
