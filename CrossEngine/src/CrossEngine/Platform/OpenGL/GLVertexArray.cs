@@ -118,6 +118,7 @@ namespace CrossEngine.Platform.OpenGL
                     case ShaderDataType.Int4:
                     case ShaderDataType.Bool:
                         {
+                            RendererApi.Log.Debug($"loc: {_vertexBufferIndex}, count: {element.GetComponentCount()}, type: {GLUtils.GetGLBaseDataType(element.Type)}, offset: {element.Offset}");
                             gl.EnableVertexAttribArray(_vertexBufferIndex);
                             gl.VertexAttribIPointer(_vertexBufferIndex,
                                 (int)element.GetComponentCount(),
@@ -159,6 +160,7 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.BindVertexArray(_rendererId);
             indexBuffer.GetValue().Bind();
+            gl.BindVertexArray(0); // mby not needed
 
             _indexBuffer = indexBuffer;
         }

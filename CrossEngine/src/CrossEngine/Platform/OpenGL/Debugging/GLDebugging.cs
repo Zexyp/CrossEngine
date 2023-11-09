@@ -7,8 +7,14 @@ using System.Text;
 using CrossEngine.Logging;
 using CrossEngine.Platform.OpenGL;
 using CrossEngine.Rendering;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
+using GLEnum = Silk.NET.OpenGL.GLEnum;
 using static CrossEngine.Platform.OpenGL.GLContext;
-using Silk.NET.OpenGL;
+#endif
 
 namespace CrossEngine.Platform.OpenGL.Debugging
 {

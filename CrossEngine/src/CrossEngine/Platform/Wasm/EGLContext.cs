@@ -61,7 +61,6 @@ namespace CrossEngine.Platform.Wasm
             //TrampolineFuncs.ApplyWorkaroundFixingInvocations();
 
             gl = GL.GetApi(EGL.GetProcAddress);
-            Console.WriteLine(EGL.GetProcAddress("glClearColor"));
         }
 
         public override void Shutdown()
