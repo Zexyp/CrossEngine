@@ -27,6 +27,7 @@
         <PackageReference Include="Evergine.Bindings.Imgui" Version="2023.4.4.966" />
         <PackageReference Include="Silk.NET.OpenGL" Version="2.18.0" />
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.18.0" />
+        <PackageReference Include="StbImageSharp" Version="2.27.13" />
     </ItemGroup>
     
     <ItemGroup>
@@ -36,12 +37,29 @@
     </ItemGroup>
     
     <ItemGroup>
-        <ContentWithTargetPath Include="deps\glfw\win64\glfw3.dll">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-            <TargetPath>glfw.dll</TargetPath>
-        </ContentWithTargetPath>
+        <Compile Update="Properties\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
     </ItemGroup>
     
+    <ItemGroup>
+        <EmbeddedResource Update="Properties\Resources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ContentWithTargetPath Include="deps\glfw\win64\glfw3.dll">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <TargetPath>glfw.dll</TargetPath>
+      </ContentWithTargetPath>
+    </ItemGroup>
+
+    <!-- ##### platform stuff ##### -->
+  
     <ItemGroup>
         <Compile Remove="src\CrossEngine\Platform\**" />
         <EmbeddedResource Remove="src\CrossEngine\Platform\**" />
@@ -51,8 +69,6 @@
         <EmbeddedResource Remove="src\CrossEngine\Utils\ImGui\**" />
         <None Remove="src\CrossEngine\Utils\ImGui\**" />
     </ItemGroup>
-
-    <!-- ##### platform stuff ##### -->
   
     <Choose>
         <When Condition="'$(Configuration)'=='Debug'">
