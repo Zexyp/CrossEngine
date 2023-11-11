@@ -2,14 +2,20 @@
 {
     public static class Time
     {
-        public static double TimeScale { get; set; } = 1;
-        public static double DeltaTime { get; internal set; }
-        public static double UnscaledDeltaTime { get; internal set; }
-        public static double FixedDeltaTime { get; set; } = 1d / 60;
-        public static double ElapsedTime { get; internal set; }
+        public static double MaximumDelta { get; set; } = 1d / 3;
+        public static double Scale { get; set; } = 1;
+        
+        public static double Elapsed { get; internal set; }
+        public static double Delta { get; internal set; }
+        public static double UnscaledElapsed { get; internal set; }
+        public static double UnscaledDelta { get; internal set; }
 
-        // TODO: consider usefulness
-        public static float DeltaTimeF => (float)DeltaTime;
-        public static float ElapsedTimeF => (float)ElapsedTime;
+        //public static double FixedElapsed;
+        //public static double FixedDelta;
+        //public static double FixedUnscaled;
+        //public static double FixedUnscaledDelta;
+
+        public static float DeltaF => (float)Delta;
+        public static float ElapsedF => (float)Elapsed;
     }
 }

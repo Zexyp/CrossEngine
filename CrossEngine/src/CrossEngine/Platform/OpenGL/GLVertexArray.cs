@@ -165,7 +165,7 @@ namespace CrossEngine.Platform.OpenGL
             _indexBuffer = indexBuffer;
         }
 
-        public override List<WeakReference<VertexBuffer>> GetVertexBuffers()
+        public override WeakReference<VertexBuffer>[] GetVertexBuffers()
         {
             throw new NotImplementedException();
         }

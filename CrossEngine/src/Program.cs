@@ -15,6 +15,7 @@ using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Platform.OpenGL.Debugging;
+using CrossEngine.Scenes;
 
 #if WASM
 using CrossEngine.Platform.Wasm;
@@ -25,6 +26,7 @@ using CrossEngine.Platform.Windows;
 using CrossEngine.Utils.ImGui;
 using CrossEngine.Rendering.Shaders;
 using System.Diagnostics;
+using CrossEngine.Ecs;
 #endif
 
 namespace CrossEngine
@@ -52,6 +54,9 @@ namespace CrossEngine
 
         class SusQ : Application
         {
+            Scene scene;
+            Entity entity;
+
             public SusQ()
             {
                 Manager.Register(new TimeSevice());
@@ -116,7 +121,7 @@ namespace CrossEngine
                         va.AddVertexBuffer(new WeakReference<VertexBuffer>(vb));
 
                         Renderer2D.Init(rapi);
-                        //LineRenderer.Init(rapi);
+                        LineRenderer.Init(rapi);
                     }
                 });
 
@@ -130,13 +135,17 @@ namespace CrossEngine
                         rapi.DrawArray(new WeakReference<VertexArray>(va), 3);
 
                         Renderer2D.BeginScene(System.Numerics.Matrix4x4.Identity);
-                        Matrix4x4 mat = Matrix4x4.CreateTranslation(Vector3.UnitY * MathF.Sin(Time.ElapsedTimeF));
-                        Renderer2D.DrawQuad(mat, System.Numerics.Vector4.One, 1);
+                        
+                        entity.Transform.Position = Vector3.UnitY * MathF.Sin(Time.ElapsedF);
+                        entity.Children[0].Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, Time.ElapsedF);
+                        Renderer2D.DrawQuad(entity.Transform.WorldTransformMatrix, new Vector4(0, 1, 0, 1));
+                        Renderer2D.DrawQuad(entity.Children[0].Transform.WorldTransformMatrix, new Vector4(0, 1, 0, 1));
+
                         Renderer2D.EndScene();
 
-                        //LineRenderer.BeginScene(System.Numerics.Matrix4x4.Identity);
-                        //LineRenderer.DrawCircle(System.Numerics.Matrix4x4.Identity, System.Numerics.Vector4.UnitX);
-                        //LineRenderer.EndScene();
+                        LineRenderer.BeginScene(System.Numerics.Matrix4x4.Identity);
+                        LineRenderer.DrawCircle(System.Numerics.Matrix4x4.Identity, System.Numerics.Vector4.UnitX);
+                        LineRenderer.EndScene();
 
                         /*
                         byte o = 1;
@@ -148,6 +157,10 @@ namespace CrossEngine
                         */
                     }
                 };
+
+                scene = new Scene();
+                entity = scene.CreateEntity();
+                scene.CreateEntity().Parent = entity;
             }
 
             public override void OnDestroy()
@@ -159,6 +172,7 @@ namespace CrossEngine
             {
                 base.OnUpdate();
                 //Console.WriteLine("upd");
+                scene.Update();
             }
 
             void OnEvent(Event e)

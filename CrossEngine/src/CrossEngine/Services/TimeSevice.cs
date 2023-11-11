@@ -25,11 +25,13 @@ namespace CrossEngine.Services
 
         public override void OnUpdate()
         {
-            Time.UnscaledDeltaTime = sw.Elapsed.TotalSeconds;
-            Time.DeltaTime = Time.TimeScale * Time.UnscaledDeltaTime;
+            Time.UnscaledDelta = sw.Elapsed.TotalSeconds;
+            Time.UnscaledElapsed += Time.UnscaledDelta;
+            Time.Delta = Math.Min(Time.UnscaledDelta * Time.Scale, Time.MaximumDelta);
+            Time.Elapsed += Time.Delta;
+
             sw.Reset();
             sw.Start();
-            Time.ElapsedTime += Time.UnscaledDeltaTime;
         }
     }
 }

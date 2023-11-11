@@ -42,7 +42,7 @@ namespace CrossEngine.Rendering.Buffers
         public abstract void AddVertexBuffer(WeakReference<VertexBuffer> vertexBuffer);
         public abstract void SetIndexBuffer(WeakReference<IndexBuffer> indexBuffer);
 
-        public abstract List<WeakReference<VertexBuffer>> GetVertexBuffers();
+        public abstract WeakReference<VertexBuffer>[] GetVertexBuffers();
         public abstract WeakReference<IndexBuffer> GetIndexBuffer();
 
         public static WeakReference<VertexArray> Create()
