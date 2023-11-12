@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Diagnostics;
 
 using CrossEngine.Display;
 using CrossEngine.Rendering;
@@ -16,6 +17,8 @@ using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Platform.OpenGL.Debugging;
 using CrossEngine.Scenes;
+using CrossEngine.Rendering.Shaders;
+using CrossEngine.Ecs;
 
 #if WASM
 using CrossEngine.Platform.Wasm;
@@ -24,9 +27,6 @@ using CrossEngine.Platform.Wasm;
 #if WINDOWS
 using CrossEngine.Platform.Windows;
 using CrossEngine.Utils.ImGui;
-using CrossEngine.Rendering.Shaders;
-using System.Diagnostics;
-using CrossEngine.Ecs;
 #endif
 
 namespace CrossEngine
@@ -122,6 +122,7 @@ namespace CrossEngine
 
                         Renderer2D.Init(rapi);
                         LineRenderer.Init(rapi);
+                        TextRendererUtil.Init();
                     }
                 });
 
@@ -140,6 +141,9 @@ namespace CrossEngine
                         entity.Children[0].Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, Time.ElapsedF);
                         Renderer2D.DrawQuad(entity.Transform.WorldTransformMatrix, new Vector4(0, 1, 0, 1));
                         Renderer2D.DrawQuad(entity.Children[0].Transform.WorldTransformMatrix, new Vector4(0, 1, 0, 1));
+
+                        Matrix4x4 textmat = Matrix4x4.CreateScale(new Vector3(32f / Manager.GetService<WindowService>().Window.Width, 32f / Manager.GetService<WindowService>().Window.Height, 1));
+                        TextRendererUtil.DrawText(textmat, "@abc", new Vector4(1, 0, 0, 1));
 
                         Renderer2D.EndScene();
 

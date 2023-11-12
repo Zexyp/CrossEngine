@@ -10,12 +10,17 @@ namespace CrossEngine.Rendering.Textures
 {
     public class TextureAtlas
     {
-        Vector4[] sprites;
+        public Vector4 Margin { get; private init; }
+        public int NumTiles { get; private init; }
 
+        Vector4[] spriteOffsets;
         
-        public TextureAtlas(Vector2 sheetSize, Vector2 spriteSize, int numTiles)
+        public TextureAtlas(Vector2 sheetSize, Vector2 spriteSize, int numTiles, Vector4 margin = default)
         {
-            this.sprites = new Vector4[numTiles];
+            NumTiles = numTiles;
+            Margin = margin;
+
+            this.spriteOffsets = new Vector4[NumTiles];
 
             var x = 2;
             var y = 3;
@@ -24,24 +29,24 @@ namespace CrossEngine.Rendering.Textures
             var spriteWidth = spriteSize.X;
             var spriteHeight = spriteSize.Y;
 
-            float offx = 0;
-            float offy = 0;
-            for (int i = 0; i < numTiles; i++)
+            float offx = Margin.X / sheetWidth;
+            float offy = (Margin.Y + Margin.W) / sheetHeight;
+            for (int i = 0; i < NumTiles; i++)
             {
-                sprites[i] = new Vector4(offx, -offy, spriteWidth / sheetWidth, spriteHeight / sheetHeight);
-                sprites[i].Y -= sprites[i].W;
-                offx += spriteWidth / sheetWidth;
+                spriteOffsets[i] = new Vector4(offx, -offy, (spriteWidth) / sheetWidth, (spriteHeight) / sheetHeight);
+                spriteOffsets[i].Y -= spriteOffsets[i].W;
+                offx += (spriteWidth + Margin.X + Margin.Z) / sheetWidth;
                 if (offx >= 1)
                 {
-                    offx = 0;
-                    offy += spriteHeight / sheetHeight;
+                    offx = Margin.X / sheetWidth;
+                    offy += (spriteHeight + Margin.Y + Margin.W) / sheetHeight;
                 }
             }
         }
 
         public Vector4 GetTextureOffsets(int index)
         {
-            return sprites[index];
+            return spriteOffsets[index];
         }
     }
 }
