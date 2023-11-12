@@ -118,7 +118,6 @@ namespace CrossEngine.Platform.OpenGL
                     case ShaderDataType.Int4:
                     case ShaderDataType.Bool:
                         {
-                            RendererApi.Log.Debug($"loc: {_vertexBufferIndex}, count: {element.GetComponentCount()}, type: {GLUtils.GetGLBaseDataType(element.Type)}, offset: {element.Offset}");
                             gl.EnableVertexAttribArray(_vertexBufferIndex);
                             gl.VertexAttribIPointer(_vertexBufferIndex,
                                 (int)element.GetComponentCount(),
