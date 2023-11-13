@@ -6,8 +6,7 @@ using System.Diagnostics;
 
 using CrossEngine.Utils;
 using CrossEngine.Ecs;
-using System.Runtime.Serialization;
-using System.Linq;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Components
 {
@@ -27,7 +26,7 @@ namespace CrossEngine.Components
         public event Action<TransformComponent> TransformChanged;
 
         #region Properties
-        //[EditorDrag]
+        [EditorDrag]
         public Vector3 Position
         {
             get
@@ -43,7 +42,7 @@ namespace CrossEngine.Components
                 MarkForUpdate();
             }
         }
-        //[EditorDrag]
+        [EditorDrag]
         public Quaternion Rotation
         {
             get
@@ -60,7 +59,7 @@ namespace CrossEngine.Components
                 MarkForUpdate();
             }
         }
-        //[EditorDrag]
+        [EditorDrag]
         public Vector3 Scale
         {
             get

@@ -6,7 +6,8 @@ const { setModuleImports, getAssemblyExports, getConfig } = await dotnet
 	.create();
 
 const config = getConfig();
-const exports = await getAssemblyExports(config.mainAssemblyName);
+const INTEROP_EXPORT_ASSEMBLY = "CrossEngine.dll";
+const exports = await getAssemblyExports(INTEROP_EXPORT_ASSEMBLY); // config.mainAssemblyName
 const interop = exports.CrossEngine.Platform.Wasm.Interop;
 
 var canvas = globalThis.document.getElementById("canvas");
@@ -137,6 +138,11 @@ setModuleImports("main.js", {
 		canvas.addEventListener("mousemove", mouseMove, false);
 		canvas.addEventListener("mousedown", mouseDown, false);
 		canvas.addEventListener("mouseup", mouseUp, false);
+		canvas.addEventListener("mousewheel", function (e) {
+			if (e.ctrlKey) {
+				e.preventDefault();
+			}
+		}, true);
 		canvas.addEventListener("touchstart", touchStart, false);
 		canvas.addEventListener("touchmove", touchMove, false);
 		canvas.addEventListener("touchend", touchEnd, false);

@@ -9,7 +9,7 @@ using CrossEngine.Profiling;
 
 namespace CrossEngine
 {
-    internal abstract class Application : IDisposable
+    public abstract class Application : IDisposable
     {
         public ServiceManager Manager = new ServiceManager();
         bool running = true;

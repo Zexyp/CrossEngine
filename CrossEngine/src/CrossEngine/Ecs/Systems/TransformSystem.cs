@@ -11,9 +11,9 @@ using CrossEngine.Components;
 using CrossEngine.Profiling;
 using CrossEngine.Ecs;
 
-namespace CrossEngine.ComponentSystems
+namespace CrossEngine.Systems
 {
-    class TransformSystem : System<TransformComponent>, IUpdatedSystem
+    class TransformSystem : UnicastSystem<TransformComponent>, IUpdatedSystem
     {
         private readonly List<TransformComponent> _roots = new List<TransformComponent>();
 #if DEBUG_TRANSFORMS
@@ -71,7 +71,7 @@ namespace CrossEngine.ComponentSystems
             Profiler.EndScope();
         }
 #if DEBUG_TRANSFORMS
-        public void Render()
+        public void DebugRender()
         {
             for (int i = 0; i < _components.Count; i++)
             {

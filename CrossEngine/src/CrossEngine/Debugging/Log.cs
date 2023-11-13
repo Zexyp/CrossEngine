@@ -37,7 +37,7 @@ namespace CrossEngine.Logging
             Default.Trace("log initialized");
         }
 
-        internal static void Print(LogLevel level, string message)
+        public static void Print(LogLevel level, string message)
         {
             mutex.WaitOne();
 

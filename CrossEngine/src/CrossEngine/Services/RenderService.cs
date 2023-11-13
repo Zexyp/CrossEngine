@@ -14,7 +14,7 @@ using CrossEngine.Events;
 
 namespace CrossEngine.Services
 {
-    internal class RenderService : Service
+    public class RenderService : Service
     {
         public RendererApi RendererApi { get; private set; }
         public event Action Frame;

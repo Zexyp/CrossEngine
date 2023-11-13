@@ -9,7 +9,7 @@ using CrossEngine;
 
 namespace CrossEngine.Services
 {
-    internal class TimeSevice : UpdatedService
+    public class TimeSevice : UpdatedService
     {
         Stopwatch sw = new Stopwatch();
 

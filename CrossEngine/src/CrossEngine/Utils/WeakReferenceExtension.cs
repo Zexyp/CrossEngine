@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Utils
 {
-    static class WeakReferenceExtension
+    public static class WeakReferenceExtension
     {
         public static T GetValue<T>(this WeakReference<T> value) where T : class
         {

@@ -7,7 +7,7 @@ using CrossEngine.Services;
 
 namespace CrossEngine.Services
 {
-    internal abstract class UpdatedService : Service
+    public abstract class UpdatedService : Service
     {
         public abstract void OnUpdate();
     }
