@@ -7,7 +7,7 @@ using CrossEngine.Services;
 
 namespace CrossEngine.Services
 {
-    internal class ServiceManager
+    public class ServiceManager
     {
         readonly List<Service> _services = new List<Service>();
         readonly Dictionary<Type, Service> _servicesDict = new Dictionary<Type, Service>();

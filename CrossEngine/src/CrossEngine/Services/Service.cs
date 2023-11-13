@@ -7,7 +7,7 @@ using CrossEngine.Services;
 
 namespace CrossEngine.Services
 {
-    internal abstract class Service
+    public abstract class Service
     {
         public ServiceManager Manager { get; internal set; }
 

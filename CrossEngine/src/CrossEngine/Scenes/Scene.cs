@@ -1,5 +1,5 @@
 ﻿using CrossEngine.Components;
-using CrossEngine.ComponentSystems;
+using CrossEngine.Systems;
 using CrossEngine.Ecs;
 
 using System;
@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Scenes
 {
-    internal class Scene
+    public class Scene
     {
         readonly World _world = new World();
         public readonly List<Entity> _entities = new List<Entity>();

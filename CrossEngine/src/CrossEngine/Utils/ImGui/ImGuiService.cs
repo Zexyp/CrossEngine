@@ -7,7 +7,7 @@ using static Evergine.Bindings.Imgui.ImguiNative;
 
 namespace CrossEngine.Utils.ImGui
 {
-    internal class ImGuiService : Service
+    public class ImGuiService : Service
     {
         public override void OnDestroy()
         {

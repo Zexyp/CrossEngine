@@ -10,7 +10,7 @@ using CrossEngine.Profiling;
 
 namespace CrossEngine.Services
 {
-    internal class InputService : UpdatedService
+    public class InputService : UpdatedService
     {
         public event OnEventFunction Event;
         Queue<Event> _events = new Queue<Event>();

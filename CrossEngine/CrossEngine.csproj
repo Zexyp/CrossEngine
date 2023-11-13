@@ -44,19 +44,6 @@
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.18.0" />
         <PackageReference Include="StbImageSharp" Version="2.27.13" />
     </ItemGroup>
-    
-    <ItemGroup>
-        <Reference Include="GLFW.NET">
-            <HintPath>libs\GLFW.NET.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
-    <ItemGroup>
-      <ContentWithTargetPath Include="deps\glfw\win64\glfw3.dll">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        <TargetPath>glfw.dll</TargetPath>
-      </ContentWithTargetPath>
-    </ItemGroup>
 
     <!-- ##### platform stuff ##### -->
   
@@ -85,6 +72,19 @@
                 <Compile Include="src\CrossEngine\Utils\ImGui\**" />
                 <EmbeddedResource Include="src\CrossEngine\Utils\ImGui\**" />
                 <None Include="src\CrossEngine\Utils\ImGui\**" />
+            </ItemGroup>
+
+            <ItemGroup>
+                <Reference Include="GLFW.NET">
+                    <HintPath>libs\GLFW.NET.dll</HintPath>
+                </Reference>
+            </ItemGroup>
+
+            <ItemGroup>
+                <ContentWithTargetPath Include="deps\glfw\win64\glfw3.dll">
+                    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+                    <TargetPath>glfw.dll</TargetPath>
+                </ContentWithTargetPath>
             </ItemGroup>
         
         </When>

@@ -15,7 +15,6 @@ using CrossEngine.Utils;
 using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Logging;
-using CrossEngine.Platform.OpenGL.Debugging;
 using CrossEngine.Scenes;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Ecs;
@@ -27,6 +26,7 @@ using CrossEngine.Platform.Wasm;
 #if WINDOWS
 using CrossEngine.Platform.Windows;
 using CrossEngine.Utils.ImGui;
+using CrossEngine.Platform.OpenGL.Debugging;
 #endif
 
 namespace CrossEngine
@@ -37,12 +37,12 @@ namespace CrossEngine
         {
             Console.WriteLine("Hello World!");
             //System.Runtime.CompilerServices.Unsafe.AsRef<bool>(null);
-            Log.Print(LogLevel.Trace, "asd");
-            Log.Print(LogLevel.Debug, "asd");
-            Log.Print(LogLevel.Info,  "asd");
-            Log.Print(LogLevel.Warn,  "asd");
-            Log.Print(LogLevel.Error, "asd");
-            Log.Print(LogLevel.Fatal, "asd");
+            Log.Print(LogLevel.Trace, "logging goes brr");
+            Log.Print(LogLevel.Debug, "logging goes brr");
+            Log.Print(LogLevel.Info,  "logging goes brr");
+            Log.Print(LogLevel.Warn,  "logging goes brr");
+            Log.Print(LogLevel.Error, "logging goes brr");
+            Log.Print(LogLevel.Fatal, "logging goes brr");
 
             var app = new SusQ();
 #if WASM
@@ -110,8 +110,8 @@ namespace CrossEngine
 
                         float[] vertices = {
                             -0.5f, -0.5f, 0.0f, // left  
-                                0.5f, -0.5f, 0.0f, // right 
-                                0.0f,  0.5f, 0.0f  // top   
+                             0.5f, -0.5f, 0.0f, // right 
+                             0.0f,  0.5f, 0.0f  // top   
                         };
                         va = VertexArray.Create().GetValue();
                         VertexBuffer vb;
@@ -137,8 +137,6 @@ namespace CrossEngine
 
                         Renderer2D.BeginScene(System.Numerics.Matrix4x4.Identity);
                         
-                        entity.Transform.Position = Vector3.UnitY * MathF.Sin(Time.ElapsedF);
-                        entity.Children[0].Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, Time.ElapsedF);
                         Renderer2D.DrawQuad(entity.Transform.WorldTransformMatrix, new Vector4(0, 1, 0, 1));
                         Renderer2D.DrawQuad(entity.Children[0].Transform.WorldTransformMatrix, new Vector4(0, 1, 0, 1));
 
@@ -165,10 +163,12 @@ namespace CrossEngine
                 scene = new Scene();
                 entity = scene.CreateEntity();
                 scene.CreateEntity().Parent = entity;
+                scene.Start();
             }
 
             public override void OnDestroy()
             {
+                scene.Stop();
                 base.OnDestroy();
             }
 
@@ -176,13 +176,15 @@ namespace CrossEngine
             {
                 base.OnUpdate();
                 //Console.WriteLine("upd");
+                entity.Transform.Position = Vector3.UnitY * MathF.Sin(Time.ElapsedF);
+                entity.Children[0].Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, Time.ElapsedF);
                 scene.Update();
             }
 
             void OnEvent(Event e)
             {
-                if (e is not WindowRefreshEvent)
-                    Console.WriteLine(e);
+                //if (e is not WindowRefreshEvent)
+                //    Console.WriteLine(e);
                 if (e is WindowCloseEvent)
                 {
                     Close();

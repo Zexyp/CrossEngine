@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace CrossEngine.Services
 {
-    internal class WindowService : Service
+    public class WindowService : Service
     {
         public enum Mode
         {

@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 namespace CrossEngine.Platform.Wasm
 {
     [SupportedOSPlatform("browser")]
-    internal static partial class Interop
+    public static partial class Interop
 	{
 		[JSImport("initialize", "main.js")]
 		public static partial void Initialize();
