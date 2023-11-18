@@ -1,28 +1,55 @@
-﻿using CrossEngine.Scenes;
+﻿using CrossEngine.Rendering;
+using CrossEngine.Scenes;
+using CrossEngine.Systems;
+using System;
 using System.Collections.Generic;
 
 namespace CrossEngine.Services
 {
-    class SceneService : Service
+    class SceneService : Service, IUpdatedService, IMessagableService
     {
+        readonly Queue<Action> _actions = new Queue<Action>();
+        Scene _currentScene;
+
         public override void OnStart()
         {
-            
+            Manager.GetService<RenderService>().Frame += OnRender;
+            SceneManager.service = this;
         }
 
         public override void OnDestroy()
         {
-            
+            SceneManager.service = null;
+            Manager.GetService<RenderService>().Frame -= OnRender;
         }
 
-        public void Push(Scene scene)
+        public void Load(Scene scene)
         {
-
+            _currentScene = scene;
+            _currentScene.Start();
         }
 
-        public void Pop()
+        public void Unload()
         {
-            
+            _currentScene.Stop();
+            _currentScene = null;
+        }
+
+        public void OnUpdate()
+        {
+            while (_actions.TryDequeue(out var action))
+                action.Invoke();
+            _currentScene.Update();
+        }
+
+        public void OnRender(RenderService rs)
+        {
+            SceneRenderer.DrawScene(_currentScene.RenderData, rs.RendererApi);
+        }
+
+        public void Execute(Action action)
+        {
+            _actions.Enqueue(action);
         }
     }
 }

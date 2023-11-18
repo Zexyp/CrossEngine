@@ -247,16 +247,14 @@ namespace CrossEngine.Ecs
         {
             component.Entity = this;
             component.Attach();
-            if (component.Enabled)
-                component.Enable();
+            if (component.Enabled) component.Enable();
 
             ComponentAdded?.Invoke(this, component);
         }
 
         private void DetachComponent(Component component)
         {
-            if (component.Enabled)
-                component.Disable();
+            if (component.Enabled) component.Disable();
             component.Detach();
             component.Entity = null;
 

@@ -10,7 +10,7 @@ using CrossEngine.Profiling;
 
 namespace CrossEngine.Services
 {
-    public class InputService : UpdatedService
+    public class InputService : Service, IUpdatedService
     {
         public event OnEventFunction Event;
         Queue<Event> _events = new Queue<Event>();
@@ -26,7 +26,7 @@ namespace CrossEngine.Services
             Manager.GetService<WindowService>().Event -= HandleEvent;
         }
 
-        public override void OnUpdate()
+        public void OnUpdate()
         {
             Input.Update();
             while (_events.TryDequeue(out var e))

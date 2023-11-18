@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace CrossEngine.Ecs
 {
-    internal class World
+    internal class EcsWorld
     {
         readonly List<System> _systems = new List<System>();
         readonly List<IUpdatedSystem> _updatedSystems = new List<IUpdatedSystem>();
@@ -33,7 +33,7 @@ namespace CrossEngine.Ecs
             _systems.Remove(system);
             if (system is IUpdatedSystem updatedSystem)
                 _updatedSystems.Remove(updatedSystem);
-            RemoveAllNotify(system);
+            NotifyRemoveAll(system);
 
             system.Detach();
             system.World = null;
@@ -62,10 +62,16 @@ namespace CrossEngine.Ecs
             {
                 ComponentRegister?.Invoke(entity.Components[i]);
             }
+            
+            entity.ComponentAdded += OnEntityComponentAdded;
+            entity.ComponentRemoved += OnEntityComponentRemoved;
         }
 
         public void RemoveEntity(Entity entity)
         {
+            entity.ComponentAdded -= OnEntityComponentAdded;
+            entity.ComponentRemoved -= OnEntityComponentRemoved;
+
             for (int i = entity.Components.Count - 1; i >= 0; i--)
             {
                 ComponentUnregister?.Invoke(entity.Components[i]);
@@ -86,23 +92,24 @@ namespace CrossEngine.Ecs
             NotifyOn(typeof(T), bindTo);
         }
 
+        // yep, this is a weird glue code
         public void NotifyOn(Type type, System bindTo)
         {
             ComponentRegister += (c) =>
             {
-                if (c.GetType() == type)
+                if (type.IsAssignableFrom(c.GetType()))
                     bindTo.Register(c);
                 return bindTo;
             };
             ComponentUnregister += (c) =>
             {
-                if (c.GetType() == type)
+                if (type.IsAssignableFrom(c.GetType()))
                     bindTo.Unregister(c);
                 return bindTo;
             };
         }
 
-        private void RemoveAllNotify(System boundTo)
+        private void NotifyRemoveAll(System boundTo)
         {
             var registerInvocation = ComponentRegister.GetInvocationList();
             for (int i = 0; i < registerInvocation.Length; i++)
@@ -118,6 +125,16 @@ namespace CrossEngine.Ecs
                 if (del(null) == boundTo)
                     ComponentUnregister -= del;
             }
+        }
+
+        private void OnEntityComponentAdded(Entity sender, Component component)
+        {
+            ComponentRegister?.Invoke(component);
+        }
+
+        private void OnEntityComponentRemoved(Entity sender, Component component)
+        {
+            ComponentUnregister?.Invoke(component);
         }
     }
 }

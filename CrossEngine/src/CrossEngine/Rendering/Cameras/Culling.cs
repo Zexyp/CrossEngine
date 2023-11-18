@@ -142,11 +142,18 @@ namespace CrossEngine.Rendering.Culling
         }
         #endregion
 
+        public static Frustum Create(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
+        {
+            Frustum frustum = new Frustum();
+            frustum.Update(projectionMatrix, viewMatrix);
+            return frustum;
+        }
+
 #if DEBUG // for debug perpouses
         Vector3 centrus;
 #endif
 
-        public unsafe void Prepare(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
+        public unsafe void Update(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
         {
             var result = Matrix4x4.Invert(viewMatrix, out var inv);
             Debug.Assert(result);

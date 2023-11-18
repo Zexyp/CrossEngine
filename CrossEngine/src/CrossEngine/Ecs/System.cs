@@ -15,7 +15,7 @@ namespace CrossEngine.Ecs
 
     abstract class System
     {
-        internal protected World World { get; internal set; }
+        internal protected EcsWorld World { get; internal set; }
 
         public abstract void Attach();
         public abstract void Detach();

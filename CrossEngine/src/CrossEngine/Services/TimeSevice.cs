@@ -9,7 +9,7 @@ using CrossEngine;
 
 namespace CrossEngine.Services
 {
-    public class TimeSevice : UpdatedService
+    public class TimeSevice : Service, IUpdatedService
     {
         Stopwatch sw = new Stopwatch();
 
@@ -23,7 +23,7 @@ namespace CrossEngine.Services
             sw.Stop();
         }
 
-        public override void OnUpdate()
+        public void OnUpdate()
         {
             Time.UnscaledDelta = sw.Elapsed.TotalSeconds;
             Time.UnscaledElapsed += Time.UnscaledDelta;

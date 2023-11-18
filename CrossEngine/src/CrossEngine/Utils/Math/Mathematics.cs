@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 
 using CrossEngine.Logging;
+using System.Runtime.Versioning;
 
 namespace CrossEngine.Utils
 {
@@ -175,6 +176,41 @@ namespace CrossEngine.Utils
             return matrix;
         }
 
+        [Obsolete("opengl specific")]
+        public static Matrix4x4 CreateOrthographic(float width, float height, float zNearPlane, float zFarPlane)
+        {
+            Matrix4x4 result = Matrix4x4.Identity;
+
+            result.M11 = 2.0f / width;
+            result.M22 = 2.0f / height;
+            // this is one of the magical bugs of the classical stndard System.Numerics.Matrix4x4 struct that makes it non-viable for opengl
+            // the fix is 2.0f instead of 1.0f
+            result.M33 = 1.0f / (zNearPlane - zFarPlane);
+            result.M43 = zNearPlane / (zNearPlane - zFarPlane);
+
+            return result;
+        }
+
+        [Obsolete("opengl specific")]
+        public static Matrix4x4 CreateOrthographicOffCenter(float left, float right, float bottom, float top, float zNearPlane, float zFarPlane)
+        {
+            Matrix4x4 result = Matrix4x4.Identity;
+
+            result.M11 = 2.0f / (right - left);
+
+            result.M22 = 2.0f / (top - bottom);
+
+            // same here
+            result.M33 = 2.0f / (zNearPlane - zFarPlane);
+
+            result.M41 = (left + right) / (left - right);
+            result.M42 = (top + bottom) / (bottom - top);
+            result.M43 = zNearPlane / (zNearPlane - zFarPlane);
+
+            return result;
+        }
+
+        /*
         public static Matrix4x4 Ortho(float left, float right, float bottom, float top)
         {
             Matrix4x4 matrix = new Matrix4x4();
@@ -215,6 +251,7 @@ namespace CrossEngine.Utils
             result.M43 = -(2 * zFar * zNear) / (zFar - zNear);
             return result;
         }
+        */
 
         static public Matrix4x4 Invert(Matrix4x4 matrix)
         {

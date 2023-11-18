@@ -14,12 +14,12 @@ using CrossEngine.Events;
 
 namespace CrossEngine.Services
 {
-    public class RenderService : Service
+    public class RenderService : Service, IMessagableService
     {
         public RendererApi RendererApi { get; private set; }
-        public event Action Frame;
-        public event Action BeforeFrame;
-        public event Action AfterFrame;
+        public event Action<RenderService> Frame;
+        public event Action<RenderService> BeforeFrame;
+        public event Action<RenderService> AfterFrame;
         public bool IgnoreRefresh { get; init; } = false;
 
         ConcurrentQueue<Action> _execute = new ConcurrentQueue<Action>();
@@ -36,13 +36,13 @@ namespace CrossEngine.Services
         {
             var ws = Manager.GetService<WindowService>();
             ws.Execute(Setup);
-            ws.WindowUpdate += DrawPresent;
+            ws.WindowUpdate += OnWindowUpdate;
         }
 
         public override void OnDestroy()
         {
             var ws = Manager.GetService<WindowService>();
-            ws.WindowUpdate -= DrawPresent;
+            ws.WindowUpdate -= OnWindowUpdate;
             ws.Execute(Destroy);
         }
 
@@ -77,6 +77,11 @@ namespace CrossEngine.Services
                 DrawPresent();
         }
 
+        private void OnWindowUpdate(WindowService obj)
+        {
+            DrawPresent();
+        }
+
         private void DrawPresent()
         {
             Profiler.BeginScope("Render");
@@ -84,9 +89,9 @@ namespace CrossEngine.Services
             while (_execute.TryDequeue(out var result))
                 result.Invoke();
 
-            BeforeFrame?.Invoke();
-            Frame?.Invoke();
-            AfterFrame?.Invoke();
+            BeforeFrame?.Invoke(this);
+            Frame?.Invoke(this);
+            AfterFrame?.Invoke(this);
 
             Profiler.EndScope();
 

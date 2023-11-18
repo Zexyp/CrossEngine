@@ -40,6 +40,7 @@
     
     <ItemGroup>
         <PackageReference Include="Evergine.Bindings.Imgui" Version="2023.4.4.966" />
+        <PackageReference Include="Evergine.Bindings.Imguizmo" Version="2023.4.4.1231" />
         <PackageReference Include="Silk.NET.OpenGL" Version="2.18.0" />
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.18.0" />
         <PackageReference Include="StbImageSharp" Version="2.27.13" />
@@ -126,6 +127,7 @@
               
                 <WasmExtraFilesToDeploy Include="res/wasm/index.html" />
                 <WasmExtraFilesToDeploy Include="res/wasm/main.js" />
+                <WasmExtraFilesToDeploy Include="res/icon.ico" />
                 <!--<WasmExtraFilesToDeploy Include="$(MSBuildThisFileDirectory)Assets\**" TargetPath="Assets/%(RecursiveDir)%(Filename)%(Extension)" />-->
             </ItemGroup>
         
