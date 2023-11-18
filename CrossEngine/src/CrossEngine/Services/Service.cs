@@ -14,4 +14,14 @@ namespace CrossEngine.Services
         public abstract void OnStart();
         public abstract void OnDestroy();
     }
+
+    public interface IUpdatedService
+    {
+        void OnUpdate();
+    }
+
+    public interface IMessagableService
+    {
+        void Execute(Action action);
+    }
 }

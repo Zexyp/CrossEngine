@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace CrossEngine.Services
 {
-    public class WindowService : Service
+    public class WindowService : Service, IMessagableService
     {
         public enum Mode
         {
@@ -17,7 +17,7 @@ namespace CrossEngine.Services
 
         public Window Window { get; private set; }
         public event OnEventFunction Event;
-        public event Action WindowUpdate;
+        public event Action<WindowService> WindowUpdate;
 
         Thread _windowThread;
         readonly ConcurrentQueue<Action> _execute = new ConcurrentQueue<Action>();
@@ -58,7 +58,7 @@ namespace CrossEngine.Services
         {
             ExecuteQueued();
 
-            WindowUpdate?.Invoke();
+            WindowUpdate?.Invoke(this);
             Window.PollEvents();
         }
 

@@ -40,14 +40,14 @@ namespace CrossEngine.Utils.ImGui
             });
         }
 
-        private void OnBeforeFrame()
+        private void OnBeforeFrame(RenderService rs)
         {
             ImplOpenGL.ImGui_ImplOpenGL3_NewFrame();
             ImplGlfw.ImGui_ImplGlfw_NewFrame();
             igNewFrame();
         }
 
-        private unsafe void OnAfterFrame()
+        private unsafe void OnAfterFrame(RenderService rs)
         {
             igRender();
             ImplOpenGL.ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());

@@ -18,6 +18,8 @@ using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Ecs;
+using CrossEngine.Rendering.Cameras;
+using CrossEngine.Components;
 
 #if WASM
 using CrossEngine.Platform.Wasm;
@@ -56,6 +58,7 @@ namespace CrossEngine
         {
             Scene scene;
             Entity entity;
+            Entity camEnt;
 
             public SusQ()
             {
@@ -79,8 +82,9 @@ namespace CrossEngine
 #if WINDOWS
                 Manager.Register(new ImGuiService());
 #endif
-                Manager.GetService<InputService>().Event += OnEvent;
+                Manager.Register(new SceneService());
 
+                Manager.GetService<InputService>().Event += OnEvent;
 #if WASM
                 Manager.GetService<WindowService>().Event += (e) =>
                 {
@@ -126,29 +130,26 @@ namespace CrossEngine
                     }
                 });
 
-                rs.Frame += () =>
+                Stopwatch sw = Stopwatch.StartNew();
+                rs.Frame += (rs) =>
                 {
                     unsafe
                     {
-                        var rapi = Manager.GetService<RenderService>().RendererApi;
+                        var rapi = rs.RendererApi;
+                        var ws = Manager.GetService<WindowService>();
 
-                        rapi.Clear();
-                        rapi.DrawArray(new WeakReference<VertexArray>(va), 3);
+                        //rapi.Clear();
+                        //rapi.DrawArray(new WeakReference<VertexArray>(va), 3);
 
-                        Renderer2D.BeginScene(System.Numerics.Matrix4x4.Identity);
-                        
-                        Renderer2D.DrawQuad(entity.Transform.WorldTransformMatrix, new Vector4(0, 1, 0, 1));
-                        Renderer2D.DrawQuad(entity.Children[0].Transform.WorldTransformMatrix, new Vector4(0, 1, 0, 1));
+                        Renderer2D.BeginScene(Matrix4x4.Identity);
 
-                        Matrix4x4 textmat = Matrix4x4.CreateScale(new Vector3(32f / Manager.GetService<WindowService>().Window.Width, 32f / Manager.GetService<WindowService>().Window.Height, 1));
-                        TextRendererUtil.DrawText(textmat, "@abc", new Vector4(1, 0, 0, 1));
+                        //TextRendererUtil.DrawText(Matrix4x4.Identity, "@abc", new Vector4(1, 0, 0, 1));
 
                         Renderer2D.EndScene();
 
-                        LineRenderer.BeginScene(System.Numerics.Matrix4x4.Identity);
+                        LineRenderer.BeginScene(Matrix4x4.Identity);
                         LineRenderer.DrawCircle(System.Numerics.Matrix4x4.Identity, System.Numerics.Vector4.UnitX);
                         LineRenderer.EndScene();
-
                         /*
                         byte o = 1;
                         igShowDemoWindow(&o);
@@ -161,14 +162,18 @@ namespace CrossEngine
                 };
 
                 scene = new Scene();
+                camEnt = scene.CreateEntity();
+                var camComp = camEnt.AddComponent(new CameraComponent() { Camera = new Camera() });
+                camComp.Primary = true;
                 entity = scene.CreateEntity();
+                entity.AddComponent(new SpriteRendererComponent());
                 scene.CreateEntity().Parent = entity;
-                scene.Start();
+                entity.Children[0].AddComponent(new SpriteRendererComponent());
+                SceneManager.Load(scene);
             }
 
             public override void OnDestroy()
             {
-                scene.Stop();
                 base.OnDestroy();
             }
 
@@ -178,7 +183,7 @@ namespace CrossEngine
                 //Console.WriteLine("upd");
                 entity.Transform.Position = Vector3.UnitY * MathF.Sin(Time.ElapsedF);
                 entity.Children[0].Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, Time.ElapsedF);
-                scene.Update();
+                Thread.Sleep(1000);
             }
 
             void OnEvent(Event e)

@@ -11,14 +11,14 @@ namespace CrossEngine.Services
     {
         readonly List<Service> _services = new List<Service>();
         readonly Dictionary<Type, Service> _servicesDict = new Dictionary<Type, Service>();
-        readonly List<UpdatedService> _updatableServices = new List<UpdatedService>();
+        readonly List<IUpdatedService> _updatedServices = new List<IUpdatedService>();
 
         public void Register<T>(T service) where T : Service
         {
             _services.Add(service);
             _servicesDict.Add(service.GetType(), service);
-            if (service is UpdatedService)
-                _updatableServices.Add((UpdatedService)(Service)service);
+            if (service is IUpdatedService)
+                _updatedServices.Add((IUpdatedService)service);
 
             service.Manager = this;
         }
@@ -31,8 +31,8 @@ namespace CrossEngine.Services
                 {
                     _services.Remove(service);
                     _servicesDict.Remove(pair.Key);
-                    if (service.GetType() == typeof(UpdatedService))
-                        _updatableServices.Remove((UpdatedService)service);
+                    if (service is IUpdatedService)
+                        _updatedServices.Remove((IUpdatedService)service);
                     service.Manager = null;
                 }
             }
@@ -71,9 +71,9 @@ namespace CrossEngine.Services
 
         public void Update()
         {
-            for (int i = 0; i < _updatableServices.Count; i++)
+            for (int i = 0; i < _updatedServices.Count; i++)
             {
-                _updatableServices[i].OnUpdate();
+                _updatedServices[i].OnUpdate();
             }
         }
     }
