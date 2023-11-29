@@ -21,6 +21,7 @@ namespace CrossEngine.Components
     public class TransformComponent : Component
     {
         // TODO: consider adding rotation mode
+        // TODO: override to global coordinates will be needed when doin fizyks / or just disallow parents of RB children to be RB
 
         // event
         public event Action<TransformComponent> TransformChanged;

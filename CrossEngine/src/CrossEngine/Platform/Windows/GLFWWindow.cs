@@ -9,6 +9,8 @@ using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Platform.OpenGL;
+using CrossEngine.Inputs;
+using System.Numerics;
 
 namespace CrossEngine.Platform.Windows
 {
@@ -115,6 +117,22 @@ namespace CrossEngine.Platform.Windows
         //    Log.Error(((int)code) + " (" + code.ToString() + "): " + Marshal.PtrToStringAnsi(message));
         //}
 
+        public override bool IsKeyPressed(Key key)
+        {
+            return Glfw.GetKey(_nativeHandle, (Keys)key) == InputState.Press;
+        }
+
+        public override bool IsMousePressed(Mouse button)
+        {
+            return Glfw.GetMouseButton(_nativeHandle, (MouseButton)button) == InputState.Press;
+        }
+
+        public override Vector2 GetCursorPosition()
+        {
+            Glfw.GetCursorPosition(_nativeHandle, out double x, out double y);
+            return new Vector2((float)x, (float)y);
+        }
+
         private SizeCallback _windowSizeCallbackHolder;
         private WindowCallback _closeCallbackHolder;
         private KeyCallback _keyCallbackHolder;
@@ -173,7 +191,7 @@ namespace CrossEngine.Platform.Windows
                         break;
                     case InputState.Repeat:
                         {
-                            Event?.Invoke(new KeyPressedEvent((CrossEngine.Inputs.Key)key, 1));
+                            Event?.Invoke(new KeyPressedEvent((CrossEngine.Inputs.Key)key, true));
                         }
                         break;
                 }
@@ -181,7 +199,7 @@ namespace CrossEngine.Platform.Windows
 
             Glfw.SetCharCallback(_nativeHandle, _charCallbackHolder = (IntPtr window, uint codePoint) =>
             {
-                Event?.Invoke(new KeyTypedEvent((CrossEngine.Inputs.Key)codePoint));
+                Event?.Invoke(new KeyCharEvent((char)codePoint));
             });
 
             Glfw.SetMouseButtonCallback(_nativeHandle, _mouseButtonCallbackHolder = (IntPtr window, MouseButton button, InputState state, ModifierKeys modifiers) =>

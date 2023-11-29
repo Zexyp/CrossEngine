@@ -5,6 +5,8 @@ using System.Linq;
 using System.Collections.Generic;
 
 using CrossEngine.Events;
+using CrossEngine.Display;
+using Silk.NET.Input;
 
 namespace CrossEngine.Inputs
 {
@@ -21,6 +23,8 @@ namespace CrossEngine.Inputs
         static Vector2 mousePosition;
         static Vector2 mouseDelta;
         static Vector2 mouseLastPosition;
+
+        static internal Window window;
 
         public static bool Enabled = true;
 
@@ -66,11 +70,11 @@ namespace CrossEngine.Inputs
         static void OnKeyPressed(KeyPressedEvent e)
         {
             keys.Add(e.KeyCode);
-            if (e.RepeatCount == 0) keysDown.Add(e.KeyCode);
+            if (!e.Repeated) keysDown.Add(e.KeyCode);
         }
         static void OnKeyReleased(KeyReleasedEvent e)
         {
-            keys.Add(e.KeyCode);
+            keys.Remove(e.KeyCode);
             keysUp.Add(e.KeyCode);
         }
         static void OnMousePressed(MousePressedEvent e)
@@ -80,7 +84,7 @@ namespace CrossEngine.Inputs
         }
         static void OnMouseReleased(MouseReleasedEvent e)
         {
-            buttons.Add(e.ButtonCode);
+            buttons.Remove(e.ButtonCode);
             buttonsUp.Add(e.ButtonCode);
         }
         static void OnMouseScrolled(MouseScrolledEvent e)
@@ -129,13 +133,14 @@ namespace CrossEngine.Inputs
         #region Is
         public static bool IsKeyPressed(Key key)
         {
-            throw new NotImplementedException();
+
+            return window.IsKeyPressed(key);
             //InputState state = Glfw.GetKey(Application.Instance.Window.Handle, (Keys)key);
             //return state == InputState.Press || state == InputState.Repeat;
         }
         public static bool IsMousePressed(Mouse button)
         {
-            throw new NotImplementedException();
+            return window.IsMousePressed(button);
             //InputState state = Glfw.GetMouseButton(Application.Instance.Window.Handle, (MouseButton)button);
             //return state == InputState.Press;
         }

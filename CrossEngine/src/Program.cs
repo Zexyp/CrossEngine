@@ -1,6 +1,4 @@
 ﻿using System;
-using static Evergine.Bindings.Imgui.ImguiNative;
-using Evergine.Bindings.Imgui;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading;
@@ -20,6 +18,9 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Ecs;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Components;
+using CrossEngine.Systems;
+using CrossEngine.Debugging;
+using CrossEngine.Inputs;
 
 #if WASM
 using CrossEngine.Platform.Wasm;
@@ -27,8 +28,9 @@ using CrossEngine.Platform.Wasm;
 
 #if WINDOWS
 using CrossEngine.Platform.Windows;
-using CrossEngine.Utils.ImGui;
 using CrossEngine.Platform.OpenGL.Debugging;
+using System.Runtime.CompilerServices;
+using ImGuiNET;
 #endif
 
 namespace CrossEngine
@@ -52,6 +54,7 @@ namespace CrossEngine
 #else
             app.Run();
 #endif
+            GPUGC.PrintCollected();
         }
 
         class SusQ : Application
@@ -80,7 +83,7 @@ namespace CrossEngine
                     ));
 #endif                    
 #if WINDOWS
-                Manager.Register(new ImGuiService());
+                Manager.Register(new CrossEngine.Utils.ImGui.ImGuiService());
 #endif
                 Manager.Register(new SceneService());
 
@@ -147,23 +150,62 @@ namespace CrossEngine
 
                         Renderer2D.EndScene();
 
-                        LineRenderer.BeginScene(Matrix4x4.Identity);
+                        LineRenderer.BeginScene(((ICamera)scene.World.GetSystem<RenderSystem>().PrimaryCamera).ViewProjectionMatrix);
                         LineRenderer.DrawCircle(System.Numerics.Matrix4x4.Identity, System.Numerics.Vector4.UnitX);
+                        scene.World.GetSystem<TransformSystem>().DebugRender();
                         LineRenderer.EndScene();
-                        /*
-                        byte o = 1;
-                        igShowDemoWindow(&o);
 
-                        igBegin("sus", &o, ImGuiWindowFlags.None);
-                        igText(Time.DeltaTime.ToString());
-                        igEnd();
-                        */
+#if WINDOWS
+                        ImGui.ShowDemoWindow();
+                        //
+                        //bool o = true;
+                        //ImGui.Begin("sus", ref o, ImGuiWindowFlags.None);
+                        //
+                        //Vector4 vec = new Vector4();
+                        //var style = ImGui.GetStyle();
+                        //ImGui.Columns(4);
+                        //
+                        //ImGui.SliderFloat("##X", ref vec.X, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
+                        //ImGui.SameLine();
+                        //ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
+                        //ImGui.Text("X");
+                        //ImGui.PopStyleColor(1);
+                        //
+                        //ImGui.NextColumn();
+                        //
+                        //ImGui.SliderFloat("##Y", ref vec.Y, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
+                        //ImGui.SameLine();
+                        //ImGui.PushStyleColor(ImGuiCol.Text, 0xff00ff00);
+                        //ImGui.Text("Y");
+                        //ImGui.PopStyleColor(1);
+                        //
+                        //ImGui.NextColumn();
+                        //
+                        //ImGui.SliderFloat("##Z", ref vec.Z, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
+                        //ImGui.SameLine();
+                        //ImGui.PushStyleColor(ImGuiCol.Text, 0xffff0000);
+                        //ImGui.Text("Z");
+                        //ImGui.PopStyleColor(1);
+                        //
+                        //ImGui.NextColumn();
+                        //
+                        //ImGui.SliderFloat("##W", ref vec.W, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
+                        //ImGui.SameLine();
+                        //ImGui.PushStyleColor(ImGuiCol.Text, 0xff00ffff);
+                        //ImGui.Text("W");
+                        //ImGui.PopStyleColor(1);
+                        //
+                        //ImGui.Columns(0, null, false);
+                        //
+                        //ImGui.Text(Time.Delta.ToString());
+                        //ImGui.End();
+#endif
                     }
                 };
 
                 scene = new Scene();
                 camEnt = scene.CreateEntity();
-                var camComp = camEnt.AddComponent(new CameraComponent() { Camera = new Camera() });
+                var camComp = camEnt.AddComponent(new CameraComponent() { ProjectionMatrix = Matrix4x4.CreateScale(.1f) });
                 camComp.Primary = true;
                 entity = scene.CreateEntity();
                 entity.AddComponent(new SpriteRendererComponent());
@@ -181,9 +223,17 @@ namespace CrossEngine
             {
                 base.OnUpdate();
                 //Console.WriteLine("upd");
-                entity.Transform.Position = Vector3.UnitY * MathF.Sin(Time.ElapsedF);
-                entity.Children[0].Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, Time.ElapsedF);
-                Thread.Sleep(1000);
+                entity.Children[0].Transform.Position = Vector3.UnitY * MathF.Sin(Time.ElapsedF * 4) * 5 + Vector3.UnitX * MathF.Cos(Time.ElapsedF * 4) * 5;
+                entity.Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, Time.ElapsedF);
+                Vector3 delta = new Vector3(
+                    (Input.GetKey(Key.D) ? 1 : 0) + (Input.GetKey(Key.A) ? -1 : 0),
+                    (Input.GetKey(Key.W) ? 1 : 0) + (Input.GetKey(Key.S) ? -1 : 0),
+                    0)
+                    *
+                    (Input.GetKey(Key.LeftShift) ? 4 : 2)
+                    *
+                    Time.DeltaF;
+                camEnt.Transform.Position += delta;
             }
 
             void OnEvent(Event e)
@@ -200,6 +250,8 @@ namespace CrossEngine
                     rs.Execute(() => rs.RendererApi.SetViewport(0, 0, wre.Width, wre.Height));
                 }
             }
+
+            
         }
     }
 }

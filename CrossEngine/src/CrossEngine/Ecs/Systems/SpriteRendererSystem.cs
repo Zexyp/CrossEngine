@@ -25,7 +25,7 @@ namespace CrossEngine.Systems
         {
             base.Attach();
 
-            World.GetSystem<RenderSystem>().PrimaryCameraChanged += (rsys) => { _layerRenderData.Camera = rsys.PrimaryCamera?.Camera; };
+            World.GetSystem<RenderSystem>().PrimaryCameraChanged += (rsys) => { _layerRenderData.Camera = rsys.PrimaryCamera; };
         }
 
         public override void Register(SpriteRendererComponent component)

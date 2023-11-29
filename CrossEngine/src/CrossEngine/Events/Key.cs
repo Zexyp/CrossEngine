@@ -1,6 +1,7 @@
 ﻿using System;
 
 using CrossEngine.Inputs;
+using GLFW;
 
 namespace CrossEngine.Events
 {
@@ -16,11 +17,11 @@ namespace CrossEngine.Events
 
     public class KeyPressedEvent : KeyEvent
     {
-        public readonly int RepeatCount;
+        public readonly bool Repeated;
 
-        public KeyPressedEvent(Key keyCode, int repeat = 0) : base(keyCode)
+        public KeyPressedEvent(Key keyCode, bool repeat = false) : base(keyCode)
         {
-            this.RepeatCount = repeat;
+            this.Repeated = repeat;
         }
     }
 
@@ -32,11 +33,13 @@ namespace CrossEngine.Events
         }
     }
 
-    public class KeyTypedEvent : KeyEvent
+    public class KeyCharEvent : KeyEvent
     {
-        public KeyTypedEvent(Key keyCode) : base(keyCode)
+        public readonly char Char;
+        public KeyCharEvent(char ch) : base(Key.Unknown)
         {
-
+            Console.WriteLine($"char {ch}");
+            Char = ch;
         }
     }
 }

@@ -17,5 +17,6 @@
 
         public static float DeltaF => (float)Delta;
         public static float ElapsedF => (float)Elapsed;
+        public static float UnscaledDeltaF => (float)UnscaledDelta;
     }
 }

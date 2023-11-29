@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 using CrossEngine.Events;
+using CrossEngine.Inputs;
 using CrossEngine.Rendering;
 
 namespace CrossEngine.Display
@@ -71,7 +73,11 @@ namespace CrossEngine.Display
         protected abstract void UpdateVSync();
         protected abstract void UpdateFullscreen();
         protected abstract (uint Width, uint Height) GetMonitorSize();
-        
+
+        public virtual bool IsKeyPressed(Key key) => throw new NotImplementedException();
+        public virtual bool IsMousePressed(Mouse button) => throw new NotImplementedException();
+        public virtual Vector2 GetCursorPosition() => throw new NotImplementedException();
+
         public void Resize(uint width, uint height)
         {
             Data.Width = width;

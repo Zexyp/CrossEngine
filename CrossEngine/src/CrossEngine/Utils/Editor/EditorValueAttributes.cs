@@ -171,12 +171,10 @@ namespace CrossEngine.Utils.Editor
     {
         public string? Name = null;
         public virtual EditorAttributeType Kind => EditorAttributeType.Edit;
-        static private int lastOrder = 0;
-        public int Order;
 
         public EditorValueAttribute()
         {
-            Order = ++lastOrder;
+            
         }
 
         public EditorValueAttribute(string? name) : this()

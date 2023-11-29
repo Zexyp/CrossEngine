@@ -1,18 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 using CrossEngine.Ecs;
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Rendering.Culling;
 using CrossEngine.Systems;
 
 namespace CrossEngine.Components
 {
-    internal class CameraComponent : Component
+    internal class CameraComponent : Component, ICamera
     {
-        public ICamera Camera;
+        public Matrix4x4 ViewMatrix { get => Matrix4x4.CreateTranslation(-Entity?.Transform?.Position ?? Vector3.Zero) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Entity?.Transform?.Rotation ?? Quaternion.Identity)); }
+        public Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.Identity;
+        public Frustum Frustum => Frustum.Create(ProjectionMatrix, ViewMatrix);
 
         public bool Primary
         {
