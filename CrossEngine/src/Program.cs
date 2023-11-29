@@ -157,6 +157,8 @@ namespace CrossEngine
 
 #if WINDOWS
                         ImGui.ShowDemoWindow();
+                        ImGui.Begin("sus", ref Unsafe.NullRef<bool>());
+                        ImGui.End();
                         //
                         //bool o = true;
                         //ImGui.Begin("sus", ref o, ImGuiWindowFlags.None);

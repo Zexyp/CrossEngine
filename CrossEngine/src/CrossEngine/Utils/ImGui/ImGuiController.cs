@@ -431,7 +431,7 @@ namespace Silk.NET.OpenGL.Legacy.Extensions.ImGui
             // Render command lists
             for (int n = 0; n < drawDataPtr.CmdListsCount; n++)
             {
-                ImDrawListPtr cmdListPtr = &((ImDrawList*)drawDataPtr.CmdLists)[n];
+                ImDrawListPtr cmdListPtr = drawDataPtr.CmdLists[n];
 
                 // Upload vertex/index buffers
 

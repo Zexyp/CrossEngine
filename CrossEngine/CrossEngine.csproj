@@ -39,9 +39,9 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="Silk.NET.OpenGL" Version="2.18.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.18.0" />
-        <PackageReference Include="Silk.NET.OpenGLES" Version="2.18.0" />
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
+        <PackageReference Include="Silk.NET.OpenGLES" Version="2.19.0" />
         <PackageReference Include="StbImageSharp" Version="2.27.13" />
     </ItemGroup>
 
