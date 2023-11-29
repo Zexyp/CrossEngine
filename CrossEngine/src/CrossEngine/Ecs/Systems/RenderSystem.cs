@@ -11,7 +11,7 @@ namespace CrossEngine.Systems
 {
     internal class RenderSystem : UnicastSystem<CameraComponent>
     {
-        public CameraComponent PrimaryCamera
+        public CameraComponent? PrimaryCamera
         {
             get => _primaryCamera;
             private set
@@ -24,7 +24,7 @@ namespace CrossEngine.Systems
         }
 
         public event Action<RenderSystem> PrimaryCameraChanged;
-        private CameraComponent _primaryCamera = null;
+        private CameraComponent? _primaryCamera = null;
 
         public override void Register(CameraComponent component)
         {

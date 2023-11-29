@@ -26,11 +26,13 @@ namespace CrossEngine.Services
         public void Load(Scene scene)
         {
             _currentScene = scene;
+            _currentScene.Load();
             _currentScene.Start();
         }
 
         public void Unload()
         {
+            _currentScene.Unload();
             _currentScene.Stop();
             _currentScene = null;
         }

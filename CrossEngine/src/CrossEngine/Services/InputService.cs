@@ -17,13 +17,16 @@ namespace CrossEngine.Services
 
         public override void OnStart()
         {
-            Manager.GetService<WindowService>().Event += HandleEvent;
-            
+            var ws = Manager.GetService<WindowService>();
+            ws.Event += HandleEvent;
+            Input.window = ws.Window;
         }
 
         public override void OnDestroy()
         {
-            Manager.GetService<WindowService>().Event -= HandleEvent;
+            var ws = Manager.GetService<WindowService>();
+            Input.window = null;
+            ws.Event -= HandleEvent;
         }
 
         public void OnUpdate()

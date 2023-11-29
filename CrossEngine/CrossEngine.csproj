@@ -39,9 +39,8 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="Evergine.Bindings.Imgui" Version="2023.4.4.966" />
-        <PackageReference Include="Evergine.Bindings.Imguizmo" Version="2023.4.4.1231" />
         <PackageReference Include="Silk.NET.OpenGL" Version="2.18.0" />
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.18.0" />
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.18.0" />
         <PackageReference Include="StbImageSharp" Version="2.27.13" />
     </ItemGroup>
@@ -52,10 +51,6 @@
         <Compile Remove="src\CrossEngine\Platform\**" />
         <EmbeddedResource Remove="src\CrossEngine\Platform\**" />
         <None Remove="src\CrossEngine\Platform\**" />
-
-        <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
-        <EmbeddedResource Remove="src\CrossEngine\Utils\ImGui\**" />
-        <None Remove="src\CrossEngine\Utils\ImGui\**" />
     </ItemGroup>
   
     <Choose>
@@ -69,10 +64,6 @@
                 <Compile Include="src\CrossEngine\Platform\Windows\**" />
                 <EmbeddedResource Include="src\CrossEngine\Platform\Windows\**" />
                 <None Include="src\CrossEngine\Platform\Windows\**" />
-
-                <Compile Include="src\CrossEngine\Utils\ImGui\**" />
-                <EmbeddedResource Include="src\CrossEngine\Utils\ImGui\**" />
-                <None Include="src\CrossEngine\Utils\ImGui\**" />
             </ItemGroup>
 
             <ItemGroup>

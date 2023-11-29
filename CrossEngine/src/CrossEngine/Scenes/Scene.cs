@@ -52,21 +52,29 @@ namespace CrossEngine.Scenes
             return entity;
         }
 
-        public void Start()
+        public void Load()
         {
-            _started = true;
             for (int i = 0; i < _entities.Count; i++)
             {
                 World.AddEntity(_entities[i]);
             }
         }
 
-        public void Stop()
+        public void Unload()
         {
             for (int i = 0; i < _entities.Count; i++)
             {
                 World.RemoveEntity(_entities[i]);
             }
+        }
+
+        public void Start()
+        {
+            _started = true;
+        }
+
+        public void Stop()
+        {
             _started = false;
         }
 
