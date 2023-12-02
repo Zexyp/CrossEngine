@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Events;
 using CrossEngine.Services;
 
 namespace CrossEngine.Services
@@ -12,13 +13,17 @@ namespace CrossEngine.Services
         readonly List<Service> _services = new List<Service>();
         readonly Dictionary<Type, Service> _servicesDict = new Dictionary<Type, Service>();
         readonly List<IUpdatedService> _updatedServices = new List<IUpdatedService>();
+        readonly List<IEventedService> _eventedServices = new List<IEventedService>();
 
         public void Register<T>(T service) where T : Service
         {
             _services.Add(service);
             _servicesDict.Add(service.GetType(), service);
-            if (service is IUpdatedService)
-                _updatedServices.Add((IUpdatedService)service);
+            
+            if (service is IUpdatedService us)
+                _updatedServices.Add(us);
+            if (service is IEventedService es)
+                _eventedServices.Add(es);
 
             service.Manager = this;
         }
@@ -31,8 +36,12 @@ namespace CrossEngine.Services
                 {
                     _services.Remove(service);
                     _servicesDict.Remove(pair.Key);
-                    if (service is IUpdatedService)
-                        _updatedServices.Remove((IUpdatedService)service);
+                    
+                    if (service is IUpdatedService us)
+                        _updatedServices.Remove(us);
+                    if (service is IEventedService es)
+                        _eventedServices.Remove(es);
+
                     service.Manager = null;
                 }
             }
@@ -74,6 +83,14 @@ namespace CrossEngine.Services
             for (int i = 0; i < _updatedServices.Count; i++)
             {
                 _updatedServices[i].OnUpdate();
+            }
+        }
+
+        public void Event(Event e)
+        {
+            for (int i = 0; i < _eventedServices.Count; i++)
+            {
+                _eventedServices[i].OnEvent(e);
             }
         }
     }

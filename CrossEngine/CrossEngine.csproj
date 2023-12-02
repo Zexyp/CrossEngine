@@ -39,6 +39,7 @@
     </PropertyGroup>
     
     <ItemGroup>
+        <PackageReference Include="Pastel" Version="4.2.0" />
         <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
         <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.19.0" />
@@ -53,6 +54,12 @@
         <None Remove="src\CrossEngine\Platform\**" />
     </ItemGroup>
   
+    <ItemGroup>
+        <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
+        <EmbeddedResource Remove="src\CrossEngine\Utils\ImGui\**" />
+        <None Remove="src\CrossEngine\Utils\ImGui\**" />
+    </ItemGroup>
+  
     <Choose>
         <When Condition="'$(Configuration)'=='Debug'">
         
@@ -64,6 +71,10 @@
                 <Compile Include="src\CrossEngine\Platform\Windows\**" />
                 <EmbeddedResource Include="src\CrossEngine\Platform\Windows\**" />
                 <None Include="src\CrossEngine\Platform\Windows\**" />
+              
+                <Compile Include="src\CrossEngine\Utils\ImGui\**" />
+                <EmbeddedResource Include="src\CrossEngine\Utils\ImGui\**" />
+                <None Include="src\CrossEngine\Utils\ImGui\**" />
             </ItemGroup>
 
             <ItemGroup>

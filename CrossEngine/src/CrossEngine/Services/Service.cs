@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Events;
 using CrossEngine.Services;
 
 namespace CrossEngine.Services
@@ -20,8 +21,12 @@ namespace CrossEngine.Services
         void OnUpdate();
     }
 
-    public interface IMessagableService
+    public interface IQueuedService
     {
         void Execute(Action action);
+    }
+
+    public interface IEventedService {
+        void OnEvent(Event e);
     }
 }

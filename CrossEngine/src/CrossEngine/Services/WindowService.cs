@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace CrossEngine.Services
 {
-    public class WindowService : Service, IMessagableService
+    public class WindowService : Service, IQueuedService
     {
         public enum Mode
         {
@@ -93,6 +93,8 @@ namespace CrossEngine.Services
         private void OnEvent(Event e)
         {
             Event?.Invoke(e);
+
+            Manager.Event(e);
         }
 
         private void ExecuteQueued()

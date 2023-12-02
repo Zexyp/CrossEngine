@@ -34,5 +34,7 @@ namespace CrossEngine.Components
         public event Action<CameraComponent> PrimaryChanged;
 
         private bool _primary;
+
+        public virtual void Resize(float width, float height) { }
     }
 }

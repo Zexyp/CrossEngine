@@ -1,4 +1,5 @@
-﻿using CrossEngine.Rendering;
+﻿using CrossEngine.Events;
+using CrossEngine.Rendering;
 using CrossEngine.Scenes;
 using CrossEngine.Systems;
 using System;
@@ -6,7 +7,7 @@ using System.Collections.Generic;
 
 namespace CrossEngine.Services
 {
-    class SceneService : Service, IUpdatedService, IMessagableService
+    class SceneService : Service, IUpdatedService, IQueuedService
     {
         readonly Queue<Action> _actions = new Queue<Action>();
         Scene _currentScene;
@@ -26,6 +27,7 @@ namespace CrossEngine.Services
         public void Load(Scene scene)
         {
             _currentScene = scene;
+            _currentScene.World.GetSystem<RenderSystem>()._window = Manager.GetService<WindowService>().Window;
             _currentScene.Load();
             _currentScene.Start();
         }
@@ -34,6 +36,7 @@ namespace CrossEngine.Services
         {
             _currentScene.Unload();
             _currentScene.Stop();
+            _currentScene.World.GetSystem<RenderSystem>()._window = null;
             _currentScene = null;
         }
 

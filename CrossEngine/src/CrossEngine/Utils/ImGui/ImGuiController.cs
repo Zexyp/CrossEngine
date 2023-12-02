@@ -54,6 +54,8 @@ namespace Silk.NET.OpenGL.Legacy.Extensions.ImGui
     // no communism
     class MyImGuiController : IDisposable
     {
+        // TODO: cursors
+
         private GL _gl;
         private bool _frameBegun;
         private readonly List<char> _pressedChars = new List<char>();
