@@ -34,7 +34,7 @@ namespace CrossEngine.Logging
 
     public static class Log
     {
-        public static readonly Logger Default;
+        public static readonly Logger Default = new Logger("Default");
 
         private static Mutex mutex = new Mutex();
 
@@ -43,16 +43,24 @@ namespace CrossEngine.Logging
         // https://no-color.org/
         public static bool EnableColors = Environment.GetEnvironmentVariable("NO_COLOR") == null;
 
-        static Log()
+        private static bool _initialized = false;
+
+        public static void Init(LogLevel? level = null, bool? enableColors = null)
         {
-            Default = new Logger("Default");
-            Default.Trace("log initialized");
+            GlobalLevel = level ?? GlobalLevel;
+            EnableColors = enableColors ?? EnableColors;
+
             if (!EnableColors)
                 Default.Trace("colors disabled");
+
+            _initialized = true;
         }
 
         public static void Print(LogLevel level, string message, uint? color = null)
         {
+            if (_initialized)
+                Init();
+
             mutex.WaitOne();
 
             if (GlobalLevel <= level)

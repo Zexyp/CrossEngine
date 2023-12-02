@@ -22,27 +22,32 @@ namespace CrossEngine.Systems
                     return;
                 _primaryCamera = value;
 
-                _primaryCamera?.Resize(_window.Width, _window.Height);
+                if (_window != null)
+                    _primaryCamera?.Resize(_window.Width, _window.Height);
                 
                 PrimaryCameraChanged?.Invoke(this);
             }
         }
-
+        public Window Window
+        {
+            get => Window;
+            set
+            {
+                if (_window != null) _window.Event -= Window_OnEvent;
+                _window = value;
+                if (_window != null)
+                {
+                    _primaryCamera?.Resize(_window.Width, _window.Height);
+                    _window.Event += Window_OnEvent;
+                }
+            }
+        }
         public event Action<RenderSystem> PrimaryCameraChanged;
+        
         private CameraComponent? _primaryCamera = null;
         internal Window _window;
 
-        public override void Start()
-        {
-            _window.Event += _window_Event;
-        }
-
-        public override void Stop()
-        {
-            _window.Event -= _window_Event;
-        }
-
-        private void _window_Event(Event e)
+        private void Window_OnEvent(Event e)
         {
             if (e is WindowResizeEvent wre)
                 _primaryCamera?.Resize(wre.Width, wre.Height);

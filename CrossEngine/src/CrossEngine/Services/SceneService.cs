@@ -4,6 +4,7 @@ using CrossEngine.Scenes;
 using CrossEngine.Systems;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace CrossEngine.Services
 {
@@ -14,20 +15,23 @@ namespace CrossEngine.Services
 
         public override void OnStart()
         {
+            Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
             Manager.GetService<RenderService>().Frame += OnRender;
             SceneManager.service = this;
         }
 
         public override void OnDestroy()
         {
+            Debug.Assert(_currentScene == null);
             SceneManager.service = null;
             Manager.GetService<RenderService>().Frame -= OnRender;
+            Manager.GetService<TimeService>().FixedUpdate -= OnFixedUpdate;
         }
 
         public void Load(Scene scene)
         {
             _currentScene = scene;
-            _currentScene.World.GetSystem<RenderSystem>()._window = Manager.GetService<WindowService>().Window;
+            _currentScene.World.GetSystem<RenderSystem>().Window = Manager.GetService<WindowService>().Window;
             _currentScene.Load();
             _currentScene.Start();
         }
@@ -36,7 +40,7 @@ namespace CrossEngine.Services
         {
             _currentScene.Unload();
             _currentScene.Stop();
-            _currentScene.World.GetSystem<RenderSystem>()._window = null;
+            _currentScene.World.GetSystem<RenderSystem>().Window = null;
             _currentScene = null;
         }
 
@@ -44,12 +48,21 @@ namespace CrossEngine.Services
         {
             while (_actions.TryDequeue(out var action))
                 action.Invoke();
-            _currentScene.Update();
+
+            if (_currentScene != null)
+                _currentScene.Update();
+        }
+
+        private void OnFixedUpdate(TimeService obj)
+        {
+            if (_currentScene != null)
+                _currentScene.FixedUpdate();
         }
 
         public void OnRender(RenderService rs)
         {
-            SceneRenderer.DrawScene(_currentScene.RenderData, rs.RendererApi);
+            if (_currentScene != null)
+                SceneRenderer.DrawScene(_currentScene.RenderData, rs.RendererApi);
         }
 
         public void Execute(Action action)

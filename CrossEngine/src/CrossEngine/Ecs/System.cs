@@ -14,6 +14,11 @@ namespace CrossEngine.Ecs
         void Update();
     }
 
+    interface IFixedUpdatedSystem
+    {
+        void FixedUpdate();
+    }
+
     abstract class System
     {
         internal protected EcsWorld World { get; internal set; }
@@ -21,8 +26,8 @@ namespace CrossEngine.Ecs
         public virtual void Attach() { }
         public virtual void Detach() { }
 
-        public virtual void Start() { }
-        public virtual void Stop() { }
+        //public virtual void Start() { }
+        //public virtual void Stop() { }
 
         public abstract void Register(Component component);
         public abstract void Unregister(Component component);
