@@ -21,6 +21,8 @@ using CrossEngine.Components;
 using CrossEngine.Systems;
 using CrossEngine.Debugging;
 using CrossEngine.Inputs;
+using CrossEngine.Ecs.Components;
+using System.Runtime.CompilerServices;
 
 #if WASM
 using CrossEngine.Platform.Wasm;
@@ -29,9 +31,7 @@ using CrossEngine.Platform.Wasm;
 #if WINDOWS
 using CrossEngine.Platform.Windows;
 using CrossEngine.Platform.OpenGL.Debugging;
-using System.Runtime.CompilerServices;
 using ImGuiNET;
-using CrossEngine.Ecs.Components;
 #endif
 
 namespace CrossEngine

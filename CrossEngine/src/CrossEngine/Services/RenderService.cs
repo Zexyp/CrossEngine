@@ -43,20 +43,20 @@ namespace CrossEngine.Services
         public override void OnDestroy()
         {
             var ws = Manager.GetService<WindowService>();
-            ws.WindowUpdate -= OnWindowUpdate;
             ws.Event -= OnEvent;
+            ws.WindowUpdate -= OnWindowUpdate;
             ws.Execute(Destroy);
+        }
+
+        public void Execute(Action action)
+        {
+            _execute.Enqueue(action);
         }
 
         private void OnEvent(Event e)
         {
             if (e is WindowResizeEvent wre)
                 RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
-        }
-
-        public void Execute(Action action)
-        {
-            _execute.Enqueue(action);
         }
 
         private void Setup()
@@ -69,6 +69,7 @@ namespace CrossEngine.Services
             RendererApi = RendererApi.Create(_api);
             RendererApi.Init();
             RendererApi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
+            RendererApi.SetViewport(0, 0, ws.Window.Width, ws.Window.Height);
         }
 
         private void Destroy()
