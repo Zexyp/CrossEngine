@@ -11,16 +11,65 @@ namespace CrossEngine.Ecs.Components
 {
     internal class OrthographicCameraComponent : CameraComponent
     {
-        float Far = 1;
-        float Near = -1;
-        float Scale = 1;
+        public override Matrix4x4 ProjectionMatrix
+        {
+            get
+            {
+                if (_projectionDirty) UpdateProjection();
+                return _projection;
+            }
+            set => throw new InvalidOperationException();
+        }
+        public float Far
+        {
+            get => _far;
+            set
+            {
+                if (_far == value) return;
+                _far = value;
+                _projectionDirty = true;
+            }
+        }
+        public float Near
+        {
+            get => _near;
+            set
+            {
+                if (_near == value) return;
+                _near = value;
+                _projectionDirty = true;
+            }
+        }
+        public float Size
+        {
+            get => _size;
+            set
+            {
+                if (_size == value) return;
+                _size = value;
+                _projectionDirty = true;
+            }
+        }
+
+        private float _far = 1;
+        private float _near = -1;
+        private float _size = 1;
+        private float _aspect = 1;
+        private bool _projectionDirty = true;
+        private Matrix4x4 _projection = Matrix4x4.Identity;
 
         public override void Resize(float width, float height)
         {
-            float aspect = width / height;
+            _aspect = width / height;
+            _projectionDirty = true;
+        }
+
+        private void UpdateProjection()
+        {
             // rip depth
             // TODO: fix
-            ProjectionMatrix = Matrix4x4.CreateOrthographic(aspect * Scale, Scale, 0, Far);
+            _projection = Matrix4x4.CreateOrthographic(_aspect * _size, _size, _near, _far);
+            _projectionDirty = false;
         }
     }
 }

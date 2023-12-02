@@ -13,6 +13,7 @@ namespace CrossEngine.Ecs
     {
         readonly List<System> _systems = new List<System>();
         readonly List<IUpdatedSystem> _updatedSystems = new List<IUpdatedSystem>();
+        readonly List<IFixedUpdatedSystem> _fixedUpdatedSystems = new List<IFixedUpdatedSystem>();
 
         private event Func<Component, System> ComponentRegister;
         private event Func<Component, System> ComponentUnregister;
@@ -25,6 +26,8 @@ namespace CrossEngine.Ecs
             
             if (system is IUpdatedSystem us)
                 _updatedSystems.Add(us);
+            if (system is IFixedUpdatedSystem fus)
+                _fixedUpdatedSystems.Add(fus);
 
             system.World = this;
             system.Attach();
@@ -38,6 +41,8 @@ namespace CrossEngine.Ecs
 
             if (system is IUpdatedSystem us)
                 _updatedSystems.Remove(us);
+            if (system is IFixedUpdatedSystem fus)
+                _fixedUpdatedSystems.Remove(fus);
 
             NotifyRemoveAll(system);
 
@@ -93,21 +98,29 @@ namespace CrossEngine.Ecs
             }
         }
 
-        public void Start()
+        public void FixedUpdate()
         {
-            for (int i = 0; i < _systems.Count; i++)
+            for (int i = 0; i < _fixedUpdatedSystems.Count; i++)
             {
-                _systems[i].Start();
+                _fixedUpdatedSystems[i].FixedUpdate();
             }
         }
 
-        public void Stop()
-        {
-            for (int i = 0; i < _systems.Count; i++)
-            {
-                _systems[i].Stop();
-            }
-        }
+        //public void Start()
+        //{
+        //    for (int i = 0; i < _systems.Count; i++)
+        //    {
+        //        _systems[i].Start();
+        //    }
+        //}
+
+        //public void Stop()
+        //{
+        //    for (int i = 0; i < _systems.Count; i++)
+        //    {
+        //        _systems[i].Stop();
+        //    }
+        //}
 
         public void NotifyOn<T>(System bindTo) where T : Component
         {

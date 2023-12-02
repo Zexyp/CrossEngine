@@ -9,9 +9,11 @@ using CrossEngine;
 
 namespace CrossEngine.Services
 {
-    public class TimeSevice : Service, IUpdatedService
+    public class TimeService : Service, IUpdatedService
     {
         Stopwatch sw = new Stopwatch();
+
+        public event Action<TimeService> FixedUpdate;
 
         public override void OnStart()
         {
@@ -29,6 +31,14 @@ namespace CrossEngine.Services
             Time.UnscaledElapsed += Time.UnscaledDelta;
             Time.Delta = Math.Min(Time.UnscaledDelta * Time.Scale, Time.MaximumDelta);
             Time.Elapsed += Time.Delta;
+
+            while (Time.FixedElapsed < Time.Elapsed)
+            {
+                Time.FixedUnscaledElapsed += Time.FixedUnscaledDelta;
+                Time.FixedDelta = Time.FixedUnscaledDelta * Time.Scale;
+                Time.FixedElapsed += Time.FixedDelta;
+                FixedUpdate?.Invoke(this);
+            }
 
             sw.Reset();
             sw.Start();

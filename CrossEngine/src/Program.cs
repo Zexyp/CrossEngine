@@ -42,12 +42,13 @@ namespace CrossEngine
         {
             Console.WriteLine("Hello World!");
             //System.Runtime.CompilerServices.Unsafe.AsRef<bool>(null);
-            Log.Print(LogLevel.Trace, "logging goes brr");
-            Log.Print(LogLevel.Debug, "logging goes brr");
-            Log.Print(LogLevel.Info,  "logging goes brr");
-            Log.Print(LogLevel.Warn,  "logging goes brr");
-            Log.Print(LogLevel.Error, "logging goes brr");
-            Log.Print(LogLevel.Fatal, "logging goes brr");
+            //Log.Default.Color = 0x25ff82;
+            Log.Default.Trace("logging goes brr");
+            Log.Default.Debug("logging goes brr");
+            Log.Default.Info("logging goes brr");
+            Log.Default.Warn("logging goes brr");
+            Log.Default.Error("logging goes brr");
+            Log.Default.Fatal("logging goes brr");
 
             var app = new SusQ();
 #if WASM
@@ -66,7 +67,7 @@ namespace CrossEngine
 
             public SusQ()
             {
-                Manager.Register(new TimeSevice());
+                Manager.Register(new TimeService());
                 Manager.Register(new InputService());
                 Manager.Register(new WindowService(
 #if WASM
@@ -157,6 +158,7 @@ namespace CrossEngine
                         LineRenderer.EndScene();
 
 #if WINDOWS
+                        GLFW.Glfw.SwapInterval(4);
                         ImGui.ShowDemoWindow();
                         static void DrawVec3Control(string label, ref Vector3 values, float resetValue = 0.0f, float columnWidth = 100.0f)
 	                    {
@@ -223,23 +225,31 @@ namespace CrossEngine
 
 		                    ImGui.PopID();
 	                    }
-                        ImGui.Begin("sus");
-                        var asd = Vector3.Zero;
-                        DrawVec3Control("yeet", ref asd);
-                        ImGui.End();
+                        if (ImGui.Begin("sus"))
+                        {
+                            var asd = Vector3.Zero;
+                            DrawVec3Control("yeet", ref asd);
+                            if (ImGui.Button("go"))
+                                Time.Scale = 1;
+                            if (ImGui.Button("halt"))
+                                Time.Scale = 0;
+                            ImGui.End();
+                        }
 #endif
                     }
                 };
 
                 scene = new Scene();
                 camEnt = scene.CreateEntity();
-                var camComp = camEnt.AddComponent(new OrthographicCameraComponent());
+                var camComp = camEnt.AddComponent(new OrthographicCameraComponent() { Size = 10 });
                 camComp.Primary = true;
                 entity = scene.CreateEntity();
                 entity.AddComponent(new SpriteRendererComponent());
                 scene.CreateEntity().Parent = entity;
                 entity.Children[0].AddComponent(new SpriteRendererComponent());
                 SceneManager.Load(scene);
+                Time.FixedUnscaledDelta = 1;
+                Manager.GetService<TimeService>().FixedUpdate += _ => Console.WriteLine("fixed");
             }
 
             public override void OnDestroy()
@@ -271,6 +281,7 @@ namespace CrossEngine
                 if (e is WindowCloseEvent)
                 {
                     Close();
+                    SceneManager.Unload();
                 }
             }
         }

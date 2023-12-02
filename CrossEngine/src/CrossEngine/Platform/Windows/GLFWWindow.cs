@@ -69,8 +69,6 @@ namespace CrossEngine.Platform.Windows
             // oh funny that was ez
             Glfw.RequestWindowAttention(_nativeHandle);
 
-            Glfw.SwapInterval(2);
-
             Context = new GLContext(_nativeHandle);
             Context.Init();
         }

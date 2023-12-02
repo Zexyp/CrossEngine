@@ -15,5 +15,10 @@ namespace CrossEngine.Scenes
         {
             service.Execute(() => service.Load(scene));
         }
+
+        public static void Unload()
+        {
+            service.Execute(service.Unload);
+        }
     }
 }

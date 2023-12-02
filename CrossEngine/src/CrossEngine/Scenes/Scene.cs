@@ -77,17 +77,25 @@ namespace CrossEngine.Scenes
         public void Start()
         {
             _started = true;
-            World.Start();
+            
+            //World.Start();
         }
 
         public void Stop()
         {
+            //World.Stop();
+
             _started = false;
         }
 
         public void Update()
         {
             World.Update();
+        }
+
+        public void FixedUpdate()
+        {
+            World.FixedUpdate();
         }
     }
 }
