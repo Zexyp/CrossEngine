@@ -104,7 +104,7 @@ namespace CrossEngine.Platform.Wasm
         private void SetupCallbacks()
         {
             Interop.KeyDown += keyDown = (bool shift, bool ctrl, bool alt, bool repeat, string code) => {
-                Event?.Invoke(new KeyPressedEvent(JSInput.TranslateKey(code), repeat ? 1 : 0));
+                Event?.Invoke(new KeyPressedEvent(JSInput.TranslateKey(code), repeat));
             };
             Interop.KeyUp += keyUp = (bool shift, bool ctrl, bool alt, string code) => {
                 Event?.Invoke(new KeyReleasedEvent(JSInput.TranslateKey(code)));

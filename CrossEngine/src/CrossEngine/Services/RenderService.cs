@@ -14,7 +14,7 @@ using CrossEngine.Events;
 
 namespace CrossEngine.Services
 {
-    public class RenderService : Service, IMessagableService
+    public class RenderService : Service, IQueuedService
     {
         public RendererApi RendererApi { get; private set; }
         public event Action<RenderService> Frame;
@@ -37,13 +37,21 @@ namespace CrossEngine.Services
             var ws = Manager.GetService<WindowService>();
             ws.Execute(Setup);
             ws.WindowUpdate += OnWindowUpdate;
+            ws.Event += OnEvent;
         }
 
         public override void OnDestroy()
         {
             var ws = Manager.GetService<WindowService>();
             ws.WindowUpdate -= OnWindowUpdate;
+            ws.Event -= OnEvent;
             ws.Execute(Destroy);
+        }
+
+        private void OnEvent(Event e)
+        {
+            if (e is WindowResizeEvent wre)
+                RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
         }
 
         public void Execute(Action action)

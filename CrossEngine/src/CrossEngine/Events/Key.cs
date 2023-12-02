@@ -1,7 +1,6 @@
 ﻿using System;
 
 using CrossEngine.Inputs;
-using GLFW;
 
 namespace CrossEngine.Events
 {
@@ -38,7 +37,6 @@ namespace CrossEngine.Events
         public readonly char Char;
         public KeyCharEvent(char ch) : base(Key.Unknown)
         {
-            Console.WriteLine($"char {ch}");
             Char = ch;
         }
     }

@@ -31,6 +31,7 @@ using CrossEngine.Platform.Windows;
 using CrossEngine.Platform.OpenGL.Debugging;
 using System.Runtime.CompilerServices;
 using ImGuiNET;
+using CrossEngine.Ecs.Components;
 #endif
 
 namespace CrossEngine
@@ -157,57 +158,82 @@ namespace CrossEngine
 
 #if WINDOWS
                         ImGui.ShowDemoWindow();
-                        ImGui.Begin("sus", ref Unsafe.NullRef<bool>());
+                        static void DrawVec3Control(string label, ref Vector3 values, float resetValue = 0.0f, float columnWidth = 100.0f)
+	                    {
+		                    ImGuiIOPtr io = ImGui.GetIO();
+                            var font = ImGui.GetFont();
+                            var style = ImGui.GetStyle();
+                            var boldFont = io.Fonts.Fonts[0];
+
+		                    ImGui.PushID(label);
+
+		                    ImGui.Columns(4, label, false);
+		                    ImGui.Text(label);
+		                    
+                            ImGui.NextColumn();
+
+		                    float lineHeight = font.FontSize + style.FramePadding.Y * 2.0f;
+		                    Vector2 buttonSize = new Vector2(lineHeight + 3.0f, lineHeight);
+
+		                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.1f, 0.15f, 1.0f));
+		                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.9f, 0.2f, 0.2f, 1.0f));
+		                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(0.8f, 0.1f, 0.15f, 1.0f));
+		                    ImGui.PushFont(boldFont);
+		                    if (ImGui.Button("X", buttonSize))
+			                    values.X = resetValue;
+		                    ImGui.PopFont();
+		                    ImGui.PopStyleColor(3);
+
+		                    ImGui.SameLine();
+		                    ImGui.DragFloat("##X", ref values.X, 0.1f, 0.0f, 0.0f, "%.2f");
+		                    ImGui.SameLine();
+                            
+                            ImGui.NextColumn();
+
+                            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.7f, 0.2f, 1.0f));
+		                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.3f, 0.8f, 0.3f, 1.0f));
+		                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(0.2f, 0.7f, 0.2f, 1.0f));
+		                    ImGui.PushFont(boldFont);
+		                    if (ImGui.Button("Y", buttonSize))
+			                    values.Y = resetValue;
+		                    ImGui.PopFont();
+		                    ImGui.PopStyleColor(3);
+
+                            ImGui.SameLine();
+		                    ImGui.DragFloat("##Y", ref values.Y, 0.1f, 0.0f, 0.0f, "%.2f");
+		                    ImGui.SameLine();
+                            
+                            ImGui.NextColumn();
+
+		                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.1f, 0.25f, 0.8f, 1.0f));
+		                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.2f, 0.35f, 0.9f, 1.0f));
+		                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(0.1f, 0.25f, 0.8f, 1.0f));
+		                    ImGui.PushFont(boldFont);
+		                    if (ImGui.Button("Z", buttonSize))
+			                    values.Z = resetValue;
+		                    ImGui.PopFont();
+		                    ImGui.PopStyleColor(3);
+
+		                    ImGui.SameLine();
+		                    ImGui.DragFloat("##Z", ref values.Z, 0.1f, 0.0f, 0.0f, "%.2f");
+
+		                    ImGui.PopStyleVar();
+
+		                    ImGui.Columns(1);
+
+		                    ImGui.PopID();
+	                    }
+                        ImGui.Begin("sus");
+                        var asd = Vector3.Zero;
+                        DrawVec3Control("yeet", ref asd);
                         ImGui.End();
-                        //
-                        //bool o = true;
-                        //ImGui.Begin("sus", ref o, ImGuiWindowFlags.None);
-                        //
-                        //Vector4 vec = new Vector4();
-                        //var style = ImGui.GetStyle();
-                        //ImGui.Columns(4);
-                        //
-                        //ImGui.SliderFloat("##X", ref vec.X, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
-                        //ImGui.SameLine();
-                        //ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
-                        //ImGui.Text("X");
-                        //ImGui.PopStyleColor(1);
-                        //
-                        //ImGui.NextColumn();
-                        //
-                        //ImGui.SliderFloat("##Y", ref vec.Y, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
-                        //ImGui.SameLine();
-                        //ImGui.PushStyleColor(ImGuiCol.Text, 0xff00ff00);
-                        //ImGui.Text("Y");
-                        //ImGui.PopStyleColor(1);
-                        //
-                        //ImGui.NextColumn();
-                        //
-                        //ImGui.SliderFloat("##Z", ref vec.Z, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
-                        //ImGui.SameLine();
-                        //ImGui.PushStyleColor(ImGuiCol.Text, 0xffff0000);
-                        //ImGui.Text("Z");
-                        //ImGui.PopStyleColor(1);
-                        //
-                        //ImGui.NextColumn();
-                        //
-                        //ImGui.SliderFloat("##W", ref vec.W, -10.0f, 10.0f, null, ImGuiSliderFlags.None);
-                        //ImGui.SameLine();
-                        //ImGui.PushStyleColor(ImGuiCol.Text, 0xff00ffff);
-                        //ImGui.Text("W");
-                        //ImGui.PopStyleColor(1);
-                        //
-                        //ImGui.Columns(0, null, false);
-                        //
-                        //ImGui.Text(Time.Delta.ToString());
-                        //ImGui.End();
 #endif
                     }
                 };
 
                 scene = new Scene();
                 camEnt = scene.CreateEntity();
-                var camComp = camEnt.AddComponent(new CameraComponent() { ProjectionMatrix = Matrix4x4.CreateScale(.1f) });
+                var camComp = camEnt.AddComponent(new OrthographicCameraComponent());
                 camComp.Primary = true;
                 entity = scene.CreateEntity();
                 entity.AddComponent(new SpriteRendererComponent());
@@ -246,14 +272,7 @@ namespace CrossEngine
                 {
                     Close();
                 }
-                if (e is WindowResizeEvent wre)
-                {
-                    var rs = Manager.GetService<RenderService>();
-                    rs.Execute(() => rs.RendererApi.SetViewport(0, 0, wre.Width, wre.Height));
-                }
             }
-
-            
         }
     }
 }

@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 using CrossEngine.Components;
+using CrossEngine.Display;
 using CrossEngine.Ecs;
+using CrossEngine.Events;
 
 namespace CrossEngine.Systems
 {
@@ -19,12 +21,32 @@ namespace CrossEngine.Systems
                 if (_primaryCamera == value)
                     return;
                 _primaryCamera = value;
+
+                _primaryCamera?.Resize(_window.Width, _window.Height);
+                
                 PrimaryCameraChanged?.Invoke(this);
             }
         }
 
         public event Action<RenderSystem> PrimaryCameraChanged;
         private CameraComponent? _primaryCamera = null;
+        internal Window _window;
+
+        public override void Start()
+        {
+            _window.Event += _window_Event;
+        }
+
+        public override void Stop()
+        {
+            _window.Event -= _window_Event;
+        }
+
+        private void _window_Event(Event e)
+        {
+            if (e is WindowResizeEvent wre)
+                _primaryCamera?.Resize(wre.Width, wre.Height);
+        }
 
         public override void Register(CameraComponent component)
         {
@@ -34,12 +56,12 @@ namespace CrossEngine.Systems
                 PrimaryCamera = component;
             }
 
-            component.PrimaryChanged += OnPrimaryChanged;
+            component.PrimaryChanged += Camera_OnPrimaryChanged;
         }
 
         public override void Unregister(CameraComponent component)
         {
-            component.PrimaryChanged -= OnPrimaryChanged;
+            component.PrimaryChanged -= Camera_OnPrimaryChanged;
 
             if (component == PrimaryCamera)
             {
@@ -48,7 +70,7 @@ namespace CrossEngine.Systems
             }
         }
 
-        private void OnPrimaryChanged(CameraComponent component)
+        private void Camera_OnPrimaryChanged(CameraComponent component)
         {
             Deprioritize(PrimaryCamera);
 
@@ -62,9 +84,9 @@ namespace CrossEngine.Systems
         {
             if (component == null)
                 return;
-            component.PrimaryChanged -= OnPrimaryChanged;
+            component.PrimaryChanged -= Camera_OnPrimaryChanged;
             component.Primary = false;
-            component.PrimaryChanged += OnPrimaryChanged;
+            component.PrimaryChanged += Camera_OnPrimaryChanged;
         }
     }
 }

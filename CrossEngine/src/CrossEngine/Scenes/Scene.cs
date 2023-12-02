@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Rendering;
+using CrossEngine.Events;
 
 namespace CrossEngine.Scenes
 {
@@ -17,15 +18,20 @@ namespace CrossEngine.Scenes
         readonly List<Entity> _entities = new List<Entity>();
         bool _started = false;
         public readonly SceneRenderData RenderData = new SceneRenderData();
+        public readonly SceneLayerRenderData _sceneLayer = new SceneLayerRenderData();
 
         public Scene()
         {
-            World.RegisterSystem(new TransformSystem());
 
-            World.RegisterSystem(new RenderSystem());
-            var layer = new SceneLayerRenderData();
-            RenderData.Layers.Add(layer);
-            World.RegisterSystem(new SpriteRendererSystem(layer));
+            _sceneLayer = new SceneLayerRenderData();
+            RenderData.Layers.Add(_sceneLayer);
+            
+            var rs = new RenderSystem();
+            rs.PrimaryCameraChanged += (rsys) => { _sceneLayer.Camera = rsys.PrimaryCamera; };
+            
+            World.RegisterSystem(new TransformSystem());
+            World.RegisterSystem(rs);
+            World.RegisterSystem(new SpriteRendererSystem(_sceneLayer));
         }
 
         public void AddEntity(Entity entity)
@@ -71,6 +77,7 @@ namespace CrossEngine.Scenes
         public void Start()
         {
             _started = true;
+            World.Start();
         }
 
         public void Stop()

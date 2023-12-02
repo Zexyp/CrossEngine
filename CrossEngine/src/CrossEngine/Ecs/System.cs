@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CrossEngine.Events;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -17,8 +18,11 @@ namespace CrossEngine.Ecs
     {
         internal protected EcsWorld World { get; internal set; }
 
-        public abstract void Attach();
-        public abstract void Detach();
+        public virtual void Attach() { }
+        public virtual void Detach() { }
+
+        public virtual void Start() { }
+        public virtual void Stop() { }
 
         public abstract void Register(Component component);
         public abstract void Unregister(Component component);
@@ -29,11 +33,6 @@ namespace CrossEngine.Ecs
         public override void Attach()
         {
             World.NotifyOn<T>(this);
-        }
-
-        public override void Detach()
-        {
-            
         }
 
         public override void Register(Component component) => Register((T)component);
@@ -59,11 +58,6 @@ namespace CrossEngine.Ecs
             {
                 World.NotifyOn(types[i], this);
             }
-        }
-
-        public override void Detach()
-        {
-
         }
     }
 }

@@ -12,20 +12,11 @@ namespace CrossEngine.Systems
 {
     internal class SpriteRendererSystem : UnicastSystem<SpriteRendererComponent>
     {
-        readonly SceneLayerRenderData _layerRenderData = new SceneLayerRenderData();
         readonly List<ISpriteRenderData> _sprites = new List<ISpriteRenderData>();
 
         public SpriteRendererSystem(SceneLayerRenderData layerRenderData)
         {
-            _layerRenderData = layerRenderData;
-            _layerRenderData.Data.Add((new SpriteRenderable(), _sprites));
-        }
-
-        public override void Attach()
-        {
-            base.Attach();
-
-            World.GetSystem<RenderSystem>().PrimaryCameraChanged += (rsys) => { _layerRenderData.Camera = rsys.PrimaryCamera; };
+            layerRenderData.Data.Add((new SpriteRenderable(), _sprites));
         }
 
         public override void Register(SpriteRendererComponent component)

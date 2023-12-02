@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using CrossEngine.Events;
+using ImGuiNET;
 
 namespace CrossEngine.Ecs
 {
@@ -20,8 +22,10 @@ namespace CrossEngine.Ecs
             Debug.Assert(!_systems.Contains(system));
 
             _systems.Add(system);
-            if (system is IUpdatedSystem updatedSystem)
-                _updatedSystems.Add(updatedSystem);
+            
+            if (system is IUpdatedSystem us)
+                _updatedSystems.Add(us);
+
             system.World = this;
             system.Attach();
         }
@@ -31,8 +35,10 @@ namespace CrossEngine.Ecs
             Debug.Assert(_systems.Contains(system));
 
             _systems.Remove(system);
-            if (system is IUpdatedSystem updatedSystem)
-                _updatedSystems.Remove(updatedSystem);
+
+            if (system is IUpdatedSystem us)
+                _updatedSystems.Remove(us);
+
             NotifyRemoveAll(system);
 
             system.Detach();
@@ -84,6 +90,22 @@ namespace CrossEngine.Ecs
             for (int i = 0; i < _updatedSystems.Count; i++)
             {
                 _updatedSystems[i].Update();
+            }
+        }
+
+        public void Start()
+        {
+            for (int i = 0; i < _systems.Count; i++)
+            {
+                _systems[i].Start();
+            }
+        }
+
+        public void Stop()
+        {
+            for (int i = 0; i < _systems.Count; i++)
+            {
+                _systems[i].Stop();
             }
         }
 
