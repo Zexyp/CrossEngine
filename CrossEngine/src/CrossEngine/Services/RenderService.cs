@@ -11,6 +11,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Profiling;
 using CrossEngine.Services;
 using CrossEngine.Events;
+using CrossEngine.Utils;
 
 namespace CrossEngine.Services
 {
@@ -32,19 +33,15 @@ namespace CrossEngine.Services
             _api = api;
         }
 
-        public override void OnStart()
+        public override void OnAttach()
         {
             var ws = Manager.GetService<WindowService>();
             ws.Execute(Setup);
-            ws.WindowUpdate += OnWindowUpdate;
-            ws.Event += OnEvent;
         }
 
-        public override void OnDestroy()
+        public override void OnDetach()
         {
             var ws = Manager.GetService<WindowService>();
-            ws.Event -= OnEvent;
-            ws.WindowUpdate -= OnWindowUpdate;
             ws.Execute(Destroy);
         }
 
@@ -53,37 +50,44 @@ namespace CrossEngine.Services
             _execute.Enqueue(action);
         }
 
-        private void OnEvent(Event e)
-        {
-            if (e is WindowResizeEvent wre)
-                RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
-        }
-
         private void Setup()
         {
             var ws = Manager.GetService<WindowService>();
-            if (!IgnoreRefresh)
-                ws.Event += OnWindowEvent;
+            ws.WindowEvent += OnWindowEvent;
+            ws.WindowUpdate += OnWindowUpdate;
             Context = ws.Window.Context;
 
             RendererApi = RendererApi.Create(_api);
             RendererApi.Init();
             RendererApi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
             RendererApi.SetViewport(0, 0, ws.Window.Width, ws.Window.Height);
+
+            Prepare();
         }
 
         private void Destroy()
         {
+            Shutdown();
+
+            var ws = Manager.GetService<WindowService>();
+            ws.WindowEvent -= OnWindowEvent;
+            ws.WindowUpdate -= OnWindowUpdate;
+
             RendererApi.Dispose();
+            RendererApi = null;
+            Context.Dispose();
+            Context = null;
         }
 
-        // this is supposed to fix state when resizing window
-        // it's unfortunate that when just holding the window nothing happens
-        // also used when window tells it's own redrawing
-        private void OnWindowEvent(Event e)
+        private void OnWindowEvent(WindowService ws, Event e)
         {
-            if (e is WindowRefreshEvent)
+            // this is supposed to fix state when resizing window
+            // it's unfortunate that when just holding the window nothing happens
+            // also used when window dictates it's own redrawing
+            if (!IgnoreRefresh && (e is WindowRefreshEvent))
                 DrawPresent();
+            if (e is WindowResizeEvent wre)
+                RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
         }
 
         private void OnWindowUpdate(WindowService obj)
@@ -109,6 +113,30 @@ namespace CrossEngine.Services
             Context.SwapBuffers();
 
             Profiler.EndScope();
+        }
+
+        private void Prepare()
+        {
+            Renderer2D.Init(RendererApi);
+            LineRenderer.Init(RendererApi);
+            TextRendererUtil.Init();
+        }
+
+        private void Shutdown()
+        {
+            Renderer2D.Shutdown();
+            LineRenderer.Shutdown();
+            TextRendererUtil.Shutdown();
+        }
+
+        public override void OnStart()
+        {
+            
+        }
+
+        public override void OnDestroy()
+        {
+            
         }
     }
 }

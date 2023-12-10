@@ -10,6 +10,8 @@ namespace CrossEngine.Services
 {
     public class ServiceManager
     {
+        public event Action<ServiceManager> ServicesDestroyed;
+
         readonly List<Service> _services = new List<Service>();
         readonly Dictionary<Type, Service> _servicesDict = new Dictionary<Type, Service>();
         readonly List<IUpdatedService> _updatedServices = new List<IUpdatedService>();
@@ -70,11 +72,28 @@ namespace CrossEngine.Services
             }
         }
 
+        public void AttachServices()
+        {
+            for (int i = 0; i < _services.Count; i++)
+            {
+                _services[i].OnAttach();
+            }
+        }
+
         public void ShutdownServices()
         {
             for (int i = _services.Count - 1; i >= 0; i--)
             {
                 _services[i].OnDestroy();
+            }
+            ServicesDestroyed?.Invoke(this);
+        }
+
+        public void DetachServices()
+        {
+            for (int i = _services.Count - 1; i >= 0; i--)
+            {
+                _services[i].OnDetach();
             }
         }
 

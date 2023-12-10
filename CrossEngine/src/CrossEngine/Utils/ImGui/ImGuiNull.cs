@@ -8,7 +8,7 @@ using ImGuiNET;
 
 namespace CrossEngine.Utils.ImGui
 {
-    static class ImGuiNull
+    public static class ImGuiNull
     {
         public unsafe static bool Begin(string name, ref bool? open, ImGuiWindowFlags flags)
         {

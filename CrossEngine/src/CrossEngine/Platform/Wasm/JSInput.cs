@@ -148,20 +148,20 @@ namespace CrossEngine.Platform.Wasm
             }
         }
 
-        public static Mouse TranslateMouse(int button)
+        public static Button TranslateMouse(int button)
         {
             switch (button)
             {
-                case 0: return Mouse.Left;
-                case 1: return Mouse.Middle;
-                case 2: return Mouse.Right;
-                case 3: return Mouse.Back;
-                case 4: return Mouse.Forward;
+                case 0: return Button.Left;
+                case 1: return Button.Middle;
+                case 2: return Button.Right;
+                case 3: return Button.Back;
+                case 4: return Button.Forward;
                 default:
                     {
                         Logging.Log.Default.Warn($"Unknown mouse button '{button}'");
                         Debug.Assert(false, $"Unknown mouse button '{button}'");
-                        return Mouse.Unknown;
+                        return Button.Unknown;
                     }
             }
         }

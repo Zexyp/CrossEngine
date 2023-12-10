@@ -1,4 +1,6 @@
-﻿#define PASTEL
+﻿#if WINDOWS
+#define PASTEL
+#endif
 
 using System;
 
@@ -47,9 +49,12 @@ namespace CrossEngine.Logging
 
         public static void Init(LogLevel? level = null, bool? enableColors = null)
         {
+            Debug.Assert(!_initialized);
+
             GlobalLevel = level ?? GlobalLevel;
             EnableColors = enableColors ?? EnableColors;
 
+            Default.Trace("init log");
             if (!EnableColors)
                 Default.Trace("colors disabled");
 
@@ -136,20 +141,25 @@ namespace CrossEngine.Logging
                 {
                     case LogLevel.Trace:
                     case LogLevel.Debug:
-                        Interop.Console.Debug(message, style);
+                        if (style == null) Interop.Console.Debug(message);
+                        else Interop.Console.Debug(message, style);
                         break;
                     case LogLevel.Info:
-                        Interop.Console.Info(message, style);
+                        if (style == null) Interop.Console.Info(message);
+                        else Interop.Console.Info(message, style);
                         break;
                     case LogLevel.Warn:
-                        Interop.Console.Warn(message, style);
+                        if (style == null) Interop.Console.Warn(message);
+                        else Interop.Console.Warn(message, style);
                         break;
                     case LogLevel.Error:
                     case LogLevel.Fatal:
-                        Interop.Console.Error(message, style);
+                        if (style == null) Interop.Console.Error(message);
+                        else Interop.Console.Error(message, style);
                         break;
                     default:
-                        Interop.Console.Log(message, style);
+                        if (style == null) Interop.Console.Log(message);
+                        else Interop.Console.Log(message, style);
                         break;
                 }
 

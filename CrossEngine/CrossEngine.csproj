@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net7.0</TargetFramework>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Configurations>Debug;Profiling;Wasm</Configurations>
@@ -24,12 +23,12 @@
     </ItemGroup>
     
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-        <DefineConstants>WINDOWS</DefineConstants>
+        <DefineConstants>DEBUG;WINDOWS</DefineConstants>
         <Optimize>False</Optimize>
     </PropertyGroup>
     
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|AnyCPU'">
-        <DefineConstants>DEBUG;WINDOWS</DefineConstants>
+        <DefineConstants>DEBUG;WINDOWS;PROFILING</DefineConstants>
         <Optimize>False</Optimize>
     </PropertyGroup>
 
@@ -39,10 +38,6 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="Pastel" Version="4.2.0" />
-        <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
-        <PackageReference Include="Silk.NET.OpenGLES" Version="2.19.0" />
         <PackageReference Include="StbImageSharp" Version="2.27.13" />
     </ItemGroup>
 
@@ -61,7 +56,7 @@
     </ItemGroup>
   
     <Choose>
-        <When Condition="'$(Configuration)'=='Debug'">
+        <When Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Profiling'">
         
             <ItemGroup>
                 <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
@@ -76,12 +71,17 @@
                 <EmbeddedResource Include="src\CrossEngine\Utils\ImGui\**" />
                 <None Include="src\CrossEngine\Utils\ImGui\**" />
             </ItemGroup>
-
+          
             <ItemGroup>
-                <Reference Include="GLFW.NET">
-                    <HintPath>libs\GLFW.NET.dll</HintPath>
-                </Reference>
+                <PackageReference Include="Pastel" Version="4.2.0" />
+                <PackageReference Include="glfw-net" Version="3.3.1" />
+                <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
+                <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
             </ItemGroup>
+          
+            <PropertyGroup>
+                <OutputType>Library</OutputType>
+            </PropertyGroup>
 
             <ItemGroup>
                 <ContentWithTargetPath Include="deps\glfw\win64\glfw3.dll">
@@ -103,8 +103,14 @@
                 <EmbeddedResource Include="src\CrossEngine\Platform\Wasm\**" />
                 <None Include="src\CrossEngine\Platform\Wasm\**" />
             </ItemGroup>
+          
+            <ItemGroup>
+                <PackageReference Include="Silk.NET.OpenGLES" Version="2.19.0" />
+            </ItemGroup>
             
             <PropertyGroup>
+                <OutputType>Exe</OutputType>
+              
                 <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
               
                 <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
@@ -113,7 +119,7 @@
               
                 <EmccFlags>-s FULL_ES3=1 -lopenal -lGL -s</EmccFlags>
                 
-                <PublishTrimmed>true</PublishTrimmed>
+                <!--<PublishTrimmed>true</PublishTrimmed>-->
                 <WasmBuildNative>true</WasmBuildNative>
                 <RunAOTCompilation>true</RunAOTCompilation>
                 <!-- Disable SIMD support as it's prerelease only on Safari -->

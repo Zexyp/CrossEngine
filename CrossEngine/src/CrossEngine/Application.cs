@@ -41,10 +41,14 @@ namespace CrossEngine
         public virtual void OnInit()
         {
             Manager.InitServices();
+
+            Manager.AttachServices();
         }
 
         public virtual void OnDestroy()
         {
+            Manager.DetachServices();
+
             Manager.ShutdownServices();
         }
 

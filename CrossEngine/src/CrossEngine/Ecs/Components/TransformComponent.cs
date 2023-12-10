@@ -7,6 +7,7 @@ using System.Diagnostics;
 using CrossEngine.Utils;
 using CrossEngine.Ecs;
 using CrossEngine.Utils.Editor;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
@@ -393,7 +394,7 @@ namespace CrossEngine.Components
         }
         #endregion
 
-        protected internal override void Attach()
+        protected internal override void OnAttach()
         {
             // basically insert yourself
             this.Parent = GetTopTransformComponent(Entity);
@@ -407,7 +408,7 @@ namespace CrossEngine.Components
             Entity.ParentChanged += Entity_ParentChanged;
         }
 
-        protected internal override void Detach()
+        protected internal override void OnDetach()
         {
             Entity.ParentChanged -= Entity_ParentChanged;
 
@@ -471,26 +472,18 @@ namespace CrossEngine.Components
             return trans;
         }
 
-        //public override void OnRender(RenderEvent re)
-        //{
-        //    if (re is EditorDrawRenderEvent)
-        //    {
-        //        LineRenderer.DrawAxes(WorldTransformMatrix);
-        //    }
-        //}
-
-        //protected internal override void Serialize(SerializationInfo info)
-        //{
-        //    info.AddValue(nameof(Position), Position);
-        //    info.AddValue(nameof(Rotation), Rotation);
-        //    info.AddValue(nameof(Scale), Scale);
-        //}
-        //
-        //protected internal override void Deserialize(SerializationInfo info)
-        //{
-        //    Position = info.GetValue(nameof(Position), Vector3.Zero);
-        //    Rotation = info.GetValue(nameof(Rotation), Quaternion.Identity);
-        //    Scale = info.GetValue(nameof(Scale), Vector3.One);
-        //}
+        protected internal override void OnSerialize(SerializationInfo info)
+        {
+            info.AddValue(nameof(Position), Position);
+            info.AddValue(nameof(Rotation), Rotation);
+            info.AddValue(nameof(Scale), Scale);
+        }
+        
+        protected internal override void OnDeserialize(SerializationInfo info)
+        {
+            Position = info.GetValue(nameof(Position), Vector3.Zero);
+            Rotation = info.GetValue(nameof(Rotation), Quaternion.Identity);
+            Scale = info.GetValue(nameof(Scale), Vector3.One);
+        }
     }
 }

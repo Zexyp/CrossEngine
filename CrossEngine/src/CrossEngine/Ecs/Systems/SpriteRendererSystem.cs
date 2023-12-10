@@ -24,6 +24,9 @@ namespace CrossEngine.Systems
             if (component.Enabled)
                 _sprites.Add(component);
             component.EnabledChanged += OnComponentEnabledChanged;
+
+            // sort based on blending so the we don't die of draw calls
+            _sprites.Sort((a, b) => a.Blend.CompareTo(b.Blend));
         }
 
         public override void Unregister(SpriteRendererComponent component)

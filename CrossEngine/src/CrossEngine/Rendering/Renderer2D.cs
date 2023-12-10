@@ -24,6 +24,13 @@ namespace CrossEngine.Rendering
 		}
 	}
 
+	public enum BlendMode
+	{
+		Opaque = default,
+		Blend,
+		Clip,
+	}
+
 	public class Renderer2D
 	{
 		#region Shader Sources
@@ -164,13 +171,16 @@ namespace CrossEngine.Rendering
 
 			public const uint MaxTextureSlots = 8; // 8 is minimum, desktop will take 32 np however my tincy lil sh*t chromium only 16
 
-			public WeakReference<ShaderProgram> currentShader;
 			public WeakReference<ShaderProgram> discardingShader;
 			public WeakReference<ShaderProgram> regularShader;
 			public WeakReference<Texture> whiteTexture;
 
 			public PrimitivesData quads;
 			public PrimitivesData tris;
+
+			public Matrix4x4 viewProjectionMatrix;
+
+            public BlendMode blending;
 
 			public struct PrimitivesData
 			{
@@ -249,8 +259,6 @@ namespace CrossEngine.Rendering
 			shader = data.discardingShader.GetValue();
 			shader.Use();
 			shader.SetParameter1("uTextures", samplers);
-
-			data.currentShader = data.regularShader;
 
 			//data.cameraUniformBuffer = new UniformBuffer(null, sizeof(Renderer2DData.CameraData), BufferUsage.DynamicDraw);
 			//data.cameraUniformBuffer.BindTo(0);
@@ -331,9 +339,7 @@ namespace CrossEngine.Rendering
 
 		public static void BeginScene(Matrix4x4 viewProjectionMatrix)
 		{
-			var shader = data.currentShader.GetValue();
-			shader.Use();
-			shader.SetParameterMat4("uViewProjection", viewProjectionMatrix);
+			data.viewProjectionMatrix = viewProjectionMatrix;
 
 			StartQuadsBatch();
 			StartTrisBatch();
@@ -375,10 +381,9 @@ namespace CrossEngine.Rendering
 				if (data.quads.TextureSlots[i]?.GetValue() != null) data.quads.TextureSlots[i].GetValue().Bind(i);
 			}
 
-			data.currentShader.GetValue().Use();
-			_rapi.DrawIndexed(data.quads.VertexArray, data.quads.IndexCount/*, DrawMode.Traingles*/);
+            Push(ref data.quads);
 
-			data.quads.Stats.DrawCalls++;
+            data.quads.Stats.DrawCalls++;
 		}
 		static void NextQuadsBatch()
 		{
@@ -410,8 +415,7 @@ namespace CrossEngine.Rendering
 				if (data.tris.TextureSlots[i]?.GetValue() != null) data.tris.TextureSlots[i].GetValue().Bind(i);
 			}
 
-			data.currentShader.GetValue().Use();
-			_rapi.DrawArray(data.tris.VertexArray, data.tris.IndexCount/*, DrawMode.Traingles*/);
+			Push(ref data.tris);
 
 			data.tris.Stats.DrawCalls++;
 		}
@@ -421,11 +425,41 @@ namespace CrossEngine.Rendering
 			StartTrisBatch();
 		}
 		#endregion
+
+		private static void Push(ref Renderer2DData.PrimitivesData primitive)
+		{
+			ShaderProgram shader = null;
+			switch (data.blending)
+			{
+				case BlendMode.Opaque:
+					_rapi.SetBlendFunc(BlendFunc.None);
+					shader = data.regularShader.GetValue();
+					break;
+				case BlendMode.Blend:
+					_rapi.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
+					shader = data.regularShader.GetValue();
+					break;
+				case BlendMode.Clip:
+					_rapi.SetBlendFunc(BlendFunc.None);
+					shader = data.discardingShader.GetValue();
+					break;
+			}
+
+			Debug.Assert(shader != null);
+
+            shader.Use();
+			shader.SetParameterMat4("uViewProjection", data.viewProjectionMatrix);
+
+			if (primitive.VertexArray.GetValue().GetIndexBuffer() != null)
+                _rapi.DrawIndexed(primitive.VertexArray, primitive.IndexCount/*, DrawMode.Traingles*/);
+            else
+                _rapi.DrawArray(primitive.VertexArray, primitive.IndexCount/*, DrawMode.Traingles*/);
+        }
 		#endregion
 
-		public static void EnableDiscardingTransparency(bool enable)
+		public static void SetBlending(BlendMode mode)
 		{
-			data.currentShader = enable ? data.discardingShader : data.regularShader;
+			data.blending = mode;
 		}
 
 		#region Quads

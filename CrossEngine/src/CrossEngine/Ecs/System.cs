@@ -9,17 +9,17 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Ecs
 {
-    interface IUpdatedSystem
+    public interface IUpdatedSystem
     {
         void Update();
     }
 
-    interface IFixedUpdatedSystem
+    public interface IFixedUpdatedSystem
     {
         void FixedUpdate();
     }
 
-    abstract class System
+    public abstract class System
     {
         internal protected EcsWorld World { get; internal set; }
 
@@ -33,7 +33,7 @@ namespace CrossEngine.Ecs
         public abstract void Unregister(Component component);
     }
 
-    abstract class UnicastSystem<T> : System where T : Component
+    public abstract class UnicastSystem<T> : System where T : Component
     {
         public override void Attach()
         {
@@ -47,7 +47,7 @@ namespace CrossEngine.Ecs
         public abstract void Unregister(T component);
     }
 
-    abstract class MulticastSystem<T> : System where T : ITuple
+    public abstract class MulticastSystem<T> : System where T : ITuple
     {
         public MulticastSystem()
         {

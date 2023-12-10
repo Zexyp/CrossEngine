@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 using CrossEngine.Ecs;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Rendering.Culling;
+using CrossEngine.Serialization;
 using CrossEngine.Systems;
 
 namespace CrossEngine.Components
 {
-    internal class CameraComponent : Component, ICamera
+    public class CameraComponent : Component, ICamera
     {
         public Matrix4x4 ViewMatrix { get => Matrix4x4.CreateTranslation(-Entity?.Transform?.Position ?? Vector3.Zero) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Entity?.Transform?.Rotation ?? Quaternion.Identity)); }
         public virtual Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.Identity;
@@ -36,5 +37,24 @@ namespace CrossEngine.Components
         private bool _primary;
 
         public virtual void Resize(float width, float height) { }
+
+        protected override Component CreateClone()
+        {
+            var comp = new CameraComponent();
+            comp.ProjectionMatrix = this.ProjectionMatrix;
+            return comp;
+        }
+
+        protected internal override void OnSerialize(SerializationInfo info)
+        {
+            info.AddValue(nameof(Primary), Primary);
+            info.AddValue(nameof(ProjectionMatrix), ProjectionMatrix);
+        }
+
+        protected internal override void OnDeserialize(SerializationInfo info)
+        {
+            Primary = info.GetValue(nameof(Primary), Primary);
+            ProjectionMatrix = info.GetValue(nameof(ProjectionMatrix), ProjectionMatrix);
+        }
     }
 }

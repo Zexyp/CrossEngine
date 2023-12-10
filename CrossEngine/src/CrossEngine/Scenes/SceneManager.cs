@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Scenes
 {
-    internal static class SceneManager
+    public static class SceneManager
     {
         internal static SceneService service;
+        
+        public static Scene Current { get; internal set; }
 
         public static void Load(Scene scene)
         {
@@ -18,7 +20,13 @@ namespace CrossEngine.Scenes
 
         public static void Unload()
         {
-            service.Execute(service.Unload);
+            if (Current == null) new InvalidOperationException("Cannot use parameterless 'Unload' outside scene update.");
+            Unload(Current);
+        }
+
+        public static void Unload(Scene scene)
+        {
+            service.Execute(() => service.Unload(scene));
         }
     }
 }

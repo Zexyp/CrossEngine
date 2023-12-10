@@ -7,7 +7,7 @@ using CrossEngine.Logging;
 
 namespace CrossEngine.Debugging
 {
-    internal static class GPUGC
+    public static class GPUGC
     {
         private static readonly Logger Log = new Logger("gpugc");
 
@@ -19,13 +19,13 @@ namespace CrossEngine.Debugging
 
         private static readonly Dictionary<IDisposable, GPUObjectCreationInfo> _objs = new Dictionary<IDisposable, GPUObjectCreationInfo>();
 
-        public static void Register(IDisposable obj)
+        internal static void Register(IDisposable obj)
         {
             lock (_objs)
                 _objs.Add(obj, new() { Time = DateTime.Now, Trace = new StackTrace() });
         }
 
-        public static void Unregister(IDisposable obj)
+        internal static void Unregister(IDisposable obj)
         {
             lock (_objs)
                 _objs.Remove(obj);
@@ -40,7 +40,7 @@ namespace CrossEngine.Debugging
                 }
         }
 
-        public static void Collect()
+        internal static void Collect()
         {
             lock (_objs)
             {

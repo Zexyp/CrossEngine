@@ -8,61 +8,88 @@ using System.Diagnostics;
 
 namespace CrossEngine.Services
 {
-    class SceneService : Service, IUpdatedService, IQueuedService
+    public class SceneService : Service, IUpdatedService, IQueuedService
     {
         readonly Queue<Action> _actions = new Queue<Action>();
-        Scene _currentScene;
+        readonly List<Scene> _scenes = new List<Scene>();
 
         public override void OnStart()
         {
-            Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
-            Manager.GetService<RenderService>().Frame += OnRender;
             SceneManager.service = this;
+
+            ExecuteQueued();
         }
 
-        public override void OnDestroy()
+        public override void OnAttach()
         {
-            Debug.Assert(_currentScene == null);
-            SceneManager.service = null;
+            Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
+            Manager.GetService<RenderService>().Frame += OnRender;
+        }
+
+        public override void OnDetach()
+        {
             Manager.GetService<RenderService>().Frame -= OnRender;
             Manager.GetService<TimeService>().FixedUpdate -= OnFixedUpdate;
         }
 
-        public void Load(Scene scene)
+        public override void OnDestroy()
         {
-            _currentScene = scene;
-            _currentScene.World.GetSystem<RenderSystem>().Window = Manager.GetService<WindowService>().Window;
-            _currentScene.Load();
-            _currentScene.Start();
+            ExecuteQueued();
+
+            Debug.Assert(_scenes.Count == 0);
+            SceneManager.service = null;
         }
 
-        public void Unload()
+        public void Load(Scene scene)
         {
-            _currentScene.Unload();
-            _currentScene.Stop();
-            _currentScene.World.GetSystem<RenderSystem>().Window = null;
-            _currentScene = null;
+            _scenes.Add(scene);
+            scene.World.GetSystem<RenderSystem>().Window = Manager.GetService<WindowService>().Window;
+            scene.Load();
+            scene.Start();
+        }
+
+        public void Unload(Scene scene)
+        {
+            scene.Unload();
+            scene.Stop();
+            scene.World.GetSystem<RenderSystem>().Window = null;
+            _scenes.Remove(scene);
+        }
+
+        private void ExecuteQueued()
+        {
+            while (_actions.TryDequeue(out var action))
+                action.Invoke();
         }
 
         public void OnUpdate()
         {
-            while (_actions.TryDequeue(out var action))
-                action.Invoke();
+            ExecuteQueued();
 
-            if (_currentScene != null)
-                _currentScene.Update();
+            for (int i = 0; i < _scenes.Count; i++)
+            {
+                SceneManager.Current = _scenes[i];
+                SceneManager.Current.Update();
+                SceneManager.Current = null;
+            }
         }
 
         private void OnFixedUpdate(TimeService obj)
         {
-            if (_currentScene != null)
-                _currentScene.FixedUpdate();
+            for (int i = 0; i < _scenes.Count; i++)
+            {
+                SceneManager.Current = _scenes[i];
+                SceneManager.Current.FixedUpdate();
+                SceneManager.Current = null;
+            }
         }
 
         public void OnRender(RenderService rs)
         {
-            if (_currentScene != null)
-                SceneRenderer.DrawScene(_currentScene.RenderData, rs.RendererApi);
+            for (int i = 0; i < _scenes.Count; i++)
+            {
+                SceneRenderer.DrawScene(_scenes[i].RenderData, rs.RendererApi);
+            }
         }
 
         public void Execute(Action action)

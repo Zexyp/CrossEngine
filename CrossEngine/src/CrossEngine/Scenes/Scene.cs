@@ -9,23 +9,28 @@ using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Rendering;
 using CrossEngine.Events;
+using CrossEngine.Utils;
+using CrossEngine.Serialization;
+using System.Collections.ObjectModel;
 
 namespace CrossEngine.Scenes
 {
-    public class Scene
+    public class Scene : ISerializable
     {
-        internal readonly EcsWorld World = new EcsWorld();
-        readonly List<Entity> _entities = new List<Entity>();
-        bool _started = false;
+        public readonly EcsWorld World = new EcsWorld();
         public readonly SceneRenderData RenderData = new SceneRenderData();
-        public readonly SceneLayerRenderData _sceneLayer = new SceneLayerRenderData();
+        public readonly ReadOnlyCollection<Entity> Entities;
+        readonly SceneLayerRenderData _sceneLayer = new SceneLayerRenderData();
+        bool _loaded = false;
+        readonly List<Entity> _entities = new List<Entity>();
 
         public Scene()
         {
+            Entities = _entities.AsReadOnly();
 
             _sceneLayer = new SceneLayerRenderData();
             RenderData.Layers.Add(_sceneLayer);
-            
+
             var rs = new RenderSystem();
             rs.PrimaryCameraChanged += (rsys) => { _sceneLayer.Camera = rsys.PrimaryCamera; };
             
@@ -37,15 +42,18 @@ namespace CrossEngine.Scenes
         public void AddEntity(Entity entity)
         {
             entity.Id = Guid.NewGuid();
+
             _entities.Add(entity);
-            if (_started)
+
+            if (_loaded)
                 World.AddEntity(entity);
         }
 
         public void RemoveEntity(Entity entity)
         {
-            if (_started)
+            if (_loaded)
                 World.RemoveEntity(entity);
+
             _entities.Remove(entity);
             entity.Id = Guid.Empty;
         }
@@ -60,6 +68,7 @@ namespace CrossEngine.Scenes
 
         public void Load()
         {
+            _loaded = true;
             for (int i = 0; i < _entities.Count; i++)
             {
                 World.AddEntity(_entities[i]);
@@ -72,20 +81,17 @@ namespace CrossEngine.Scenes
             {
                 World.RemoveEntity(_entities[i]);
             }
+            _loaded = false;
         }
 
         public void Start()
         {
-            _started = true;
             
-            //World.Start();
         }
 
         public void Stop()
         {
-            //World.Stop();
-
-            _started = false;
+            
         }
 
         public void Update()
@@ -96,6 +102,19 @@ namespace CrossEngine.Scenes
         public void FixedUpdate()
         {
             World.FixedUpdate();
+        }
+
+        void ISerializable.GetObjectData(SerializationInfo info)
+        {
+            info.AddValue("Entities", _entities.ToArray());
+        }
+
+        void ISerializable.SetObjectData(SerializationInfo info)
+        {
+            foreach (var ent in info.GetValue<Entity[]>("Entities"))
+            {
+                AddEntity(ent);
+            }
         }
     }
 }

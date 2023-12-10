@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.ComponentModel;
+using CrossEngine.Serialization;
+using CrossEngine.Utils;
 
 #if TRANSFORM_COMPONENT_CACHE
 using CrossEngine.Components;
@@ -15,7 +17,7 @@ using CrossEngine.Components;
 
 namespace CrossEngine.Ecs
 {
-    public class Entity
+    public class Entity : ISerializable
     {
         public Guid Id { get; internal set; } = Guid.Empty;
 
@@ -246,19 +248,34 @@ namespace CrossEngine.Ecs
         private void AttachComponent(Component component)
         {
             component.Entity = this;
-            component.Attach();
-            if (component.Enabled) component.Enable();
+            component.OnAttach();
+            if (component.Enabled) component.OnEnable();
 
             ComponentAdded?.Invoke(this, component);
         }
 
         private void DetachComponent(Component component)
         {
-            if (component.Enabled) component.Disable();
-            component.Detach();
+            if (component.Enabled) component.OnDisable();
+            component.OnDetach();
             component.Entity = null;
 
             ComponentRemoved?.Invoke(this, component);
+        }
+
+        void ISerializable.GetObjectData(SerializationInfo info)
+        {
+            info.AddValue("Id", Id);
+            info.AddValue("Components", _components.ToArray());
+        }
+
+        void ISerializable.SetObjectData(SerializationInfo info)
+        {
+            Id = info.GetValue("Id", Id);
+            foreach (var comp in info.GetValue<Component[]>("Components"))
+            {
+                AddComponent(comp);
+            }
         }
     }
 }

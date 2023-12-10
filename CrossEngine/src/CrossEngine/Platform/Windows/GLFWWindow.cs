@@ -117,22 +117,6 @@ namespace CrossEngine.Platform.Windows
         //    Log.Error(((int)code) + " (" + code.ToString() + "): " + Marshal.PtrToStringAnsi(message));
         //}
 
-        public override bool IsKeyPressed(Key key)
-        {
-            return Glfw.GetKey(_nativeHandle, (Keys)key) == InputState.Press;
-        }
-
-        public override bool IsMousePressed(Mouse button)
-        {
-            return Glfw.GetMouseButton(_nativeHandle, (MouseButton)button) == InputState.Press;
-        }
-
-        public override Vector2 GetCursorPosition()
-        {
-            Glfw.GetCursorPosition(_nativeHandle, out double x, out double y);
-            return new Vector2((float)x, (float)y);
-        }
-
         private SizeCallback _windowSizeCallbackHolder;
         private WindowCallback _closeCallbackHolder;
         private KeyCallback _keyCallbackHolder;
@@ -181,16 +165,19 @@ namespace CrossEngine.Platform.Windows
                 {
                     case InputState.Press:
                         {
+                            Keyboard.Add((CrossEngine.Inputs.Key)key);
                             Event?.Invoke(new KeyPressedEvent((CrossEngine.Inputs.Key)key));
                         }
                         break;
                     case InputState.Release:
                         {
+                            Keyboard.Remove((CrossEngine.Inputs.Key)key);
                             Event?.Invoke(new KeyReleasedEvent((CrossEngine.Inputs.Key)key));
                         }
                         break;
                     case InputState.Repeat:
                         {
+                            Keyboard.Add((CrossEngine.Inputs.Key)key);
                             Event?.Invoke(new KeyPressedEvent((CrossEngine.Inputs.Key)key, true));
                         }
                         break;
@@ -208,12 +195,14 @@ namespace CrossEngine.Platform.Windows
                 {
                     case InputState.Press:
                         {
-                            Event?.Invoke(new MousePressedEvent((CrossEngine.Inputs.Mouse)button));
+                            Mouse.Add((CrossEngine.Inputs.Button)button);
+                            Event?.Invoke(new MousePressedEvent((CrossEngine.Inputs.Button)button));
                         }
                         break;
                     case InputState.Release:
                         {
-                            Event?.Invoke(new MouseReleasedEvent((CrossEngine.Inputs.Mouse)button));
+                            Mouse.Remove((CrossEngine.Inputs.Button)button);
+                            Event?.Invoke(new MouseReleasedEvent((CrossEngine.Inputs.Button)button));
                         }
                         break;
                 }
@@ -221,11 +210,13 @@ namespace CrossEngine.Platform.Windows
 
             Glfw.SetScrollCallback(_nativeHandle, _scrollCallbackHolder = (IntPtr window, double x, double y) =>
             {
+                Mouse.Scroll(new((float)x, (float)y));
                 Event?.Invoke(new MouseScrolledEvent((float)x, (float)y));
             });
 
             Glfw.SetCursorPositionCallback(_nativeHandle, _cursorPositionCallbackHolder = (IntPtr window, double x, double y) =>
             {
+                Mouse.Position(new((float)x, (float)y));
                 Event?.Invoke(new MouseMovedEvent((float)x, (float)y));
             });
         }

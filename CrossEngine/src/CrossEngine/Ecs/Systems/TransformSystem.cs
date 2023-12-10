@@ -13,7 +13,7 @@ using CrossEngine.Ecs;
 
 namespace CrossEngine.Systems
 {
-    class TransformSystem : UnicastSystem<TransformComponent>, IUpdatedSystem
+    public class TransformSystem : UnicastSystem<TransformComponent>, IUpdatedSystem
     {
         private readonly List<TransformComponent> _roots = new List<TransformComponent>();
 #if DEBUG_TRANSFORMS

@@ -8,6 +8,8 @@ using System.Numerics;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Assets;
+using System.Security.Cryptography;
+using CrossEngine.Debugging;
 
 namespace CrossEngine.Utils
 {
@@ -16,6 +18,7 @@ namespace CrossEngine.Utils
         const int SymbolsCount = 95;
         const float SymbolWidth = 12;
         const float SymbolHeight = 16;
+
         static WeakReference<Texture> textTexture;
         static TextureAtlas textAtlas;
 
@@ -27,21 +30,35 @@ namespace CrossEngine.Utils
             textAtlas = new TextureAtlas(tex.Size, new Vector2(12, 16), SymbolsCount, margin: new Vector4(0, 0, 4, 0));
         }
 
+        public static void Shutdown()
+        {
+            GPUGC.PrintCollected();
+            textTexture.GetValue().Dispose();
+            textTexture = null;
+        }
+
         public static void DrawText(Matrix4x4 transform, string text, Vector4 color, int entID = 0)
         {
             if (text == null)
                 return;
 
             int line = 0;
-            transform *= Matrix4x4.CreateScale(new Vector3(SymbolWidth / SymbolHeight, 1, 1));
+            transform = Matrix4x4.CreateScale(new Vector3(SymbolWidth, SymbolHeight, 1)) * transform * Matrix4x4.CreateTranslation(new Vector3(SymbolWidth / 2, -SymbolHeight / 2, 0));
+            int column = 0;
             for (int i = 0; i < text.Length; i++)
             {
-                Matrix4x4 matrix = Matrix4x4.CreateTranslation(new Vector3(i, line, 0)) * transform;
+                // space
+                if (text[0] == ' ')
+                    continue;
+
+                Matrix4x4 matrix = Matrix4x4.CreateTranslation(new Vector3(column, -line, 0)) * transform;
+                column++;
 
                 // special characters
                 if (text[i] == '\n')
                 {
                     line++;
+                    column = 0;
                     continue;
                 }
 
@@ -52,7 +69,7 @@ namespace CrossEngine.Utils
                 Renderer2D.DrawTexturedQuad(matrix,
                                             textTexture,
                                             color,
-                                            textAtlas?.GetTextureOffsets(chord) ?? new Vector4(0, 0, 1, 1),
+                                            textAtlas.GetTextureOffsets(chord),
                                             entID);
             }
         }

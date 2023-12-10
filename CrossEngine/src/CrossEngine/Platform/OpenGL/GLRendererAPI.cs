@@ -19,7 +19,7 @@ namespace CrossEngine.Platform.OpenGL
     {
         public override unsafe void Init()
         {
-            Log.Trace("opengl info:\nversion: {0}\nrenderer: {1}\nvendor: {2}",
+            Log.Debug("opengl info:\nversion: {0}\nrenderer: {1}\nvendor: {2}",
                 GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Version)),
                 GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Renderer)),
                 GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Vendor)));

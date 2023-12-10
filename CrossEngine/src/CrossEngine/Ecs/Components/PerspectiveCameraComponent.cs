@@ -1,4 +1,5 @@
-﻿using CrossEngine.Components;
+﻿using CrossEngine.Ecs;
+using CrossEngine.Serialization;
 using CrossEngine.Utils;
 using System;
 using System.Collections.Generic;
@@ -7,9 +8,9 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CrossEngine.Ecs.Components
+namespace CrossEngine.Components
 {
-    internal class PerspectiveCameraComponent : CameraComponent
+    public class PerspectiveCameraComponent : CameraComponent
     {
         public override Matrix4x4 ProjectionMatrix
         {
@@ -70,6 +71,31 @@ namespace CrossEngine.Ecs.Components
             // TODO: fix
             _projection = Matrix4x4.CreatePerspectiveFieldOfView(_fov, _aspect, _near, _far);
             _projectionDirty = false;
+        }
+
+        protected override Component CreateClone()
+        {
+            var comp = new PerspectiveCameraComponent();
+            comp.Near = this.Near;
+            comp.Far = this.Far;
+            comp.FOV = this.FOV;
+            return comp;
+        }
+
+        protected internal override void OnSerialize(SerializationInfo info)
+        {
+            info.AddValue(nameof(Primary), Primary);
+            info.AddValue(nameof(Near), Near);
+            info.AddValue(nameof(Far), Far);
+            info.AddValue(nameof(FOV), FOV);
+        }
+
+        protected internal override void OnDeserialize(SerializationInfo info)
+        {
+            Primary = info.GetValue(nameof(Primary), Primary);
+            Near = info.GetValue(nameof(Near), Near);
+            Far = info.GetValue(nameof(Far), Far);
+            FOV = info.GetValue(nameof(FOV), FOV);
         }
     }
 }

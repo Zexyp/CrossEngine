@@ -14,11 +14,17 @@ namespace CrossEngine.Assets
 {
     public static class TextureLoader
     {
+        // TODO: shutdown
+
         // wtf, how is this not crashing the whole thing?
+        // (the static ctor is very funky - nobody knows when or how it gets called
+        // however we know it's before the first call to any member
+        // and i can say for certain that it's even on the same thread)
         public static readonly WeakReference<Texture> DefaultTexture;
 
         static unsafe TextureLoader()
         {
+            // me too lazy to fix this mem leak...
             DefaultTexture = Texture.Create(1, 1, ColorFormat.RGBA);
             uint col = 0xffff00ff;
             DefaultTexture.GetValue().SetData(&col, (uint)sizeof(uint));

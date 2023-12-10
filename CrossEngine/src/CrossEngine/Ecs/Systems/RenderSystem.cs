@@ -11,7 +11,7 @@ using CrossEngine.Events;
 
 namespace CrossEngine.Systems
 {
-    internal class RenderSystem : UnicastSystem<CameraComponent>
+    public class RenderSystem : UnicastSystem<CameraComponent>
     {
         public CameraComponent? PrimaryCamera
         {
@@ -45,7 +45,7 @@ namespace CrossEngine.Systems
         public event Action<RenderSystem> PrimaryCameraChanged;
         
         private CameraComponent? _primaryCamera = null;
-        internal Window _window;
+        private Window _window;
 
         private void Window_OnEvent(Event e)
         {

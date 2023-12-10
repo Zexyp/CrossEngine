@@ -149,7 +149,8 @@ setModuleImports("main.js", {
 		checkCanvasResize(true);
 		checkCanvasResizeFrame();
 
-		canvas.tabIndex = 1000;
+		//canvas.tabIndex = 1000;
+		canvas.focus();
 
 		interop.SetRootUri(window.location.toString());
 

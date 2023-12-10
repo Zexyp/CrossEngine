@@ -12,14 +12,10 @@ using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Legacy;
 #endif
 
-#if GL
-namespace Silk.NET.OpenGL.Extensions.ImGui
-#elif GLES
-namespace Silk.NET.OpenGLES.Extensions.ImGui
-#elif LEGACY
-namespace Silk.NET.OpenGL.Legacy.Extensions.ImGui
-#endif
+namespace CrossEngine.Utils.ImGui
 {
+    using ImGui = ImGuiNET.ImGui;
+
     public enum TextureCoordinate
     {
         S = TextureParameterName.TextureWrapS,

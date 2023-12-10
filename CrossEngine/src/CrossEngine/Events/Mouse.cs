@@ -32,9 +32,9 @@ namespace CrossEngine.Events
 
     abstract public class MouseButtonEvent : MouseEvent
     {
-        public readonly Mouse ButtonCode;
+        public readonly Button ButtonCode;
 
-        protected MouseButtonEvent(Mouse code)
+        protected MouseButtonEvent(Button code)
         {
             ButtonCode = code;
         }
@@ -42,7 +42,7 @@ namespace CrossEngine.Events
 
     public class MousePressedEvent : MouseButtonEvent
     {
-        public MousePressedEvent(Mouse code) : base(code)
+        public MousePressedEvent(Button code) : base(code)
         {
 
         }
@@ -50,7 +50,7 @@ namespace CrossEngine.Events
 
     public class MouseReleasedEvent : MouseButtonEvent
     {
-        public MouseReleasedEvent(Mouse code) : base(code)
+        public MouseReleasedEvent(Button code) : base(code)
         {
 
         }

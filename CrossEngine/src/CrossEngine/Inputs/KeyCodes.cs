@@ -135,7 +135,7 @@ namespace CrossEngine.Inputs
         Menu = 348
     }
 
-    public enum Mouse
+    public enum Button
     {
         Unknown = -1,
 
