@@ -104,19 +104,27 @@ namespace CrossEngine.Platform.Wasm
         private void SetupCallbacks()
         {
             Interop.KeyDown += keyDown = (bool shift, bool ctrl, bool alt, bool repeat, string code) => {
-                Event?.Invoke(new KeyPressedEvent(JSInput.TranslateKey(code), repeat));
+                var key = JSInput.TranslateKey(code);
+                Keyboard.Add(key);
+                Event?.Invoke(new KeyPressedEvent(key, repeat));
             };
             Interop.KeyUp += keyUp = (bool shift, bool ctrl, bool alt, string code) => {
-                Event?.Invoke(new KeyReleasedEvent(JSInput.TranslateKey(code)));
+                var key = JSInput.TranslateKey(code);
+                Keyboard.Remove(key);
+                Event?.Invoke(new KeyReleasedEvent(key));
             };
             Interop.MouseMove += mouseMove = (float x, float y) => {
                 Event?.Invoke(new MouseMovedEvent(x, y));
             };
             Interop.MouseDown += mouseDown = (bool shift, bool ctrl, bool alt, int button) => {
-                Event?.Invoke(new MousePressedEvent(JSInput.TranslateMouse(button)));
+                var tbutton = JSInput.TranslateMouse(button);
+                Mouse.Add(tbutton);
+                Event?.Invoke(new MousePressedEvent(tbutton));
             };
             Interop.MouseUp += mouseUp = (bool shift, bool ctrl, bool alt, int button) => {
-                Event?.Invoke(new MouseReleasedEvent(JSInput.TranslateMouse(button)));
+                var tbutton = JSInput.TranslateMouse(button);
+                Mouse.Remove(tbutton);
+                Event?.Invoke(new MouseReleasedEvent(tbutton));
             };
             Interop.CanvasResize += canvasResize = (float width, float height) => {
                 Data.Width = (uint)width;

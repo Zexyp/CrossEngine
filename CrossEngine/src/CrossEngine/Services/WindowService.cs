@@ -1,27 +1,32 @@
 ﻿using CrossEngine.Display;
 using CrossEngine.Events;
+using CrossEngine.Profiling;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
 namespace CrossEngine.Services
 {
-    public class WindowService : Service, IQueuedService
+    public class WindowService : Service, IQueuedService, IUpdatedService
     {
         public enum Mode
         {
             None = default,
-            Manual,
+            Sync,
             ThreadLoop,
         }
 
         public Window Window { get; private set; }
-        public event OnEventFunction Event;
+        public event Action<WindowService, Event> WindowEvent;
         public event Action<WindowService> WindowUpdate;
+        public int MaxFrameDuration = (int)(1d / 30 * 1000);
 
         Thread _windowThread;
         readonly ConcurrentQueue<Action> _execute = new ConcurrentQueue<Action>();
         Mode _mode;
+        bool _running = false;
+        AutoResetEvent _render = new AutoResetEvent(false);
+        AutoResetEvent _main = new AutoResetEvent(false);
 
         public WindowService(Mode mode)
         {
@@ -30,6 +35,7 @@ namespace CrossEngine.Services
 
         public override void OnStart()
         {
+            _running = true;
             if (_mode == Mode.ThreadLoop)
             {
                 _windowThread = new Thread(Loop);
@@ -41,8 +47,11 @@ namespace CrossEngine.Services
 
         public override void OnDestroy()
         {
+            _running = false;
             if (_mode == Mode.ThreadLoop)
             {
+                _render.WaitOne();
+                _main.Set();
                 _windowThread.Join();
             }
             else
@@ -59,7 +68,12 @@ namespace CrossEngine.Services
             ExecuteQueued();
 
             WindowUpdate?.Invoke(this);
+            Window.Keyboard.Update();
+            Window.Mouse.Update();
+
+            Profiler.BeginScope($"{nameof(CrossEngine.Display.Window)}.{nameof(CrossEngine.Display.Window.PollEvents)}");
             Window.PollEvents();
+            Profiler.EndScope();
         }
 
         private void Setup()
@@ -71,7 +85,7 @@ namespace CrossEngine.Services
             Window = new CrossEngine.Platform.Wasm.CanvasWindow();
 #endif
 
-            Window.Event += OnEvent;
+            Window.Event += OnWindowEvent;
 
             Window.Create();
 
@@ -82,7 +96,7 @@ namespace CrossEngine.Services
         {
             ExecuteQueued();
 
-            Window.Event -= OnEvent;
+            Window.Event -= OnWindowEvent;
 
             // destroy
             Window.Destroy();
@@ -90,9 +104,9 @@ namespace CrossEngine.Services
             Window.Dispose();
         }
 
-        private void OnEvent(Event e)
+        private void OnWindowEvent(Event e)
         {
-            Event?.Invoke(e);
+            WindowEvent?.Invoke(this, e);
 
             Manager.Event(e);
         }
@@ -107,12 +121,59 @@ namespace CrossEngine.Services
         {
             Setup();
 
-            while (!Window.ShouldClose)
+            while (_running)
             {
+                if (_mode == Mode.ThreadLoop)
+                {
+                    Profiler.Function("signaling main");
+                    _render.Set();
+                    Profiler.Function("waiting for main");
+                    _main.WaitOne();
+                    _main.Reset();
+                }
+
                 Update();
             }
 
+            _render.Set();
+
             Destroy();
+        }
+
+        public override void OnAttach()
+        {
+            
+        }
+
+        public override void OnDetach()
+        {
+            
+        }
+        bool _lastFrameSkipped = false;
+        public void OnUpdate()
+        {
+            if (!_running)
+                return;
+
+            if (_mode == Mode.ThreadLoop)
+            {
+                Profiler.Function("waiting for render");
+                if (_render.WaitOne(MaxFrameDuration))
+                {
+                    _lastFrameSkipped = false;
+                    _render.Reset();
+                    Profiler.Function("signaling render");
+                    _main.Set();
+                }
+                else
+                {
+                    if (!_lastFrameSkipped) ;//Logging.Log.Default.Trace("skipping frame(s)");
+                    _lastFrameSkipped = true;
+                    Profiler.Function("frame skip");
+                }
+            }
+            else
+                Update();
         }
     }
 }

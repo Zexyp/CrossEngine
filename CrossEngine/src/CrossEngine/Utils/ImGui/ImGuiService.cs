@@ -11,7 +11,7 @@ namespace CrossEngine.Utils.ImGui
     public class ImGuiService : Service
     {
         MyImGuiController controller;
-        public override void OnDestroy()
+        public override void OnDetach()
         {
             var rs = Manager.GetService<RenderService>();
             rs.BeforeFrame -= OnBeforeFrame;
@@ -19,11 +19,11 @@ namespace CrossEngine.Utils.ImGui
 
             rs.Execute(() =>
             {
-                
+                // TODO: dispose
             });
         }
 
-        public override unsafe void OnStart()
+        public override unsafe void OnAttach()
         {
             var rs = Manager.GetService<RenderService>();
             rs.BeforeFrame += OnBeforeFrame;
@@ -31,39 +31,30 @@ namespace CrossEngine.Utils.ImGui
 
             rs.Execute(() =>
             {
-                // Setup Dear ImGui context
-                IG.CreateContext(null);
-                var io = IG.GetIO();
-                io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;   // Enable Keyboard Controls
-                //io->ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;    // Enable Gamepad Controls
-
-                // Setup Dear ImGui style
-                //IG.StyleColorsDark(IG.GetStyle());
-                //ImGui::StyleColorsClassic();
-
-                // Setup Platform/Renderer backends
-                //ImplGlfw.ImGui_ImplGlfw_InitForOpenGL(((GlfwWindow)Manager.GetService<WindowService>().Window).NativeHandle, true);
-                //ImplOpenGL.ImGui_ImplOpenGL3_Init("#version 330 core");
                 controller = new MyImGuiController(CrossEngine.Platform.OpenGL.GLContext.gl, Manager.GetService<WindowService>().Window);
+                var io = IG.GetIO();
+                io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;    // Enable Docking
             });
         }
 
         private void OnBeforeFrame(RenderService rs)
         {
-            //ImplOpenGL.ImGui_ImplOpenGL3_NewFrame();
-            //ImplGlfw.ImGui_ImplGlfw_NewFrame();
-
             controller.Update(Time.UnscaledDeltaF);
-
         }
 
         private unsafe void OnAfterFrame(RenderService rs)
         {
             controller.Render();
+        }
 
-            //ImplOpenGL.ImGui_ImplOpenGL3_RenderDrawData(IG.GetDrawData());
-            //igUpdatePlatformWindows();
-            //igRenderPlatformWindowsDefault(null, null);
+        public override void OnStart()
+        {
+            
+        }
+
+        public override void OnDestroy()
+        {
+            
         }
     }
 }

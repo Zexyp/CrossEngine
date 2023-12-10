@@ -48,6 +48,9 @@ namespace CrossEngine.Display
         public abstract bool ShouldClose { get; set; }
         public abstract IntPtr Handle { get; }
 
+        public readonly Keyboard Keyboard = new Keyboard();
+        public readonly Mouse Mouse = new Mouse();
+
         // event emission
         public abstract event OnEventFunction Event;
 
@@ -73,10 +76,6 @@ namespace CrossEngine.Display
         protected abstract void UpdateVSync();
         protected abstract void UpdateFullscreen();
         protected abstract (uint Width, uint Height) GetMonitorSize();
-
-        public virtual bool IsKeyPressed(Key key) => throw new NotImplementedException();
-        public virtual bool IsMousePressed(Mouse button) => throw new NotImplementedException();
-        public virtual Vector2 GetCursorPosition() => throw new NotImplementedException();
 
         public void Resize(uint width, uint height)
         {

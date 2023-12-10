@@ -24,14 +24,10 @@ using Silk.NET.OpenGL.Legacy;
 #endif
 
 
-#if GL
-namespace Silk.NET.OpenGL.Extensions.ImGui
-#elif GLES
-namespace Silk.NET.OpenGLES.Extensions.ImGui
-#elif LEGACY
-namespace Silk.NET.OpenGL.Legacy.Extensions.ImGui
-#endif
+namespace CrossEngine.Utils.ImGui
 {
+    using ImGui = ImGuiNET.ImGui;
+
     static class Util
     {
         [Pure]
@@ -250,11 +246,11 @@ namespace Silk.NET.OpenGL.Legacy.Extensions.ImGui
             //var mouseState = _input.Mice[0].CaptureState();
             //var keyboardState = _input.Keyboards[0];
 
-            io.MouseDown[0] = _window.IsMousePressed(Mouse.Left);
-            io.MouseDown[1] = _window.IsMousePressed(Mouse.Right);
-            io.MouseDown[2] = _window.IsMousePressed(Mouse.Middle);
+            io.MouseDown[0] = _window.Mouse.Get(Button.Left);
+            io.MouseDown[1] = _window.Mouse.Get(Button.Right);
+            io.MouseDown[2] = _window.Mouse.Get(Button.Middle);
 
-            var mousePos = _window.GetCursorPosition();
+            var mousePos = _window.Mouse.CursorPosition;
             var point = new Point((int)mousePos.X, (int)mousePos.Y);
             io.MousePos = new Vector2(point.X, point.Y);
 
@@ -269,7 +265,7 @@ namespace Silk.NET.OpenGL.Legacy.Extensions.ImGui
                 {
                     continue;
                 }
-                io.KeysDown[(int)key] = _window.IsKeyPressed(key);
+                io.KeysDown[(int)key] = _window.Keyboard.Get(key);
             }
 
             foreach (var c in _pressedChars)
@@ -279,10 +275,10 @@ namespace Silk.NET.OpenGL.Legacy.Extensions.ImGui
 
             _pressedChars.Clear();
 
-            io.KeyCtrl = _window.IsKeyPressed(Key.LeftControl) || _window.IsKeyPressed(Key.RightControl);
-            io.KeyAlt = _window.IsKeyPressed(Key.LeftAlt) || _window.IsKeyPressed(Key.RightAlt);
-            io.KeyShift = _window.IsKeyPressed(Key.LeftShift) || _window.IsKeyPressed(Key.RightShift);
-            io.KeySuper = _window.IsKeyPressed(Key.LeftSuper) || _window.IsKeyPressed(Key.RightSuper);
+            io.KeyCtrl = _window.Keyboard.Get(Key.LeftControl) || _window.Keyboard.Get(Key.RightControl);
+            io.KeyAlt = _window.Keyboard.Get(Key.LeftAlt) || _window.Keyboard.Get(Key.RightAlt);
+            io.KeyShift = _window.Keyboard.Get(Key.LeftShift) || _window.Keyboard.Get(Key.RightShift);
+            io.KeySuper = _window.Keyboard.Get(Key.LeftSuper) || _window.Keyboard.Get(Key.RightSuper);
         }
 
         internal void PressChar(char keyChar)

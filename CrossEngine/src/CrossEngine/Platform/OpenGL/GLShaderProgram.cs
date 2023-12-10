@@ -318,7 +318,7 @@ namespace CrossEngine.Platform.OpenGL
                 var attribute = new ShaderParameter(GLUtils.ToShaderDataType(type), name, location, _rendererId);
                 _attributes.Add(name, attribute);
 
-                RendererApi.Log.Trace("shader attribute parameter: {0} {1}", attribute.Type, attribute.Name);
+                RendererApi.Log.Debug("shader attribute parameter: {0} {1}", attribute.Type, attribute.Name);
             }
 
             int uniformCount;
@@ -334,7 +334,7 @@ namespace CrossEngine.Platform.OpenGL
                 var uniform = new ShaderParameter(GLUtils.ToShaderDataType(type), name, location, _rendererId);
                 _uniforms.Add(name, uniform);
 
-                RendererApi.Log.Trace("shader uniform parameter: {0} {1}", uniform.Type, uniform.Name);
+                RendererApi.Log.Debug("shader uniform parameter: {0} {1}", uniform.Type, uniform.Name);
             }
         }
     }

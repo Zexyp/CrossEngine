@@ -10,10 +10,13 @@ namespace CrossEngine.Services
 {
     public abstract class Service
     {
-        public ServiceManager Manager { get; internal set; }
+        protected internal ServiceManager Manager { get; internal set; }
 
         public abstract void OnStart();
         public abstract void OnDestroy();
+
+        public abstract void OnAttach();
+        public abstract void OnDetach();
     }
 
     public interface IUpdatedService

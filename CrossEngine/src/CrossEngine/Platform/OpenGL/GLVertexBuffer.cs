@@ -1,5 +1,4 @@
 ﻿using System;
-using Silk.NET.OpenGL;
 
 using System.Collections.Generic;
 using System.Diagnostics;

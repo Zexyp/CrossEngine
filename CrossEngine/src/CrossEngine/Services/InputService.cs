@@ -12,37 +12,85 @@ namespace CrossEngine.Services
 {
     public class InputService : Service, IUpdatedService
     {
-        public event OnEventFunction Event;
-        Queue<Event> _events = new Queue<Event>();
+        readonly Queue<Event> _events = new Queue<Event>();
 
-        public override void OnStart()
+        readonly Keyboard keyboard = new();
+        readonly Mouse mouse = new();
+
+        public override void OnAttach()
         {
             var ws = Manager.GetService<WindowService>();
-            ws.Event += HandleEvent;
-            Input.window = ws.Window;
+            ws.WindowEvent += HandleEvent;
+            Input.keyboard = keyboard;
+            Input.mouse = mouse;
         }
 
-        public override void OnDestroy()
+        public override void OnDetach()
         {
             var ws = Manager.GetService<WindowService>();
-            Input.window = null;
-            ws.Event -= HandleEvent;
+            Input.keyboard = null;
+            Input.mouse = null;
+            ws.WindowEvent -= HandleEvent;
         }
 
         public void OnUpdate()
         {
-            Input.Update();
+            Profiler.BeginScope();
+            
+            keyboard.Update();
+            mouse.Update();
             while (_events.TryDequeue(out var e))
             {
                 new EventDispatcher(e)
-                    .Dispatch((e) => Event?.Invoke(e))
-                    .Dispatch(Input.OnEvent);
+                .Dispatch<KeyPressedEvent>(OnKeyPressed)
+                .Dispatch<KeyReleasedEvent>(OnKeyReleased)
+                .Dispatch<MousePressedEvent>(OnMousePressed)
+                .Dispatch<MouseReleasedEvent>(OnMouseReleased)
+                .Dispatch<MouseScrolledEvent>(OnMouseScrolled)
+                .Dispatch<MouseMovedEvent>(OnMouseMoved);
             }
+
+            Profiler.EndScope();
         }
 
-        private void HandleEvent(Event e)
+        private void HandleEvent(WindowService ws, Event e)
         {
             _events.Enqueue(e);
+        }
+
+        public override void OnStart()
+        {
+            
+        }
+
+        public override void OnDestroy()
+        {
+            
+        }
+
+        void OnKeyPressed(KeyPressedEvent e)
+        {
+            keyboard.Add(e.KeyCode);
+        }
+        void OnKeyReleased(KeyReleasedEvent e)
+        {
+            keyboard.Remove(e.KeyCode);
+        }
+        void OnMousePressed(MousePressedEvent e)
+        {
+            mouse.Add(e.ButtonCode);
+        }
+        void OnMouseReleased(MouseReleasedEvent e)
+        {
+            mouse.Remove(e.ButtonCode);
+        }
+        void OnMouseScrolled(MouseScrolledEvent e)
+        {
+            mouse.Scroll(new(e.X, e.Y));
+        }
+        void OnMouseMoved(MouseMovedEvent e)
+        {
+            mouse.Position(new(e.X, e.Y));
         }
     }
 }

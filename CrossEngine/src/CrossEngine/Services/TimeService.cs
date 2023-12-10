@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 
 using CrossEngine;
+using CrossEngine.Profiling;
 
 namespace CrossEngine.Services
 {
@@ -37,11 +38,24 @@ namespace CrossEngine.Services
                 Time.FixedUnscaledElapsed += Time.FixedUnscaledDelta;
                 Time.FixedDelta = Time.FixedUnscaledDelta * Time.Scale;
                 Time.FixedElapsed += Time.FixedDelta;
+
+                Profiler.BeginScope("FixedUpdate");
                 FixedUpdate?.Invoke(this);
+                Profiler.EndScope();
             }
 
             sw.Reset();
             sw.Start();
+        }
+
+        public override void OnAttach()
+        {
+            
+        }
+
+        public override void OnDetach()
+        {
+            
         }
     }
 }

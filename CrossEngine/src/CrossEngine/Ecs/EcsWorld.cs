@@ -5,11 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using CrossEngine.Events;
-using ImGuiNET;
 
 namespace CrossEngine.Ecs
 {
-    internal class EcsWorld
+    public class EcsWorld
     {
         readonly List<System> _systems = new List<System>();
         readonly List<IUpdatedSystem> _updatedSystems = new List<IUpdatedSystem>();
@@ -164,12 +163,14 @@ namespace CrossEngine.Ecs
 
         private void OnEntityComponentAdded(Entity sender, Component component)
         {
+            component.Attached = true;
             ComponentRegister?.Invoke(component);
         }
 
         private void OnEntityComponentRemoved(Entity sender, Component component)
         {
             ComponentUnregister?.Invoke(component);
+            component.Attached = false;
         }
     }
 }

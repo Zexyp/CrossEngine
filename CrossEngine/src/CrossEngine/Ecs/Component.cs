@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.Serialization;
+using CrossEngine.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Logging;
 
 namespace CrossEngine.Ecs
 {
-    public abstract class Component : ICloneable
+    public abstract class Component : ICloneable, ISerializable
     {
         public Entity Entity { get; internal set; }
         public event Action<Component> EnabledChanged;
@@ -22,29 +23,21 @@ namespace CrossEngine.Ecs
 
                 _enabled = value;
 
-                if (_enabled) Enable();
-                else Disable();
+                if (!Attached) return;
+
+                if (_enabled) OnEnable();
+                else OnDisable();
 
                 EnabledChanged?.Invoke(this);
             }
         }
 
         private bool _enabled = true;
+        internal bool Attached = false; // idfk rn, ecs world refernce would be as good as this weird bool
 
-        protected internal virtual void Enable() { }
-        protected internal virtual void Disable() { }
-
-        protected internal virtual void Attach() { }
-        protected internal virtual void Detach() { }
-
-
-        //protected internal virtual void Serialize(SerializationInfo info) { }
-        //protected internal virtual void Deserialize(SerializationInfo info) { }
-
-        protected virtual Component CreateClone()
+        public Component()
         {
-            Log.Default.Info("using default constructor for cloning component");
-            return (Component)Activator.CreateInstance(this.GetType());
+            
         }
 
         public object Clone()
@@ -54,17 +47,32 @@ namespace CrossEngine.Ecs
             return comp;
         }
 
-        //public void GetObjectData(SerializationInfo info)
-        //{
-        //    info.AddValue(nameof(Enabled), Enabled);
-        //    Serialize(info);
-        //}
-        //
-        //public void SetObjectData(SerializationInfo info)
-        //{
-        //    Enabled = info.GetValue<bool>(nameof(Enabled));
-        //    Deserialize(info);
-        //}
+        void ISerializable.GetObjectData(SerializationInfo info)
+        {
+            info.AddValue("Enabled", Enabled);
+            OnSerialize(info);
+        }
+
+        void ISerializable.SetObjectData(SerializationInfo info)
+        {
+            Enabled = info.GetValue<bool>("Enabled");
+            OnDeserialize(info);
+        }
+
+        protected virtual Component CreateClone()
+        {
+            Log.Default.Debug("using default constructor for cloning component");
+            return (Component)Activator.CreateInstance(this.GetType());
+        }
+
+        protected internal virtual void OnEnable() { }
+        protected internal virtual void OnDisable() { }
+
+        protected internal virtual void OnAttach() { }
+        protected internal virtual void OnDetach() { }
+
+        protected internal virtual void OnSerialize(SerializationInfo info) { }
+        protected internal virtual void OnDeserialize(SerializationInfo info) { }
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
