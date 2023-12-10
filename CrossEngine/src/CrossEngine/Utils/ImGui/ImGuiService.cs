@@ -31,9 +31,14 @@ namespace CrossEngine.Utils.ImGui
 
             rs.Execute(() =>
             {
-                controller = new MyImGuiController(CrossEngine.Platform.OpenGL.GLContext.gl, Manager.GetService<WindowService>().Window);
-                var io = IG.GetIO();
-                io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;    // Enable Docking
+                controller = new MyImGuiController(
+                    CrossEngine.Platform.OpenGL.GLContext.gl,
+                    Manager.GetService<WindowService>().Window,
+                    () =>
+                    {
+                        var io = IG.GetIO();
+                        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;    // Enable Docking
+                    });
             });
         }
 

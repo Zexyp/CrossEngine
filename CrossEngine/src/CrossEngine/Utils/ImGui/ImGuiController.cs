@@ -14,7 +14,6 @@ using System.Diagnostics.Contracts;
 using System.Diagnostics;
 using CrossEngine.Display;
 using CrossEngine.Events;
-using System.Runtime.Intrinsics.X86;
 #if GLES
 using Silk.NET.OpenGLES;
 #elif GL
@@ -77,10 +76,12 @@ namespace CrossEngine.Utils.ImGui
         private float _scrollY;
         private float _scrollX;
 
+        private GLFW.Cursor[] _mouseCursors = new GLFW.Cursor[(int)ImGuiMouseCursor.COUNT];
+
         /// <summary>
         /// Constructs a new ImGuiController with font configuration and onConfigure Action.
         /// </summary>
-        public MyImGuiController(GL gl, Window window)
+        public MyImGuiController(GL gl, Window window, Action onConfigureIO = null)
         {
             Init(gl, window);
 
@@ -94,6 +95,8 @@ namespace CrossEngine.Utils.ImGui
             //
             //onConfigureIO?.Invoke();
 
+            onConfigureIO?.Invoke();
+                
             io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
 
             CreateDeviceResources();
@@ -119,6 +122,43 @@ namespace CrossEngine.Utils.ImGui
             Context = ImGuiNET.ImGui.CreateContext();
             ImGuiNET.ImGui.SetCurrentContext(Context);
             ImGuiNET.ImGui.StyleColorsDark();
+            var io = ImGui.GetIO();
+
+            
+            _mouseCursors[(int)ImGuiMouseCursor.Arrow] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
+            _mouseCursors[(int)ImGuiMouseCursor.TextInput] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Beam);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeNS] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.ResizeVertical);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeEW] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.ResizeHorizontal);
+            _mouseCursors[(int)ImGuiMouseCursor.Hand] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Hand);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeAll] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeNESW] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeNWSE] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
+            _mouseCursors[(int)ImGuiMouseCursor.NotAllowed] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
+        }
+
+        private void UpdateMouseCursor()
+        {
+            ImGuiIOPtr io = ImGui.GetIO();
+            if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) != 0 || (GLFW.CursorMode)GLFW.Glfw.GetInputMode(((CrossEngine.Platform.Windows.GlfwWindow)_window).NativeHandle, GLFW.InputMode.Cursor) == GLFW.CursorMode.Disabled)
+                return;
+
+            ImGuiMouseCursor imgui_cursor = ImGui.GetMouseCursor();
+            // (those braces are here to reduce diff with multi-viewports support in 'docking' branch)
+            {
+                GLFW.Window window = ((CrossEngine.Platform.Windows.GlfwWindow)_window).NativeHandle;
+                if (imgui_cursor == ImGuiMouseCursor.None || io.MouseDrawCursor)
+                {
+                    // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
+                    GLFW.Glfw.SetInputMode(window, GLFW.InputMode.Cursor, (int)GLFW.CursorMode.Hidden);
+                }
+                else
+                {
+                    // Show OS mouse cursor
+                    // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
+                    GLFW.Glfw.SetCursor(window, _mouseCursors[(int)imgui_cursor] != GLFW.Cursor.None ? _mouseCursors[(int)imgui_cursor] : _mouseCursors[(int)ImGuiMouseCursor.Arrow]);
+                    GLFW.Glfw.SetInputMode(window, GLFW.InputMode.Cursor, (int)GLFW.CursorMode.Normal);
+                }
+            }
         }
 
         private void BeginFrame()
@@ -184,6 +224,8 @@ namespace CrossEngine.Utils.ImGui
                 _frameBegun = false;
                 ImGuiNET.ImGui.Render();
                 RenderImDrawData(ImGuiNET.ImGui.GetDrawData());
+
+                UpdateMouseCursor();
 
                 if (oldCtx != Context)
                 {

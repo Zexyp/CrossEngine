@@ -32,7 +32,6 @@ namespace CrossEngine.Utils
 
         public static void Shutdown()
         {
-            GPUGC.PrintCollected();
             textTexture.GetValue().Dispose();
             textTexture = null;
         }
