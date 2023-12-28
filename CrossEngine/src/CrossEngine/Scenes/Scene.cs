@@ -12,10 +12,11 @@ using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Serialization;
 using System.Collections.ObjectModel;
+using CrossEngine.Assets;
 
 namespace CrossEngine.Scenes
 {
-    public class Scene : ISerializable
+    public class Scene
     {
         public readonly EcsWorld World = new EcsWorld();
         public readonly SceneRenderData RenderData = new SceneRenderData();
@@ -23,6 +24,7 @@ namespace CrossEngine.Scenes
         readonly SceneLayerRenderData _sceneLayer = new SceneLayerRenderData();
         bool _loaded = false;
         readonly List<Entity> _entities = new List<Entity>();
+        public AssetPool Assets { get; internal set; } = new AssetPool();
 
         public Scene()
         {
@@ -41,7 +43,8 @@ namespace CrossEngine.Scenes
 
         public void AddEntity(Entity entity)
         {
-            entity.Id = Guid.NewGuid();
+            if (entity.Id == Guid.Empty)
+                entity.Id = Guid.NewGuid();
 
             _entities.Add(entity);
 
@@ -55,7 +58,6 @@ namespace CrossEngine.Scenes
                 World.RemoveEntity(entity);
 
             _entities.Remove(entity);
-            entity.Id = Guid.Empty;
         }
 
         public Entity CreateEntity()
@@ -68,6 +70,8 @@ namespace CrossEngine.Scenes
 
         public void Load()
         {
+            Assets.Load();
+
             _loaded = true;
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -82,6 +86,8 @@ namespace CrossEngine.Scenes
                 World.RemoveEntity(_entities[i]);
             }
             _loaded = false;
+
+            Assets.Unload();
         }
 
         public void Start()
@@ -102,19 +108,6 @@ namespace CrossEngine.Scenes
         public void FixedUpdate()
         {
             World.FixedUpdate();
-        }
-
-        void ISerializable.GetObjectData(SerializationInfo info)
-        {
-            info.AddValue("Entities", _entities.ToArray());
-        }
-
-        void ISerializable.SetObjectData(SerializationInfo info)
-        {
-            foreach (var ent in info.GetValue<Entity[]>("Entities"))
-            {
-                AddEntity(ent);
-            }
         }
     }
 }

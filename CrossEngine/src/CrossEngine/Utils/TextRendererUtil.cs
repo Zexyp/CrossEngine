@@ -7,9 +7,9 @@ using System.Numerics;
 
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
-using CrossEngine.Assets;
 using System.Security.Cryptography;
 using CrossEngine.Debugging;
+using CrossEngine.Assets.Loaders;
 
 namespace CrossEngine.Utils
 {

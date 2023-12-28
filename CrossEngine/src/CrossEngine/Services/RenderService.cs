@@ -12,6 +12,7 @@ using CrossEngine.Profiling;
 using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Utils;
+using CrossEngine.Platform;
 
 namespace CrossEngine.Services
 {
@@ -28,9 +29,9 @@ namespace CrossEngine.Services
         GraphicsContext Context;
         GraphicsApi _api;
 
-        public RenderService(GraphicsApi api)
+        public RenderService()
         {
-            _api = api;
+            _api = PlatformHelper.GetGraphicsApi();
         }
 
         public override void OnAttach()

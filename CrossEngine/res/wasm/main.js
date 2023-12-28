@@ -17,7 +17,7 @@ setModuleImports("main.js", {
 	initialize: () => {
 
 		var checkCanvasResize = (dispatch) => {
-			//var devicePixelRatio = window.devicePixelRatio || 1.0;
+			var devicePixelRatio = window.devicePixelRatio || 1.0;
 			var displayWidth = canvas.clientWidth * devicePixelRatio;
 			var displayHeight = canvas.clientHeight * devicePixelRatio;
 
@@ -90,14 +90,15 @@ setModuleImports("main.js", {
 			if (shouldIgnore(e))
 				return;
 
+			var devicePixelRatio = window.devicePixelRatio || 1.0;
 			var shift = e.shiftKey;
 			var ctrl = e.ctrlKey;
 			var alt = e.altKey;
 			var button = 0;
 			var touch = e.changedTouches[0];
 			var bcr = e.target.getBoundingClientRect();
-			var x = touch.clientX - bcr.x;
-			var y = touch.clientY - bcr.y;
+			var x = (touch.clientX - bcr.x) * devicePixelRatio;
+			var y = (touch.clientY - bcr.y) * devicePixelRatio;
 
 			interop.OnMouseMove(x, y);
 			interop.OnMouseDown(shift, ctrl, alt, button);
@@ -107,10 +108,11 @@ setModuleImports("main.js", {
 			if (shouldIgnore(e))
 				return;
 
+			var devicePixelRatio = window.devicePixelRatio || 1.0;
 			var touch = e.changedTouches[0];
 			var bcr = e.target.getBoundingClientRect();
-			var x = touch.clientX - bcr.x;
-			var y = touch.clientY - bcr.y;
+			var x = (touch.clientX - bcr.x) * devicePixelRatio;
+			var y = (touch.clientY - bcr.y) * devicePixelRatio;
 
 			interop.OnMouseMove(x, y);
 		}
@@ -119,14 +121,15 @@ setModuleImports("main.js", {
 			if (shouldIgnore(e))
 				return;
 
+			var devicePixelRatio = window.devicePixelRatio || 1.0;
 			var shift = e.shiftKey;
 			var ctrl = e.ctrlKey;
 			var alt = e.altKey;
 			var button = 0;
 			var touch = e.changedTouches[0];
 			var bcr = e.target.getBoundingClientRect();
-			var x = touch.clientX - bcr.x;
-			var y = touch.clientY - bcr.y;
+			var x = (touch.clientX - bcr.x) * devicePixelRatio;
+			var y = (touch.clientY - bcr.y) * devicePixelRatio;
 
 			interop.OnMouseMove(x, y);
 			interop.OnMouseUp(shift, ctrl, alt, button);

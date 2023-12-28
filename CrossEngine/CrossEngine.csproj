@@ -44,9 +44,9 @@
     <!-- ##### platform stuff ##### -->
   
     <ItemGroup>
-        <Compile Remove="src\CrossEngine\Platform\**" />
-        <EmbeddedResource Remove="src\CrossEngine\Platform\**" />
-        <None Remove="src\CrossEngine\Platform\**" />
+        <Compile Remove="src\CrossEngine\Platform\*\**" />
+        <EmbeddedResource Remove="src\CrossEngine\Platform\*\**" />
+        <None Remove="src\CrossEngine\Platform\*\**" />
     </ItemGroup>
   
     <ItemGroup>

@@ -5,6 +5,10 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngine", "CrossEngine\CrossEngine.csproj", "{4917BF5E-6BB1-40EA-8AF6-FBD2784CA153}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngineEditor", "CrossEngineEditor\CrossEngineEditor.csproj", "{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngineSandbox", "CrossEngineSandbox\CrossEngineSandbox.csproj", "{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +22,17 @@ Global
 		{4917BF5E-6BB1-40EA-8AF6-FBD2784CA153}.Profiling|Any CPU.Build.0 = Profiling|Any CPU
 		{4917BF5E-6BB1-40EA-8AF6-FBD2784CA153}.Wasm|Any CPU.ActiveCfg = Wasm|Any CPU
 		{4917BF5E-6BB1-40EA-8AF6-FBD2784CA153}.Wasm|Any CPU.Build.0 = Wasm|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Any CPU.Build.0 = Debug|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Wasm|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Profiling|Any CPU.ActiveCfg = Profiling|Any CPU
+		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Profiling|Any CPU.Build.0 = Profiling|Any CPU
+		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Wasm|Any CPU.ActiveCfg = Wasm|Any CPU
+		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Wasm|Any CPU.Build.0 = Wasm|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
