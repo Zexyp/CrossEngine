@@ -1,5 +1,6 @@
 ﻿using CrossEngine.Display;
 using CrossEngine.Events;
+using CrossEngine.Platform;
 using CrossEngine.Profiling;
 using System;
 using System.Collections.Concurrent;
@@ -79,11 +80,7 @@ namespace CrossEngine.Services
         private void Setup()
         {
             // setup
-#if WINDOWS
-            Window = new CrossEngine.Platform.Windows.GlfwWindow();
-#elif WASM
-            Window = new CrossEngine.Platform.Wasm.CanvasWindow();
-#endif
+            Window = PlatformHelper.CreateWindow();
 
             Window.Event += OnWindowEvent;
 

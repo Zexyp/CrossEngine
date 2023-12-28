@@ -12,6 +12,7 @@ namespace CrossEngine.Rendering.Renderables
         virtual Vector4 TextureOffsets => new Vector4(0, 0, 1, 1);
         virtual WeakReference<Texture> Texture => null;
         virtual BlendMode Blend => BlendMode.Opaque;
+        virtual Vector4 DrawOffsets => throw new NotImplementedException();
     }
 
     class SpriteRenderable : Renderable<ISpriteRenderData>
@@ -39,7 +40,7 @@ namespace CrossEngine.Rendering.Renderables
             if (data.Texture == null)
                 Renderer2D.DrawQuad(data.Transform, data.Color, data.EntityId);
             else
-                Renderer2D.DrawTexturedQuad(data.Transform, data.Texture, data.Color, data.EntityId);
+                Renderer2D.DrawTexturedQuad(data.Transform, data.Texture, data.Color, data.TextureOffsets, data.EntityId);
         }
     }
 }

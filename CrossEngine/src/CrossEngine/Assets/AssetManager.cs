@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    internal interface IAsset
+    static class AssetManager
     {
-        Guid Id { get; }
-        void Load();
-        void Unload();
+        static AssetPool _current = new AssetPool();
     }
 }

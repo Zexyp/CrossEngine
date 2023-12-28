@@ -92,9 +92,7 @@ namespace CrossEngine.Utils.ImGui
             //
             //    io.Fonts.AddFontFromFileTTF(imGuiFontConfig.Value.FontPath, imGuiFontConfig.Value.FontSize, null, glyphRange);
             //}
-            //
-            //onConfigureIO?.Invoke();
-
+            
             onConfigureIO?.Invoke();
                 
             io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;

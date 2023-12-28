@@ -1,4 +1,5 @@
-﻿using CrossEngine.Scenes;
+﻿using CrossEngine.Assets;
+using CrossEngine.Scenes;
 using CrossEngine.Serialization.Json;
 using System;
 using System.Collections.Generic;
@@ -6,31 +7,39 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace CrossEngine.Serialization
 {
     public static class SceneSerializer
     {
-        static readonly JsonSerializerOptions options = new JsonSerializerOptions()
+        static SceneSerializer()
         {
+            AssetJsonConverter assConv;
+            options = new()
+            {
 #if DEBUG
-            WriteIndented = true,
+                WriteIndented = true,
 #endif
-            Converters =
+                Converters =
                 {
+                    new EntityStructureJsonConverter(),
+
+                    (assConv = new AssetJsonConverter()),
+
+                    new SceneJsonConverter(assConv),
+
+                    new SerializableJsonConverter(),
+
                     new Vector2JsonConverter(),
                     new Vector3JsonConverter(),
                     new Vector4JsonConverter(),
                     new QuaternionJsonConverter(),
                     new Matrix4x4JsonConverter(),
-
-                    new EntityStructureJsonConverter(),
-                    
-                    new SerializableJsonConverter(),
                 }
-        };
+            };
+        }
+
+        static readonly JsonSerializerOptions options;
 
         public static void Serialize(Stream stream, Scene scene)
         {
