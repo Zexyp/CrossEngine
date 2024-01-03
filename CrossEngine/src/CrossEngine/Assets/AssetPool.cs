@@ -1,6 +1,8 @@
-﻿using CrossEngine.Platform;
+﻿using CrossEngine.Ecs;
+using CrossEngine.Platform;
 using CrossEngine.Serialization;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,18 +13,19 @@ namespace CrossEngine.Assets
 {
     public class AssetPool : IAssetLoadContext, ISerializable
     {
-        Dictionary<Type, IAssetCollection> _collections = new();
+        Dictionary<Type, IDictionary> _collections = new();
         string _directory = "./";
         bool _loaded = false;
 
-        public string GetFullPath(string realtivePath)
+        #region IAssetLoadContext
+        string IAssetLoadContext.GetFullPath(string realtivePath)
         {
             return Path.Join(_directory, realtivePath);
         }
 
         Asset IAssetLoadContext.LoadChild(Type type, Guid id)
         {
-            var ch = _collections[type].Get(id);
+            var ch = (Asset)_collections[type][id];
             if (!ch.Loaded)
                 ch.Load(this);
             return ch;
@@ -31,8 +34,9 @@ namespace CrossEngine.Assets
         void IAssetLoadContext.FreeChild(Asset asset)
         {
             if (asset.Loaded)
-                _collections[asset.GetType()].Get(asset.Id).Unload(this);
+                ((Asset)_collections[asset.GetType()][asset.Id]).Unload(this);
         }
+        #endregion
 
         Task<Stream> IAssetLoadContext.OpenStream(string path)
         {
@@ -41,20 +45,23 @@ namespace CrossEngine.Assets
 
         public void Add(Asset asset)
         {
+            if (asset.Id == Guid.Empty)
+                asset.Id = Guid.NewGuid();
+
             Type type = asset.GetType();
             if (!_collections.ContainsKey(type))
             {
-                var col = (IAssetCollection)Activator.CreateInstance(typeof(AssetCollection<>).MakeGenericType(new[] { type }));
+                var col = new Dictionary<Guid, Asset>();
                 _collections.Add(type, col);
             }
-            _collections[type].Add(asset);
+            _collections[type].Add(asset.Id, asset);
         }
 
         public void Remove(Asset asset)
         {
             Type type = asset.GetType();
             var col = _collections[type];
-            col.Remove(asset);
+            col.Remove(asset.Id);
 
             if (col.Count == 0)
                 _collections.Remove(type);
@@ -66,14 +73,28 @@ namespace CrossEngine.Assets
         {
             if (!_collections.ContainsKey(type))
                 return null;
-            return _collections[type].Get(id);
+            return (Asset)_collections[type][id];
+        }
+
+        public ICollection<T>? GetCollection<T>() where T : Asset
+        {
+            return (ICollection<T>)GetCollection(typeof(T));
+        }
+
+        public ICollection? GetCollection(Type ofType)
+        {
+            if (!ofType.IsSubclassOf(typeof(Asset)))
+                throw new InvalidOperationException();
+            if (!_collections.ContainsKey(ofType))
+                return null;
+            return _collections[ofType].Values;
         }
 
         public void Load()
         {
-            foreach (var item in _collections.Values)
+            foreach (var col in _collections.Values)
             {
-                foreach (var asset in item)
+                foreach (Asset asset in col.Values)
                 {
                     if (!asset.Loaded)
                         asset.Load(this);
@@ -83,9 +104,9 @@ namespace CrossEngine.Assets
 
         public void Unload()
         {
-            foreach (var item in _collections.Values)
+            foreach (var col in _collections.Values)
             {
-                foreach (var asset in item)
+                foreach (Asset asset in col.Values)
                 {
                     if (asset.Loaded)
                         asset.Unload(this);
@@ -95,7 +116,11 @@ namespace CrossEngine.Assets
 
         void ISerializable.GetObjectData(SerializationInfo info)
         {
-            info.AddValue("Assets", _collections.Values.SelectMany(x => x).ToArray());
+            List<Asset> imTooLazy = new();
+            foreach (var col in _collections.Values)
+                foreach (Asset asset in col.Values)
+                    imTooLazy.Add(asset);
+            info.AddValue("Assets", imTooLazy.ToArray());
         }
 
         void ISerializable.SetObjectData(SerializationInfo info)
