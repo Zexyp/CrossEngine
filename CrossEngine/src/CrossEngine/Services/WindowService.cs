@@ -2,13 +2,15 @@
 using CrossEngine.Events;
 using CrossEngine.Platform;
 using CrossEngine.Profiling;
+using CrossEngine.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace CrossEngine.Services
 {
-    public class WindowService : Service, IQueuedService, IUpdatedService
+    public class WindowService : Service, IScheduledService, IUpdatedService
     {
         public enum Mode
         {
@@ -23,7 +25,7 @@ namespace CrossEngine.Services
         public int MaxFrameDuration = (int)(1d / 30 * 1000);
 
         Thread _windowThread;
-        readonly ConcurrentQueue<Action> _execute = new ConcurrentQueue<Action>();
+        readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
         Mode _mode;
         bool _running = false;
         AutoResetEvent _render = new AutoResetEvent(false);
@@ -59,14 +61,11 @@ namespace CrossEngine.Services
                 Destroy();
         }
 
-        public void Execute(Action action)
-        {
-            _execute.Enqueue(action);
-        }
+        public Task Execute(Action action) => _scheduler.Schedule(action);
 
         public void Update()
         {
-            ExecuteQueued();
+            _scheduler.RunOnCurrentThread();
 
             WindowUpdate?.Invoke(this);
             Window.Keyboard.Update();
@@ -86,12 +85,12 @@ namespace CrossEngine.Services
 
             Window.Create();
 
-            ExecuteQueued();
+            _scheduler.RunOnCurrentThread();
         }
 
         private void Destroy()
         {
-            ExecuteQueued();
+            _scheduler.RunOnCurrentThread();
 
             Window.Event -= OnWindowEvent;
 
@@ -106,12 +105,6 @@ namespace CrossEngine.Services
             WindowEvent?.Invoke(this, e);
 
             Manager.Event(e);
-        }
-
-        private void ExecuteQueued()
-        {
-            while (_execute.TryDequeue(out var result))
-                result.Invoke();
         }
 
         private void Loop()

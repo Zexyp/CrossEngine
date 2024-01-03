@@ -16,7 +16,7 @@ using CrossEngine.Platform;
 
 namespace CrossEngine.Services
 {
-    public class RenderService : Service, IQueuedService
+    public class RenderService : Service, IScheduledService
     {
         public RendererApi RendererApi { get; private set; }
         public event Action<RenderService> Frame;
@@ -24,7 +24,7 @@ namespace CrossEngine.Services
         public event Action<RenderService> AfterFrame;
         public bool IgnoreRefresh { get; init; } = false;
 
-        ConcurrentQueue<Action> _execute = new ConcurrentQueue<Action>();
+        readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
         bool _running = false;
         GraphicsContext Context;
         GraphicsApi _api;
@@ -46,10 +46,7 @@ namespace CrossEngine.Services
             ws.Execute(Destroy);
         }
 
-        public void Execute(Action action)
-        {
-            _execute.Enqueue(action);
-        }
+        public Task Execute(Action action) => _scheduler.Schedule(action);
 
         private void Setup()
         {
@@ -100,8 +97,7 @@ namespace CrossEngine.Services
         {
             Profiler.BeginScope("Render");
 
-            while (_execute.TryDequeue(out var result))
-                result.Invoke();
+            _scheduler.RunOnCurrentThread();
 
             BeforeFrame?.Invoke(this);
             Frame?.Invoke(this);

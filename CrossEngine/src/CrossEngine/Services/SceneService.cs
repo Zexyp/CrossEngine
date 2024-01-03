@@ -2,22 +2,24 @@
 using CrossEngine.Rendering;
 using CrossEngine.Scenes;
 using CrossEngine.Systems;
+using CrossEngine.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace CrossEngine.Services
 {
-    public class SceneService : Service, IUpdatedService, IQueuedService
+    public class SceneService : Service, IUpdatedService, IScheduledService
     {
-        readonly Queue<Action> _actions = new Queue<Action>();
         readonly List<Scene> _scenes = new List<Scene>();
+        readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
 
         public override void OnStart()
         {
             SceneManager.service = this;
 
-            ExecuteQueued();
+            _scheduler.RunOnCurrentThread();
         }
 
         public override void OnAttach()
@@ -34,7 +36,7 @@ namespace CrossEngine.Services
 
         public override void OnDestroy()
         {
-            ExecuteQueued();
+            _scheduler.RunOnCurrentThread();
 
             Debug.Assert(_scenes.Count == 0);
             SceneManager.service = null;
@@ -56,15 +58,11 @@ namespace CrossEngine.Services
             _scenes.Remove(scene);
         }
 
-        private void ExecuteQueued()
-        {
-            while (_actions.TryDequeue(out var action))
-                action.Invoke();
-        }
+        
 
         public void OnUpdate()
         {
-            ExecuteQueued();
+            _scheduler.RunOnCurrentThread();
 
             for (int i = 0; i < _scenes.Count; i++)
             {
@@ -92,9 +90,6 @@ namespace CrossEngine.Services
             }
         }
 
-        public void Execute(Action action)
-        {
-            _actions.Enqueue(action);
-        }
+        public Task Execute(Action action) => _scheduler.Schedule(action);
     }
 }
