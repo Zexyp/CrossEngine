@@ -10,8 +10,11 @@ namespace CrossEngine.Scenes
     public static class SceneManager
     {
         internal static SceneService service;
-        
-        public static Scene Current { get; internal set; }
+
+        [ThreadStatic]
+        static Scene _current;
+
+        public static Scene Current { get => _current; internal set => _current = value; }
 
         public static void Load(Scene scene)
         {

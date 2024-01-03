@@ -24,9 +24,9 @@ namespace CrossEngine.Services
         void OnUpdate();
     }
 
-    public interface IQueuedService
+    public interface IScheduledService
     {
-        void Execute(Action action);
+        Task Execute(Action action);
     }
 
     public interface IEventedService {
