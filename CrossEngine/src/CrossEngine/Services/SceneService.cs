@@ -91,5 +91,6 @@ namespace CrossEngine.Services
         }
 
         public Task Execute(Action action) => _scheduler.Schedule(action);
+        public TaskScheduler GetScheduler() => _scheduler;
     }
 }

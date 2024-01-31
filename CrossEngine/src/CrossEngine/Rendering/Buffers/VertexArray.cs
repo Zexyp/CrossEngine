@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 
 using CrossEngine.Platform.OpenGL;
@@ -47,11 +48,16 @@ namespace CrossEngine.Rendering.Buffers
 
         public static WeakReference<VertexArray> Create()
         {
+            return Create(new WeakReference<VertexArray>(null));
+        }
+
+        public static WeakReference<VertexArray> Create(WeakReference<VertexArray> wr)
+        {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<VertexArray>(new GLVertexArray());
+                case GraphicsApi.OpenGL: wr.SetTarget(new GLVertexArray()); return wr;
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

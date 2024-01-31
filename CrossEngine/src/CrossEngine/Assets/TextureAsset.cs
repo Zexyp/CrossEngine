@@ -1,4 +1,5 @@
-﻿using CrossEngine.Assets.Loaders;
+﻿using CrossEngine.Assets;
+using CrossEngine.Assets.Loaders;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Serialization;
 using CrossEngine.Utils;
@@ -14,24 +15,30 @@ namespace CrossEngine.Assets
 {
     public class TextureAsset : Asset
     {
-        public override bool Loaded => Texture?.GetValue() != null;
+        public override bool Loaded { get => _loaded; }
 
         public WeakReference<Texture> Texture = null;
 
         public string RelativePath;
 
+        private bool _loaded = false;
+
         public override async void Load(IAssetLoadContext context)
         {
-            using (Stream stream = await context.OpenStream(context.GetFullPath(RelativePath)))
+            _loaded = true;
+            
+            using (Stream stream = await context.OpenRelativeStream(RelativePath))
             {
-                Texture = TextureLoader.LoadTexture(stream);
+                Texture = context.GetLoader<TextureLoader>().ScheduleTextureLoad(stream);
             }
         }
 
         public override void Unload(IAssetLoadContext context)
         {
-            Texture.GetValue().Dispose();
+            context.GetLoader<TextureLoader>().ScheduleTextureUnload(Texture);
             Texture = null;
+
+            _loaded = false;
         }
 
         public override void GetObjectData(SerializationInfo info)

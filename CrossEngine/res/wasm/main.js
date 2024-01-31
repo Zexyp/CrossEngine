@@ -13,6 +13,10 @@ const interop = exports.CrossEngine.Platform.Wasm.Interop;
 var canvas = globalThis.document.getElementById("canvas");
 dotnet.instance.Module["canvas"] = canvas;
 
+globalThis.window.addEventListener("orientationchange", function (event) {
+	globalThis.document.documentElement.requestFullscreen();
+});
+
 setModuleImports("main.js", {
 	initialize: () => {
 
@@ -70,6 +74,9 @@ setModuleImports("main.js", {
 			var button = e.button;
 
 			interop.OnMouseDown(shift, ctrl, alt, button);
+
+			if (navigator.userAgent.match(/Android/i))
+				document.documentElement.requestFullscreen();
 		}
 
 		var mouseUp = (e) => {

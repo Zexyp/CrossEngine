@@ -55,11 +55,16 @@ namespace CrossEngine.Rendering.Textures
 
         public static WeakReference<Texture> Create(uint width, uint height, ColorFormat internalFormat)
         {
+            return Create(new WeakReference<Texture>(null), width, height, internalFormat);
+        }
+
+        public static WeakReference<Texture> Create(WeakReference<Texture> wr, uint width, uint height, ColorFormat internalFormat)
+        {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<Texture>(new GLTexture(width, height, internalFormat));
+                case GraphicsApi.OpenGL: wr.SetTarget(new GLTexture(width, height, internalFormat)); return wr;
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

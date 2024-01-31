@@ -13,6 +13,7 @@ using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Platform;
+using CrossEngine.Assets.Loaders;
 
 namespace CrossEngine.Services
 {
@@ -22,7 +23,7 @@ namespace CrossEngine.Services
         public event Action<RenderService> Frame;
         public event Action<RenderService> BeforeFrame;
         public event Action<RenderService> AfterFrame;
-        public bool IgnoreRefresh { get; init; } = false;
+        public bool IgnoreRefresh { get; set; } = false;
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
         bool _running = false;
@@ -47,6 +48,7 @@ namespace CrossEngine.Services
         }
 
         public Task Execute(Action action) => _scheduler.Schedule(action);
+        public TaskScheduler GetScheduler() => _scheduler;
 
         private void Setup()
         {
@@ -116,6 +118,9 @@ namespace CrossEngine.Services
         {
             Renderer2D.Init(RendererApi);
             LineRenderer.Init(RendererApi);
+            
+            TextureLoader.InternalInit();
+
             TextRendererUtil.Init();
         }
 
@@ -123,6 +128,7 @@ namespace CrossEngine.Services
         {
             Renderer2D.Shutdown();
             LineRenderer.Shutdown();
+            
             TextRendererUtil.Shutdown();
         }
 

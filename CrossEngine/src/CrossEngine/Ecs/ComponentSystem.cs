@@ -19,7 +19,7 @@ namespace CrossEngine.Ecs
         void FixedUpdate();
     }
 
-    public abstract class System
+    public abstract class ComponentSystem
     {
         internal protected EcsWorld World { get; internal set; }
 
@@ -33,7 +33,7 @@ namespace CrossEngine.Ecs
         public abstract void Unregister(Component component);
     }
 
-    public abstract class UnicastSystem<T> : System where T : Component
+    public abstract class UnicastSystem<T> : ComponentSystem where T : Component
     {
         public override void Attach()
         {
@@ -47,13 +47,12 @@ namespace CrossEngine.Ecs
         public abstract void Unregister(T component);
     }
 
-    public abstract class MulticastSystem<T> : System where T : ITuple
+    public abstract class MulticastSystem<T> : ComponentSystem where T : ITuple
     {
         public MulticastSystem()
         {
             var types = typeof(T).GetGenericArguments();
-            if (types.Distinct().Count() == types.Length && types.All(e => e.IsSubclassOf(typeof(Component))))
-                throw new NotSupportedException();
+            Debug.Assert(types.Distinct().Count() == types.Length && types.All(e => e.IsSubclassOf(typeof(Component))));
         }
 
         public override void Attach()

@@ -24,9 +24,9 @@ namespace CrossEngine.Serialization
                 {
                     new EntityStructureJsonConverter(),
 
-                    (assConv = new AssetJsonConverter()),
+                    new AssetJsonConverter(),
 
-                    new SceneJsonConverter(assConv),
+                    new SceneJsonConverter(),
 
                     new SerializableJsonConverter(),
 

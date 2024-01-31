@@ -59,11 +59,16 @@ namespace CrossEngine.Rendering.Buffers
 
         public static unsafe WeakReference<IndexBuffer> Create(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
+            return Create(new WeakReference<IndexBuffer>(null), indices, count, dataType, bufferUsage);
+        }
+
+        public static unsafe WeakReference<IndexBuffer> Create(WeakReference<IndexBuffer> wr, void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
+        {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<IndexBuffer>(new GLIndexBuffer(indices, count, dataType, bufferUsage));
+                case GraphicsApi.OpenGL: wr.SetTarget(new GLIndexBuffer(indices, count, dataType, bufferUsage)); return wr;
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

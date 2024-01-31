@@ -44,7 +44,7 @@ namespace CrossEngine.Components
                 MarkForUpdate();
             }
         }
-        [EditorDrag]
+        //[EditorDrag]
         public Quaternion Rotation
         {
             get

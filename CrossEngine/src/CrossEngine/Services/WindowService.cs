@@ -165,5 +165,7 @@ namespace CrossEngine.Services
             else
                 Update();
         }
+
+        public TaskScheduler GetScheduler() => _scheduler;
     }
 }

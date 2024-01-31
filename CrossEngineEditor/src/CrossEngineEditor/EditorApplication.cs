@@ -23,9 +23,7 @@ namespace CrossEngineEditor
             Manager.Register(new WindowService(
                 WindowService.Mode.ThreadLoop
                 ));
-            Manager.Register(new RenderService(
-                GraphicsApi.OpenGL
-                ));
+            Manager.Register(new RenderService());
             Manager.Register(new ImGuiService());
             Manager.Register(new SceneService());
             Manager.Register(new EditorService());
