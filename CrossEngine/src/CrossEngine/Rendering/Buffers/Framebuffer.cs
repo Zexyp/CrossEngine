@@ -111,11 +111,16 @@ namespace CrossEngine.Rendering.Buffers
 
         public static unsafe WeakReference<Framebuffer> Create(ref FramebufferSpecification specification)
         {
+            return Create(new WeakReference<Framebuffer>(null), ref specification);
+        }
+
+        public static unsafe WeakReference<Framebuffer> Create(WeakReference<Framebuffer> wr, ref FramebufferSpecification specification)
+        {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<Framebuffer>(new GLFramebuffer(ref specification));
+                case GraphicsApi.OpenGL: wr.SetTarget(new GLFramebuffer(ref specification)); return wr;
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

@@ -13,30 +13,11 @@ namespace CrossEngine.Assets
 {
     public class AssetPool : IAssetLoadContext, ISerializable
     {
+        public string Directory = "./";
+        
         Dictionary<Type, IDictionary> _collections = new();
-        string _directory = "./";
         bool _loaded = false;
-
-        #region IAssetLoadContext
-        string IAssetLoadContext.GetFullPath(string realtivePath)
-        {
-            return Path.Join(_directory, realtivePath);
-        }
-
-        Asset IAssetLoadContext.LoadChild(Type type, Guid id)
-        {
-            var ch = (Asset)_collections[type][id];
-            if (!ch.Loaded)
-                ch.Load(this);
-            return ch;
-        }
-
-        void IAssetLoadContext.FreeChild(Asset asset)
-        {
-            if (asset.Loaded)
-                ((Asset)_collections[asset.GetType()][asset.Id]).Unload(this);
-        }
-        #endregion
+        Loader[] _loaders = null;
 
         Task<Stream> IAssetLoadContext.OpenStream(string path)
         {
@@ -90,8 +71,9 @@ namespace CrossEngine.Assets
             return _collections[ofType].Values;
         }
 
-        public void Load()
+        public void Load(Loader[] loaders)
         {
+            _loaders = loaders;
             foreach (var col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
@@ -100,10 +82,13 @@ namespace CrossEngine.Assets
                         asset.Load(this);
                 }
             }
+            _loaded = true;
+            _loaders = null;
         }
 
-        public void Unload()
+        public void Unload(Loader[] loaders)
         {
+            _loaders = loaders;
             foreach (var col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
@@ -112,10 +97,46 @@ namespace CrossEngine.Assets
                         asset.Unload(this);
                 }
             }
+            _loaded = false;
+            _loaders = null;
         }
 
+        #region IAssetLoadContext
+        string IAssetLoadContext.GetFullPath(string realtivePath)
+        {
+            return Path.Join(Directory, realtivePath);
+        }
+
+        Asset IAssetLoadContext.LoadChild(Type type, Guid id)
+        {
+            var ch = (Asset)_collections[type][id];
+            if (!ch.Loaded)
+                ch.Load(this);
+            return ch;
+        }
+
+        void IAssetLoadContext.FreeChild(Asset asset)
+        {
+            if (asset.Loaded)
+                ((Asset)_collections[asset.GetType()][asset.Id]).Unload(this);
+        }
+
+        public Loader GetLoader(Type type)
+        {
+            for (int i = 0; i < _loaders.Length; i++)
+            {
+                var l = _loaders[i];
+                if (l.GetType() == type)
+                    return l;
+            }
+            return null;
+        }
+        #endregion
+
+        #region ISerializable
         void ISerializable.GetObjectData(SerializationInfo info)
         {
+            info.AddValue("Directory", Directory);
             List<Asset> imTooLazy = new();
             foreach (var col in _collections.Values)
                 foreach (Asset asset in col.Values)
@@ -125,11 +146,14 @@ namespace CrossEngine.Assets
 
         void ISerializable.SetObjectData(SerializationInfo info)
         {
+            Directory = info.GetValue("Directory", Directory);
+
             var assets = info.GetValue<Asset[]>("Assets");
             for (int i = 0; i < assets.Length; i++)
             {
                 Add(assets[i]);
             }
         }
+        #endregion
     }
 }

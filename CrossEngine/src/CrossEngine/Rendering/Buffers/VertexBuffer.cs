@@ -45,11 +45,16 @@ namespace CrossEngine.Rendering.Buffers
 
         public static unsafe WeakReference<VertexBuffer> Create(void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
+            return Create(new WeakReference<VertexBuffer>(null), vertices, size, bufferUsage);
+        }
+
+        public static unsafe WeakReference<VertexBuffer> Create(WeakReference<VertexBuffer> wr, void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
+        {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<VertexBuffer>(new GLVertexBuffer(vertices, size, BufferUsageHint.StaticDraw));
+                case GraphicsApi.OpenGL: wr.SetTarget(new GLVertexBuffer(vertices, size, bufferUsage)); return wr;
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

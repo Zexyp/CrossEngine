@@ -21,6 +21,13 @@ namespace CrossEngineEditor
         public override void OnStart()
         {
             AddPanel(new InspctorPanel());
+            AddPanel(new HierarchyPanel());
+
+            Context.Scene = new CrossEngine.Scenes.Scene();
+            Context.Scene.CreateEntity();
+            Context.Scene.CreateEntity();
+            Context.Scene.CreateEntity();
+            Context.Scene.Entities[1].Parent = Context.Scene.Entities[0];
         }
 
         public override void OnDestroy()

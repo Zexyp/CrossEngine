@@ -10,14 +10,14 @@ namespace CrossEngine.Ecs
 {
     public class EcsWorld
     {
-        readonly List<System> _systems = new List<System>();
+        readonly List<ComponentSystem> _systems = new List<ComponentSystem>();
         readonly List<IUpdatedSystem> _updatedSystems = new List<IUpdatedSystem>();
         readonly List<IFixedUpdatedSystem> _fixedUpdatedSystems = new List<IFixedUpdatedSystem>();
 
-        private event Func<Component, System> ComponentRegister;
-        private event Func<Component, System> ComponentUnregister;
+        private event Func<Component, ComponentSystem> ComponentRegister;
+        private event Func<Component, ComponentSystem> ComponentUnregister;
 
-        public void RegisterSystem(System system)
+        public void RegisterSystem(ComponentSystem system)
         {
             Debug.Assert(!_systems.Contains(system));
 
@@ -32,7 +32,7 @@ namespace CrossEngine.Ecs
             system.Attach();
         }
 
-        public void UnregisterSystem(System system)
+        public void UnregisterSystem(ComponentSystem system)
         {
             Debug.Assert(_systems.Contains(system));
 
@@ -49,12 +49,12 @@ namespace CrossEngine.Ecs
             system.World = null;
         }
 
-        public T GetSystem<T>() where T : System
+        public T GetSystem<T>() where T : ComponentSystem
         {
             return (T)GetSystem(typeof(T));
         }
 
-        public System GetSystem(Type type)
+        public ComponentSystem GetSystem(Type type)
         {
             for (int i = 0; i < _systems.Count; i++)
             {
@@ -121,13 +121,13 @@ namespace CrossEngine.Ecs
         //    }
         //}
 
-        public void NotifyOn<T>(System bindTo) where T : Component
+        public void NotifyOn<T>(ComponentSystem bindTo) where T : Component
         {
             NotifyOn(typeof(T), bindTo);
         }
 
         // yep, this is a weird glue code
-        public void NotifyOn(Type type, System bindTo)
+        public void NotifyOn(Type type, ComponentSystem bindTo, bool inherit = true)
         {
             ComponentRegister += (c) =>
             {
@@ -143,19 +143,19 @@ namespace CrossEngine.Ecs
             };
         }
 
-        private void NotifyRemoveAll(System boundTo)
+        private void NotifyRemoveAll(ComponentSystem boundTo)
         {
             var registerInvocation = ComponentRegister.GetInvocationList();
             for (int i = 0; i < registerInvocation.Length; i++)
             {
-                var del = (Func<Component, System>)registerInvocation[i];
+                var del = (Func<Component, ComponentSystem>)registerInvocation[i];
                 if (del(null) == boundTo)
                     ComponentRegister -= del;
             }
             var unregisterInvocation = ComponentUnregister.GetInvocationList();
             for (int i = 0; i < registerInvocation.Length; i++)
             {
-                var del = (Func<Component, System>)unregisterInvocation[i];
+                var del = (Func<Component, ComponentSystem>)unregisterInvocation[i];
                 if (del(null) == boundTo)
                     ComponentUnregister -= del;
             }

@@ -223,6 +223,24 @@ namespace CrossEngine.Ecs
         }
 
         public int GetComponentIndex(Component component) => _components.IndexOf(component);
+
+        public IEnumerable<Component> GetDeepComponents(Type type, bool inherit = true)
+        {
+            foreach (var c in _components)
+            {
+                Type comptype = c.GetType();
+                if (inherit ? type.IsAssignableFrom(comptype) : comptype == type)
+                    yield return c;
+            }
+
+            foreach (var ch in _children)
+            {
+                foreach (var c in ch.GetDeepComponents(type))
+                {
+                    yield return c;
+                }
+            }
+        }
         #endregion
 
         #region Hierarchy Methods

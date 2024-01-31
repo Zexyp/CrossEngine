@@ -14,11 +14,13 @@ namespace CrossEngine.Assets
         
         Asset LoadChild(Type type, Guid id);
         void FreeChild(Asset asset);
-        
-        virtual T LoadChild<T>(Guid id) where T : Asset
-        {
-            return (T)LoadChild(typeof(T), id);
-        }
+
+        Loader GetLoader(Type type);
+
+        virtual Task<Stream> OpenRelativeStream(string realtivePath) => OpenStream(GetFullPath(realtivePath));
+
+        virtual T GetLoader<T>() where T : Loader => (T)GetLoader(typeof(T));
+        virtual T LoadChild<T>(Guid id) where T : Asset => (T)LoadChild(typeof(T), id);
     }
 
     public abstract class Asset : ISerializable

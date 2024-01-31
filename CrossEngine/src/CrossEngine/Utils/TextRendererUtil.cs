@@ -9,6 +9,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
 using System.Security.Cryptography;
 using CrossEngine.Debugging;
+using CrossEngine.Assets;
 using CrossEngine.Assets.Loaders;
 
 namespace CrossEngine.Utils

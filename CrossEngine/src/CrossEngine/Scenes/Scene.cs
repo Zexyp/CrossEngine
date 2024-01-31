@@ -24,7 +24,6 @@ namespace CrossEngine.Scenes
         readonly SceneLayerRenderData _sceneLayer = new SceneLayerRenderData();
         bool _loaded = false;
         readonly List<Entity> _entities = new List<Entity>();
-        public AssetPool Assets { get; internal set; } = new AssetPool();
 
         public Scene()
         {
@@ -39,6 +38,7 @@ namespace CrossEngine.Scenes
             World.RegisterSystem(new TransformSystem());
             World.RegisterSystem(rs);
             World.RegisterSystem(new SpriteRendererSystem(_sceneLayer));
+            World.RegisterSystem(new UISystem(RenderData));
         }
 
         public void AddEntity(Entity entity)
@@ -70,8 +70,6 @@ namespace CrossEngine.Scenes
 
         public void Load()
         {
-            Assets.Load();
-
             _loaded = true;
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -86,8 +84,6 @@ namespace CrossEngine.Scenes
                 World.RemoveEntity(_entities[i]);
             }
             _loaded = false;
-
-            Assets.Unload();
         }
 
         public void Start()

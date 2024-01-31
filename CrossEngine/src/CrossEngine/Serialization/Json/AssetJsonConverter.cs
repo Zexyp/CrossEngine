@@ -10,36 +10,18 @@ using System.Xml.Linq;
 
 namespace CrossEngine.Serialization.Json
 {
-    internal class AssetJsonConverter : SerializableJsonConverter, IInitializedConverter
+    internal class AssetJsonConverter : ElementJsonConverter<Asset>
     {
-        internal AssetPool pool = null;
-
         public override bool CanConvert(Type typeToConvert) => typeToConvert.IsSubclassOf(typeof(Asset));
 
-        public override void Write(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, Asset value, JsonSerializerOptions options)
         {
-            if (pool != null)
-                JsonSerializer.Serialize(writer, ((Asset)value).Id, options);
-            else
-                base.Write(writer, value, options);
+            JsonSerializer.Serialize(writer, value.Id, options);
         }
 
-        public override ISerializable Read(JsonElement reader, Type typeToConvert, JsonSerializerOptions options)
+        public override Asset Read(JsonElement reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            if (pool != null)
-                return pool.Get(typeToConvert, reader.GetGuid());
-            else
-                return base.Read(reader, typeToConvert, options);
-        }
-
-        public void Init()
-        {
-            pool = null;
-        }
-
-        public void Finish()
-        {
-            pool = null;
+            return AssetManager.Get(typeToConvert, reader.GetGuid());
         }
     }
 }
