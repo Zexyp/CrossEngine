@@ -185,12 +185,12 @@ namespace CrossEngine.Ecs
             return null;
         }
 
-        public T[] GetAllComponents<T>() where T : Component
+        public T[] GetAllComponents<T>(bool inherit = true) where T : Component
         {
             List<T> found = new List<T>();
             for (int i = 0; i < _components.Count; i++)
             {
-                if (_components[i] is T)
+                if (inherit ? _components[i] is T : _components[i].GetType() == typeof(T))
                 {
                     found.Add((T)_components[i]);
                 }
@@ -198,13 +198,20 @@ namespace CrossEngine.Ecs
             return found.ToArray();
         }
 
-        public bool TryGetComponent<T>(out T component) where T : Component
+        public bool TryGetComponent<T>(out T component, bool inherit = true) where T : Component
+        {
+            var result = TryGetComponent(typeof(T), out var output, inherit);
+            component = (T)output;
+            return result;
+        }
+
+        public bool TryGetComponent(Type type, out Component component, bool inherit = true)
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                if (_components[i] is T)
+                if (inherit ? type.IsAssignableFrom(_components[i].GetType()) : type == _components[i].GetType())
                 {
-                    component = (T)_components[i];
+                    component = _components[i];
                     return true;
                 }
             }
