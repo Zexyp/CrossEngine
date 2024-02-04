@@ -121,9 +121,9 @@ namespace CrossEngine.Ecs
         //    }
         //}
 
-        public void NotifyOn<T>(ComponentSystem bindTo) where T : Component
+        public void NotifyOn<T>(ComponentSystem bindTo, bool inherit = true) where T : Component
         {
-            NotifyOn(typeof(T), bindTo);
+            NotifyOn(typeof(T), bindTo, inherit);
         }
 
         // yep, this is a weird glue code
@@ -131,13 +131,13 @@ namespace CrossEngine.Ecs
         {
             ComponentRegister += (c) =>
             {
-                if (type.IsAssignableFrom(c.GetType()))
+                if (inherit ? type.IsAssignableFrom(c.GetType()) : type == c.GetType())
                     bindTo.Register(c);
                 return bindTo;
             };
             ComponentUnregister += (c) =>
             {
-                if (type.IsAssignableFrom(c.GetType()))
+                if (inherit ? type.IsAssignableFrom(c.GetType()) : type == c.GetType())
                     bindTo.Unregister(c);
                 return bindTo;
             };

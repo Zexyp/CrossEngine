@@ -84,6 +84,6 @@ namespace CrossEngine.Ecs
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class RequireComponentAttribute<T> : Attribute where T : Component
     {
-        public RequireComponentAttribute() => throw new NotImplementedException();
+        public RequireComponentAttribute(bool inherit = true) => throw new NotImplementedException();
     }
 }

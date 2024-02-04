@@ -35,9 +35,16 @@ namespace CrossEngine.Ecs
 
     public abstract class UnicastSystem<T> : ComponentSystem where T : Component
     {
+        private bool inherit;
+
+        public UnicastSystem(bool inherit = true)
+        {
+            this.inherit = inherit;
+        }
+
         public override void Attach()
         {
-            World.NotifyOn<T>(this);
+            World.NotifyOn<T>(this, this.inherit);
         }
 
         public override void Register(Component component) => Register((T)component);
@@ -49,8 +56,12 @@ namespace CrossEngine.Ecs
 
     public abstract class MulticastSystem<T> : ComponentSystem where T : ITuple
     {
-        public MulticastSystem()
+        private bool inherit;
+
+        public MulticastSystem(bool inherit = true)
         {
+            this.inherit = inherit;
+
             var types = typeof(T).GetGenericArguments();
             Debug.Assert(types.Distinct().Count() == types.Length && types.All(e => e.IsSubclassOf(typeof(Component))));
         }
@@ -60,7 +71,7 @@ namespace CrossEngine.Ecs
             var types = typeof(T).GetGenericArguments();
             for (int i = 0; i < types.Length; i++)
             {
-                World.NotifyOn(types[i], this);
+                World.NotifyOn(types[i], this, this.inherit);
             }
         }
     }
