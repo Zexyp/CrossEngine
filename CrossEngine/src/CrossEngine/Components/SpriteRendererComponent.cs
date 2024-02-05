@@ -10,13 +10,17 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Components
 {
     public class SpriteRendererComponent : Component, ISpriteRenderData
     {
+        [EditorColor]
         public Vector4 Color { get; set; } = Vector4.One;
+        [EditorEnum]
         public BlendMode Blend { get; set; } = BlendMode.Blend;
+        [EditorAsset]
         public SpriteAsset Sprite;
 
         Matrix4x4 IObjectRenderData.Transform => Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity;

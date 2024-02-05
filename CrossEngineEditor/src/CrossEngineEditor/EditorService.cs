@@ -20,7 +20,7 @@ namespace CrossEngineEditor
 
         public override void OnStart()
         {
-            AddPanel(new InspctorPanel());
+            AddPanel(new InspectorPanel());
             AddPanel(new HierarchyPanel());
 
             Context.Scene = new CrossEngine.Scenes.Scene();
@@ -28,6 +28,10 @@ namespace CrossEngineEditor
             Context.Scene.CreateEntity();
             Context.Scene.CreateEntity();
             Context.Scene.Entities[1].Parent = Context.Scene.Entities[0];
+            Context.Scene.Entities[0].AddComponent<CrossEngine.Components.OrthographicCameraComponent>();
+            Context.Scene.Entities[0].AddComponent<CrossEngine.Components.PerspectiveCameraComponent>();
+            Context.Scene.Entities[0].AddComponent<CrossEngine.Components.SpriteRendererComponent>();
+            Context.Scene.Entities[0].AddComponent<CrossEngine.Components.TagComponent>();
         }
 
         public override void OnDestroy()

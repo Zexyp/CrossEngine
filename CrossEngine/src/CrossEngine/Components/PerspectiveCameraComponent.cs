@@ -1,6 +1,7 @@
 ﻿using CrossEngine.Ecs;
 using CrossEngine.Serialization;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Editor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,7 @@ namespace CrossEngine.Components
             }
             set => throw new InvalidOperationException();
         }
+        [EditorDrag]
         public float Far
         {
             get => _far;
@@ -31,6 +33,7 @@ namespace CrossEngine.Components
                 _projectionDirty = true;
             }
         }
+        [EditorDrag]
         public float Near
         {
             get => _near;
@@ -41,6 +44,7 @@ namespace CrossEngine.Components
                 _projectionDirty = true;
             }
         }
+        [EditorDrag]
         public float FOV
         {
             get => _fov;
@@ -52,8 +56,8 @@ namespace CrossEngine.Components
             }
         }
 
-        private float _far = 1;
-        private float _near = -1;
+        private float _far = 1000;
+        private float _near = .1f;
         private float _fov = 90;
         private float _aspect = 1;
         private bool _projectionDirty = true;

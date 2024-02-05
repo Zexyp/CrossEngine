@@ -177,7 +177,7 @@ namespace CrossEngine.Utils.Editor
             
         }
 
-        public EditorValueAttribute(string? name) : this()
+        public EditorValueAttribute(string name) : this()
         {
             Name = name;
         }
@@ -187,10 +187,10 @@ namespace CrossEngine.Utils.Editor
     public class EditorSectionAttribute : EditorValueAttribute
     {
         public override EditorAttributeType Kind => EditorAttributeType.Decor;
-
-        public EditorSectionAttribute(string name)
+        
+        public EditorSectionAttribute(string name) : base(name)
         {
-            Name = name;
+
         }
     }
 
@@ -198,11 +198,6 @@ namespace CrossEngine.Utils.Editor
     public class EditorHintAttribute : EditorValueAttribute
     {
         public override EditorAttributeType Kind => EditorAttributeType.Hint;
-
-        public EditorHintAttribute(string name)
-        {
-            Name = name;
-        }
     }
 
     #region Range
@@ -304,6 +299,12 @@ namespace CrossEngine.Utils.Editor
         public bool HDR = true;
     }
 
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorAssetAttribute : EditorValueAttribute
+    {
+
+    }
+
     //[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     //public class EditorInnerDrawAttribute : EditorValueAttribute
     //{
@@ -345,6 +346,7 @@ namespace CrossEngine.Utils.Editor
             MaxLength = maxLength;
         }
 
+        public bool Nullable = false;
         public uint MaxLength = 256;
     }
 

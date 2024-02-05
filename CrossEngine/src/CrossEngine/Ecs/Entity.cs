@@ -39,16 +39,20 @@ namespace CrossEngine.Ecs
             set
             {
                 if (value == _parent) return;
+
+                if (this == value) throw new InvalidOperationException("Unacceptable!!! (yeah someone tried self parenting)");
+                if (value?.IsParentedBy(this) ?? false) throw new InvalidOperationException("Recursive tree attempted");
+                
                 if (_parent != null)
                 {
                     _parent._children.Remove(this);
-                    _parent.ChildRemoved?.Invoke(_parent, this);
+                    _parent.ChildRemoved?.Invoke(this, _parent);
                 }
                 _parent = value;
                 if (_parent != null)
                 {
                     _parent._children.Add(this);
-                    _parent.ChildAdded?.Invoke(_parent, this);
+                    _parent.ChildAdded?.Invoke(this, _parent);
                 }
                 ParentChanged?.Invoke(this);
             }
@@ -229,8 +233,6 @@ namespace CrossEngine.Ecs
             _components.Insert(destinationIndex, component);
         }
 
-        public int GetComponentIndex(Component component) => _components.IndexOf(component);
-
         public IEnumerable<Component> GetDeepComponents(Type type, bool inherit = true)
         {
             foreach (var c in _components)
@@ -259,8 +261,6 @@ namespace CrossEngine.Ecs
             _children.Remove(child);
             _children.Insert(destinationIndex, child);
         }
-
-        public int GetChildIndex(Entity child) => _children.IndexOf(child);
 
         public bool IsParentedBy(Entity potpar)
         {

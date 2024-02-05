@@ -57,7 +57,8 @@ namespace CrossEngine.Components
 
                 _rotation = value;
                 _dirtyLocal = true;
-                //_eulerAngles = QuaternionExtension.ToEuler(value);
+
+                _eulerAnglesCache = QuaternionExtension.ToEuler(value);
                 MarkForUpdate();
             }
         }
@@ -77,23 +78,24 @@ namespace CrossEngine.Components
                 MarkForUpdate();
             }
         }
-        //[EditorDrag]
-        //public Vector3 EulerRotation
-        //{
-        //    get
-        //    {
-        //        return _eulerAngles;
-        //    }
-        //    set
-        //    {
-        //        if (_eulerAngles == value) return;
-        //
-        //        _eulerAngles = value;
-        //        _eulerAngles = new Vector3(_eulerAngles.X % (MathF.PI * 2), _eulerAngles.Y % (MathF.PI * 2), _eulerAngles.Z % (MathF.PI * 2));
-        //        _rotation = QuaternionExtension.RotateXYZ(_eulerAngles);
-        //        MarkForUpdate();
-        //    }
-        //}
+        [EditorDrag]
+        public Vector3 EulerRotation
+        {
+            get
+            {
+                return _eulerAnglesCache;
+            }
+            set
+            {
+                if (_eulerAnglesCache == value) return;
+
+                _eulerAnglesCache = value;
+                _eulerAnglesCache = new Vector3(_eulerAnglesCache.X % (MathF.PI * 2), _eulerAnglesCache.Y % (MathF.PI * 2), _eulerAnglesCache.Z % (MathF.PI * 2));
+                
+                _rotation = QuaternionExtension.RotateXYZ(_eulerAnglesCache);
+                MarkForUpdate();
+            }
+        }
 
         public Matrix4x4 WorldTransformMatrix
         {
@@ -194,6 +196,7 @@ namespace CrossEngine.Components
         private Vector3 _translation = Vector3.Zero;
         private Quaternion _rotation = Quaternion.Identity;
         private Vector3 _scale = Vector3.One;
+        private Vector3 _eulerAnglesCache = Vector3.Zero;
 
         // world
         // they get cached
