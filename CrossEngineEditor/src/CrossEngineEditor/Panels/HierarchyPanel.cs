@@ -1,4 +1,7 @@
-﻿using CrossEngine.Ecs;
+﻿using CrossEngine.Components;
+using CrossEngine.Ecs;
+using CrossEngine.Inputs;
+using CrossEngineEditor.Utils;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
@@ -22,11 +25,15 @@ namespace CrossEngineEditor.Panels
             if (Context.Scene == null)
                 return;
             
-            foreach (var ent in Context.Scene.Entities.Where(e => e.Parent == null))
+            foreach (var ent in Context.Scene.Entities.Where(e => e.Parent == null).ToArray())
             {
                 DrawEntityNode(ent);
             }
+
+            ddEntityContext.Update();
         }
+
+        DragDropContext<Entity> ddEntityContext = new DragDropContext<Entity>();
 
         unsafe void DrawEntityNode(Entity node)
         {
@@ -40,14 +47,23 @@ namespace CrossEngineEditor.Panels
 
             if (node == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
 
-            string label = $"Entity (Id: {node.Id})";
+            string label = node.TryGetComponent<TagComponent>(out var tagComponent) ? tagComponent.Tag : $"Entity (Id: {node.Id})";
+            label ??= "";
 
             bool opened = ImGui.TreeNodeEx(node.GetHashCode().ToString(), flags, label);
 
-            if (node == Context.ActiveEntity) ImGui.PopStyleColor();
-
             if (ImGui.IsItemClicked())
                 Context.ActiveEntity = node;
+
+            if (node == Context.ActiveEntity) ImGui.PopStyleColor();
+
+            ddEntityContext.MarkSource(node);
+            if (ddEntityContext.MarkTarget())
+                if (!node.IsParentedBy(ddEntityContext.Source))
+                {
+                    ddEntityContext.Source.Parent = node;
+                    ddEntityContext.End();
+                }
 
             if (opened)
             {
@@ -57,6 +73,35 @@ namespace CrossEngineEditor.Panels
                 }
 
                 ImGui.TreePop();
+            }
+
+            if (ddEntityContext.Source != node && ddEntityContext.Active)
+            {
+                const float SEPARATOR_HEIGHT = 4;
+
+                Vector2 prevCur = ImGui.GetCursorPos();
+
+                ImGui.SetCursorPos(new Vector2(prevCur.X, prevCur.Y - SEPARATOR_HEIGHT / 2));
+                ImGui.Button("##target", new Vector2(ImGui.GetColumnWidth(), SEPARATOR_HEIGHT));
+
+                if (ddEntityContext.MarkTarget())
+                {
+                    if (node.Parent != ddEntityContext.Source && !node.IsParentedBy(ddEntityContext.Source))
+                    {
+                        ddEntityContext.Source.Parent = node.Parent;
+                        if (node.Parent == null)
+                        {
+                            Context.Scene.ShifEntity(ddEntityContext.Source, Context.Scene.Entities.IndexOf(node));
+                        }
+                        else
+                        {
+                            node.Parent.ShiftChild(ddEntityContext.Source, node.Parent.Children.IndexOf(node));
+                        }
+                    }
+                    ddEntityContext.End();
+                }
+
+                ImGui.SetCursorPos(prevCur);
             }
 
             ImGui.PopID();

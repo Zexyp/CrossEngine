@@ -60,6 +60,15 @@ namespace CrossEngine.Scenes
             _entities.Remove(entity);
         }
 
+        public void ShifEntity(Entity entity, int destinationIndex)
+        {
+            if (!_entities.Contains(entity)) throw new InvalidOperationException("Scene does not contain entity!");
+            if (destinationIndex < 0 || destinationIndex > _entities.Count - 1) throw new IndexOutOfRangeException("Invalid index!");
+
+            _entities.Remove(entity);
+            _entities.Insert(destinationIndex, entity);
+        }
+
         public Entity CreateEntity()
         {
             var entity = new Entity();
