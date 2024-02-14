@@ -114,9 +114,9 @@ void main()
 
         public static void Shutdown()
         {
-            data.lineShader.GetValue().Dispose();
-            data.lineVertexArray.GetValue().Dispose();
-            data.lineVertexBuffer.GetValue().Dispose();
+            data.lineShader.Dispose();
+            data.lineVertexArray.Dispose();
+            data.lineVertexBuffer.Dispose();
             data.lineVertexBufferBase = null;
         }
 

@@ -45,6 +45,8 @@ namespace CrossEngine.Services
         public override void OnStart()
         {
             AssetManager.service = this;
+
+            AddLoader(new TextureLoader());
         }
 
         public override void OnDestroy()

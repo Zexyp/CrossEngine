@@ -1,7 +1,11 @@
-﻿using CrossEngine.Display;
+﻿using CrossEngine.Assets.Loaders;
+using CrossEngine.Display;
 using CrossEngine.Profiling;
+using CrossEngine.Rendering.Textures;
+using CrossEngine.Scenes;
 using CrossEngine.Services;
 using CrossEngineEditor.Panels;
+using CrossEngine.Utils;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
@@ -9,6 +13,13 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Logging;
+using System.Diagnostics;
+using CrossEngineEditor.Utils;
+using StbImageSharp;
+using CrossEngine.Assets;
+using System.Text.Json;
+using CrossEngine.Serialization;
 
 namespace CrossEngineEditor
 {
@@ -16,35 +27,78 @@ namespace CrossEngineEditor
     {
         readonly EditorContext Context = new EditorContext();
         readonly List<EditorPanel> _panels = new List<EditorPanel>();
+        readonly List<EditorPanel> _registeredPanels = new List<EditorPanel>();
         private Window window = null;
+        Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
 
         public override void OnStart()
         {
-            AddPanel(new InspectorPanel());
-            AddPanel(new HierarchyPanel());
+            RegisterPanel(new InspectorPanel());
+            RegisterPanel(new HierarchyPanel());
+            RegisterPanel(new ViewportPanel(Manager.GetService<RenderService>()));
+            RegisterPanel(new SimpleThemeGeneratorPanel());
+            RegisterPanel(new AssetListPanel());
 
-            Context.Scene = new CrossEngine.Scenes.Scene();
-            Context.Scene.CreateEntity();
-            Context.Scene.CreateEntity();
-            Context.Scene.CreateEntity();
-            Context.Scene.Entities[1].Parent = Context.Scene.Entities[0];
-            Context.Scene.Entities[0].AddComponent<CrossEngine.Components.OrthographicCameraComponent>();
-            Context.Scene.Entities[0].AddComponent<CrossEngine.Components.PerspectiveCameraComponent>();
-            Context.Scene.Entities[0].AddComponent<CrossEngine.Components.SpriteRendererComponent>();
-            Context.Scene.Entities[0].AddComponent<CrossEngine.Components.TagComponent>();
+            var scene = new Scene();
+            scene.CreateEntity();
+            scene.CreateEntity();
+            scene.CreateEntity();
+            scene.Entities[1].Parent = scene.Entities[0];
+            scene.Entities[0].AddComponent<CrossEngine.Components.OrthographicCameraComponent>();
+            scene.Entities[0].AddComponent<CrossEngine.Components.PerspectiveCameraComponent>();
+            scene.Entities[0].AddComponent<CrossEngine.Components.SpriteRendererComponent>();
+            scene.Entities[0].AddComponent<CrossEngine.Components.TagComponent>();
+
+            Log.Info("editor started");
+
+            SetScene(scene);
         }
 
         public override void OnDestroy()
         {
+            SceneManager.Unload(Context.Scene);
+
+            Context.ActiveEntity = null;
+            Context.Scene = null;
+
             while (_panels.Count > 0)
                 RemovePanel(_panels[0]);
+
+            _registeredPanels.Clear();
+
+            Log.Info("editor closed");
         }
 
-        public override void OnAttach()
+        public override unsafe void OnAttach()
         {
-            Manager.GetService<WindowService>().Execute(() => window = Manager.GetService<WindowService>().Window);
+            Manager.GetService<WindowService>().Execute(() =>
+            {
+                window = Manager.GetService<WindowService>().Window;
+                
+                // eeww
+                Theming.UseImmersiveDarkMode(Process.GetCurrentProcess().MainWindowHandle, true);
+                var result = ImageResult.FromMemory(CrossEngine.Properties.Resources.Logo, ColorComponents.RedGreenBlueAlpha);
+                fixed (void* p = &result.Data[0])
+                    window.SetIcon(p, (uint)result.Width, (uint)result.Height);
+            });
             var rs = Manager.GetService<RenderService>();
             rs.Frame += OnRender;
+            rs.Execute(() =>
+            {
+                dockspaceIconTexture = TextureLoader.LoadTexture(CrossEngine.Properties.Resources.Logo);
+                dockspaceIconTexture.GetValue().SetFilterParameter(FilterParameter.Nearest);
+            });
+        }
+
+        public override void OnDetach()
+        {
+            var rs = Manager.GetService<RenderService>();
+            rs.Frame -= OnRender;
+            rs.Execute(() =>
+            {
+                dockspaceIconTexture.Dispose();
+                dockspaceIconTexture = null;
+            });
         }
 
         private void OnRender(RenderService rs)
@@ -67,13 +121,9 @@ namespace CrossEngineEditor
             Profiler.EndScope();
         }
 
-        public override void OnDetach()
-        {
-            var rs = Manager.GetService<RenderService>();
-            rs.Frame -= OnRender;
-        }
-
         #region Dockspace
+        private WeakReference<Texture> dockspaceIconTexture;
+
         private unsafe void SetupDockspace(Window window)
         {
             ImGuiIOPtr io = ImGui.GetIO();
@@ -100,17 +150,18 @@ namespace CrossEngineEditor
 
             ImGui.PopStyleVar(3);
 
-            //Vector2 lastCurPos = ImGui.GetCursorPos();
-            //ImGui.SetCursorPos((ImGui.GetWindowSize() - new Vector2(256, 256)) * 0.5f);
-            //ImGui.Image(new IntPtr(dockspaceIconTexture.ID), new Vector2(256, 256), new Vector2(0, 1), new Vector2(1, 0), new Vector4(1, 1, 1, 0.75f));
-            //ImGui.SetCursorPos(lastCurPos);
+            Vector2 lastCur = ImGui.GetCursorPos();
+            ImGui.SetCursorPos((ImGui.GetWindowSize() - new Vector2(256, 256)) * 0.5f);
+            ImGui.Image(new IntPtr(dockspaceIconTexture.GetValue()?.RendererId ?? 0), new Vector2(256, 256), new Vector2(0, 1), new Vector2(1, 0), new Vector4(1, 1, 1, 0.25f));
+            ImGui.SetCursorPos(lastCur);
+
             Vector4 col = *ImGui.GetStyleColorVec4(ImGuiCol.DockingEmptyBg);
             col.W *= 0.1f;
             ImGui.PushStyleColor(ImGuiCol.DockingEmptyBg, col);
 
             ImGui.DockSpace(ImGui.GetID("Dockspace"));
 
-            ImGui.PopStyleColor();
+            //ImGui.PopStyleColor();
         }
 
         private void EndDockspace()
@@ -122,14 +173,90 @@ namespace CrossEngineEditor
         {
             if (ImGui.BeginMainMenuBar())
             {
-                
+                if (ImGui.BeginMenu("File"))
+                {
+                    if (ImGui.MenuItem("New Scene"))
+                    {
+                        SetScene(new Scene());
+                    }
+                    if (ImGui.MenuItem("Load Scene..."))
+                    {
+                        var filepath = ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
+                        if (filepath != null)
+                            using (Stream stream = File.OpenRead(filepath))
+                            {
+                                SetScene(SceneSerializer.DeserializeJson(stream));
+                            }
+                    }
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Save Scene", Context.Scene != null)) ;
+                    if (ImGui.MenuItem("Save Scene As...", Context.Scene != null))
+                    {
+                        var filepath = ShellFileDialogs.FileSaveDialog.ShowDialog(0, null, null, null, null);
+                        if (filepath != null)
+                            using (Stream stream = File.OpenWrite(filepath))
+                            {
+                                SceneSerializer.SerializeJson(stream, Context.Scene);
+                            }
+                    }
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Quit"))
+                        EditorApplication.Instance.Close();
+
+                    ImGui.EndMenu();
+                }
+
+                if (ImGui.BeginMenu("Window"))
+                {
+                    if (ImGui.BeginMenu("Panels"))
+                    {
+                        for (int i = 0; i < _registeredPanels.Count; i++)
+                        {
+                            var p = _registeredPanels[i];
+                            if (ImGui.MenuItem(p.WindowName, null, p.Open ?? false))
+                                p.Open = !p.Open;
+                        }
+
+                        ImGui.EndMenu();
+                    }
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Fullscreen", null, window.Fullscreen))
+                        window.SetFullscreen(!window.Fullscreen);
+
+                    // TODO: Workspace saving
+
+                    ImGui.EndMenu();
+                }
+
                 ImGui.EndMainMenuBar();
             }
         }
         #endregion
 
         #region Panel Methods
-        private void AddPanel(EditorPanel panel)
+        private void RegisterPanel(EditorPanel panel)
+        {
+            if (_registeredPanels.Contains(panel)) throw new InvalidOperationException();
+
+            _registeredPanels.Add(panel);
+
+            PushPanel(panel);
+
+            Log.Trace($"registered panel '{panel.GetType().FullName}'");
+        }
+
+        private void UnregisterPanel(EditorPanel panel)
+        {
+            if (!_registeredPanels.Contains(panel)) throw new InvalidOperationException();
+
+            _registeredPanels.Remove(panel);
+
+            RemovePanel(panel);
+
+            Log.Trace($"unregistered panel '{panel.GetType().FullName}'");
+        }
+
+        private void PushPanel(EditorPanel panel)
         {
             _panels.Add(panel);
             panel.Context = Context;
@@ -151,28 +278,46 @@ namespace CrossEngineEditor
             _panels.Remove(panel);
         }
 
-        public T GetPanel<T>() where T : EditorPanel
-        {
-            return (T)GetPanel(typeof(T));
-        }
-
-        public EditorPanel GetPanel(Type typeOfPanel)
-        {
-            for (int i = 0; i < _panels.Count; i++)
-            {
-                if (_panels[i].GetType() == typeOfPanel)
-                    return _panels[i];
-            }
-            return null;
-        }
+        //public T GetPanel<T>() where T : EditorPanel
+        //{
+        //    return (T)GetPanel(typeof(T));
+        //}
+        //
+        //public EditorPanel GetPanel(Type typeOfPanel)
+        //{
+        //    for (int i = 0; i < _panels.Count; i++)
+        //    {
+        //        if (_panels[i].GetType() == typeOfPanel)
+        //            return _panels[i];
+        //    }
+        //    return null;
+        //}
 
         private void DrawPanels()
         {
             for (int i = 0; i < _panels.Count; i++)
             {
-                _panels[i].Draw();
+                var p = _panels[i];
+
+                try
+                {
+                    p.Draw();
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"following error while drawing panel '{p.WindowName}' ({p.GetType().FullName}): {e}");
+                }
             }
         }
         #endregion
+
+        private void SetScene(Scene scene)
+        {
+            if (Context.Scene != null) SceneManager.Unload(Context.Scene);
+
+            Context.Scene = scene;
+
+            SceneManager.Load(scene, new SceneService.SceneConfig() { Update = false, Render = false, Resize = false });
+        }
     }
 }

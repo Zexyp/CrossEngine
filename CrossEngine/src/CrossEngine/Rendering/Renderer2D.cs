@@ -321,17 +321,18 @@ namespace CrossEngine.Rendering
 
 		public static void Shutdown()
 		{
-			data.discardingShader.GetValue().Dispose();
-			data.regularShader.GetValue().Dispose();
-			data.whiteTexture.GetValue().Dispose();
+			data.discardingShader.Dispose();
+			data.regularShader.Dispose();
+			data.whiteTexture.Dispose();
 
-			data.quads.VertexArray.GetValue().Dispose();
-			data.quads.VertexArray.GetValue().GetIndexBuffer().GetValue().Dispose();
-			data.quads.VertexBuffer.GetValue().Dispose();
+			var va = data.quads.VertexArray.GetValue();
+            va.Dispose();
+			va.GetIndexBuffer().Dispose();
+			data.quads.VertexBuffer.Dispose();
 			data.quads.VertexBufferBase = null;
 
-			data.tris.VertexArray.GetValue().Dispose();
-			data.tris.VertexBuffer.GetValue().Dispose();
+			data.tris.VertexArray.Dispose();
+			data.tris.VertexBuffer.Dispose();
 			data.tris.VertexBufferBase = null;
 
 			_rapi = null;

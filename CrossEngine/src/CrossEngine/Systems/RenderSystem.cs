@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,35 +23,21 @@ namespace CrossEngine.Systems
                     return;
                 _primaryCamera = value;
 
-                if (_window != null)
-                    _primaryCamera?.Resize(_window.Width, _window.Height);
+                _primaryCamera?.Resize(_lastSize.X, _lastSize.Y);
                 
                 PrimaryCameraChanged?.Invoke(this);
             }
         }
-        public Window Window
-        {
-            get => Window;
-            set
-            {
-                if (_window != null) _window.Event -= Window_OnEvent;
-                _window = value;
-                if (_window != null)
-                {
-                    _primaryCamera?.Resize(_window.Width, _window.Height);
-                    _window.Event += Window_OnEvent;
-                }
-            }
-        }
+        
         public event Action<RenderSystem> PrimaryCameraChanged;
         
         private CameraComponent? _primaryCamera = null;
-        private Window _window;
+        private Vector2 _lastSize = Vector2.One;
 
-        private void Window_OnEvent(Event e)
+        public void Resize(float width, float height)
         {
-            if (e is WindowResizeEvent wre)
-                _primaryCamera?.Resize(wre.Width, wre.Height);
+            _lastSize = new(width, height);
+            _primaryCamera?.Resize(width, height);
         }
 
         public override void Register(CameraComponent component)

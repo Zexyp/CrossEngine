@@ -9,6 +9,7 @@ namespace CrossEngine.Utils.Editor
     public enum EditorAttributeType
     {
         None = 0,
+        AdditionalEdit,
         Hint,
         Edit,
         Decor,
@@ -184,6 +185,18 @@ namespace CrossEngine.Utils.Editor
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorNullableAttribute : EditorValueAttribute
+    {
+        public override EditorAttributeType Kind => EditorAttributeType.AdditionalEdit;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorPathAttribute : EditorValueAttribute
+    {
+        public override EditorAttributeType Kind => EditorAttributeType.AdditionalEdit;
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorSectionAttribute : EditorValueAttribute
     {
         public override EditorAttributeType Kind => EditorAttributeType.Decor;
@@ -305,6 +318,15 @@ namespace CrossEngine.Utils.Editor
 
     }
 
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    public class EditorGuidAttribute : EditorStringAttribute
+    {
+        public EditorGuidAttribute()
+        {
+            MaxLength = 36;
+        }
+    }
+
     //[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     //public class EditorInnerDrawAttribute : EditorValueAttribute
     //{
@@ -346,7 +368,6 @@ namespace CrossEngine.Utils.Editor
             MaxLength = maxLength;
         }
 
-        public bool Nullable = false;
         public uint MaxLength = 256;
     }
 

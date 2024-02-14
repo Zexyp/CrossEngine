@@ -122,10 +122,14 @@ namespace CrossEngine.Services
             TextureLoader.InternalInit();
 
             TextRendererUtil.Init();
+
+            _scheduler.RunOnCurrentThread();
         }
 
         private void Shutdown()
         {
+            _scheduler.RunOnCurrentThread();
+
             Renderer2D.Shutdown();
             LineRenderer.Shutdown();
             

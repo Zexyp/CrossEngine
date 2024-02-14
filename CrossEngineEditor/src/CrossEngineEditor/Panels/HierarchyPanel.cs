@@ -45,7 +45,7 @@ namespace CrossEngineEditor.Panels
                                        ImGuiTreeNodeFlags.DefaultOpen |
                                        ((node.Children.Count <= 0) ? ImGuiTreeNodeFlags.Leaf : ImGuiTreeNodeFlags.None);
 
-            if (node == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
+            //if (node == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
 
             string label = node.TryGetComponent<TagComponent>(out var tagComponent) ? tagComponent.Tag : $"Entity (Id: {node.Id})";
             label ??= "";
@@ -55,7 +55,7 @@ namespace CrossEngineEditor.Panels
             if (ImGui.IsItemClicked())
                 Context.ActiveEntity = node;
 
-            if (node == Context.ActiveEntity) ImGui.PopStyleColor();
+            //if (node == Context.ActiveEntity) ImGui.PopStyleColor();
 
             ddEntityContext.MarkSource(node);
             if (ddEntityContext.MarkTarget())

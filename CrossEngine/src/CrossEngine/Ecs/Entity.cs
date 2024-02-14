@@ -114,7 +114,7 @@ namespace CrossEngine.Ecs
 
             _components.Add(component);
 
-            AttachComponent(component);
+            if (_attached) AttachComponent(component);
 
             return component;
         }
@@ -135,7 +135,7 @@ namespace CrossEngine.Ecs
         {
             Debug.Assert(_components.Contains(component));
 
-            DetachComponent(component);
+            if (_attached) DetachComponent(component);
 
             _components.Remove(component);
 
@@ -272,15 +272,23 @@ namespace CrossEngine.Ecs
 
         private void AttachComponent(Component component)
         {
+            Debug.Assert(!component.Attached);
+
             component.Entity = this;
             component.OnAttach();
             if (component.Enabled) component.OnEnable();
 
             ComponentAdded?.Invoke(this, component);
+
+            component.Attached = true;
         }
 
         private void DetachComponent(Component component)
         {
+            Debug.Assert(component.Attached);
+
+            component.Attached = false;
+
             if (component.Enabled) component.OnDisable();
             component.OnDetach();
             component.Entity = null;

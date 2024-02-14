@@ -41,7 +41,7 @@ namespace CrossEngine.Platform
         public static Task<Stream> FileOpen(string path)
         {
 #if WINDOWS
-            return Task.FromResult((Stream)File.Open(path, FileMode.Open));
+            return Task.FromResult((Stream)File.OpenRead(path));
 #elif WASM
             // .Result creates deadlock
             return httpClient.GetStreamAsync(Path.Join(CrossEngine.Platform.Wasm.Interop.RootUri.ToString(), path));

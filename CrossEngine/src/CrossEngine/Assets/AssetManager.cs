@@ -9,7 +9,6 @@ namespace CrossEngine.Assets
 {
     public static class AssetManager
     {
-        [ThreadStatic]
         private static AssetPool _current;
         internal static AssetService service;
         public static AssetPool Current { get => _current; }

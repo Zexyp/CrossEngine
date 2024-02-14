@@ -30,6 +30,7 @@ namespace CrossEngineEditor.Utils
             DoneEditing = 1 << 1,
             Ended = 1 << 2,
             Started = 1 << 3,
+            Full = Started | Ended | Changed | DoneEditing,
         }
 
         public delegate void EditResultHandler(MemberInfo member, object target, EditResult result);
@@ -61,6 +62,9 @@ namespace CrossEngineEditor.Utils
 
                     if ((result & EditResult.Changed) != 0)
                         memberInfo.SetFieldOrPropertyValue(target, value);
+
+                    //if (result != EditResult.None)
+                    //    Console.WriteLine(result);
                 }
                 return result;
             }
@@ -76,9 +80,21 @@ namespace CrossEngineEditor.Utils
             }
         }
 
-        static void Inspect(object value, EditResultHandler editResultHandler = null)
+        public static void Inspect(object target, Type type = null, EditResultHandler editResultHandler = null)
         {
-            throw new NotImplementedException();
+            Debug.Assert(target != null);
+
+            type = type ?? target.GetType();
+            var membs = type.GetMembers();
+            for (int mi = 0; mi < membs.Length; mi++)
+            {
+                var memb = membs[mi];
+                if (Attribute.IsDefined(memb, typeof(EditorValueAttribute), true))
+                {
+                    var result = InspectDrawer.DrawMember(memb, target);
+                    editResultHandler?.Invoke(memb, target, result);
+                }
+            }
         }
 
         private static Type GetUnderlyingType(this MemberInfo member)
@@ -376,49 +392,40 @@ namespace CrossEngineEditor.Utils
                 var style = ImGui.GetStyle();
                 var v = (string)value;
                 float square = ImGui.GetTextLineHeight() + style.FramePadding.Y * 2;
-                bool pushedColor;
-                if (pushedColor = v == null)
-                    ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
+                
+                bool pushedColor = v == null;
+                if (pushedColor) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
 
                 var t = (v != null) ? v : "<null>";
-                byte[] buffer = new byte[cattrib.MaxLength];
+                byte[] buffer = new byte[cattrib.MaxLength + 1];
                 Encoding.Default.GetBytes(t, buffer);
 
-                var result = ImGui.InputText(name, buffer, cattrib.MaxLength);
+                var result = ImGui.InputText(name, buffer, cattrib.MaxLength + 1);
                 var er = EvalResult(result);
                 
                 if (result)
-                    value = Encoding.Default.GetString(buffer);
+                    value = Encoding.Default.GetString(buffer).TrimEnd('\0');
 
-                if (pushedColor)
-                    ImGui.PopStyleColor();
-
-                if (cattrib.Nullable)
-                {
-                    ImGui.SameLine();
-
-                    if (ImGui.Button("×", new Vector2(square)))
-                    {
-                        value = null;
-                        return EditResult.Changed | EditResult.DoneEditing;
-                    }
-                }
+                if (pushedColor) ImGui.PopStyleColor();
 
                 return er;
             } },
 
             { typeof(EditorEnumAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
-                bool result;
+                EditResult er = EditResult.None;
 
-                if (result = ImGui.BeginCombo(name, value.ToString()))
+                if (ImGui.BeginCombo(name, value.ToString()))
                 {
                     var values = Enum.GetValues(value.GetType());
                     for (int i = 0; i < values.Length; i++)
                     {
                         var ev = values.GetValue(i);
-                        bool isSelected = ev == value;
+                        bool isSelected = Enum.Equals(ev, value);
                         if (ImGui.Selectable(ev.ToString(), isSelected))
+                        {
                             value = ev;
+                            er = EditResult.Full;
+                        }
 
                         if (isSelected)
                             ImGui.SetItemDefaultFocus();
@@ -426,16 +433,32 @@ namespace CrossEngineEditor.Utils
 
                     ImGui.EndCombo();
                 }
-                var er = EvalResult(result);
+
+                return er;
+            } },
+
+            { typeof(EditorGuidAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
+                object strVal = value.ToString();
+                
+                EditResult er = AttributeHandlers[typeof(EditorStringAttribute)].Invoke(attribute, typeof(string), name, ref strVal);
+
+                if (((er & EditResult.Changed) != 0) && Guid.TryParse((string)strVal, out var guid))
+                {
+                    value = guid;
+                }
+                else
+                {
+                    er &= ~EditResult.Changed;
+                }
 
                 return er;
             } },
 
             { typeof(EditorAssetAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
-                bool result;
+                EditResult er = EditResult.None;
                 var v = (Asset)value;
 
-                if (result = ImGui.BeginCombo(name, v?.Id.ToString()))
+                if (ImGui.BeginCombo(name, v?.Id.ToString()))
                 {
                     var coll = AssetManager.Current?.GetCollection(type);
 
@@ -444,7 +467,10 @@ namespace CrossEngineEditor.Utils
                         {
                             bool isSelected = item == v;
                             if (ImGui.Selectable(item.Id.ToString(), isSelected))
-                                value = v;
+                            {
+                                value = item;
+                                er = EditResult.Full;
+                            }
 
                             if (isSelected)
                                 ImGui.SetItemDefaultFocus();
@@ -452,20 +478,36 @@ namespace CrossEngineEditor.Utils
 
                     ImGui.EndCombo();
                 }
-                var er = EvalResult(result);
 
+                return er;
+            } },
+
+            { typeof(EditorNullableAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
                 ImGui.SameLine();
 
-                var style = ImGui.GetStyle();
-                float square = ImGui.GetTextLineHeight() + style.FramePadding.Y * 2;
-                if (ImGui.Button("×", new Vector2(square)))
+                if (ImGui.Button("×") && value != null)
                 {
                     value = null;
-                    return EditResult.Changed | EditResult.DoneEditing;
+                    return EditResult.Full;
                 }
 
-                return 0;
+                return EditResult.None;
             } },
+            //{ typeof(EditorPathAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
+            //    ImGui.SameLine();
+            //
+            //    if (ImGui.Button("..."))
+            //    {
+            //        var newVal = ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
+            //        if (newVal != null)
+            //        {
+            //            value = newVal;
+            //            return EditResult.Full;
+            //        }
+            //    }
+            //
+            //    return EditResult.None;
+            //} }
         };
 
         private static EditResult ExecuteFromDict(IDictionary dict, EditorValueAttribute attrib, Type type, string name, ref object value)

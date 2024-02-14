@@ -67,26 +67,18 @@ namespace CrossEngine.Ecs
 
         public void AddEntity(Entity entity)
         {
-            entity.Attach();
-            for (int i = 0; i < entity.Components.Count; i++)
-            {
-                ComponentRegister?.Invoke(entity.Components[i]);
-            }
-            
             entity.ComponentAdded += OnEntityComponentAdded;
             entity.ComponentRemoved += OnEntityComponentRemoved;
+            
+            entity.Attach();
         }
 
         public void RemoveEntity(Entity entity)
         {
+            entity.Detach();
+
             entity.ComponentAdded -= OnEntityComponentAdded;
             entity.ComponentRemoved -= OnEntityComponentRemoved;
-
-            for (int i = entity.Components.Count - 1; i >= 0; i--)
-            {
-                ComponentUnregister?.Invoke(entity.Components[i]);
-            }
-            entity.Detach();
         }
 
         public void Update()
@@ -163,14 +155,12 @@ namespace CrossEngine.Ecs
 
         private void OnEntityComponentAdded(Entity sender, Component component)
         {
-            component.Attached = true;
             ComponentRegister?.Invoke(component);
         }
 
         private void OnEntityComponentRemoved(Entity sender, Component component)
         {
             ComponentUnregister?.Invoke(component);
-            component.Attached = false;
         }
     }
 }

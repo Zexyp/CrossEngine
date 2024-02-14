@@ -1,6 +1,7 @@
 ﻿using CrossEngine.Ecs;
 using CrossEngine.Platform;
 using CrossEngine.Serialization;
+using CrossEngine.Utils.Editor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace CrossEngine.Assets
 {
     public class AssetPool : IAssetLoadContext, ISerializable
     {
+        [EditorString]
         public string Directory = "./";
         
         Dictionary<Type, IDictionary> _collections = new();
@@ -69,6 +71,23 @@ namespace CrossEngine.Assets
             if (!_collections.ContainsKey(ofType))
                 return null;
             return _collections[ofType].Values;
+        }
+
+        // funny
+        public IEnumerable<(Type, IEnumerable<Asset>)> Enumerate()
+        {
+            IEnumerable<Asset> InnerEnumerate(ICollection coll)
+            {
+                foreach (Asset item in coll)
+                {
+                    yield return item;
+                }
+            }
+
+            foreach (var item in _collections)
+            {
+                yield return (item.Key, InnerEnumerate(item.Value.Values));
+            }
         }
 
         public void Load(Loader[] loaders)

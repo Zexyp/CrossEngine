@@ -1,4 +1,5 @@
-﻿using CrossEngine.Components;
+﻿using CrossEngine.Assemblies;
+using CrossEngine.Components;
 using CrossEngine.Ecs;
 using CrossEngine.Utils.Editor;
 using CrossEngineEditor.Utils;
@@ -63,13 +64,9 @@ namespace CrossEngineEditor.Panels
 
                 if (collapsingHeader)
                 {
-                    var membs = componentType.GetMembers();
-                    for (int mi = 0; mi < membs.Length; mi++)
-                    {
-                        var memb = membs[mi];
-                        if (Attribute.IsDefined(memb, typeof(EditorValueAttribute), true))
-                            InspectDrawer.DrawMember(memb, component);
-                    }
+                    InspectDrawer.Inspect(component);
+
+                    ImGui.Separator();
                 }
 
                 ImGui.PopID();
@@ -87,10 +84,46 @@ namespace CrossEngineEditor.Panels
             if (off > 0.0f)
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + off);
 
+            const string componentPopup = "Add Component";
+
             if (ImGui.Button("Add Component"))
-                entity.AddComponent<TagComponent>();
+            {
+                ImGui.OpenPopup(componentPopup);
+            }
+
+            if (ImGui.BeginPopup(componentPopup))
+            {
+                AddComponentPopup();
+
+                ImGui.EndPopup();
+            }
 
             ddComponentContext.Update();
+        }
+
+        private void AddComponentPopup()
+        {
+            // TODO: consider cashing this
+
+            var typeOfComponent = typeof(Component);
+            foreach (var assembly in AssemblyManager.Loaded)
+            {
+                ImGui.SeparatorText(assembly.GetName().Name);
+
+                var types = assembly.GetTypes();
+                for (int i = 0; i < types.Length; i++)
+                {
+                    var t = types[i];
+
+                    if (t.IsPublic && !t.IsAbstract && t.IsSubclassOf(typeOfComponent))
+                    {
+                        if (ImGui.Selectable(t.FullName))
+                        {
+                            Context.ActiveEntity.AddComponent((Component)Activator.CreateInstance(t));
+                        }
+                    }
+                }
+            }
         }
     }
 }

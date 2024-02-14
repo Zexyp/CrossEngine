@@ -1,34 +1,34 @@
-﻿using CrossEngine.Scenes;
-using CrossEngine.Serialization;
+﻿using CrossEngine.Assemblies;
 using CrossEngine.Utils.Editor;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    internal class SceneAsset : Asset
+    public class AssemblyAsset : Asset
     {
-        public override bool Loaded => Scene != null;
+        public override bool Loaded => Assembly != null;
 
-        public Scene Scene { get; internal set; }
+        public Assembly Assembly;
+
         [EditorString]
         public string RelativePath;
 
+        AssemblyLoadContext loadContext;
+
         public override async void Load(IAssetLoadContext context)
         {
-            using (Stream stream = await context.OpenRelativeStream(RelativePath))
-            {
-                Scene = SceneSerializer.DeserializeJson(stream);
-            }
+            loadContext = AssemblyManager.Load(await context.OpenRelativeStream(RelativePath), out Assembly);
         }
 
         public override void Unload(IAssetLoadContext context)
         {
-            Scene = null;
+            AssemblyManager.Unload(loadContext);
         }
     }
 }
