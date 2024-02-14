@@ -33,7 +33,7 @@ namespace CrossEngine.Ecs
         }
 
         private bool _enabled = true;
-        internal bool Attached = false; // idfk rn, ecs world refernce would be as good as this weird bool
+        internal bool Attached { get; set; } = false; // idfk rn, ecs world refernce would be as good as this weird bool
 
         public Component()
         {

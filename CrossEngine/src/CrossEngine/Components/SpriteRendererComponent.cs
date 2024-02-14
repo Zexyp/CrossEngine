@@ -20,6 +20,7 @@ namespace CrossEngine.Components
         public Vector4 Color { get; set; } = Vector4.One;
         [EditorEnum]
         public BlendMode Blend { get; set; } = BlendMode.Blend;
+        [EditorNullable]
         [EditorAsset]
         public SpriteAsset Sprite;
 

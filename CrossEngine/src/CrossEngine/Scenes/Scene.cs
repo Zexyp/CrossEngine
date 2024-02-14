@@ -13,6 +13,7 @@ using CrossEngine.Utils;
 using CrossEngine.Serialization;
 using System.Collections.ObjectModel;
 using CrossEngine.Assets;
+using System.Drawing;
 
 namespace CrossEngine.Scenes
 {
@@ -21,7 +22,7 @@ namespace CrossEngine.Scenes
         public readonly EcsWorld World = new EcsWorld();
         public readonly SceneRenderData RenderData = new SceneRenderData();
         public readonly ReadOnlyCollection<Entity> Entities;
-        readonly SceneLayerRenderData _sceneLayer = new SceneLayerRenderData();
+        readonly SceneLayerRenderData _defaultLayer = new SceneLayerRenderData();
         bool _loaded = false;
         readonly List<Entity> _entities = new List<Entity>();
 
@@ -29,16 +30,30 @@ namespace CrossEngine.Scenes
         {
             Entities = _entities.AsReadOnly();
 
-            _sceneLayer = new SceneLayerRenderData();
-            RenderData.Layers.Add(_sceneLayer);
+            _defaultLayer = new SceneLayerRenderData();
+            RenderData.Layers.Add(_defaultLayer);
 
             var rs = new RenderSystem();
-            rs.PrimaryCameraChanged += (rsys) => { _sceneLayer.Camera = rsys.PrimaryCamera; };
-            
+            rs.PrimaryCameraChanged += (rsys) => { _defaultLayer.Camera = rsys.PrimaryCamera; };
+            RenderData.Resize += (s, w, h) => rs.Resize(w, h);
+
             World.RegisterSystem(new TransformSystem());
             World.RegisterSystem(rs);
-            World.RegisterSystem(new SpriteRendererSystem(_sceneLayer));
+            World.RegisterSystem(new SpriteRendererSystem(_defaultLayer));
             World.RegisterSystem(new UISystem(RenderData));
+        }
+
+        #region Entity Methods
+        public Entity GetEntity(int hashCode)
+        {
+            for (int i = 0; i < _entities.Count; i++)
+            {
+                var ent = _entities[i];
+                if (ent.Id.GetHashCode() == hashCode)
+                    return ent;
+            }
+
+            return null;
         }
 
         public void AddEntity(Entity entity)
@@ -76,6 +91,7 @@ namespace CrossEngine.Scenes
             AddEntity(entity);
             return entity;
         }
+        #endregion
 
         public void Load()
         {

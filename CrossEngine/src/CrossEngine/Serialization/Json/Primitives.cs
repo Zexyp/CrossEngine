@@ -12,7 +12,15 @@ namespace CrossEngine.Serialization.Json
     {
         public override Vector2 Read(JsonElement reader, Type type, JsonSerializerOptions options)
         {
-            return new Vector2(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle());
+            switch (reader.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    return new Vector2(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle());
+                case JsonValueKind.Array:
+                    return new Vector2(reader[0].GetSingle(), reader[1].GetSingle());
+                default:
+                    throw new JsonException();
+            }
         }
 
         public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options)
@@ -28,7 +36,15 @@ namespace CrossEngine.Serialization.Json
     {
         public override Vector3 Read(JsonElement reader, Type type, JsonSerializerOptions options)
         {
-            return new Vector3(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle());
+            switch (reader.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    return new Vector3(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle());
+                case JsonValueKind.Array:
+                    return new Vector3(reader[0].GetSingle(), reader[1].GetSingle(), reader[2].GetSingle());
+                default:
+                    throw new JsonException();
+            }
         }
 
         public override void Write(Utf8JsonWriter writer, Vector3 value, JsonSerializerOptions options)
@@ -45,7 +61,15 @@ namespace CrossEngine.Serialization.Json
     {
         public override Vector4 Read(JsonElement reader, Type type, JsonSerializerOptions options)
         {
-            return new Vector4(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle(), reader.GetProperty("W").GetSingle());
+            switch (reader.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    return new Vector4(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle(), reader.GetProperty("W").GetSingle());
+                case JsonValueKind.Array:
+                    return new Vector4(reader[0].GetSingle(), reader[1].GetSingle(), reader[2].GetSingle(), reader[3].GetSingle());
+                default:
+                    throw new JsonException();
+            }
         }
 
         public override void Write(Utf8JsonWriter writer, Vector4 value, JsonSerializerOptions options)
@@ -64,7 +88,15 @@ namespace CrossEngine.Serialization.Json
     {
         public override Quaternion Read(JsonElement reader, Type type, JsonSerializerOptions options)
         {
-            return new Quaternion(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle(), reader.GetProperty("W").GetSingle());
+            switch (reader.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    return new Quaternion(reader.GetProperty("X").GetSingle(), reader.GetProperty("Y").GetSingle(), reader.GetProperty("Z").GetSingle(), reader.GetProperty("W").GetSingle());
+                case JsonValueKind.Array:
+                    return new Quaternion(reader[0].GetSingle(), reader[1].GetSingle(), reader[2].GetSingle(), reader[3].GetSingle());
+                default:
+                    throw new JsonException();
+            }
         }
 
         public override void Write(Utf8JsonWriter writer, Quaternion value, JsonSerializerOptions options)
@@ -84,6 +116,7 @@ namespace CrossEngine.Serialization.Json
         {
             Matrix4x4 matrix = new Matrix4x4();
 
+            // uh-oh stinky
             var p = &matrix.M11;
             var values = reader.EnumerateArray().SelectMany(i => i.EnumerateArray()).Select(i => i.GetSingle()).ToArray();
             for (int i = 0; i < 16; i++)

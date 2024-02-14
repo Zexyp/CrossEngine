@@ -44,35 +44,35 @@ namespace CrossEngineEditor.Panels
 
         public EditorPanel()
         {
-            this.WindowName = $"Unnamed Panel {this.GetHashCode()}";
+            this.WindowName = $"Unnamed Panel ({this.GetType().FullName})";
         }
 
         public void Draw()
         {
             if (_open != null && !(bool)_open) return;
 
-            ImGui.PushID((int)ImGui.GetID(WindowName));
+            ImGui.PushID(this.GetHashCode());
 
             PrepareWindow();
 
             var lastOpen = _open;
-            if (!ImGuiNull.Begin(WindowName, ref _open, WindowFlags))
-            {
-                EndPrepareWindow();
+            var windowOpen = ImGuiNull.Begin(WindowName, ref _open, WindowFlags);
 
-                ImGui.End();
-            }
-            else
+            EndPrepareWindow();
+            
+            if (windowOpen)
             {
                 EndPrepareWindow();
 
                 WindowSize = ImGui.GetWindowSize();
                 WindowPosition = ImGui.GetWindowPos();
+                var io = ImGui.GetIO();
 
                 if (ImGui.IsWindowHovered() &&
                     !ImGui.IsMouseDragging(ImGuiMouseButton.Left) &&
                     !ImGui.IsMouseDragging(ImGuiMouseButton.Right) &&
-                    !ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
+                    !ImGui.IsMouseDragging(ImGuiMouseButton.Middle) &&
+                    !io.WantCaptureKeyboard)
                     ImGui.SetWindowFocus();
                 Focused = ImGui.IsWindowFocused();
 

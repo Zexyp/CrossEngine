@@ -20,7 +20,7 @@ namespace CrossEngine.Assets.Loaders
     {
         // TODO: shutdown
 
-        public static WeakReference<Texture> DefaultTexture;
+        //public static WeakReference<Texture> DefaultTexture;
 
         // wtf, how is this not crashing the whole thing?
         // (the static ctor is very funky - nobody knows when or how it gets called
@@ -33,7 +33,7 @@ namespace CrossEngine.Assets.Loaders
 
         public override void Init()
         {
-            InternalInit();
+            //InternalInit();
         }
 
         public override void Shutdown()
@@ -43,18 +43,18 @@ namespace CrossEngine.Assets.Loaders
 
         internal static unsafe void InternalInit()
         {
-            if (DefaultTexture != null)
-                return;
-
-            // me too lazy to fix this mem leak...
-            DefaultTexture = Texture.Create(1, 1, ColorFormat.RGBA);
-            uint col = 0xffff00ff;
-            DefaultTexture.GetValue().SetData(&col, (uint)sizeof(uint));
-
-            StbImage.stbi_set_flip_vertically_on_load(1);
-
+            //if (DefaultTexture != null)
+            //    return;
+            //
+            //// me too lazy to fix this mem leak...
+            //DefaultTexture = Texture.Create(1, 1, ColorFormat.RGBA);
+            //uint col = 0xffff00ff;
+            //DefaultTexture.GetValue().SetData(&col, (uint)sizeof(uint));
+        
             var gapi = RendererApi.GetApi();
             Debug.Assert(gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES);
+        
+            StbImage.stbi_set_flip_vertically_on_load(1);
         }
 
         public WeakReference<Texture> ScheduleTextureLoad(byte[] filedata)
@@ -71,18 +71,18 @@ namespace CrossEngine.Assets.Loaders
 
         public void ScheduleTextureUnload(WeakReference<Texture> tex)
         {
-            Schedule(() => tex.GetValue().Dispose());
+            Schedule(() => tex.Dispose());
         }
 
         public static WeakReference<Texture> LoadTexture(byte[] filedata)
         {
-            ImageResult result = ImageResult.FromMemory(filedata, ColorComponents.RedGreenBlue);
+            ImageResult result = ImageResult.FromMemory(filedata);
             return InternalLoad(result);
         }
 
         public static WeakReference<Texture> LoadTexture(Stream filedata)
         {
-            ImageResult result = ImageResult.FromStream(filedata, ColorComponents.RedGreenBlue);
+            ImageResult result = ImageResult.FromStream(filedata);
             return InternalLoad(result);
         }
 
@@ -97,14 +97,32 @@ namespace CrossEngine.Assets.Loaders
         {
             var gapi = RendererApi.GetApi();
 
+            var format = ColorComponentsToColorFormat(result.Comp);
+
             WeakReference<Texture> texture = (wr == null) ?
-                Texture.Create((uint)result.Width, (uint)result.Height, ColorFormat.RGB) :
-                Texture.Create(wr, (uint)result.Width, (uint)result.Height, ColorFormat.RGB);
+                Texture.Create((uint)result.Width, (uint)result.Height, format) :
+                Texture.Create(wr, (uint)result.Width, (uint)result.Height, format);
 
             fixed (void* p = result.Data)
-                ((GLTexture)texture.GetValue()).SetData(p, (uint)result.Width, (uint)result.Height, ColorFormat.RGB, ColorFormat.RGB);
+                ((GLTexture)texture.GetValue()).SetData(p, (uint)result.Width, (uint)result.Height, format, format);
 
             return texture;
+        }
+
+        private static ColorFormat ColorComponentsToColorFormat(ColorComponents components)
+        {
+            switch (components)
+            {
+                case ColorComponents.RedGreenBlue:
+                    return ColorFormat.RGB;
+                case ColorComponents.RedGreenBlueAlpha:
+                    return ColorFormat.RGBA;
+                case ColorComponents.Default:
+                case ColorComponents.Grey:
+                case ColorComponents.GreyAlpha:
+                default:
+                    throw new NotSupportedException();
+            }
         }
     }
 }

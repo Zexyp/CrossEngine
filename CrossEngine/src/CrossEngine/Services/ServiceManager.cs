@@ -51,10 +51,7 @@ namespace CrossEngine.Services
 
         public T GetService<T>() where T : Service
         {
-            Type type = typeof(T);
-            if (_servicesDict.ContainsKey(type))
-                return (T)_servicesDict[type];
-            return null;
+            return (T)GetService(typeof(T));
         }
 
         public Service GetService(Type type)

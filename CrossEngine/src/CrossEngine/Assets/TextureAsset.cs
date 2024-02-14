@@ -3,6 +3,7 @@ using CrossEngine.Assets.Loaders;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Serialization;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Editor;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,6 +20,7 @@ namespace CrossEngine.Assets
 
         public WeakReference<Texture> Texture = null;
 
+        [EditorString]
         public string RelativePath;
 
         private bool _loaded = false;

@@ -1,4 +1,5 @@
 ﻿using CrossEngine.Serialization;
+using CrossEngine.Utils.Editor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,15 +13,17 @@ namespace CrossEngine.Assets
     {
         public override bool Loaded => Texture?.Loaded == true;
 
+        [EditorDrag]
         public Vector4 TextureOffsets = new(0, 0, 1, 1);
 
+        [EditorAsset]
         public TextureAsset Texture { get; set; }
 
         private Guid idTexture;
 
         public override void Load(IAssetLoadContext context)
         {
-            Texture = context.LoadChild<TextureAsset>(idTexture);
+            Texture = context.LoadChild<TextureAsset>(Texture?.Id ?? idTexture);
         }
 
         public override void Unload(IAssetLoadContext context)

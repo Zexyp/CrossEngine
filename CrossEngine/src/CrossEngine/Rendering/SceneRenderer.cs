@@ -20,7 +20,9 @@ namespace CrossEngine.Rendering
         {
             Profiler.BeginScope();
 
-            renderData.Output?.GetValue().Bind();
+            var fb = renderData.Output?.GetValue();
+            fb?.Bind();
+
             if (renderData.ClearColor != null)
             {
                 rapi.SetClearColor(renderData.ClearColor.Value);
@@ -53,7 +55,8 @@ namespace CrossEngine.Rendering
                 }
             }
 
-            renderData.Output?.GetValue().Unbind();
+            fb?.Unbind();
+
 
             Profiler.EndScope();
         }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime;
 using System.Threading.Tasks;
 using CrossEngine.Serialization;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Assets
 {
@@ -25,6 +26,7 @@ namespace CrossEngine.Assets
 
     public abstract class Asset : ISerializable
     {
+        [EditorGuid]
         public Guid Id { get; internal set; }
         public abstract bool Loaded { get; }
 

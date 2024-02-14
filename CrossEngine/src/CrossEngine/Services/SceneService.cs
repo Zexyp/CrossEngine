@@ -6,14 +6,26 @@ using CrossEngine.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace CrossEngine.Services
 {
     public class SceneService : Service, IUpdatedService, IScheduledService
     {
-        readonly List<Scene> _scenes = new List<Scene>();
+        public struct SceneConfig
+        {
+            public bool Update;
+            public bool Render;
+            public bool Resize;
+        }
+
+        readonly List<(Scene Scene, SceneConfig Config)> _scenes = new();
+
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
+
+        private WindowService ws;
 
         public override void OnStart()
         {
@@ -24,14 +36,32 @@ namespace CrossEngine.Services
 
         public override void OnAttach()
         {
+            ws = Manager.GetService<WindowService>();
+            ws.Execute(() => { ws.Window.Event += OnWindowEvent; OnWindowResize(ws.Window.Width, ws.Window.Height); });
             Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
             Manager.GetService<RenderService>().Frame += OnRender;
+        }
+
+        private void OnWindowEvent(Event e)
+        {
+            if (e is WindowResizeEvent wre)
+                OnWindowResize(wre.Width, wre.Height);
+        }
+
+        private void OnWindowResize(float width, float height)
+        {
+            for (int i = 0; i < _scenes.Count; i++)
+            {
+                if (_scenes[i].Config.Resize)
+                    _scenes[i].Scene.RenderData.PerformResize(width, height);
+            }
         }
 
         public override void OnDetach()
         {
             Manager.GetService<RenderService>().Frame -= OnRender;
             Manager.GetService<TimeService>().FixedUpdate -= OnFixedUpdate;
+            ws.Execute(() => { ws.Window.Event -= OnWindowEvent; ws = null; });
         }
 
         public override void OnDestroy()
@@ -42,20 +72,30 @@ namespace CrossEngine.Services
             SceneManager.service = null;
         }
 
-        public void Load(Scene scene)
+        public ref SceneConfig GetConfig(Scene scene)
         {
-            _scenes.Add(scene);
-            scene.World.GetSystem<RenderSystem>().Window = Manager.GetService<WindowService>().Window;
-            scene.Load();
-            scene.Start();
+            for (int i = 0; i < _scenes.Count; i++)
+            {
+                if (scene == _scenes[i].Scene)
+                    return ref Unsafe.AsRef(_scenes[i].Config);
+            }
+
+            throw new KeyNotFoundException();
         }
 
-        public void Unload(Scene scene)
+        public void Push(Scene scene, SceneConfig? config = null)
+        {
+            var configValue = config ?? default;
+            if (configValue.Resize)
+                scene.RenderData.PerformResize(ws.Window.Width, ws.Window.Height);
+            _scenes.Add((scene, configValue));
+            scene.Load();
+        }
+
+        public void Remove(Scene scene)
         {
             scene.Unload();
-            scene.Stop();
-            scene.World.GetSystem<RenderSystem>().Window = null;
-            _scenes.Remove(scene);
+            _scenes.RemoveAll(e => e.Scene == scene);
         }
 
         
@@ -66,7 +106,10 @@ namespace CrossEngine.Services
 
             for (int i = 0; i < _scenes.Count; i++)
             {
-                SceneManager.Current = _scenes[i];
+                if (!_scenes[i].Config.Update)
+                    continue;
+
+                SceneManager.Current = _scenes[i].Scene;
                 SceneManager.Current.Update();
                 SceneManager.Current = null;
             }
@@ -76,7 +119,10 @@ namespace CrossEngine.Services
         {
             for (int i = 0; i < _scenes.Count; i++)
             {
-                SceneManager.Current = _scenes[i];
+                if (!_scenes[i].Config.Update)
+                    continue;
+
+                SceneManager.Current = _scenes[i].Scene;
                 SceneManager.Current.FixedUpdate();
                 SceneManager.Current = null;
             }
@@ -86,7 +132,10 @@ namespace CrossEngine.Services
         {
             for (int i = 0; i < _scenes.Count; i++)
             {
-                SceneRenderer.DrawScene(_scenes[i].RenderData, rs.RendererApi);
+                if (!_scenes[i].Config.Render)
+                    continue;
+
+                SceneRenderer.DrawScene(_scenes[i].Scene.RenderData, rs.RendererApi);
             }
         }
 

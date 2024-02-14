@@ -14,5 +14,10 @@ namespace CrossEngine.Utils
                 return result;
             return null;
         }
+
+        public static void Dispose<T>(this WeakReference<T> value) where T : class, IDisposable
+        {
+            value.GetValue().Dispose();
+        }
     }
 }

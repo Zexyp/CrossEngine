@@ -7,41 +7,51 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CrossEngine.Serialization
 {
     public static class SceneSerializer
     {
+        // TODO: move this somewhere
+        public static readonly JsonConverter[] BaseConverters = new JsonConverter[]
+        {
+            new SerializableJsonConverter(),
+
+            new Vector2JsonConverter(),
+            new Vector3JsonConverter(),
+            new Vector4JsonConverter(),
+            new QuaternionJsonConverter(),
+            new Matrix4x4JsonConverter()
+        };
+
+        static readonly JsonSerializerOptions options;
+
         static SceneSerializer()
         {
             AssetJsonConverter assConv;
+            
             options = new()
             {
 #if DEBUG
                 WriteIndented = true,
 #endif
-                Converters =
-                {
-                    new EntityStructureJsonConverter(),
-
-                    new AssetJsonConverter(),
-
-                    new SceneJsonConverter(),
-
-                    new SerializableJsonConverter(),
-
-                    new Vector2JsonConverter(),
-                    new Vector3JsonConverter(),
-                    new Vector4JsonConverter(),
-                    new QuaternionJsonConverter(),
-                    new Matrix4x4JsonConverter(),
-                }
             };
+
+            foreach (var item in new JsonConverter[]
+            {
+                new EntityStructureJsonConverter(),
+
+                new AssetJsonConverter(),
+
+                new SceneJsonConverter(),
+            }.Concat(BaseConverters))
+            {
+                options.Converters.Add(item);
+            }
         }
 
-        static readonly JsonSerializerOptions options;
-
-        public static void Serialize(Stream stream, Scene scene)
+        public static void SerializeJson(Stream stream, Scene scene)
         {
             lock (options)
             {
@@ -61,7 +71,7 @@ namespace CrossEngine.Serialization
             }
         }
 
-        public static Scene Deserialize(Stream stream)
+        public static Scene DeserializeJson(Stream stream)
         {
             Scene scene;
             

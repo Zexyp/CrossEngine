@@ -14,6 +14,13 @@ namespace CrossEngine.Rendering
         public WeakReference<Framebuffer>? Output;
 
         public List<SceneLayerRenderData> Layers = new List<SceneLayerRenderData>();
+
+        public event Action<SceneRenderData, float, float> Resize;
+
+        public void PerformResize(float width, float height)
+        {
+            Resize?.Invoke(this, width, height);
+        }
     }
 
     public class SceneLayerRenderData

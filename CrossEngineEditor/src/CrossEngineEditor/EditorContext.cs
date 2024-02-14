@@ -6,6 +6,7 @@ using System.Linq;
 using CrossEngine.Scenes;
 using CrossEngine.Ecs;
 using CrossEngine.Utils;
+using CrossEngine.Assets;
 
 namespace CrossEngineEditor
 {
@@ -35,6 +36,7 @@ namespace CrossEngineEditor
                 ActiveEntityChanged?.Invoke();
             }
         }
+        AssetPool Assets;
 
         private Entity _activeEntity = null;
         private Scene _scene = null;

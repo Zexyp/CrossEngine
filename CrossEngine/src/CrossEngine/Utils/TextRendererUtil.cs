@@ -33,7 +33,7 @@ namespace CrossEngine.Utils
 
         public static void Shutdown()
         {
-            textTexture.GetValue().Dispose();
+            textTexture.Dispose();
             textTexture = null;
         }
 
