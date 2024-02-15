@@ -59,13 +59,13 @@ namespace CrossEngine.Assets.Loaders
 
         public WeakReference<Texture> ScheduleTextureLoad(byte[] filedata)
         {
-            ImageResult result = ImageResult.FromMemory(filedata, ColorComponents.RedGreenBlue);
+            ImageResult result = ImageResult.FromMemory(filedata);
             return ScheduledInternalLoad(result);
         }
 
         public WeakReference<Texture> ScheduleTextureLoad(Stream filedata)
         {
-            ImageResult result = ImageResult.FromStream(filedata, ColorComponents.RedGreenBlue);
+            ImageResult result = ImageResult.FromStream(filedata);
             return ScheduledInternalLoad(result);
         }
 

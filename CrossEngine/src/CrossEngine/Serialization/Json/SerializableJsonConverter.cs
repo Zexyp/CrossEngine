@@ -19,12 +19,13 @@ namespace CrossEngine.Serialization.Json
                 JsonSerializer.Serialize(writer, value, options);
             }
 
+            var info = new SerializationInfo(Writing);
+
             writer.WriteStartObject();
 
             writer.WriteString("$type", value.GetType().FullName);
-            var info = new SerializationInfo(Writing);
 
-            OnSerializeContent(writer, value, options);
+            OnSerializeContent(writer, value, options, info);
 
             value.GetObjectData(info);
 
@@ -43,6 +44,8 @@ namespace CrossEngine.Serialization.Json
                 return true;
             }
 
+            var info = new SerializationInfo(Reading);
+
             string typeString = reader.GetProperty("$type").GetString();
             Type type = Type.GetType(typeString);
 
@@ -50,14 +53,14 @@ namespace CrossEngine.Serialization.Json
 
             var serializable = (ISerializable)Activator.CreateInstance(type);
 
-            serializable.SetObjectData(new SerializationInfo(Reading));
+            serializable.SetObjectData(info);
 
-            OnDeserializeContent(reader, serializable, options);
+            OnDeserializeContent(reader, serializable, options, info);
 
             return serializable;
         }
 
-        protected virtual void OnSerializeContent(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options) { }
-        protected virtual void OnDeserializeContent(JsonElement reader, ISerializable value, JsonSerializerOptions options) { }
+        protected virtual void OnSerializeContent(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options, SerializationInfo info) { }
+        protected virtual void OnDeserializeContent(JsonElement reader, ISerializable value, JsonSerializerOptions options, SerializationInfo info) { }
     }
 }

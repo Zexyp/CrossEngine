@@ -17,11 +17,29 @@ namespace CrossEngineEditor.Panels
     {
         public HierarchyPanel() : base("Hierarchy")
         {
-            
+            WindowFlags |= ImGuiWindowFlags.MenuBar;
         }
 
         protected override void DrawWindowContent()
         {
+            if (ImGui.BeginMenuBar())
+            {
+                if (ImGui.BeginMenu("Entity", Context.Scene != null))
+                {
+                    if (ImGui.MenuItem("Add"))
+                        Context.Scene.CreateEntity();
+                    if (ImGui.MenuItem("Add Empty"))
+                        Context.Scene.CreateEntity();
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Delete", Context.ActiveEntity != null))
+                        Context.Scene.RemoveEntity(Context.ActiveEntity);
+
+                    ImGui.EndMenu();
+                }
+
+                ImGui.EndMenuBar();
+            }
+
             if (Context.Scene == null)
                 return;
             

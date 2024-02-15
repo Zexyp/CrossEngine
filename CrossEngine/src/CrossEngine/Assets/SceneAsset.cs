@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    internal class SceneAsset : Asset
+    public class SceneAsset : Asset
     {
         public override bool Loaded => Scene != null;
 
@@ -18,9 +18,9 @@ namespace CrossEngine.Assets
         [EditorString]
         public string RelativePath;
 
-        public override async void Load(IAssetLoadContext context)
+        public override void Load(IAssetLoadContext context)
         {
-            using (Stream stream = await context.OpenRelativeStream(RelativePath))
+            using (Stream stream = context.OpenRelativeStream(RelativePath))
             {
                 Scene = SceneSerializer.DeserializeJson(stream);
             }
@@ -29,6 +29,20 @@ namespace CrossEngine.Assets
         public override void Unload(IAssetLoadContext context)
         {
             Scene = null;
+        }
+
+        public override void GetObjectData(SerializationInfo info)
+        {
+            base.GetObjectData(info);
+
+            info.AddValue(nameof(RelativePath), RelativePath);
+        }
+
+        public override void SetObjectData(SerializationInfo info)
+        {
+            base.SetObjectData(info);
+
+            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
         }
     }
 }

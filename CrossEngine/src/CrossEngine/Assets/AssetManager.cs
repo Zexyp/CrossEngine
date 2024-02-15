@@ -1,4 +1,5 @@
-﻿using CrossEngine.Services;
+﻿using CrossEngine.Logging;
+using CrossEngine.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,11 @@ namespace CrossEngine.Assets
         internal static AssetService service;
         public static AssetPool Current { get => _current; }
 
+        public static T Get<T>(Guid id) where T : Asset
+        {
+            return (T)Get(typeof(T), id);
+        }
+
         public static Asset Get(Type typeOfAsset, Guid id)
         {
             return _current.Get(typeOfAsset, id);
@@ -20,7 +26,9 @@ namespace CrossEngine.Assets
 
         public static void Bind(AssetPool pool)
         {
+            _current?.BindLoaders(null);
             _current = pool;
+            _current?.BindLoaders(service.Loaders.ToArray());
         }
 
         public static void Load()

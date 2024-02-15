@@ -1,66 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="vendor\**" />
-    <EmbeddedResource Remove="vendor\**" />
-    <None Remove="vendor\**" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Dialogs\FileOpenDialog.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Dialogs\FileSaveDialog.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Dialogs\FolderBrowserDialog.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Filter.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\HResults.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Enums.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\FileOpenDialogRCW.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\FileSaveDialogRCW.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\FilterSpec.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Identifiers.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IEnumIdList.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IFileDialog.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IFileDialogEvents.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IFileOpenDialog.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IFileSaveDialog.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IModalWindow.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IShellFolder.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IShellItem.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IShellItem2.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\IShellItemArray.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\NativeFileOpenDialog.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\NativeFileSaveDialog.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\NativeMethods.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\Enums.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\IPropertyDescription.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\IPropertyDescriptionList.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\IPropertyEnumType.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\IPropertyEnumTypeList.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\IPropertyStore.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\PropertyKey.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\PropVariant.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Native\Properties\PropVariantNativeMethods.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\NullableAttributes.cs" />
-    <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\Utility.cs" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="vendor\**" />
+        <EmbeddedResource Remove="vendor\**" />
+        <None Remove="vendor\**" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="vendor\ShellFileDialogs\ShellFileDialogs\ShellFileDialogs.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\**" />
+        <Compile Remove="vendor\ShellFileDialogs\ShellFileDialogs\ShellFileDialogs.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="src\CrossEngineEditor\Popups\" />
-  </ItemGroup>
-
+    <ItemGroup>
+        <ContentWithTargetPath Include="res\fonts\JetBrainsMono[wght].ttf">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <TargetPath>res\fonts\JetBrainsMono[wght].ttf</TargetPath>
+        </ContentWithTargetPath>
+    </ItemGroup>
+  
 </Project>

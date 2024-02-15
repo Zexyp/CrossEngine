@@ -1,8 +1,11 @@
 ﻿using CrossEngine.Assets;
 using CrossEngine.Assets.Loaders;
+using CrossEngine.Logging;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +15,14 @@ namespace CrossEngine.Services
     public class AssetService : Service
     {
         private RenderService rser;
-        private List<Loader> _loaders = new List<Loader>();
+        internal static Logger Log = new Logger("assets");
+        readonly private List<Loader> _loaders = new List<Loader>();
+        readonly public ReadOnlyCollection<Loader> Loaders;
+
+        public AssetService()
+        {
+            Loaders = _loaders.AsReadOnly();
+        }
 
         public void AddLoader(Loader loader)
         {
@@ -34,12 +44,12 @@ namespace CrossEngine.Services
 
         public void Load(AssetPool assets)
         {
-            assets.Load(_loaders.ToArray());
+            assets.LoadAll();
         }
 
         public void Unload(AssetPool assets)
         {
-            assets.Unload(_loaders.ToArray());
+            assets.UnloadAll();
         }
 
         public override void OnStart()

@@ -11,22 +11,25 @@ namespace CrossEngine.Assets
     public interface IAssetLoadContext
     {
         string GetFullPath(string realtivePath);
-        Task<Stream> OpenStream(string path);
+        Stream OpenStream(string path);
         
-        Asset LoadChild(Type type, Guid id);
+        void LoadChild(Type type, in Guid id, out Asset to);
         void FreeChild(Asset asset);
 
         Loader GetLoader(Type type);
 
-        virtual Task<Stream> OpenRelativeStream(string realtivePath) => OpenStream(GetFullPath(realtivePath));
+        virtual Stream OpenRelativeStream(string realtivePath) => OpenStream(GetFullPath(realtivePath));
 
         virtual T GetLoader<T>() where T : Loader => (T)GetLoader(typeof(T));
-        virtual T LoadChild<T>(Guid id) where T : Asset => (T)LoadChild(typeof(T), id);
+        virtual void LoadChild<T>(in Guid id, out T to) where T : Asset
+        {
+            LoadChild(typeof(T), id, out var o);
+            to = (T)o;
+        }
     }
 
     public abstract class Asset : ISerializable
     {
-        [EditorGuid]
         public Guid Id { get; internal set; }
         public abstract bool Loaded { get; }
 
@@ -35,5 +38,12 @@ namespace CrossEngine.Assets
 
         public virtual void GetObjectData(SerializationInfo info) => info.AddValue(nameof(Id), Id);
         public virtual void SetObjectData(SerializationInfo info) => Id = info.GetValue(nameof(Id), Id);
+
+        protected void SetChildId<T>(T value, ref T asset, ref Guid guid) where T : Asset
+        {
+            asset = value;
+            if (asset != null) guid = asset.Id;
+            else guid = Guid.Empty;
+        }
     }
 }

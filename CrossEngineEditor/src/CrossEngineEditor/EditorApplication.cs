@@ -35,7 +35,7 @@ namespace CrossEngineEditor
                 WindowService.Mode.ThreadLoop
                 ));
             Manager.Register(new RenderService());
-            Manager.Register(new ImGuiService());
+            Manager.Register(new ImGuiService("res/fonts/JetBrainsMono[wght].ttf"));
             Manager.Register(new SceneService());
             Manager.Register(new AssetService());
 

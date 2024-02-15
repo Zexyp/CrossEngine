@@ -1,7 +1,11 @@
 ﻿using CrossEngine.Ecs;
+using CrossEngine.Logging;
 using CrossEngine.Platform;
 using CrossEngine.Serialization;
+using CrossEngine.Services;
+using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
+using Silk.NET.Core.Native;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,11 +24,6 @@ namespace CrossEngine.Assets
         Dictionary<Type, IDictionary> _collections = new();
         bool _loaded = false;
         Loader[] _loaders = null;
-
-        Task<Stream> IAssetLoadContext.OpenStream(string path)
-        {
-            return PlatformHelper.FileOpen(path);
-        }
 
         public void Add(Asset asset)
         {
@@ -61,16 +60,27 @@ namespace CrossEngine.Assets
 
         public ICollection<T>? GetCollection<T>() where T : Asset
         {
-            return (ICollection<T>)GetCollection(typeof(T));
+            return new CastWrapCollection<T>(_collections[typeof(T)].Values);
         }
 
-        public ICollection? GetCollection(Type ofType)
+        public ICollection<Asset>? GetCollection(Type ofType)
         {
             if (!ofType.IsSubclassOf(typeof(Asset)))
                 throw new InvalidOperationException();
-            if (!_collections.ContainsKey(ofType))
-                return null;
-            return _collections[ofType].Values;
+            
+            return (ICollection<Asset>)_collections[ofType].Values;
+        }
+
+        public bool HasCollection<T>() where T : Asset
+        {
+            return _collections.ContainsKey(typeof(T));
+        }
+        public bool HasCollection(Type ofType)
+        {
+            if (!ofType.IsSubclassOf(typeof(Asset)))
+                throw new InvalidOperationException();
+
+            return _collections.ContainsKey(ofType);
         }
 
         // funny
@@ -90,54 +100,95 @@ namespace CrossEngine.Assets
             }
         }
 
-        public void Load(Loader[] loaders)
+        public bool LoadAll()
         {
-            _loaders = loaders;
+            var result = true;
             foreach (var col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
                 {
-                    if (!asset.Loaded)
-                        asset.Load(this);
+                    if (!LoadAsset(asset))
+                        result = false;
                 }
             }
             _loaded = true;
-            _loaders = null;
+
+            return result;
         }
 
-        public void Unload(Loader[] loaders)
+        public bool UnloadAll()
         {
-            _loaders = loaders;
+            var result = true;
             foreach (var col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
                 {
-                    if (asset.Loaded)
-                        asset.Unload(this);
+                    if (!UnloadAsset(asset))
+                        result = false;
                 }
             }
             _loaded = false;
-            _loaders = null;
+
+            return result;
+        }
+
+        public void BindLoaders(Loader[] loaders)
+        {
+            _loaders = loaders;
+        }
+
+        public bool LoadAsset(Asset asset)
+        {
+            try
+            {
+                if (!asset.Loaded)
+                    asset.Load(this);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AssetService.Log.Error($"failed to load asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
+                return false;
+            }
+        }
+
+        public bool UnloadAsset(Asset asset)
+        {
+            try
+            {
+                if (asset.Loaded)
+                    asset.Unload(this);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AssetService.Log.Error($"failed to unload asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
+                return false;
+            }
         }
 
         #region IAssetLoadContext
+        Stream IAssetLoadContext.OpenStream(string path)
+        {
+            return PlatformHelper.FileOpen(path);
+        }
+
         string IAssetLoadContext.GetFullPath(string realtivePath)
         {
             return Path.Join(Directory, realtivePath);
         }
 
-        Asset IAssetLoadContext.LoadChild(Type type, Guid id)
+        void IAssetLoadContext.LoadChild(Type type, in Guid id, out Asset to)
         {
             var ch = (Asset)_collections[type][id];
-            if (!ch.Loaded)
-                ch.Load(this);
-            return ch;
+            to = ch;
+
+            LoadAsset(ch);
         }
 
         void IAssetLoadContext.FreeChild(Asset asset)
         {
-            if (asset.Loaded)
-                ((Asset)_collections[asset.GetType()][asset.Id]).Unload(this);
+            UnloadAsset((Asset)_collections[asset.GetType()][asset.Id]);
         }
 
         public Loader GetLoader(Type type)

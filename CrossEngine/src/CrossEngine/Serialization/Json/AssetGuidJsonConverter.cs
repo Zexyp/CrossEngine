@@ -10,7 +10,7 @@ using System.Xml.Linq;
 
 namespace CrossEngine.Serialization.Json
 {
-    internal class AssetJsonConverter : ElementJsonConverter<Asset>
+    internal class AssetGuidJsonConverter : ElementJsonConverter<Asset>
     {
         public override bool CanConvert(Type typeToConvert) => typeToConvert.IsSubclassOf(typeof(Asset));
 

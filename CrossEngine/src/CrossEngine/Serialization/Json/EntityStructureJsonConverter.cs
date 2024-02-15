@@ -16,14 +16,14 @@ namespace CrossEngine.Serialization.Json
         Dictionary<Guid, Entity> _pool = new();
         List<(Entity Entity, Guid Id)> _bindToParent = new();
 
-        protected override void OnSerializeContent(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options)
+        protected override void OnSerializeContent(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options, SerializationInfo info)
         {
             var entity = (Entity)value;
             if (entity.Parent != null)
                 writer.WriteString("Parent", entity.Parent.Id);
         }
 
-        protected override void OnDeserializeContent(JsonElement reader, ISerializable value, JsonSerializerOptions options)
+        protected override void OnDeserializeContent(JsonElement reader, ISerializable value, JsonSerializerOptions options, SerializationInfo info)
         {
             var entity = (Entity)value;
             _pool.Add(entity.Id, entity);

@@ -404,7 +404,24 @@ namespace CrossEngineEditor.Utils
                 var er = EvalResult(result);
                 
                 if (result)
-                    value = Encoding.Default.GetString(buffer).TrimEnd('\0');
+                {
+                    // tractooooor
+                    //  ,-,---,
+                    //  |_|___|  Y
+                    //  |/``\ |--'-q  _
+                    // {( () ) {(===t||
+                    //   \__/````\_/
+                    //
+                    // i hate my code
+
+                    var buffCont = Encoding.Default.GetString(buffer).TrimEnd('\0');
+                    var newVal = "";
+                    for (int i = 0; i < buffCont.Length && buffCont[i] != '\0'; i++)
+                    {
+                        newVal += buffCont[i];
+                    }
+                    value = newVal;
+                }
 
                 if (pushedColor) ImGui.PopStyleColor();
 
