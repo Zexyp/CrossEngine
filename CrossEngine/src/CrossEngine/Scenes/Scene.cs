@@ -91,6 +91,13 @@ namespace CrossEngine.Scenes
             AddEntity(entity);
             return entity;
         }
+
+        public Entity CreateEmptyEntity()
+        {
+            var entity = new Entity();
+            AddEntity(entity);
+            return entity;
+        }
         #endregion
 
         public void Load()

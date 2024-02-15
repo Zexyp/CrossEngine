@@ -20,6 +20,7 @@ using StbImageSharp;
 using CrossEngine.Assets;
 using System.Text.Json;
 using CrossEngine.Serialization;
+using CrossEngine.Utils.ImGui;
 
 namespace CrossEngineEditor
 {
@@ -29,10 +30,13 @@ namespace CrossEngineEditor
         readonly List<EditorPanel> _panels = new List<EditorPanel>();
         readonly List<EditorPanel> _registeredPanels = new List<EditorPanel>();
         private Window window = null;
-        Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
+        internal static Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
 
         public override void OnStart()
         {
+            Context.AssetsChanged += OnContextAssetsChanged;
+            Context.SceneChanged += OnContextSceneChanged;
+
             RegisterPanel(new InspectorPanel());
             RegisterPanel(new HierarchyPanel());
             RegisterPanel(new ViewportPanel(Manager.GetService<RenderService>()));
@@ -51,15 +55,12 @@ namespace CrossEngineEditor
 
             Log.Info("editor started");
 
-            SetScene(scene);
+            Context.Scene = scene;
         }
 
         public override void OnDestroy()
         {
-            SceneManager.Unload(Context.Scene);
-
-            Context.ActiveEntity = null;
-            Context.Scene = null;
+            Context.Clear();
 
             while (_panels.Count > 0)
                 RemovePanel(_panels[0]);
@@ -80,6 +81,7 @@ namespace CrossEngineEditor
                 var result = ImageResult.FromMemory(CrossEngine.Properties.Resources.Logo, ColorComponents.RedGreenBlueAlpha);
                 fixed (void* p = &result.Data[0])
                     window.SetIcon(p, (uint)result.Width, (uint)result.Height);
+
             });
             var rs = Manager.GetService<RenderService>();
             rs.Frame += OnRender;
@@ -175,22 +177,36 @@ namespace CrossEngineEditor
             {
                 if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.MenuItem("New Scene"))
+                    //ImGui.Separator();
+                    if (ImGui.MenuItem("Quit"))
+                        EditorApplication.Instance.Close();
+
+                    ImGui.EndMenu();
+                }
+
+                if (ImGui.BeginMenu("Scene"))
+                {
+                    if (ImGui.MenuItem("New"))
                     {
-                        SetScene(new Scene());
+                        Context.Scene = new Scene();
                     }
-                    if (ImGui.MenuItem("Load Scene..."))
+                    if (ImGui.BeginMenu("Load", Context.Assets?.HasCollection<SceneAsset>() == true))
                     {
-                        var filepath = ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
-                        if (filepath != null)
-                            using (Stream stream = File.OpenRead(filepath))
+                        foreach (var item in Context.Assets.GetCollection<SceneAsset>())
+                        {
+                            if (!item.Loaded) ImGui.BeginDisabled();
+                            if (ImGui.Selectable(item.RelativePath ?? "<null>", item.Scene != null && item.Scene == Context.Scene))
                             {
-                                SetScene(SceneSerializer.DeserializeJson(stream));
+                                Context.Scene = null;
+                                Context.Scene = item.Scene;
                             }
+                            if (!item.Loaded) ImGui.EndDisabled();
+                        }
+
+                        ImGui.EndMenu();
                     }
                     ImGui.Separator();
-                    if (ImGui.MenuItem("Save Scene", Context.Scene != null)) ;
-                    if (ImGui.MenuItem("Save Scene As...", Context.Scene != null))
+                    if (ImGui.MenuItem("Save As...", Context.Scene != null))
                     {
                         var filepath = ShellFileDialogs.FileSaveDialog.ShowDialog(0, null, null, null, null);
                         if (filepath != null)
@@ -199,9 +215,6 @@ namespace CrossEngineEditor
                                 SceneSerializer.SerializeJson(stream, Context.Scene);
                             }
                     }
-                    ImGui.Separator();
-                    if (ImGui.MenuItem("Quit"))
-                        EditorApplication.Instance.Close();
 
                     ImGui.EndMenu();
                 }
@@ -311,13 +324,20 @@ namespace CrossEngineEditor
         }
         #endregion
 
-        private void SetScene(Scene scene)
+        private void OnContextSceneChanged(Scene old)
         {
-            if (Context.Scene != null) SceneManager.Unload(Context.Scene);
+            if (old != null) SceneManager.Unload(old);
 
-            Context.Scene = scene;
+            if (Context.Scene != null) SceneManager.Load(Context.Scene, new SceneService.SceneConfig() { Update = false, Render = false, Resize = false });
+        }
 
-            SceneManager.Load(scene, new SceneService.SceneConfig() { Update = false, Render = false, Resize = false });
+        private void OnContextAssetsChanged(AssetPool old)
+        {
+            if (old != null) AssetManager.Unload();
+
+            AssetManager.Bind(Context.Assets);
+
+            if (Context.Assets != null) AssetManager.Load();
         }
     }
 }

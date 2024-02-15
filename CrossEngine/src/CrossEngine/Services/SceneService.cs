@@ -1,4 +1,5 @@
 ﻿using CrossEngine.Events;
+using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Scenes;
 using CrossEngine.Systems;
@@ -24,6 +25,8 @@ namespace CrossEngine.Services
         readonly List<(Scene Scene, SceneConfig Config)> _scenes = new();
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
+
+        static Logger Log = new Logger("scenes");
 
         private WindowService ws;
 
@@ -90,12 +93,14 @@ namespace CrossEngine.Services
                 scene.RenderData.PerformResize(ws.Window.Width, ws.Window.Height);
             _scenes.Add((scene, configValue));
             scene.Load();
+            Log.Info("scene pushed");
         }
 
         public void Remove(Scene scene)
         {
             scene.Unload();
             _scenes.RemoveAll(e => e.Scene == scene);
+            Log.Info("scene removed");
         }
 
         

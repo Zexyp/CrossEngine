@@ -1,5 +1,7 @@
 ﻿using CrossEngine.Assemblies;
 using CrossEngine.Assets;
+using CrossEngine.Logging;
+using CrossEngine.Services;
 using CrossEngine.Utils.Editor;
 using CrossEngineEditor.Utils;
 using ImGuiNET;
@@ -28,6 +30,10 @@ namespace CrossEngineEditor.Panels
             {
                 jso.Converters.Add(item);
             }
+
+#if DEBUG
+            jso.WriteIndented = true;
+#endif
         }
 
         protected override void DrawWindowContent()
@@ -41,7 +47,7 @@ namespace CrossEngineEditor.Panels
                 {
                     if (ImGui.MenuItem("New"))
                     {
-                        SetAssetPool(new AssetPool());
+                        Context.Assets = new AssetPool();
                     }
                     if (ImGui.MenuItem("Load..."))
                     {
@@ -49,32 +55,31 @@ namespace CrossEngineEditor.Panels
                         if (filepath != null)
                             using (Stream stream = File.OpenRead(filepath))
                             {
-                                SetAssetPool(JsonSerializer.Deserialize<AssetPool>(stream, jso));
+                                Context.Assets = JsonSerializer.Deserialize<AssetPool>(stream, jso);
                             }
                     }
                     ImGui.Separator();
-                    if (ImGui.MenuItem("Save", AssetManager.Current != null)) ;
-                    if (ImGui.MenuItem("Save As...", AssetManager.Current != null))
+                    if (ImGui.MenuItem("Save As...", Context.Assets != null))
                     {
                         var filepath = ShellFileDialogs.FileSaveDialog.ShowDialog(0, null, null, null, null);
                         if (filepath != null)
                             using (Stream stream = File.OpenWrite(filepath))
                             {
-                                JsonSerializer.Serialize(stream, AssetManager.Current, jso);
+                                JsonSerializer.Serialize(stream, Context.Assets, jso);
                             }
                     }
 
                     ImGui.EndMenu();
                 }
 
-                if (ImGui.BeginMenu("Asset", AssetManager.Current != null))
+                if (ImGui.BeginMenu("Asset", Context.Assets != null))
                 {
                     if (ImGui.MenuItem("Create..."))
                     {
                         openCreatePopup = true;
                     }
                     ImGui.Separator();
-                    if (ImGui.MenuItem("Reload All", AssetManager.Current != null))
+                    if (ImGui.MenuItem("Reload All", Context.Assets != null))
                     {
                         AssetManager.Unload();
                         AssetManager.Load();
@@ -101,10 +106,10 @@ namespace CrossEngineEditor.Panels
                 ImGui.EndPopup();
             }
 
-            if (AssetManager.Current == null)
+            if (Context.Assets == null)
                 return;
 
-            InspectDrawer.Inspect(AssetManager.Current);
+            InspectDrawer.Inspect(Context.Assets);
 
             if (ImGui.BeginTable("Assets", 2, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuterH | ImGuiTableFlags.Resizable | ImGuiTableFlags.RowBg | ImGuiTableFlags.NoBordersInBody))
             {
@@ -112,11 +117,11 @@ namespace CrossEngineEditor.Panels
                 ImGui.TableSetupColumn("Data", ImGuiTableColumnFlags.WidthFixed);
                 ImGui.TableHeadersRow();
 
-                foreach ((Type Type, IEnumerable<Asset> EnumerateMore) item in AssetManager.Current.Enumerate())
+                foreach ((Type Type, IEnumerable<Asset> EnumerateMore) item in Context.Assets.Enumerate())
                 {
                     ImGui.TableNextRow();
                     ImGui.TableNextColumn();
-                    var treeOpen = ImGui.TreeNodeEx(item.Type.FullName);
+                    var treeOpen = ImGui.TreeNodeEx($"{item.Type.FullName}[]");
                     ImGui.TableNextColumn();
                     ImGui.TextDisabled("-");
 
@@ -128,11 +133,27 @@ namespace CrossEngineEditor.Panels
 
                             ImGui.TableNextRow();
                             ImGui.TableNextColumn();
+                            
+                            if (!asset.Loaded) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
                             var innerOpen = ImGui.TreeNodeEx(asset.Id.ToString());
+                            if (!asset.Loaded) ImGui.PopStyleColor();
+                            
                             ImGui.TableNextColumn();
                             if (innerOpen)
                             {
-
+                                if (ImGui.Button("×"))
+                                    Context.Assets.Remove(asset);
+                                ImGui.BeginDisabled();
+                                var loaded = asset.Loaded;
+                                ImGui.Checkbox("Loaded", ref loaded);
+                                ImGui.EndDisabled();
+                                ImGui.SameLine();
+                                if (ImGui.Button("Reload"))
+                                {
+                                    if (asset.Loaded) Context.Assets.UnloadAsset(asset);
+                                    if (!asset.Loaded) Context.Assets.LoadAsset(asset);
+                                }
+                                InspectDrawer.DrawMember(typeof(Asset).GetMember(nameof(Asset.Id))[0], asset);
                                 InspectDrawer.Inspect(asset);
 
                                 ImGui.TreePop();
@@ -149,15 +170,6 @@ namespace CrossEngineEditor.Panels
 
                 ImGui.EndTable();
             }
-        }
-
-        private void SetAssetPool(AssetPool pool)
-        {
-            if (AssetManager.Current != null) AssetManager.Unload();
-
-            AssetManager.Bind(pool);
-
-            AssetManager.Load();
         }
 
         private void CreateAssetPopup()
@@ -178,7 +190,7 @@ namespace CrossEngineEditor.Panels
                     {
                         if (ImGui.Selectable(t.FullName))
                         {
-                            AssetManager.Current.Add((Asset)Activator.CreateInstance(t));
+                            Context.Assets.Add((Asset)Activator.CreateInstance(t));
                         }
                     }
                 }

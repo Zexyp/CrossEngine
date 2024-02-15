@@ -13,17 +13,22 @@ namespace CrossEngine.Assets
     {
         public override bool Loaded => Texture?.Loaded == true;
 
+        [EditorAsset]
+        public TextureAsset Texture
+        {
+            get => texture;
+            set => SetChildId(value, ref texture, ref idTexture);
+        }
+
         [EditorDrag]
         public Vector4 TextureOffsets = new(0, 0, 1, 1);
 
-        [EditorAsset]
-        public TextureAsset Texture { get; set; }
-
-        private Guid idTexture;
+        private TextureAsset texture = null;
+        private Guid idTexture = Guid.Empty;
 
         public override void Load(IAssetLoadContext context)
         {
-            Texture = context.LoadChild<TextureAsset>(Texture?.Id ?? idTexture);
+            context.LoadChild(idTexture, out texture);
         }
 
         public override void Unload(IAssetLoadContext context)
@@ -36,7 +41,7 @@ namespace CrossEngine.Assets
             base.GetObjectData(info);
 
             info.AddValue(nameof(TextureOffsets), TextureOffsets);
-            info.AddValue(nameof(Texture), Texture?.Id);
+            info.AddValue(nameof(Texture), idTexture);
         }
 
         public override void SetObjectData(SerializationInfo info)

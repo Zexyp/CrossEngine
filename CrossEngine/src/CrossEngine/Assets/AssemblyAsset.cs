@@ -21,9 +21,9 @@ namespace CrossEngine.Assets
 
         AssemblyLoadContext loadContext;
 
-        public override async void Load(IAssetLoadContext context)
+        public override void Load(IAssetLoadContext context)
         {
-            loadContext = AssemblyManager.Load(await context.OpenRelativeStream(RelativePath), out Assembly);
+            loadContext = AssemblyManager.Load(context.OpenRelativeStream(RelativePath), out Assembly);
         }
 
         public override void Unload(IAssetLoadContext context)

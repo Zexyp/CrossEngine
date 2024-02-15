@@ -27,12 +27,14 @@ namespace CrossEngine.Rendering.Renderables
         public override void End()
         {
             Renderer2D.EndScene();
+            _lastBlend = null;
         }
 
         public override void Submit(ISpriteRenderData data)
         {
             if (_lastBlend != data.Blend)
             {
+                _lastBlend = data.Blend;
                 Renderer2D.Flush();
                 Renderer2D.SetBlending(data.Blend);
             }

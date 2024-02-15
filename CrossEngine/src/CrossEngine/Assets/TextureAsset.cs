@@ -23,24 +23,28 @@ namespace CrossEngine.Assets
         [EditorString]
         public string RelativePath;
 
+        //[EditorEnum]
+        //[EditorNullable]
+        //public ColorFormat? Format = null;
+
         private bool _loaded = false;
 
-        public override async void Load(IAssetLoadContext context)
+        public override void Load(IAssetLoadContext context)
         {
-            _loaded = true;
-            
-            using (Stream stream = await context.OpenRelativeStream(RelativePath))
+            using (Stream stream = context.OpenRelativeStream(RelativePath))
             {
                 Texture = context.GetLoader<TextureLoader>().ScheduleTextureLoad(stream);
             }
+            
+            _loaded = true;
         }
 
         public override void Unload(IAssetLoadContext context)
         {
+            _loaded = false;
+
             context.GetLoader<TextureLoader>().ScheduleTextureUnload(Texture);
             Texture = null;
-
-            _loaded = false;
         }
 
         public override void GetObjectData(SerializationInfo info)

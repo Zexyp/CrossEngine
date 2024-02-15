@@ -29,7 +29,7 @@ namespace CrossEngine.Serialization
 
         static SceneSerializer()
         {
-            AssetJsonConverter assConv;
+            AssetGuidJsonConverter assConv;
             
             options = new()
             {
@@ -42,7 +42,7 @@ namespace CrossEngine.Serialization
             {
                 new EntityStructureJsonConverter(),
 
-                new AssetJsonConverter(),
+                new AssetGuidJsonConverter(),
 
                 new SceneJsonConverter(),
             }.Concat(BaseConverters))
