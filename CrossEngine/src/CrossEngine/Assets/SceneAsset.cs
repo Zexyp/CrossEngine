@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
+    [DependantAsset]
     public class SceneAsset : Asset
     {
         public override bool Loaded => Scene != null;

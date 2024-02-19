@@ -11,4 +11,9 @@ namespace CrossEngine.Serialization.Json
         void Init();
         void Finish();
     }
+
+    internal interface ITypeResolveConverter
+    {
+        TypeResolver Resolver { get; set; }
+    }
 }

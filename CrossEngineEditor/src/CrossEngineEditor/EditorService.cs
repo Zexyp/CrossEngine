@@ -36,6 +36,7 @@ namespace CrossEngineEditor
         {
             Context.AssetsChanged += OnContextAssetsChanged;
             Context.SceneChanged += OnContextSceneChanged;
+            Context.ModeChanged += OnContextModeChanged;
 
             RegisterPanel(new InspectorPanel());
             RegisterPanel(new HierarchyPanel());
@@ -241,6 +242,18 @@ namespace CrossEngineEditor
                     ImGui.EndMenu();
                 }
 
+                var dis = Context.Scene == null;
+                if (dis) ImGui.BeginDisabled();
+                ImGui.SetCursorPosX(ImGui.GetColumnWidth() / 2);
+                var colorPushed = Context.Mode == EditorContext.Playmode.Playing;
+                if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered]);
+                if (ImGui.ArrowButton("##play", Context.Mode == EditorContext.Playmode.Playing ? ImGuiDir.Down : ImGuiDir.Right))
+                {
+                    Context.Mode = Context.Mode == EditorContext.Playmode.Playing ? EditorContext.Playmode.Stopped : EditorContext.Playmode.Playing;
+                }
+                if (colorPushed) ImGui.PopStyleColor();
+                if (dis) ImGui.EndDisabled();
+
                 ImGui.EndMainMenuBar();
             }
         }
@@ -318,7 +331,7 @@ namespace CrossEngineEditor
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"following error while drawing panel '{p.WindowName}' ({p.GetType().FullName}): {e}");
+                    Log.Error($"incident while drawing a panel '{p.WindowName}' ({p.GetType().FullName}): {e}");
                 }
             }
         }
@@ -338,6 +351,22 @@ namespace CrossEngineEditor
             AssetManager.Bind(Context.Assets);
 
             if (Context.Assets != null) AssetManager.Load();
+        }
+
+        private void OnContextModeChanged()
+        {
+            if (Context.Scene == null) return;
+
+            if (Context.Mode == EditorContext.Playmode.Playing && !Context.Scene.Started)
+            {
+                SceneManager.Start(Context.Scene);
+                SceneManager.Configure(Context.Scene, new SceneService.SceneConfig() { Update = true, Render = false, Resize = false });
+            }
+            if ((Context.Mode == EditorContext.Playmode.Stopped || Context.Mode == EditorContext.Playmode.Paused) && Context.Scene.Started)
+            {
+                SceneManager.Configure(Context.Scene, new SceneService.SceneConfig() { Update = false, Render = false, Resize = false });
+                SceneManager.Stop(Context.Scene);
+            }
         }
     }
 }

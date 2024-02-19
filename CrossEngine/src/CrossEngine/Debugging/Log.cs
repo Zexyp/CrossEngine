@@ -49,23 +49,16 @@ namespace CrossEngine.Logging
 
         public static void Init(LogLevel? level = null, bool? enableColors = null)
         {
-            Debug.Assert(!_initialized);
-
             GlobalLevel = level ?? GlobalLevel;
             EnableColors = enableColors ?? EnableColors;
 
-            Default.Trace("init log");
+            Default.Trace("configured log");
             if (!EnableColors)
                 Default.Trace("colors disabled");
-
-            _initialized = true;
         }
 
         public static void Print(LogLevel level, string message, uint? color = null)
         {
-            if (_initialized)
-                Init();
-
             mutex.WaitOne();
 
             if (GlobalLevel <= level)

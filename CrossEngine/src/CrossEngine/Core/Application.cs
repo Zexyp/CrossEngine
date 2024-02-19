@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using CrossEngine.Services;
 using CrossEngine.Profiling;
 
-namespace CrossEngine
+namespace CrossEngine.Core
 {
     public abstract class Application : IDisposable
     {

@@ -23,7 +23,7 @@ namespace CrossEngine.Assemblies
         {
             Loaded = _loaded.AsReadOnly();
 
-            Log.Trace("initial assemblies\n    " + string.Join("\n    ", _loaded.Select(a => a.FullName)));
+            Log.Trace("initial assemblies:\n    " + string.Join("\n    ", _loaded.Select(a => GetPrintName(a))));
         }
 
         public static IEnumerable<Type> GetSubclasses(Type type)
@@ -43,19 +43,30 @@ namespace CrossEngine.Assemblies
             }
         }
 
+        public static Type GetType(string typeName)
+        {
+            for (int i = 0; i < _loaded.Count; i++)
+            {
+                Type found = _loaded[i].GetType(typeName, false);
+                if (found != null)
+                    return found;
+            }
+            return null;
+        }
+
         public static AssemblyLoadContext Load(Stream stream, out Assembly assembly)
         {
             var context = new AssemblyLoadContext(null, true);
-            
+
             assembly = context.LoadFromStream(stream);
             _contexts.Add(context, assembly);
             _loaded.Add(assembly);
             
-            Log.Info($"assembly loaded '{assembly.FullName}'");
+            Log.Info($"assembly loaded '{GetPrintName(assembly)}'");
 
             var tmpa = assembly;
-            context.Unloading += c => Log.Info($"assembly unloading '{tmpa.FullName}'");
-
+            context.Unloading += c => Log.Info($"assembly unloading '{GetPrintName(tmpa)}'");
+             
             return context;
         }
 
@@ -64,6 +75,12 @@ namespace CrossEngine.Assemblies
             _loaded.Remove(_contexts[context]);
             _contexts.Remove(context);
             context.Unload();
+        }
+
+        private static string GetPrintName(Assembly a)
+        {
+            var n = a.GetName();
+            return $"{n.Name} ({n.Version})";
         }
     }
 }

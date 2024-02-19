@@ -11,23 +11,23 @@ namespace CrossEngine.Ecs
 {
     public interface IUpdatedSystem
     {
-        void Update();
+        void OnUpdate();
     }
 
     public interface IFixedUpdatedSystem
     {
-        void FixedUpdate();
+        void OnFixedUpdate();
     }
 
     public abstract class ComponentSystem
     {
         internal protected EcsWorld World { get; internal set; }
+        protected bool Started = false;
 
-        public virtual void Attach() { }
-        public virtual void Detach() { }
-
-        //public virtual void Start() { }
-        //public virtual void Stop() { }
+        public virtual void OnAttach() { }
+        public virtual void OnDetach() { }
+        public virtual void OnStart() { }
+        public virtual void OnStop() { }
 
         public abstract void Register(Component component);
         public abstract void Unregister(Component component);
@@ -42,7 +42,7 @@ namespace CrossEngine.Ecs
             this.inherit = inherit;
         }
 
-        public override void Attach()
+        public override void OnAttach()
         {
             World.NotifyOn<T>(this, this.inherit);
         }
@@ -66,7 +66,7 @@ namespace CrossEngine.Ecs
             Debug.Assert(types.Distinct().Count() == types.Length && types.All(e => e.IsSubclassOf(typeof(Component))));
         }
 
-        public override void Attach()
+        public override void OnAttach()
         {
             var types = typeof(T).GetGenericArguments();
             for (int i = 0; i < types.Length; i++)

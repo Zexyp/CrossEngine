@@ -17,7 +17,8 @@ using CrossEngine.Components;
 
 namespace CrossEngine.Ecs
 {
-    public class Entity : ISerializable
+    // a very inspectable container
+    public class Entity : ISerializable, ICloneable
     {
         public Guid Id { get; internal set; } = Guid.Empty;
 
@@ -65,7 +66,6 @@ namespace CrossEngine.Ecs
         private readonly List<Component> _components = new List<Component>();
         private readonly List<Entity> _children = new List<Entity>();
         private Entity _parent = null;
-        private bool _attached = false;
 
         public Entity()
         {
@@ -73,32 +73,15 @@ namespace CrossEngine.Ecs
             Children = _children.AsReadOnly();
         }
 
-        internal void Attach()
-        {
-            _attached = true;
-            for (int i = 0; i < _components.Count; i++)
-            {
-                AttachComponent(_components[i]);
-            }
-        }
-
-        internal void Detach()
-        {
-            for (int i = _components.Count - 1; i >= 0; i--)
-            {
-                DetachComponent(_components[i]);
-            }
-            _attached = false;
-        }
-
         #region Component Methods
         #region Add
         public Component AddComponent(Component component)
         {
-            Debug.Assert(!_components.Contains(component));
-
             var componentType = component.GetType();
-            if (Attribute.GetCustomAttribute(componentType, typeof(AllowSinglePerEntityAttribute)) != null)
+
+            if (_components.Contains(component))
+                throw new InvalidOperationException("Entity already has this component");
+            if (Attribute.IsDefined(componentType, typeof(AllowSinglePerEntityAttribute)))
             {
                 if (GetComponent(componentType) != null)
                     throw new InvalidOperationException($"Entity already has component of type '{componentType}'");
@@ -114,7 +97,7 @@ namespace CrossEngine.Ecs
 
             _components.Add(component);
 
-            if (_attached) AttachComponent(component);
+            ComponentAdded?.Invoke(this, component);
 
             return component;
         }
@@ -133,9 +116,10 @@ namespace CrossEngine.Ecs
         #region Remove
         public void RemoveComponent(Component component)
         {
-            Debug.Assert(_components.Contains(component));
+            if (!_components.Contains(component))
+                throw new InvalidOperationException("Entiy does not have this component");
 
-            if (_attached) DetachComponent(component);
+            ComponentRemoved?.Invoke(this, component);
 
             _components.Remove(component);
 
@@ -270,32 +254,7 @@ namespace CrossEngine.Ecs
         }
         #endregion
 
-        private void AttachComponent(Component component)
-        {
-            Debug.Assert(!component.Attached);
-
-            component.Entity = this;
-            component.OnAttach();
-            if (component.Enabled) component.OnEnable();
-
-            ComponentAdded?.Invoke(this, component);
-
-            component.Attached = true;
-        }
-
-        private void DetachComponent(Component component)
-        {
-            Debug.Assert(component.Attached);
-
-            component.Attached = false;
-
-            if (component.Enabled) component.OnDisable();
-            component.OnDetach();
-            component.Entity = null;
-
-            ComponentRemoved?.Invoke(this, component);
-        }
-
+        #region ISerializable
         void ISerializable.GetObjectData(SerializationInfo info)
         {
             info.AddValue("Id", Id);
@@ -304,11 +263,25 @@ namespace CrossEngine.Ecs
 
         void ISerializable.SetObjectData(SerializationInfo info)
         {
-            Id = info.GetValue("Id", Id);
-            foreach (var comp in info.GetValue<Component[]>("Components"))
+            Debug.Assert(_components.Count == 0);
+
+            Id = info.GetValue<Guid>("Id");
+            var comps = info.GetValue<Component[]>("Components");
+            for (int i = 0; i < comps.Length; i++)
             {
-                AddComponent(comp);
+                AddComponent(comps[i]);
             }
         }
+
+        public object Clone()
+        {
+            Entity entity = new Entity();
+            for (int i = 0; i < _components.Count; i++)
+            {
+                entity.AddComponent((Component)_components[i].Clone());
+            }
+            return entity;
+        }
+        #endregion
     }
 }

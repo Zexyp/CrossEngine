@@ -1,8 +1,10 @@
-﻿using CrossEngine.Assets;
+﻿using CrossEngine.Assemblies;
+using CrossEngine.Assets;
 using CrossEngine.Scenes;
 using CrossEngine.Serialization.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,6 +13,24 @@ using System.Text.Json.Serialization;
 
 namespace CrossEngine.Serialization
 {
+    // my simple thing :), ITypeResolutionService sounds too scary
+    public abstract class TypeResolver
+    {
+        public static readonly TypeResolver Default = new DefaultTypeResolver();
+
+        public abstract Type Resolve(string str);
+    }
+
+    sealed class DefaultTypeResolver : TypeResolver
+    {
+        public override Type Resolve(string str) => Type.GetType(str, true);
+    }
+
+    class CrossAssemblyTypeResolver : TypeResolver
+    {
+        public override Type Resolve(string str) => Type.GetType(str, false) ?? AssemblyManager.GetType(str);
+    }
+
     public static class SceneSerializer
     {
         // TODO: move this somewhere
@@ -26,6 +46,7 @@ namespace CrossEngine.Serialization
         };
 
         static readonly JsonSerializerOptions options;
+        static readonly TypeResolver resolver;
 
         static SceneSerializer()
         {
@@ -39,15 +60,22 @@ namespace CrossEngine.Serialization
             };
 
             foreach (var item in new JsonConverter[]
-            {
-                new EntityStructureJsonConverter(),
+                {
+                    new EntityStructureJsonConverter(),
 
-                new AssetGuidJsonConverter(),
+                    new AssetGuidJsonConverter(),
 
-                new SceneJsonConverter(),
-            }.Concat(BaseConverters))
+                    new SceneJsonConverter(),
+                }.Concat(BaseConverters))
             {
                 options.Converters.Add(item);
+            }
+
+            resolver = new CrossAssemblyTypeResolver();
+            for (int i = 0; i < options.Converters.Count; i++)
+            {
+                if (options.Converters[i] is ITypeResolveConverter resolveMe)
+                    resolveMe.Resolver = resolver;
             }
         }
 
