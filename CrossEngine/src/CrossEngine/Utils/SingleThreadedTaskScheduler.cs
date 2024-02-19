@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace CrossEngine.Utils
 {
@@ -15,6 +17,8 @@ namespace CrossEngine.Utils
 
         public Task Schedule(Action action)
         {
+            Debug.Assert(action != null);
+
             return
                 Task.Factory.StartNew
                     (

@@ -38,7 +38,7 @@ namespace CrossEngine.Systems
         private SceneRenderData renderData;
         private Dictionary<CanvasComponent, SceneLayerRenderData> layers = new Dictionary<CanvasComponent, SceneLayerRenderData>();
 
-        public UISystem(SceneRenderData renderData)
+        public UISystem(SceneRenderData renderData/*, input!?!?! */)
         {
             this.renderData = renderData;
         }

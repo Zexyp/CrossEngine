@@ -46,4 +46,9 @@ namespace CrossEngine.Assets
             else guid = Guid.Empty;
         }
     }
+
+    public class DependantAssetAttribute : Attribute
+    {
+
+    }
 }

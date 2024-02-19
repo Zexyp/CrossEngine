@@ -34,7 +34,7 @@ namespace CrossEngine.Components
         {
             base.OnDeserialize(info);
 
-            info.AddValue(nameof(Tag), Tag);
+            Tag = info.GetValue(nameof(Tag), Tag);
         }
     }
 }

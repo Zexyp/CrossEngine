@@ -20,30 +20,28 @@ namespace CrossEngine.Ecs
             set
             {
                 if (value == _enabled) return;
-
+                
                 _enabled = value;
-
-                if (!Attached) return;
-
-                if (_enabled) OnEnable();
-                else OnDisable();
 
                 EnabledChanged?.Invoke(this);
             }
         }
 
         private bool _enabled = true;
-        internal bool Attached { get; set; } = false; // idfk rn, ecs world refernce would be as good as this weird bool
 
         public Component()
         {
             
         }
 
-        public object Clone()
+        public virtual object Clone()
         {
-            var comp = CreateClone();
+            // mby use OnSerialize and OnDeserialize to copy data (would be cool 😎)
+            Log.Default.Trace("using default ctor for cloning of component");
+
+            var comp = (Component)Activator.CreateInstance(this.GetType());
             comp.Enabled = this.Enabled;
+            
             return comp;
         }
 
@@ -59,17 +57,11 @@ namespace CrossEngine.Ecs
             OnDeserialize(info);
         }
 
-        protected virtual Component CreateClone()
-        {
-            Log.Default.Debug("using default constructor for cloning component");
-            return (Component)Activator.CreateInstance(this.GetType());
-        }
-
-        protected internal virtual void OnEnable() { }
-        protected internal virtual void OnDisable() { }
-
-        protected internal virtual void OnAttach() { }
-        protected internal virtual void OnDetach() { }
+        //protected internal virtual void OnEnable() { }
+        //protected internal virtual void OnDisable() { }
+        //
+        //protected internal virtual void OnAttach() { }
+        //protected internal virtual void OnDetach() { }
 
         protected internal virtual void OnSerialize(SerializationInfo info) { }
         protected internal virtual void OnDeserialize(SerializationInfo info) { }
@@ -81,9 +73,14 @@ namespace CrossEngine.Ecs
 
     }
 
+    [Obsolete("not implemented")]
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class RequireComponentAttribute<T> : Attribute where T : Component
     {
-        public RequireComponentAttribute(bool inherit = true) => throw new NotImplementedException();
+        public bool Inherit;
+        public RequireComponentAttribute(bool inherit = true)
+        {
+            Inherit = inherit;
+        }
     }
 }

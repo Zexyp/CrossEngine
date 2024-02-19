@@ -7,6 +7,7 @@ using IG = ImGuiNET.ImGui;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using System.IO;
 using CrossEngine.Logging;
+using CrossEngine.Core;
 
 namespace CrossEngine.Utils.ImGui
 {

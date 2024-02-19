@@ -66,7 +66,7 @@ namespace CrossEngineEditor.Panels
 
             var io = ImGui.GetIO();
             
-            if (ImGui.IsItemClicked())
+            if (ImGui.IsItemClicked() && Context.Scene != null)
             {
                 Vector2 winpos = ImGui.GetWindowPos();
                 Vector2 texpos = ImGui.GetMousePos() - new Vector2(ImGui.GetWindowContentRegionMin().X + winpos.X, ImGui.GetWindowContentRegionMax().Y + winpos.Y);

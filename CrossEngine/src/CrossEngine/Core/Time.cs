@@ -1,4 +1,4 @@
-﻿namespace CrossEngine
+﻿namespace CrossEngine.Core
 {
     public static class Time
     {

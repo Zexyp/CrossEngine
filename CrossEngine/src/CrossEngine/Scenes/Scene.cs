@@ -14,16 +14,18 @@ using CrossEngine.Serialization;
 using System.Collections.ObjectModel;
 using CrossEngine.Assets;
 using System.Drawing;
+using CrossEngine.Services;
 
 namespace CrossEngine.Scenes
 {
-    public class Scene
+    public class Scene : ICloneable
     {
         public readonly EcsWorld World = new EcsWorld();
         public readonly SceneRenderData RenderData = new SceneRenderData();
         public readonly ReadOnlyCollection<Entity> Entities;
         readonly SceneLayerRenderData _defaultLayer = new SceneLayerRenderData();
         bool _loaded = false;
+        public bool Started { get; private set; } = false;
         readonly List<Entity> _entities = new List<Entity>();
 
         public Scene()
@@ -41,6 +43,7 @@ namespace CrossEngine.Scenes
             World.RegisterSystem(rs);
             World.RegisterSystem(new SpriteRendererSystem(_defaultLayer));
             World.RegisterSystem(new UISystem(RenderData));
+            World.RegisterSystem(new ScriptSystem());
         }
 
         #region Entity Methods
@@ -65,14 +68,30 @@ namespace CrossEngine.Scenes
 
             if (_loaded)
                 World.AddEntity(entity);
+
+            for (int i = 0; i < entity.Children.Count; i++)
+            {
+                AddEntity(entity.Children[i]);
+            }
+
+            SceneService.Log.Trace($"added entity '{entity.Id}'");
         }
 
         public void RemoveEntity(Entity entity)
         {
+            for (int i = 0; i < entity.Children.Count; i++)
+            {
+                entity.Children[i].Parent = entity.Parent;
+            }
+
+            entity.Parent = null;
+
             if (_loaded)
                 World.RemoveEntity(entity);
 
             _entities.Remove(entity);
+
+            SceneService.Log.Trace($"removed entity '{entity.Id}'");
         }
 
         public void ShifEntity(Entity entity, int destinationIndex)
@@ -120,12 +139,14 @@ namespace CrossEngine.Scenes
 
         public void Start()
         {
-            
+            World.Start();
+            Started = true;
         }
 
         public void Stop()
         {
-            
+            Started = false;
+            World.Stop();
         }
 
         public void Update()
@@ -136,6 +157,16 @@ namespace CrossEngine.Scenes
         public void FixedUpdate()
         {
             World.FixedUpdate();
+        }
+
+        public object Clone()
+        {
+            Scene scene = new Scene();
+            for (int i = 0; i < this._entities.Count; i++)
+            {
+                scene.AddEntity((Entity)this._entities[i].Clone());
+            }
+            return scene;
         }
     }
 }

@@ -77,7 +77,7 @@ namespace CrossEngine.Components
             _projectionDirty = false;
         }
 
-        protected override Component CreateClone()
+        public override object Clone()
         {
             var comp = new PerspectiveCameraComponent();
             comp.Near = this.Near;

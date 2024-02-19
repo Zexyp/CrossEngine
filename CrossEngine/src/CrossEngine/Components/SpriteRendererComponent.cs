@@ -30,10 +30,12 @@ namespace CrossEngine.Components
         WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Texture?.Texture;
         BlendMode ISpriteRenderData.Blend => Blend;
 
-        protected override Component CreateClone()
+        public override object Clone()
         {
             var comp = new SpriteRendererComponent();
             comp.Color = this.Color;
+            comp.Blend = this.Blend;
+            comp.Sprite = this.Sprite;
             return comp;
         }
 

@@ -7,8 +7,10 @@ using System.Text.Json.Serialization;
 
 namespace CrossEngine.Serialization.Json
 {
-    public class SerializableJsonConverter : ElementJsonConverter<ISerializable>
+    public class SerializableJsonConverter : ElementJsonConverter<ISerializable>, ITypeResolveConverter
     {
+        public TypeResolver Resolver { get; set; } = null;
+
         public override bool CanConvert(Type typeToConvert) => typeof(ISerializable).IsAssignableFrom(typeToConvert);
 
         public override void Write(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options)
@@ -19,7 +21,7 @@ namespace CrossEngine.Serialization.Json
                 JsonSerializer.Serialize(writer, value, options);
             }
 
-            var info = new SerializationInfo(Writing);
+            var info = new CallbackSerializationInfo(Writing);
 
             writer.WriteStartObject();
 
@@ -44,10 +46,11 @@ namespace CrossEngine.Serialization.Json
                 return true;
             }
 
-            var info = new SerializationInfo(Reading);
+            var info = new CallbackSerializationInfo(Reading);
 
             string typeString = reader.GetProperty("$type").GetString();
-            Type type = Type.GetType(typeString);
+
+            Type type = Resolver?.Resolve(typeString) ?? Type.GetType(typeString);
 
             Debug.Assert(type != null);
 

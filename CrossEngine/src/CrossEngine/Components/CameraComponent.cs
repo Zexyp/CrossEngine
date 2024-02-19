@@ -38,7 +38,7 @@ namespace CrossEngine.Components
 
         public virtual void Resize(float width, float height) { }
 
-        protected override Component CreateClone()
+        public override object Clone()
         {
             var comp = new CameraComponent();
             comp.ProjectionMatrix = this.ProjectionMatrix;

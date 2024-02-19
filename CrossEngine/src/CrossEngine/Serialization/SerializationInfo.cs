@@ -10,37 +10,13 @@ using System.Text.Json.Serialization;
 
 namespace CrossEngine.Serialization
 {
-    public class SerializationInfo
+    // this guy not sealed
+    public abstract class SerializationInfo
     {
-        private ReadCallback _reader;
-        private WriteCallback _writer;
+        public abstract void AddValue(string name, object? value);
 
-        public delegate bool ReadCallback(string key, Type type, out object? value);
-        public delegate void WriteCallback(string key, object? value);
-
-        internal SerializationInfo(WriteCallback write)
-        {
-            _writer = write;
-        }
-
-        internal SerializationInfo(ReadCallback read)
-        {
-            _reader = read;
-        }
-
-        public void AddValue(string name, object? value)
-        {
-            _writer.Invoke(name, value);
-        }
-
-        public object? GetValue(string name, Type typeOfValue)
-        {
-            return _reader.Invoke(name, typeOfValue, out var value) ? value : null;
-        }
-        public bool TryGetValue(string name, Type typeOfValue, out object value)
-        {
-            return _reader.Invoke(name, typeOfValue, out value);
-        }
+        public abstract object? GetValue(string name, Type typeOfValue);
+        public abstract bool TryGetValue(string name, Type typeOfValue, out object value);
 
         public object GetValue(string name, Type typeOfValue, object customDefault)
         {

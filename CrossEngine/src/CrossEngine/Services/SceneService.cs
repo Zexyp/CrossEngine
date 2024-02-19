@@ -26,7 +26,7 @@ namespace CrossEngine.Services
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
 
-        static Logger Log = new Logger("scenes");
+        static internal Logger Log = new Logger("scenes");
 
         private WindowService ws;
 
@@ -75,12 +75,26 @@ namespace CrossEngine.Services
             SceneManager.service = null;
         }
 
-        public ref SceneConfig GetConfig(Scene scene)
+        public SceneConfig GetConfig(Scene scene)
         {
             for (int i = 0; i < _scenes.Count; i++)
             {
                 if (scene == _scenes[i].Scene)
-                    return ref Unsafe.AsRef(_scenes[i].Config);
+                    return _scenes[i].Config;
+            }
+
+            throw new KeyNotFoundException();
+        }
+
+        public void SetConfig(Scene scene, SceneConfig config)
+        {
+            for (int i = 0; i < _scenes.Count; i++)
+            {
+                if (scene != _scenes[i].Scene)
+                    continue;
+
+                _scenes[i] = (_scenes[i].Scene, config);
+                return;
             }
 
             throw new KeyNotFoundException();

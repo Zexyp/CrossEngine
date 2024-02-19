@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CrossEngineEditor.Utils
+namespace CrossEngineEditor.Utils.UI
 {
     internal class DragDropContext<T> where T : class
     {

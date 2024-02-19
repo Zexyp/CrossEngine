@@ -44,7 +44,7 @@ namespace CrossEngine.Platform
             return File.OpenRead(path);
 #elif WASM
             // .Result creates deadlock
-            return httpClient.GetStreamAsync(Path.Join(CrossEngine.Platform.Wasm.Interop.RootUri.ToString(), path)).RunSynchronously();
+            return httpClient.GetStreamAsync(Path.Join(CrossEngine.Platform.Wasm.Interop.RootUri.ToString(), path)).GetAwaiter().GetResult();
 #else
 #error
 #endif

@@ -81,13 +81,9 @@ namespace CrossEngineEditor.Panels
                     ImGui.Separator();
                     if (ImGui.MenuItem("Reload All", Context.Assets != null))
                     {
-                        AssetManager.Unload();
-                        AssetManager.Load();
-                        if (Context.Scene != null)
-                        {
-                            Context.Scene.Unload();
-                            Context.Scene.Load();
-                        }
+                        var last = Context.Assets;
+                        Context.Assets = null;
+                        Context.Assets = last;
                     }
 
                     ImGui.EndMenu();

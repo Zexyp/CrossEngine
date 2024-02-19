@@ -211,17 +211,9 @@ namespace CrossEngine.Components
         bool _dirty = true;
         bool _dirtyLocal = true;
 
-        private readonly List<TransformComponent> _children = new List<TransformComponent>();
-        private TransformComponent _parent;
-
         // util
         //private Vector3 _eulerAngles;
         #endregion
-
-        public TransformComponent()
-        {
-            Children = _children.AsReadOnly();
-        }
 
         #region Transform things
         //public void SetTransformUseEuler(Matrix4x4 matrix)
@@ -317,9 +309,9 @@ namespace CrossEngine.Components
             //}
 
             _dirty = true;
-            for (int i = 0; i < _children.Count; i++)
+            for (int i = 0; i < Children.Count; i++)
             {
-                _children[i].MarkForUpdate();
+                Children[i].MarkForUpdate();
             }
 
             TransformChanged?.Invoke(this);
@@ -355,101 +347,28 @@ namespace CrossEngine.Components
         #endregion
 
         #region Hierarchy things
+        internal readonly List<TransformComponent> Children = new List<TransformComponent>();
+        private TransformComponent _parent;
+
         internal TransformComponent Parent
         {
             get => _parent;
-            private set
+            set
             {
                 if (this._parent == value) return;
 
                 // if no parent, remove yourself from parent's child collection
-                if (this._parent != null) this._parent._children.Remove(this);
+                if (this._parent != null) this._parent.Children.Remove(this);
                 this._parent = value;
-                if (this._parent != null) this._parent._children.Add(this);
+                if (this._parent != null) this._parent.Children.Add(this);
 
                 MarkForUpdate();
                 ParentChanged?.Invoke(this);
             }
         }
-        internal readonly ReadOnlyCollection<TransformComponent> Children;
-
+        
         internal event Action<TransformComponent> ParentChanged;
-
-        private void Entity_ParentChanged(Entity sender)
-        {
-            Debug.Assert(Entity == sender);
-
-            this.Parent = GetTopTransformComponent(Entity);
-
-            // we don't want this
-            //if (this.Parent != null)
-            //{
-            //    WorldPosition = Position;
-            //    WorldRotation = Rotation;
-            //    WorldScale = Scale;
-            //}
-            //else
-            //{
-            //    Position = WorldPosition;
-            //    Rotation = WorldRotation;
-            //    Scale = WorldScale; 
-            //}
-        }
         #endregion
-
-        protected internal override void OnAttach()
-        {
-            // basically insert yourself
-            this.Parent = GetTopTransformComponent(Entity);
-            // set all children's parent to this
-            var children = GetBottomTransformComponents(Entity);
-            for (int i = 0; i < children.Length; i++)
-            {
-                children[i].Parent = this;
-            }
-
-            Entity.ParentChanged += Entity_ParentChanged;
-        }
-
-        protected internal override void OnDetach()
-        {
-            Entity.ParentChanged -= Entity_ParentChanged;
-
-            // bridge the connection
-            while (_children.Count > 0)
-                this._children[0].Parent = this.Parent;
-
-            this.Parent = null;
-        }
-
-        // i do not care about memory
-        private TransformComponent[] GetBottomTransformComponents(Entity root)
-        {
-            List<TransformComponent> trans = new List<TransformComponent>();
-            Queue<Entity> q = new Queue<Entity>();
-            for (int i = 0; i < root.Children.Count; i++)
-                q.Enqueue(root.Children[i]);
-            while (q.TryDequeue(out var ent))
-            {
-                if (ent.TryGetComponent<TransformComponent>(out var c))
-                {
-                    trans.Add(c);
-                    continue;
-                }
-                for (int i = 0; i < ent.Children.Count; i++)
-                    q.Enqueue(ent.Children[i]);
-            }
-            return trans.ToArray();
-        }
-
-        private TransformComponent GetTopTransformComponent(Entity ent)
-        {
-            if (ent.Parent == null)
-                return null;
-            if (ent.Parent.TryGetComponent<TransformComponent>(out var comp))
-                return comp;
-            return GetTopTransformComponent(ent.Parent);
-        }
 
         internal void Update()
         {
@@ -464,7 +383,7 @@ namespace CrossEngine.Components
             }
         }
 
-        protected override Component CreateClone()
+        public override object Clone()
         {
             var trans = new TransformComponent();
 

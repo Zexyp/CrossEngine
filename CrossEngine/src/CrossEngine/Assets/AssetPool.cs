@@ -7,6 +7,7 @@ using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using Silk.NET.Core.Native;
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -20,8 +21,8 @@ namespace CrossEngine.Assets
     {
         [EditorString]
         public string Directory = "./";
-        
-        Dictionary<Type, IDictionary> _collections = new();
+
+        OrderedDictionary<Type, IDictionary> _collections = new();
         bool _loaded = false;
         Loader[] _loaders = null;
 
@@ -34,7 +35,10 @@ namespace CrossEngine.Assets
             if (!_collections.ContainsKey(type))
             {
                 var col = new Dictionary<Guid, Asset>();
-                _collections.Add(type, col);
+                if (type.IsDefined(typeof(DependantAssetAttribute), false))
+                    _collections.Add(type, col);
+                else
+                    _collections.Insert(0, type, col);
             }
             _collections[type].Add(asset.Id, asset);
         }
@@ -94,7 +98,7 @@ namespace CrossEngine.Assets
                 }
             }
 
-            foreach (var item in _collections)
+            foreach (var item in (IDictionary<Type, IDictionary>)_collections)
             {
                 yield return (item.Key, InnerEnumerate(item.Value.Values));
             }
@@ -103,7 +107,7 @@ namespace CrossEngine.Assets
         public bool LoadAll()
         {
             var result = true;
-            foreach (var col in _collections.Values)
+            foreach (IDictionary col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
                 {
@@ -119,7 +123,7 @@ namespace CrossEngine.Assets
         public bool UnloadAll()
         {
             var result = true;
-            foreach (var col in _collections.Values)
+            foreach (IDictionary col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
                 {
@@ -148,6 +152,7 @@ namespace CrossEngine.Assets
             catch (Exception ex)
             {
                 AssetService.Log.Error($"failed to load asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
+                AssetService.Log.Trace($"load asset failiure details: {ex}");
                 return false;
             }
         }
@@ -163,6 +168,7 @@ namespace CrossEngine.Assets
             catch (Exception ex)
             {
                 AssetService.Log.Error($"failed to unload asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
+                AssetService.Log.Trace($"unload asset failiure details: {ex}");
                 return false;
             }
         }
@@ -208,7 +214,7 @@ namespace CrossEngine.Assets
         {
             info.AddValue("Directory", Directory);
             List<Asset> imTooLazy = new();
-            foreach (var col in _collections.Values)
+            foreach (IDictionary col in _collections.Values)
                 foreach (Asset asset in col.Values)
                     imTooLazy.Add(asset);
             info.AddValue("Assets", imTooLazy.ToArray());

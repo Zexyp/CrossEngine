@@ -21,16 +21,24 @@ namespace CrossEngine.Scenes
             service.Execute(() => service.Push(scene, config ?? new SceneService.SceneConfig() { Render = true, Update = true, Resize = true }));
         }
 
-        public static void Unload()
-        {
-            if (Current == null) new InvalidOperationException("Cannot use parameterless 'Unload' outside scene update.");
-
-            Unload(Current);
-        }
-
         public static void Unload(Scene scene)
         {
             service.Execute(() => service.Remove(scene));
+        }
+
+        public static void Start(Scene scene)
+        {
+            service.Execute(scene.Start);
+        }
+
+        public static void Stop(Scene scene)
+        {
+            service.Execute(scene.Stop);
+        }
+
+        public static void Configure(Scene scene, SceneService.SceneConfig config)
+        {
+            service.Execute(() => service.SetConfig(scene, config));
         }
     }
 }

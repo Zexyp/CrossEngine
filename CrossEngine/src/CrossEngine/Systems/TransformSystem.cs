@@ -10,6 +10,7 @@ using System.Diagnostics;
 using CrossEngine.Components;
 using CrossEngine.Profiling;
 using CrossEngine.Ecs;
+using System.ComponentModel;
 
 namespace CrossEngine.Systems
 {
@@ -20,33 +21,42 @@ namespace CrossEngine.Systems
         private readonly List<TransformComponent> _components = new List<TransformComponent>();
 #endif
 
-        private void ParentCheck(TransformComponent component)
-        {
-            if (component.Parent == null) _roots.Add(component);
-            else _roots.Remove(component);
-        }
-
         public override void Register(TransformComponent component)
         {
             ParentCheck(component);
             component.ParentChanged += ParentCheck;
+
 #if DEBUG_TRANSFORMS
             _components.Add(component);
 #endif
+
+            component.Entity.ParentChanged += OnEntityParentChanged;
+
+            AttachTransform(component);
+        }
+
+        private void OnEntityParentChanged(Entity sender)
+        {
+            sender.Transform.Parent = GetTopTransformComponent(sender);
         }
 
         public override void Unregister(TransformComponent component)
         {
+            DetachTransform(component);
+
+            component.Entity.ParentChanged -= OnEntityParentChanged;
+
 #if DEBUG_TRANSFORMS
             _components.Remove(component);
 #endif
+
             component.ParentChanged -= ParentCheck;
             _roots.Remove(component);
         }
 
-        public void Update()
+        public void OnUpdate()
         {
-            Profiler.BeginScope($"{nameof(TransformSystem)}.{nameof(TransformSystem.Update)}");
+            Profiler.BeginScope($"{nameof(TransformSystem)}.{nameof(TransformSystem.OnUpdate)}");
 
             void RecursiveUpdate(TransformComponent c)
             {
@@ -70,6 +80,7 @@ namespace CrossEngine.Systems
 
             Profiler.EndScope();
         }
+
 #if DEBUG_TRANSFORMS
         public void DebugRender()
         {
@@ -79,5 +90,61 @@ namespace CrossEngine.Systems
             }
         }
 #endif
+
+        // i do not care about memory
+        private TransformComponent[] GetBottomTransformComponents(Entity root)
+        {
+            List<TransformComponent> trans = new List<TransformComponent>();
+            Queue<Entity> q = new Queue<Entity>();
+            for (int i = 0; i < root.Children.Count; i++)
+                q.Enqueue(root.Children[i]);
+            while (q.TryDequeue(out var ent))
+            {
+                if (ent.TryGetComponent<TransformComponent>(out var c))
+                {
+                    trans.Add(c);
+                    continue;
+                }
+                for (int i = 0; i < ent.Children.Count; i++)
+                    q.Enqueue(ent.Children[i]);
+            }
+            return trans.ToArray();
+        }
+
+        private TransformComponent GetTopTransformComponent(Entity ent)
+        {
+            if (ent.Parent == null)
+                return null;
+            if (ent.Parent.TryGetComponent<TransformComponent>(out var comp))
+                return comp;
+            return GetTopTransformComponent(ent.Parent);
+        }
+
+        private void ParentCheck(TransformComponent component)
+        {
+            if (component.Parent == null) _roots.Add(component);
+            else _roots.Remove(component);
+        }
+
+        private void AttachTransform(TransformComponent component)
+        {
+            // basically insert yourself
+            component.Parent = GetTopTransformComponent(component.Entity);
+            // set all children's parent to this
+            var children = GetBottomTransformComponents(component.Entity);
+            for (int i = 0; i < children.Length; i++)
+            {
+                children[i].Parent = component;
+            }
+        }
+
+        private void DetachTransform(TransformComponent component)
+        {
+            // bridge the connection
+            while (component.Children.Count > 0)
+                component.Children[0].Parent = component.Parent;
+
+            component.Parent = null;
+        }
     }
 }

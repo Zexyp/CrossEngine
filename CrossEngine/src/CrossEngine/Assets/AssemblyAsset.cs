@@ -1,4 +1,5 @@
 ﻿using CrossEngine.Assemblies;
+using CrossEngine.Serialization;
 using CrossEngine.Utils.Editor;
 using System;
 using System.Collections.Generic;
@@ -28,7 +29,22 @@ namespace CrossEngine.Assets
 
         public override void Unload(IAssetLoadContext context)
         {
+            Assembly = null;
             AssemblyManager.Unload(loadContext);
+        }
+
+        public override void GetObjectData(SerializationInfo info)
+        {
+            base.GetObjectData(info);
+
+            info.AddValue(nameof(RelativePath), RelativePath);
+        }
+
+        public override void SetObjectData(SerializationInfo info)
+        {
+            base.SetObjectData(info);
+
+            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
         }
     }
 }

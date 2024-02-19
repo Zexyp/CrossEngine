@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
+    [DependantAsset]
     public class SpriteAsset : Asset
     {
         public override bool Loaded => Texture?.Loaded == true;
