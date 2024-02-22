@@ -36,39 +36,11 @@ namespace CrossEngineEditor
 
         public override void OnStart()
         {
-            Context.AssetsChanged += OnContextAssetsChanged;
-            Context.SceneChanged += OnContextSceneChanged;
-
-            var rs = Manager.GetService<RenderService>();
-            RegisterPanel(new InspectorPanel());
-            RegisterPanel(new HierarchyPanel());
-            RegisterPanel(new ViewportPanel(rs));
-            RegisterPanel(new GamePanel(rs));
-            RegisterPanel(new AssetListPanel());
-            RegisterPanel(new SimpleThemeGeneratorPanel());
-
-            // debug thingy
-            // ######
-            var scene = new Scene();
-            scene.CreateEntity();
-            scene.CreateEntity();
-            scene.CreateEntity();
-            scene.Entities[1].Parent = scene.Entities[0];
-            scene.Entities[0].AddComponent<CrossEngine.Components.OrthographicCameraComponent>();
-            scene.Entities[0].AddComponent<CrossEngine.Components.PerspectiveCameraComponent>();
-            scene.Entities[0].AddComponent<CrossEngine.Components.SpriteRendererComponent>();
-            scene.Entities[0].AddComponent<CrossEngine.Components.TagComponent>();
-
-            Context.Scene = scene;
-            // ######
-
             Log.Info("editor started");
         }
 
         public override void OnDestroy()
         {
-            Context.Clear();
-
             while (_panels.Count > 0)
                 RemovePanel(_panels[0]);
 
@@ -79,6 +51,7 @@ namespace CrossEngineEditor
 
         public override unsafe void OnAttach()
         {
+            var rs = Manager.GetService<RenderService>();
             Manager.GetService<WindowService>().Execute(() =>
             {
                 window = Manager.GetService<WindowService>().Window;
@@ -90,17 +63,20 @@ namespace CrossEngineEditor
                     window.SetIcon(p, (uint)result.Width, (uint)result.Height);
 
             });
-            var rs = Manager.GetService<RenderService>();
             rs.Frame += OnRender;
             rs.Execute(() =>
             {
                 dockspaceIconTexture = TextureLoader.LoadTexture(CrossEngine.Properties.Resources.Logo);
                 dockspaceIconTexture.GetValue().SetFilterParameter(FilterParameter.Nearest);
             });
+
+            Init();
         }
 
         public override void OnDetach()
         {
+            Deinit();
+
             var rs = Manager.GetService<RenderService>();
             rs.Frame -= OnRender;
             rs.Execute(() =>
@@ -128,6 +104,43 @@ namespace CrossEngineEditor
             EndDockspace();
 
             Profiler.EndScope();
+        }
+
+        private void Init()
+        {
+            Context.AssetsChanged += OnContextAssetsChanged;
+            Context.SceneChanged += OnContextSceneChanged;
+
+            var rs = Manager.GetService<RenderService>();
+            RegisterPanel(new InspectorPanel());
+            RegisterPanel(new HierarchyPanel());
+            RegisterPanel(new ViewportPanel(rs));
+            RegisterPanel(new GamePanel(rs));
+            RegisterPanel(new AssetListPanel());
+            RegisterPanel(new SimpleThemeGeneratorPanel());
+
+            // debug thingy
+            // ######
+            var scene = new Scene();
+            scene.CreateEntity();
+            scene.CreateEntity();
+            scene.CreateEntity();
+            scene.Entities[1].Parent = scene.Entities[0];
+            scene.Entities[0].AddComponent<CrossEngine.Components.OrthographicCameraComponent>();
+            scene.Entities[0].AddComponent<CrossEngine.Components.PerspectiveCameraComponent>();
+            scene.Entities[0].AddComponent<CrossEngine.Components.SpriteRendererComponent>();
+            scene.Entities[0].AddComponent<CrossEngine.Components.TagComponent>();
+
+            Context.Scene = scene;
+            // ######
+        }
+
+        private void Deinit()
+        {
+            Context.Clear();
+
+            Context.AssetsChanged -= OnContextAssetsChanged;
+            Context.SceneChanged -= OnContextSceneChanged;
         }
 
         #region Dockspace

@@ -80,6 +80,7 @@ namespace CrossEngine.Components
         public override object Clone()
         {
             var comp = new OrthographicCameraComponent();
+            comp.Primary = this.Primary;
             comp.Near = this.Near;
             comp.Far = this.Far;
             comp.Size = this.Size;

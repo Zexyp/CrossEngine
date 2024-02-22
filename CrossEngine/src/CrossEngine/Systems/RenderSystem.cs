@@ -48,21 +48,20 @@ namespace CrossEngine.Systems
                 PrimaryCamera = component;
             }
 
-            component.PrimaryChanged += Camera_OnPrimaryChanged;
+            component.PrimaryChanged += OnCameraPrimaryChanged;
         }
 
         public override void Unregister(CameraComponent component)
         {
-            component.PrimaryChanged -= Camera_OnPrimaryChanged;
+            component.PrimaryChanged -= OnCameraPrimaryChanged;
 
             if (component == PrimaryCamera)
             {
-                Deprioritize(PrimaryCamera);
                 PrimaryCamera = null;
             }
         }
 
-        private void Camera_OnPrimaryChanged(CameraComponent component)
+        private void OnCameraPrimaryChanged(CameraComponent component)
         {
             Deprioritize(PrimaryCamera);
 
@@ -76,9 +75,9 @@ namespace CrossEngine.Systems
         {
             if (component == null)
                 return;
-            component.PrimaryChanged -= Camera_OnPrimaryChanged;
+            component.PrimaryChanged -= OnCameraPrimaryChanged;
             component.Primary = false;
-            component.PrimaryChanged += Camera_OnPrimaryChanged;
+            component.PrimaryChanged += OnCameraPrimaryChanged;
         }
     }
 }
