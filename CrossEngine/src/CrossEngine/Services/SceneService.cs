@@ -125,7 +125,7 @@ namespace CrossEngine.Services
 
             for (int i = 0; i < _scenes.Count; i++)
             {
-                if (!_scenes[i].Config.Update)
+                if (!_scenes[i].Config.Update || !_scenes[i].Scene.Started)
                     continue;
 
                 SceneManager.Current = _scenes[i].Scene;
@@ -138,7 +138,7 @@ namespace CrossEngine.Services
         {
             for (int i = 0; i < _scenes.Count; i++)
             {
-                if (!_scenes[i].Config.Update)
+                if (!_scenes[i].Config.Update || !_scenes[i].Scene.Started)
                     continue;
 
                 SceneManager.Current = _scenes[i].Scene;

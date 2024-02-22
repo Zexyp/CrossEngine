@@ -21,6 +21,7 @@ using CrossEngine.Assets;
 using System.Text.Json;
 using CrossEngine.Serialization;
 using CrossEngine.Utils.ImGui;
+using System.Threading.Channels;
 
 namespace CrossEngineEditor
 {
@@ -29,6 +30,7 @@ namespace CrossEngineEditor
         readonly EditorContext Context = new EditorContext();
         readonly List<EditorPanel> _panels = new List<EditorPanel>();
         readonly List<EditorPanel> _registeredPanels = new List<EditorPanel>();
+        //readonly List<EditorModal> _modals = new List<EditorModal>();
         private Window window = null;
         internal static Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
 
@@ -36,14 +38,17 @@ namespace CrossEngineEditor
         {
             Context.AssetsChanged += OnContextAssetsChanged;
             Context.SceneChanged += OnContextSceneChanged;
-            Context.ModeChanged += OnContextModeChanged;
 
+            var rs = Manager.GetService<RenderService>();
             RegisterPanel(new InspectorPanel());
             RegisterPanel(new HierarchyPanel());
-            RegisterPanel(new ViewportPanel(Manager.GetService<RenderService>()));
-            RegisterPanel(new SimpleThemeGeneratorPanel());
+            RegisterPanel(new ViewportPanel(rs));
+            RegisterPanel(new GamePanel(rs));
             RegisterPanel(new AssetListPanel());
+            RegisterPanel(new SimpleThemeGeneratorPanel());
 
+            // debug thingy
+            // ######
             var scene = new Scene();
             scene.CreateEntity();
             scene.CreateEntity();
@@ -54,9 +59,10 @@ namespace CrossEngineEditor
             scene.Entities[0].AddComponent<CrossEngine.Components.SpriteRendererComponent>();
             scene.Entities[0].AddComponent<CrossEngine.Components.TagComponent>();
 
-            Log.Info("editor started");
-
             Context.Scene = scene;
+            // ######
+
+            Log.Info("editor started");
         }
 
         public override void OnDestroy()
@@ -245,13 +251,16 @@ namespace CrossEngineEditor
                 var dis = Context.Scene == null;
                 if (dis) ImGui.BeginDisabled();
                 ImGui.SetCursorPosX(ImGui.GetColumnWidth() / 2);
-                var colorPushed = Context.Mode == EditorContext.Playmode.Playing;
-                if (colorPushed) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered]);
-                if (ImGui.ArrowButton("##play", Context.Mode == EditorContext.Playmode.Playing ? ImGuiDir.Down : ImGuiDir.Right))
+                var on = Context.Mode == EditorContext.Playmode.Playing || Context.Mode == EditorContext.Playmode.Paused;
+                if (on) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered]);
+                if (ImGui.ArrowButton("##play", on ? ImGuiDir.Down : ImGuiDir.Right))
                 {
-                    Context.Mode = Context.Mode == EditorContext.Playmode.Playing ? EditorContext.Playmode.Stopped : EditorContext.Playmode.Playing;
+                    if (on)
+                        StopScene();
+                    else
+                        StartScene();
                 }
-                if (colorPushed) ImGui.PopStyleColor();
+                if (on) ImGui.PopStyleColor();
                 if (dis) ImGui.EndDisabled();
 
                 ImGui.EndMainMenuBar();
@@ -353,20 +362,27 @@ namespace CrossEngineEditor
             if (Context.Assets != null) AssetManager.Load();
         }
 
-        private void OnContextModeChanged()
+        Scene prevScene;
+        private void StartScene()
         {
-            if (Context.Scene == null) return;
+            Debug.Assert(prevScene == null);
+            prevScene = Context.Scene;
+            Context.Scene = (Scene)Context.Scene.Clone();
+            
+            SceneManager.Start(Context.Scene);
+            SceneManager.Configure(Context.Scene, new SceneService.SceneConfig() { Update = true, Render = false, Resize = false });
+            Context.Mode = EditorContext.Playmode.Playing;
+        }
 
-            if (Context.Mode == EditorContext.Playmode.Playing && !Context.Scene.Started)
-            {
-                SceneManager.Start(Context.Scene);
-                SceneManager.Configure(Context.Scene, new SceneService.SceneConfig() { Update = true, Render = false, Resize = false });
-            }
-            if ((Context.Mode == EditorContext.Playmode.Stopped || Context.Mode == EditorContext.Playmode.Paused) && Context.Scene.Started)
-            {
-                SceneManager.Configure(Context.Scene, new SceneService.SceneConfig() { Update = false, Render = false, Resize = false });
-                SceneManager.Stop(Context.Scene);
-            }
+        private void StopScene()
+        {
+            Context.Mode = EditorContext.Playmode.Stopped;
+            SceneManager.Configure(Context.Scene, new SceneService.SceneConfig() { Update = false, Render = false, Resize = false });
+            SceneManager.Stop(Context.Scene);
+
+            Debug.Assert(prevScene != null);
+            Context.Scene = prevScene;
+            prevScene = null;
         }
     }
 }

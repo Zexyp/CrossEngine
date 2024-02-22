@@ -45,8 +45,6 @@ namespace CrossEngine.Logging
         // https://no-color.org/
         public static bool EnableColors = Environment.GetEnvironmentVariable("NO_COLOR") == null;
 
-        private static bool _initialized = false;
-
         public static void Init(LogLevel? level = null, bool? enableColors = null)
         {
             GlobalLevel = level ?? GlobalLevel;

@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Debug;Profiling;Wasm</Configurations>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CrossEngineProjectPath Condition="'$(CrossEngineProjectPath)'==''">../CrossEngine</CrossEngineProjectPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
+    <ProjectReference Include="..\CrossEngineRuntime\CrossEngineRuntime.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;WINDOWS</DefineConstants>
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|AnyCPU'">
+    <DefineConstants>DEBUG;WINDOWS;PROFILING</DefineConstants>
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Wasm|AnyCPU'">
+    <DefineConstants>DEBUG;OPENGL_ES</DefineConstants>
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Profiling'">
+
+
+
+    </When>
+
+    <When Condition="'$(Configuration)'=='Wasm'">
+
+      <PropertyGroup>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+        <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <WasmMainJSPath>$(CrossEngineProjectPath)/res/wasm/main.js</WasmMainJSPath>
+
+        <EmccFlags>-s FULL_ES3=1 -lopenal -lGL -s</EmccFlags>
+
+        <!--<PublishTrimmed>true</PublishTrimmed>-->
+        <WasmBuildNative>true</WasmBuildNative>
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <!-- Disable SIMD support as it's prerelease only on Safari -->
+        <!--<WasmEnableSIMD>false</WasmEnableSIMD>-->
+        <!-- Normal,JustInterp,Full,FullInterp,Hybrid,LLVMOnly,LLVMOnlyInterp -->
+        <!--<AOTMode>LLVMOnly</AOTMode>-->
+      </PropertyGroup>
+
+      <ItemGroup>
+        <NativeFileReference Include="$(CrossEngineProjectPath)/res/wasm/native/libEGL.c" ScanForPInvokes="true" />
+        <NativeFileReference Include="$(CrossEngineProjectPath)/res/wasm/native/openal32.c" ScanForPInvokes="true" />
+        <NativeFileReference Include="$(CrossEngineProjectPath)/res/wasm/native/emscripten.c" ScanForPInvokes="true" />
+
+        <WasmExtraFilesToDeploy Include="$(CrossEngineProjectPath)/res/wasm/index.html" />
+        <WasmExtraFilesToDeploy Include="$(CrossEngineProjectPath)/res/wasm/main.js" />
+        <WasmExtraFilesToDeploy Include="$(CrossEngineProjectPath)/res/icon.ico" />
+        <!--<WasmExtraFilesToDeploy Include="$(MSBuildThisFileDirectory)Assets\**" TargetPath="Assets/%(RecursiveDir)%(Filename)%(Extension)" />-->
+      </ItemGroup>
+
+    </When>
+  </Choose>
+
+</Project>

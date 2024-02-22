@@ -6,21 +6,32 @@ using System.Threading.Tasks;
 
 using CrossEngine.Services;
 using CrossEngine.Profiling;
+using System.Threading;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Core
 {
     public abstract class Application : IDisposable
     {
         public ServiceManager Manager = new ServiceManager();
-        bool running = true;
+        private bool running = true;
+        private EventWaitHandle wait = new EventWaitHandle(false, EventResetMode.ManualReset);
+        private static Logger Log = new Logger("app");
 
         public void Run()
         {
+            wait.Reset();
+
+            Log.Trace("running");
+
 #if PROFILING
             Profiler.BeginSession("session", "profiling.json");
 #endif
+            Log.Trace("intializing");
 
             OnInit();
+            
+            Log.Trace("intialized");
 
             while (running)
             {
@@ -31,11 +42,19 @@ namespace CrossEngine.Core
                 Profiler.EndScope();
             }
 
+            Log.Trace("destroying");
+
             OnDestroy();
+
+            Log.Trace("destroyed");
 
 #if PROFILING
             Profiler.EndSession();
 #endif
+
+            Log.Trace("ended");
+
+            wait.Set();
         }
 
         public virtual void OnInit()
@@ -60,6 +79,12 @@ namespace CrossEngine.Core
         public void Close()
         {
             running = false;
+        }
+
+        public void CloseWait()
+        {
+            Close();
+            wait.WaitOne();
         }
 
         public void Dispose()

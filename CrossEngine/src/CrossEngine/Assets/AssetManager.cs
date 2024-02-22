@@ -1,18 +1,37 @@
 ﻿using CrossEngine.Logging;
+using CrossEngine.Platform;
 using CrossEngine.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
     public static class AssetManager
     {
-        private static AssetPool _current;
-        internal static AssetService service;
         public static AssetPool Current { get => _current; }
+        
+        internal static AssetService service;
+        
+        private static AssetPool _current;
+        private static JsonSerializerOptions _jso;
+
+        static AssetManager()
+        {
+            _jso = new JsonSerializerOptions();
+            foreach (var item in CrossEngine.Serialization.SceneSerializer.BaseConverters)
+            {
+                _jso.Converters.Add(item);
+            }
+
+#if DEBUG
+            _jso.WriteIndented = true;
+#endif
+        }
 
         public static T Get<T>(Guid id) where T : Asset
         {
@@ -31,6 +50,30 @@ namespace CrossEngine.Assets
             _current?.BindLoaders(service.Loaders.ToArray());
         }
 
+        public static AssetPool ReadFile(string filepath)
+        {
+            AssetService.Log.Trace($"read file '{filepath}'");
+            using (Stream stream = PlatformHelper.FileRead(filepath))
+            {
+                var pool = JsonSerializer.Deserialize<AssetPool>(stream, _jso);
+                pool.Directory = Path.Join(Path.GetDirectoryName(filepath), pool.Directory);
+                return pool;
+            }
+        }
+
+        public static void WriteFile(AssetPool pool, string filepath)
+        {
+            AssetService.Log.Trace($"write file '{filepath}'");
+            using (Stream stream = PlatformHelper.FileWrite(filepath))
+            {
+                string prevdir = pool.Directory;
+                Console.WriteLine(Path.GetRelativePath(Path.GetDirectoryName(filepath), pool.Directory));
+                pool.Directory = Path.GetRelativePath(Path.GetDirectoryName(filepath), pool.Directory);
+                JsonSerializer.Serialize(stream, pool, _jso);
+                pool.Directory = prevdir;
+            }
+        }
+
         public static void Load()
         {
             service.Load(_current);
@@ -39,11 +82,6 @@ namespace CrossEngine.Assets
         public static void Unload()
         {
             service.Unload(_current);
-        }
-
-        public static void Read(string filepath)
-        {
-            throw new NotImplementedException();
         }
     }
 }

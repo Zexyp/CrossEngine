@@ -66,7 +66,7 @@ namespace CrossEngineEditor.Panels
 
             // draw the framebuffer as image
             Scene.RenderData.Output = Framebuffer;
-            if (Drawing && DrawCamera != null)
+            if (Drawing)
             {
                 SceneRenderer.DrawScene(Scene.RenderData, rs.RendererApi, DrawCamera);
             }

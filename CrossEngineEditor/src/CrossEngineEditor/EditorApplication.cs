@@ -29,6 +29,14 @@ namespace CrossEngineEditor
             Debug.Assert(Instance == null);
             Instance = this;
 
+            // provides a nice smooth shutdown
+            //AppDomain.CurrentDomain.ProcessExit <- this is nice but works like ass
+            Console.CancelKeyPress += (object? sender, ConsoleCancelEventArgs e) =>
+            {
+                CloseWait();
+                Environment.Exit(25);
+            };
+
             // register
             Manager.Register(new TimeService());
             Manager.Register(new InputService());
