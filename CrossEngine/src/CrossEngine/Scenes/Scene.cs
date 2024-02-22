@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 using CrossEngine.Assets;
 using System.Drawing;
 using CrossEngine.Services;
+using System.Diagnostics;
 
 namespace CrossEngine.Scenes
 {
@@ -25,6 +26,7 @@ namespace CrossEngine.Scenes
         public readonly ReadOnlyCollection<Entity> Entities;
         readonly SceneLayerRenderData _defaultLayer = new SceneLayerRenderData();
         bool _loaded = false;
+        readonly List<Entity> _roots = new();
         public bool Started { get; private set; } = false;
         readonly List<Entity> _entities = new List<Entity>();
 
@@ -61,10 +63,14 @@ namespace CrossEngine.Scenes
 
         public void AddEntity(Entity entity)
         {
+            Debug.Assert(entity.Parent == null);
+
             if (entity.Id == Guid.Empty)
                 entity.Id = Guid.NewGuid();
 
             _entities.Add(entity);
+
+            if (entity.Parent == null) _roots.Add(entity);
 
             if (_loaded)
                 World.AddEntity(entity);
@@ -74,22 +80,36 @@ namespace CrossEngine.Scenes
                 AddEntity(entity.Children[i]);
             }
 
+            entity.ParentChanged += OnEntityParentChanged;
+
             SceneService.Log.Trace($"added entity '{entity.Id}'");
+        }
+
+        private void OnEntityParentChanged(Entity obj)
+        {
+            if (obj.Parent == null) _roots.Add(obj);
+            else _roots.Remove(obj);
         }
 
         public void RemoveEntity(Entity entity)
         {
+            entity.ParentChanged -= OnEntityParentChanged;
+
+            // collapse gap
             for (int i = 0; i < entity.Children.Count; i++)
             {
                 entity.Children[i].Parent = entity.Parent;
             }
 
+            // remove parenting
             entity.Parent = null;
 
             if (_loaded)
                 World.RemoveEntity(entity);
 
             _entities.Remove(entity);
+
+            _roots.Remove(entity);
 
             SceneService.Log.Trace($"removed entity '{entity.Id}'");
         }
@@ -162,9 +182,24 @@ namespace CrossEngine.Scenes
         public object Clone()
         {
             Scene scene = new Scene();
-            for (int i = 0; i < this._entities.Count; i++)
+            void AddChildren(Entity clone, Entity original)
             {
-                scene.AddEntity((Entity)this._entities[i].Clone());
+                for (int i = 0; i < original.Children.Count; i++)
+                {
+                    var ch = original.Children[i];
+                    var cch = (Entity)ch.Clone();
+                    scene.AddEntity(cch);
+                    AddChildren(cch, ch);
+                    cch.Parent = clone;
+                }
+            }
+
+            for (int i = 0; i < this._roots.Count; i++)
+            {
+                var entity = this._roots[i];
+                var centity = (Entity)entity.Clone();
+                scene.AddEntity(centity);
+                AddChildren(centity, entity);
             }
             return scene;
         }

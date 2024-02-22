@@ -10,6 +10,7 @@ using CrossEngine.Rendering.Cameras;
 using CrossEngine.Rendering.Culling;
 using CrossEngine.Serialization;
 using CrossEngine.Systems;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Components
 {
@@ -19,6 +20,7 @@ namespace CrossEngine.Components
         public virtual Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.Identity;
         public Frustum Frustum => Frustum.Create(ProjectionMatrix, ViewMatrix);
 
+        [EditorValue]
         public bool Primary
         {
             get => _primary;

@@ -89,7 +89,10 @@ namespace CrossEngineEditor.Panels
                 // pan
                 if (io.KeyAlt && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
-                    _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * .25f, io.MouseWheel * _zoom * .25f, 0), _cameraRotation);
+                    if (io.KeyShift)
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * .25f, io.MouseWheelH * _zoom * .25f, 0), _cameraRotation);
+                    else
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * .25f, io.MouseWheel * _zoom * .25f, 0), _cameraRotation);
 
                     _viewDirty = true;
                 }

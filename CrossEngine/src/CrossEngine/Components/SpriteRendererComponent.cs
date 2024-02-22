@@ -43,12 +43,14 @@ namespace CrossEngine.Components
         {
             info.AddValue(nameof(Color), Color);
             info.AddValue(nameof(Sprite), Sprite);
+            info.AddValue(nameof(Blend), Blend);
         }
 
         protected internal override void OnDeserialize(SerializationInfo info)
         {
             Color = info.GetValue(nameof(Color), Color);
-            Sprite = info.GetValue<SpriteAsset>(nameof(Sprite));
+            Sprite = info.GetValue<SpriteAsset>(nameof(Sprite), Sprite);
+            Blend = info.GetValue(nameof(Blend), Blend);
         }
     }
 }

@@ -32,9 +32,6 @@ namespace CrossEngineEditor
                 ActiveEntity = null;
 
                 SceneChanged?.Invoke(old);
-
-                if (_scene == null) Mode = Playmode.None;
-                else Mode = Playmode.Stopped;
             }
         }
         public Entity ActiveEntity

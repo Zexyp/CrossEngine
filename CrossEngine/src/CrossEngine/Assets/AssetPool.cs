@@ -176,7 +176,7 @@ namespace CrossEngine.Assets
         #region IAssetLoadContext
         Stream IAssetLoadContext.OpenStream(string path)
         {
-            return PlatformHelper.FileOpen(path);
+            return PlatformHelper.FileRead(path);
         }
 
         string IAssetLoadContext.GetFullPath(string realtivePath)

@@ -18,22 +18,9 @@ namespace CrossEngineEditor.Panels
 {
     internal class AssetListPanel : EditorPanel
     {
-        JsonSerializerOptions jso;
-
         public AssetListPanel() : base("Asset List")
         {
             WindowFlags |= ImGuiWindowFlags.MenuBar;
-
-
-            jso = new JsonSerializerOptions();
-            foreach (var item in CrossEngine.Serialization.SceneSerializer.BaseConverters)
-            {
-                jso.Converters.Add(item);
-            }
-
-#if DEBUG
-            jso.WriteIndented = true;
-#endif
         }
 
         protected override void DrawWindowContent()
@@ -53,20 +40,14 @@ namespace CrossEngineEditor.Panels
                     {
                         var filepath = ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
                         if (filepath != null)
-                            using (Stream stream = File.OpenRead(filepath))
-                            {
-                                Context.Assets = JsonSerializer.Deserialize<AssetPool>(stream, jso);
-                            }
+                            Context.Assets = AssetManager.ReadFile(filepath);
                     }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Save As...", Context.Assets != null))
                     {
                         var filepath = ShellFileDialogs.FileSaveDialog.ShowDialog(0, null, null, null, null);
                         if (filepath != null)
-                            using (Stream stream = File.OpenWrite(filepath))
-                            {
-                                JsonSerializer.Serialize(stream, Context.Assets, jso);
-                            }
+                            AssetManager.WriteFile(Context.Assets, filepath);
                     }
 
                     ImGui.EndMenu();

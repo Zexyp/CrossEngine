@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Platform
 {
-    internal static class PlatformHelper
+    public static class PlatformHelper
     {
 #if WASM
         private static HttpClient httpClient = new HttpClient();
 #endif
 
-        public static Window CreateWindow()
+        internal static Window CreateWindow()
         {
 #if WINDOWS
             return new CrossEngine.Platform.Windows.GlfwWindow();
@@ -27,7 +27,7 @@ namespace CrossEngine.Platform
 #endif
         }
 
-        public static GraphicsApi GetGraphicsApi()
+        internal static GraphicsApi GetGraphicsApi()
         {
 #if WINDOWS
             return GraphicsApi.OpenGL;
@@ -38,13 +38,24 @@ namespace CrossEngine.Platform
 #endif
         }
 
-        public static Stream FileOpen(string path)
+        public static Stream FileRead(string path)
         {
 #if WINDOWS
             return File.OpenRead(path);
 #elif WASM
             // .Result creates deadlock
             return httpClient.GetStreamAsync(Path.Join(CrossEngine.Platform.Wasm.Interop.RootUri.ToString(), path)).GetAwaiter().GetResult();
+#else
+#error
+#endif
+        }
+
+        public static Stream FileWrite(string path)
+        {
+#if WINDOWS
+            return File.OpenWrite(path);
+#elif WASM
+            throw new NotSupportedException();
 #else
 #error
 #endif

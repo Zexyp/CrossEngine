@@ -36,5 +36,12 @@ namespace CrossEngine.Components
 
             Tag = info.GetValue(nameof(Tag), Tag);
         }
+
+        public override object Clone()
+        {
+            var comp = new TagComponent();
+            comp.Tag = this.Tag;
+            return comp;
+        }
     }
 }
