@@ -44,6 +44,7 @@ namespace CrossEngine.Components
         {
             var comp = new CameraComponent();
             comp.ProjectionMatrix = this.ProjectionMatrix;
+            comp.Primary = this.Primary;
             return comp;
         }
 

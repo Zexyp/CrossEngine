@@ -30,7 +30,7 @@ namespace CrossEngine.Platform.OpenGL
             GLExtensions.Load();
 
 #if DEBUG
-            Debugging.GLDebugging.Enable();
+            Debugging.GLDebugging.Enable(LogLevel.Debug);
 #endif
         }
 

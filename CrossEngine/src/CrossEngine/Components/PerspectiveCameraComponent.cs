@@ -80,6 +80,7 @@ namespace CrossEngine.Components
         public override object Clone()
         {
             var comp = new PerspectiveCameraComponent();
+            comp.Primary = this.Primary;
             comp.Near = this.Near;
             comp.Far = this.Far;
             comp.FOV = this.FOV;
