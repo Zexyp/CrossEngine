@@ -1,0 +1,3 @@
+[submodule "CrossEngineEditor\\vendor\\ShellFileDialogs"]
+	path = CrossEngineEditor\\vendor\\ShellFileDialogs
+	url = https://github.com/Profy/ShellFileDialogs.git
