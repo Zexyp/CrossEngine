@@ -40,7 +40,7 @@ namespace CrossEngineEditor.Panels
                     {
                         var filepath = ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
                         if (filepath != null)
-                            Context.Assets = AssetManager.ReadFile(filepath);
+                            AssetManager.ReadFile(filepath).ContinueWith(t => Context.Assets = t.Result);
                     }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Save As...", Context.Assets != null))

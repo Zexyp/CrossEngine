@@ -28,12 +28,12 @@ namespace CrossEngine.Scenes
 
         public static void Start(Scene scene)
         {
-            service.Execute(scene.Start);
+            service.Execute(() => scene.Start());
         }
 
         public static void Stop(Scene scene)
         {
-            service.Execute(scene.Stop);
+            service.Execute(() => scene.Stop());
         }
 
         public static void Configure(Scene scene, SceneService.SceneConfig config)

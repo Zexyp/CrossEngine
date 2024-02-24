@@ -42,14 +42,14 @@ namespace CrossEngine.Services
             _loaders.Remove(loader);
         }
 
-        public void Load(AssetPool assets)
+        public async Task LoadAsync(AssetPool assets)
         {
-            assets.LoadAll();
+            await assets.LoadAll();
         }
 
-        public void Unload(AssetPool assets)
+        public async Task UnloadAsync(AssetPool assets)
         {
-            assets.UnloadAll();
+            await assets.UnloadAll();
         }
 
         public override void OnStart()

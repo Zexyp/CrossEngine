@@ -19,15 +19,15 @@ namespace CrossEngine.Assets
         [EditorString]
         public string RelativePath;
 
-        public override void Load(IAssetLoadContext context)
+        public override async Task Load(IAssetLoadContext context)
         {
-            using (Stream stream = context.OpenRelativeStream(RelativePath))
+            using (Stream stream = await context.OpenRelativeStream(RelativePath))
             {
                 Scene = SceneSerializer.DeserializeJson(stream);
             }
         }
 
-        public override void Unload(IAssetLoadContext context)
+        public override async Task Unload(IAssetLoadContext context)
         {
             Scene = null;
         }

@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <ApplicationIcon>icon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,6 +22,10 @@
     <ItemGroup>
         <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\**" />
         <Compile Remove="vendor\ShellFileDialogs\ShellFileDialogs\ShellFileDialogs.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="icon.ico" />
     </ItemGroup>
 
     <ItemGroup>

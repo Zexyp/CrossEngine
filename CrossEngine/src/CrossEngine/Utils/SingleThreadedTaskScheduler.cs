@@ -18,7 +18,7 @@ namespace CrossEngine.Utils
         public Task Schedule(Action action)
         {
             Debug.Assert(action != null);
-
+            
             return
                 Task.Factory.StartNew
                     (
