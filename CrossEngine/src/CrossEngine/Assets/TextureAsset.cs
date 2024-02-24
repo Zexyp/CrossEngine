@@ -29,9 +29,9 @@ namespace CrossEngine.Assets
 
         private bool _loaded = false;
 
-        public override void Load(IAssetLoadContext context)
+        public override async Task Load(IAssetLoadContext context)
         {
-            using (Stream stream = context.OpenRelativeStream(RelativePath))
+            using (Stream stream = await context.OpenRelativeStream(RelativePath))
             {
                 Texture = context.GetLoader<TextureLoader>().ScheduleTextureLoad(stream);
             }
@@ -39,7 +39,7 @@ namespace CrossEngine.Assets
             _loaded = true;
         }
 
-        public override void Unload(IAssetLoadContext context)
+        public override async Task Unload(IAssetLoadContext context)
         {
             _loaded = false;
 

@@ -114,10 +114,19 @@ namespace CrossEngine.Logging
 #endif
 
 #elif WASM
+                static string ToHex(uint color)
+                {
+                    var r = (byte)color;
+                    var g = (byte)(color >> 8);
+                    var b = (byte)(color >> 16);
+                    var a = (byte)(color >> 24);
+                    return $"#{r:X2}{g:X2}{b:X2}{a:X2}";
+                }
+
                 if (color != null)
                     if (color.Value < 0x01000000)
                         color += 0xff000000;
-                string style = Log.EnableColors ? (color != null ? $"#{color.Value.ToString("X8")}" : level switch
+                string style = Log.EnableColors ? (color != null ? ToHex(color.Value) : level switch
                 {
                     LogLevel.Trace => "gray",
                     LogLevel.Debug => "turquoise",

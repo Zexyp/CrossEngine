@@ -104,14 +104,14 @@ namespace CrossEngine.Assets
             }
         }
 
-        public bool LoadAll()
+        public async Task<bool> LoadAll()
         {
             var result = true;
             foreach (IDictionary col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
                 {
-                    if (!LoadAsset(asset))
+                    if (!await LoadAsset(asset))
                         result = false;
                 }
             }
@@ -120,14 +120,14 @@ namespace CrossEngine.Assets
             return result;
         }
 
-        public bool UnloadAll()
+        public async Task<bool> UnloadAll()
         {
             var result = true;
             foreach (IDictionary col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
                 {
-                    if (!UnloadAsset(asset))
+                    if (!await UnloadAsset(asset))
                         result = false;
                 }
             }
@@ -141,12 +141,12 @@ namespace CrossEngine.Assets
             _loaders = loaders;
         }
 
-        public bool LoadAsset(Asset asset)
+        public async Task<bool> LoadAsset(Asset asset)
         {
             try
             {
                 if (!asset.Loaded)
-                    asset.Load(this);
+                    await asset.Load(this);
                 return true;
             }
             catch (Exception ex)
@@ -157,12 +157,12 @@ namespace CrossEngine.Assets
             }
         }
 
-        public bool UnloadAsset(Asset asset)
+        public async Task<bool> UnloadAsset(Asset asset)
         {
             try
             {
                 if (asset.Loaded)
-                    asset.Unload(this);
+                    await asset.Unload(this);
                 return true;
             }
             catch (Exception ex)
@@ -174,7 +174,7 @@ namespace CrossEngine.Assets
         }
 
         #region IAssetLoadContext
-        Stream IAssetLoadContext.OpenStream(string path)
+        Task<Stream> IAssetLoadContext.OpenStream(string path)
         {
             return PlatformHelper.FileRead(path);
         }
@@ -184,17 +184,17 @@ namespace CrossEngine.Assets
             return Path.Join(Directory, realtivePath);
         }
 
-        void IAssetLoadContext.LoadChild(Type type, in Guid id, out Asset to)
+        async Task IAssetLoadContext.LoadChild(Type type, Guid id, Action<Asset> returnCallback)
         {
             var ch = (Asset)_collections[type][id];
-            to = ch;
+            returnCallback.Invoke(ch);
 
-            LoadAsset(ch);
+            await LoadAsset(ch);
         }
 
-        void IAssetLoadContext.FreeChild(Asset asset)
+        async Task IAssetLoadContext.FreeChild(Asset asset)
         {
-            UnloadAsset((Asset)_collections[asset.GetType()][asset.Id]);
+            await UnloadAsset((Asset)_collections[asset.GetType()][asset.Id]);
         }
 
         public Loader GetLoader(Type type)

@@ -50,10 +50,10 @@ namespace CrossEngine.Assets
             _current?.BindLoaders(service.Loaders.ToArray());
         }
 
-        public static AssetPool ReadFile(string filepath)
+        public static async Task<AssetPool> ReadFile(string filepath)
         {
             AssetService.Log.Trace($"read file '{filepath}'");
-            using (Stream stream = PlatformHelper.FileRead(filepath))
+            using (Stream stream = await PlatformHelper.FileRead(filepath))
             {
                 var pool = JsonSerializer.Deserialize<AssetPool>(stream, _jso);
                 pool.Directory = Path.Join(Path.GetDirectoryName(filepath), pool.Directory);
@@ -67,7 +67,6 @@ namespace CrossEngine.Assets
             using (Stream stream = PlatformHelper.FileWrite(filepath))
             {
                 string prevdir = pool.Directory;
-                Console.WriteLine(Path.GetRelativePath(Path.GetDirectoryName(filepath), pool.Directory));
                 pool.Directory = Path.GetRelativePath(Path.GetDirectoryName(filepath), pool.Directory);
                 JsonSerializer.Serialize(stream, pool, _jso);
                 pool.Directory = prevdir;
@@ -76,12 +75,22 @@ namespace CrossEngine.Assets
 
         public static void Load()
         {
-            service.Load(_current);
+            service.LoadAsync(_current).Wait();
         }
 
         public static void Unload()
         {
-            service.Unload(_current);
+            service.UnloadAsync(_current).Wait();
+        }
+
+        public static Task LoadAsync()
+        {
+            return service.LoadAsync(_current);
+        }
+
+        public static Task UnloadAsync()
+        {
+            return service.UnloadAsync(_current);
         }
     }
 }

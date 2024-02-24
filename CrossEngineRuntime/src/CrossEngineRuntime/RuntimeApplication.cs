@@ -4,6 +4,7 @@ using System.Linq;
 using CrossEngine.Assets;
 using CrossEngine.Core;
 using CrossEngine.Debugging;
+using CrossEngine.Ecs;
 using CrossEngine.Events;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
@@ -19,14 +20,14 @@ namespace CrossEngineRuntime
             Manager.Register(new InputService());
             Manager.Register(new WindowService(
 #if WASM
-                    WindowService.Mode.Sync
-#else
                 WindowService.Mode.Sync
+#else
+                WindowService.Mode.ThreadLoop
 #endif
                 ));
             Manager.Register(new RenderService(
 #if WASM
-                    ) { IgnoreRefresh = true });
+                ) { IgnoreRefresh = true });
 #else
                 ));
 #endif
@@ -42,30 +43,44 @@ namespace CrossEngineRuntime
             Manager.GetService<WindowService>().WindowEvent += OnEvent;
 
 #if WASM
-                Manager.GetService<WindowService>().WindowEvent += (ws, e) =>
-                {
-                    if (e is WindowRefreshEvent)
-                        OnUpdate();
-                };
+            Manager.GetService<WindowService>().WindowEvent += (ws, e) =>
+            {
+                if (e is WindowRefreshEvent)
+                    OnUpdate();
+            };
 #endif
         }
 
         Scene scene;
 
-        public override void OnInit()
+        public override async void OnInit()
         {
             base.OnInit();
 
-            AssetManager.Bind(AssetManager.ReadFile("./assets.json"));
-            AssetManager.Load();
+            AssetManager.Bind(await AssetManager.ReadFile("./assets.json"));
+            // do NOT ask me why
+            AssetManager.LoadAsync().ContinueWith(t =>
+            {
+                var scenes = AssetManager.Current.GetCollection<SceneAsset>();
+                if (scenes == null)
+                    throw new Exception("no scenes?");
 
-            var scenes = AssetManager.Current.GetCollection<SceneAsset>();
-            if (scenes == null)
-                throw new Exception("no scenes?");
+                scene = scenes.First().Scene;
 
-            scene = scenes.First().Scene;
-            SceneManager.Load(scene);
-            SceneManager.Start(scene);
+                var msg = "scene\n";
+                foreach (var entity in scene.Entities)
+                {
+                    msg += $"\tentity '{entity.Id}'\n";
+                    foreach (var component in entity.Components)
+                    {
+                        msg += $"\t\tcomponent '{component.GetType().FullName}'\n";
+                    }
+                }
+                Console.WriteLine(msg);
+
+                SceneManager.Load(scene);
+                SceneManager.Start(scene);
+            });
         }
 
         public override void OnDestroy()

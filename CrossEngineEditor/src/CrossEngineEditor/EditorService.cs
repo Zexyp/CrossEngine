@@ -232,6 +232,7 @@ namespace CrossEngineEditor
                         if (filepath != null)
                             using (Stream stream = File.OpenWrite(filepath))
                             {
+                                stream.SetLength(0);
                                 SceneSerializer.SerializeJson(stream, Context.Scene);
                             }
                     }

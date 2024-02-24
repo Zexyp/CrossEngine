@@ -26,5 +26,20 @@ namespace CrossEngineEditor.Panels
         {
             base.DrawWindowContent();
         }
+
+        public override void OnAttach()
+        {
+            Context.SceneChanged += OnContextSceneChanged;
+        }
+
+        public override void OnDetach()
+        {
+            Context.SceneChanged -= OnContextSceneChanged;
+        }
+
+        private void OnContextSceneChanged(Scene obj)
+        {
+            OnCameraResize();
+        }
     }
 }

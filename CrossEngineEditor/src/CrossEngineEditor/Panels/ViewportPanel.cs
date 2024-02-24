@@ -42,16 +42,22 @@ namespace CrossEngineEditor.Panels
                 {
                     if (ImGui.BeginMenu("Viewport"))
                     {
-                        if (ImGui.MenuItem("Top") && (_viewDirty = true)) ;
-                        if (ImGui.MenuItem("Bottom") && (_viewDirty = true)) ;
+                        if (ImGui.MenuItem("Top", null, false) &&
+                            (_viewDirty = true)) ;
+                        if (ImGui.MenuItem("Bottom", null, false) &&
+                            (_viewDirty = true)) ;
                         ImGui.Separator();
-                        if (ImGui.MenuItem("Front") && (_viewDirty = true))
+                        if (ImGui.MenuItem("Front", null, _cameraRotation == Quaternion.Identity) &&
+                            (_viewDirty = true))
                             _cameraRotation = Quaternion.Identity;
-                        if (ImGui.MenuItem("Back") && (_viewDirty = true))
+                        if (ImGui.MenuItem("Back", null, _cameraRotation == Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI)) &&
+                            (_viewDirty = true))
                             _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI);
                         ImGui.Separator();
-                        if (ImGui.MenuItem("Right") && (_viewDirty = true)) ;
-                        if (ImGui.MenuItem("Left") && (_viewDirty = true)) ;
+                        if (ImGui.MenuItem("Right", null, false) &&
+                            (_viewDirty = true)) ;
+                        if (ImGui.MenuItem("Left", null, false) &&
+                            (_viewDirty = true)) ;
 
                         ImGui.EndMenu();
                     }

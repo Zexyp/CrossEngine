@@ -27,14 +27,14 @@ namespace CrossEngine.Assets
         private TextureAsset texture = null;
         private Guid idTexture = Guid.Empty;
 
-        public override void Load(IAssetLoadContext context)
+        public override async Task Load(IAssetLoadContext context)
         {
-            context.LoadChild(idTexture, out texture);
+            await context.LoadChild<TextureAsset>(idTexture, a => texture = a);
         }
 
-        public override void Unload(IAssetLoadContext context)
+        public override async Task Unload(IAssetLoadContext context)
         {
-            context.FreeChild(Texture);
+            await context.FreeChild(Texture);
         }
 
         public override void GetObjectData(SerializationInfo info)
