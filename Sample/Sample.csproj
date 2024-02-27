@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="res\" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -70,6 +71,7 @@
         <WasmExtraFilesToDeploy Include="$(CrossEngineProjectPath)/res/wasm/index.html" />
         <WasmExtraFilesToDeploy Include="$(CrossEngineProjectPath)/res/wasm/main.js" />
         <WasmExtraFilesToDeploy Include="$(CrossEngineProjectPath)/res/icon.ico" />
+        
         <WasmExtraFilesToDeploy Include="$(MSBuildThisFileDirectory)res/assets.json" />
         <WasmExtraFilesToDeploy Include="$(MSBuildThisFileDirectory)res/assets/**" TargetPath="assets/%(RecursiveDir)%(Filename)%(Extension)" />
       </ItemGroup>

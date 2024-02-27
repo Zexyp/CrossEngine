@@ -117,8 +117,6 @@ namespace CrossEngine.Services
             Log.Info("scene removed");
         }
 
-        
-
         public void OnUpdate()
         {
             _scheduler.RunOnCurrentThread();
@@ -145,6 +143,20 @@ namespace CrossEngine.Services
                 SceneManager.Current.FixedUpdate();
                 SceneManager.Current = null;
             }
+        }
+
+        public void Start(Scene scene)
+        {
+            SceneManager.Current = scene;
+            SceneManager.Current.Start();
+            SceneManager.Current = null;
+        }
+
+        public void Stop(Scene scene)
+        {
+            SceneManager.Current = scene;
+            SceneManager.Current.Stop();
+            SceneManager.Current = null;
         }
 
         public void OnRender(RenderService rs)

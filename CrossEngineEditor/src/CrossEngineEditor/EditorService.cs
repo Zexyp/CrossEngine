@@ -215,7 +215,7 @@ namespace CrossEngineEditor
                         foreach (var item in Context.Assets.GetCollection<SceneAsset>())
                         {
                             if (!item.Loaded) ImGui.BeginDisabled();
-                            if (ImGui.Selectable(item.RelativePath ?? "<null>", item.Scene != null && item.Scene == Context.Scene))
+                            if (ImGui.Selectable(item.GetName(), item.Scene != null && item.Scene == Context.Scene))
                             {
                                 Context.Scene = null;
                                 Context.Scene = item.Scene;

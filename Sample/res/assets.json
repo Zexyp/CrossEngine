@@ -3,29 +3,117 @@
   "Directory": "assets",
   "Assets": [
     {
-      "$type": "CrossEngine.Assets.AssemblyAsset",
-      "Id": "4d74b034-70cd-44cb-b7cc-2c129c735796",
-      "RelativePath": "assemblies\\CrossEngineSandbox.dll"
+      "$type": "CrossEngine.Assets.TextureAsset",
+      "Id": "f49cc94f-61eb-45d2-af6a-d3e0c00140c1",
+      "Name": "tex-pigeon-atlas",
+      "RelativePath": "textures/pigeon.png"
     },
     {
       "$type": "CrossEngine.Assets.TextureAsset",
-      "Id": "1978479b-4ecc-4d83-9bf4-c7baeb68f2af",
+      "Id": "d38200f8-6c56-4484-b319-c5cfbc655e3c",
+      "Name": "tex-logo",
       "RelativePath": "textures/logo.png"
     },
     {
+      "$type": "CrossEngine.Assets.TextureAsset",
+      "Id": "07f8dede-2d76-4113-9ed7-8ef0ebe31969",
+      "Name": "tex-pipes-atlas",
+      "RelativePath": "textures/pipes.png"
+    },
+    {
+      "$type": "CrossEngine.Assets.AssemblyAsset",
+      "Id": "787f084c-987f-4be0-b325-7e0b11c34635",
+      "Name": null,
+      "RelativePath": "../Sample.dll"
+    },
+    {
       "$type": "CrossEngine.Assets.SpriteAsset",
-      "Id": "965b0b95-d54e-4079-b423-87aa8c0e5a1c",
+      "Id": "b6c8c502-2b19-4bd0-9425-de160fdf795c",
+      "Name": "spr-pigeon-push",
+      "TextureOffsets": {
+        "X": 0.6666667,
+        "Y": 0,
+        "Z": 0.33333334,
+        "W": 1
+      },
+      "Texture": "f49cc94f-61eb-45d2-af6a-d3e0c00140c1"
+    },
+    {
+      "$type": "CrossEngine.Assets.SpriteAsset",
+      "Id": "97fecce4-69b3-4abf-af41-d1f098c04652",
+      "Name": "spr-pigeon-idle",
+      "TextureOffsets": {
+        "X": 0.33333334,
+        "Y": 0,
+        "Z": 0.33333334,
+        "W": 1
+      },
+      "Texture": "f49cc94f-61eb-45d2-af6a-d3e0c00140c1"
+    },
+    {
+      "$type": "CrossEngine.Assets.SpriteAsset",
+      "Id": "b36ea3fc-d5c4-4739-b693-d1cd86a30c48",
+      "Name": "spr-pigeon-fall",
+      "TextureOffsets": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0.33333334,
+        "W": 1
+      },
+      "Texture": "f49cc94f-61eb-45d2-af6a-d3e0c00140c1"
+    },
+    {
+      "$type": "CrossEngine.Assets.SpriteAsset",
+      "Id": "5ac044df-9092-42d1-8393-6f3ca2e270d0",
+      "Name": "spr-logo",
       "TextureOffsets": {
         "X": 0,
         "Y": 0,
         "Z": 1,
         "W": 1
       },
-      "Texture": "1978479b-4ecc-4d83-9bf4-c7baeb68f2af"
+      "Texture": "d38200f8-6c56-4484-b319-c5cfbc655e3c"
+    },
+    {
+      "$type": "CrossEngine.Assets.SpriteAsset",
+      "Id": "b96a4f93-e223-46a2-af3a-854f2b57c7b6",
+      "Name": "spr-pipe-var1",
+      "TextureOffsets": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0.33333334,
+        "W": 1
+      },
+      "Texture": "07f8dede-2d76-4113-9ed7-8ef0ebe31969"
+    },
+    {
+      "$type": "CrossEngine.Assets.SpriteAsset",
+      "Id": "b35ff83e-88d2-4029-8bac-a1db2f54b916",
+      "Name": "spr-pipe-var2",
+      "TextureOffsets": {
+        "X": 0.33333334,
+        "Y": 0,
+        "Z": 0.33333334,
+        "W": 1
+      },
+      "Texture": "07f8dede-2d76-4113-9ed7-8ef0ebe31969"
+    },
+    {
+      "$type": "CrossEngine.Assets.SpriteAsset",
+      "Id": "8b392ed3-32f6-43a9-9430-0881a713448c",
+      "Name": "spr-pipe-var3",
+      "TextureOffsets": {
+        "X": 0.6666667,
+        "Y": 0,
+        "Z": 0.33333334,
+        "W": 1
+      },
+      "Texture": "07f8dede-2d76-4113-9ed7-8ef0ebe31969"
     },
     {
       "$type": "CrossEngine.Assets.SceneAsset",
-      "Id": "60cac435-76c9-4510-ad3d-7c8412335dfb",
+      "Id": "d8807606-e507-4595-8fcd-0dea303f9bd8",
+      "Name": "sc-main",
       "RelativePath": "scenes/scene.json"
     }
   ]

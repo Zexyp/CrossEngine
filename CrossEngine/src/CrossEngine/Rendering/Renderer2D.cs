@@ -338,7 +338,7 @@ namespace CrossEngine.Rendering
 			_rapi = null;
 		}
 
-		public static void BeginScene(Matrix4x4 viewProjectionMatrix)
+		public static void BeginScene(in Matrix4x4 viewProjectionMatrix)
 		{
 			data.viewProjectionMatrix = viewProjectionMatrix;
 
@@ -464,7 +464,7 @@ namespace CrossEngine.Rendering
 		}
 
 		#region Quads
-		public static unsafe void DrawQuad(Matrix4x4 transform, Vector4 color, int entityID = 0)
+		public static unsafe void DrawQuad(in Matrix4x4 transform, in Vector4 color, int entityID = 0)
 		{
 			const float textureIndex = 0.0f; // white texture index
 
@@ -486,7 +486,7 @@ namespace CrossEngine.Rendering
 			data.quads.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedQuad(Matrix4x4 transform, WeakReference<Texture> texture, Vector4 tintColor, int entityId = 0)
+		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, WeakReference<Texture> texture, in Vector4 tintColor, int entityId = 0)
 		{
 			if (data.quads.IndexCount >= Renderer2DData.MaxQuadIndices)
 				NextQuadsBatch();
@@ -526,7 +526,7 @@ namespace CrossEngine.Rendering
 			data.quads.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedQuad(Matrix4x4 transform, WeakReference<Texture> texture, Vector4 tintColor, Vector4 texOffsets, int entityId = 0)
+		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, WeakReference<Texture> texture, in Vector4 tintColor, in Vector4 texOffsets, int entityId = 0)
 		{
 			if (data.quads.IndexCount >= Renderer2DData.MaxQuadIndices)
 				NextQuadsBatch();
@@ -570,7 +570,7 @@ namespace CrossEngine.Rendering
 		#endregion
 
 		#region Tris
-		public static unsafe void DrawTri(Vector3 p1, Vector3 p2, Vector3 p3, Vector4 color, int entityID = 0)
+		public static unsafe void DrawTri(Vector3 p1, Vector3 p2, Vector3 p3, in Vector4 color, int entityID = 0)
 		{
 			if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
 				NextTrisBatch();
@@ -591,7 +591,7 @@ namespace CrossEngine.Rendering
 			data.tris.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, WeakReference<Texture> texture, Vector4 tintColor, int entityId = 0)
+		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, WeakReference<Texture> texture, in Vector4 tintColor, int entityId = 0)
 		{
 			if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
 				NextTrisBatch();
@@ -633,7 +633,7 @@ namespace CrossEngine.Rendering
 			data.tris.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, WeakReference<Texture> texture, Vector4 tintColor, Vector2 uv1, Vector2 uv2, Vector2 uv3, int entityId = 0)
+		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, WeakReference<Texture> texture, in Vector4 tintColor, Vector2 uv1, Vector2 uv2, Vector2 uv3, int entityId = 0)
 		{
 			if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
 				NextTrisBatch();

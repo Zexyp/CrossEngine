@@ -208,6 +208,18 @@ namespace CrossEngine.Ecs
         }
         #endregion
 
+        public bool HasComponent<T>(bool inherit = true) where T : Component => HasComponent(typeof(T), inherit);
+
+        public bool HasComponent(Type ofType, bool inherit = true)
+        {
+            for (int i = 0; i < _components.Count; i++)
+            {
+                Type comptype = _components[i].GetType();
+                if (inherit ? ofType.IsAssignableFrom(comptype) : comptype == ofType) return true;
+            }
+            return false;
+        }
+
         public void ShiftComponent(Component component, int destinationIndex)
         {
             if (!_components.Contains(component)) throw new InvalidOperationException("Entity does not contain component!");

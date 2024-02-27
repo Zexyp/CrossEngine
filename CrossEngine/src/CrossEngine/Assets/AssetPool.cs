@@ -57,21 +57,51 @@ namespace CrossEngine.Assets
 
         public Asset Get(Type type, Guid id)
         {
+            if (!type.IsSubclassOf(typeof(Asset)))
+                throw new InvalidOperationException();
+
             if (!_collections.ContainsKey(type))
                 return null;
+
             return (Asset)_collections[type][id];
+        }
+        
+        public T GetNamed<T>(string name) where T : Asset => (T)GetNamed(typeof(T), name);
+
+        public Asset GetNamed(Type type, string name)
+        {
+            if (!type.IsSubclassOf(typeof(Asset)))
+                throw new InvalidOperationException();
+
+            if (!_collections.ContainsKey(type))
+                return null;
+
+            foreach (Asset asset in _collections[type].Values)
+            {
+                if (asset.Name == name)
+                    return asset;
+            }
+            return null;
         }
 
         public ICollection<T>? GetCollection<T>() where T : Asset
         {
-            return new CastWrapCollection<T>(_collections[typeof(T)].Values);
+            var type = typeof(T);
+            
+            if (!_collections.ContainsKey(type))
+                return null;
+
+            return new CastWrapCollection<T>(_collections[type].Values);
         }
 
         public ICollection<Asset>? GetCollection(Type ofType)
         {
             if (!ofType.IsSubclassOf(typeof(Asset)))
                 throw new InvalidOperationException();
-            
+
+            if (!_collections.ContainsKey(ofType))
+                return null;
+
             return (ICollection<Asset>)_collections[ofType].Values;
         }
 

@@ -17,8 +17,8 @@ namespace CrossEngine.Utils
     public static class TextRendererUtil
     {
         const int SymbolsCount = 95;
-        const float SymbolWidth = 12;
-        const float SymbolHeight = 16;
+        public const float SymbolWidth = 12;
+        public const float SymbolHeight = 16;
 
         static WeakReference<Texture> textTexture;
         static TextureAtlas textAtlas;
@@ -43,24 +43,28 @@ namespace CrossEngine.Utils
                 return;
 
             int line = 0;
-            transform = Matrix4x4.CreateScale(new Vector3(SymbolWidth, SymbolHeight, 1)) * transform * Matrix4x4.CreateTranslation(new Vector3(SymbolWidth / 2, -SymbolHeight / 2, 0));
+            // i hate matrices
+            transform = Matrix4x4.CreateScale(new Vector3(SymbolWidth, SymbolHeight, 1)) * Matrix4x4.CreateTranslation(new Vector3(SymbolWidth / 2, -SymbolHeight / 2, 0)) * transform;
             int column = 0;
             for (int i = 0; i < text.Length; i++)
             {
-                // space
-                if (text[0] == ' ')
-                    continue;
-
-                Matrix4x4 matrix = Matrix4x4.CreateTranslation(new Vector3(column, -line, 0)) * transform;
-                column++;
-
+                // what was i drinking while writing this code is uncertain
                 // special characters
+                if (text[i] == ' ')
+                {
+                    column++;
+                    continue;
+                }
                 if (text[i] == '\n')
                 {
                     line++;
                     column = 0;
                     continue;
                 }
+
+                Matrix4x4 matrix = Matrix4x4.CreateTranslation(new Vector3(column, -line, 0)) * transform;
+
+                column++;
 
                 int chord = text[i] - ' ';
                 // clamp

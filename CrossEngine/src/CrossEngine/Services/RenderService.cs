@@ -57,7 +57,6 @@ namespace CrossEngine.Services
             ws.WindowUpdate += OnWindowUpdate;
             Context = ws.Window.Context;
 
-            RendererApi = RendererApi.Create(_api);
             RendererApi.Init();
             RendererApi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
             RendererApi.SetViewport(0, 0, ws.Window.Width, ws.Window.Height);
@@ -119,8 +118,6 @@ namespace CrossEngine.Services
             Renderer2D.Init(RendererApi);
             LineRenderer.Init(RendererApi);
             
-            TextureLoader.InternalInit();
-
             TextRendererUtil.Init();
 
             _scheduler.RunOnCurrentThread();
@@ -138,7 +135,8 @@ namespace CrossEngine.Services
 
         public override void OnStart()
         {
-            
+            RendererApi = RendererApi.Create(_api);
+            TextureLoader.InternalInit();
         }
 
         public override void OnDestroy()

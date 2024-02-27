@@ -648,7 +648,7 @@ namespace CrossEngine.Utils
         }
     }
 
-    public static class Color
+    public static class ColorHelper
     {
         //public static Vector3 RGBFromUInt(uint color)
         //{
@@ -731,7 +731,7 @@ namespace CrossEngine.Utils
                     // The color is not defined, we should throw an error.
 
                     default:
-                        Log.Default.Error("color conversion messed up!");
+                        Log.Default.Error("color conversion fucked up!");
                         rgbColor.X = rgbColor.Y = rgbColor.Z = hsvColor.Z;
                         break;
                 }
@@ -784,6 +784,57 @@ namespace CrossEngine.Utils
                 hsvColor.X += 1.0f;
 
             return hsvColor;
+        }
+
+        // 0xAARRGGBB
+        private const int U32_R_SHIFT = 16;
+        private const int U32_G_SHIFT = 8;
+        private const int U32_B_SHIFT = 0;
+        private const int U32_A_SHIFT = 24;
+
+        public static Vector4 U32ToVec4(uint value)
+        {
+            float s = 1.0f / 255.0f;
+            return new Vector4(
+                ((value >> U32_R_SHIFT) & 0xFF) * s,
+                ((value >> U32_G_SHIFT) & 0xFF) * s,
+                ((value >> U32_B_SHIFT) & 0xFF) * s,
+                ((value >> U32_A_SHIFT) & 0xFF) * s);
+        }
+
+        public static Vector3 U32ToVec3(uint value)
+        {
+            float s = 1.0f / 255.0f;
+            return new Vector3(
+                ((value >> U32_R_SHIFT) & 0xFF) * s,
+                ((value >> U32_G_SHIFT) & 0xFF) * s,
+                ((value >> U32_B_SHIFT) & 0xFF) * s);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int ColF32ToU8(float v)
+        {
+            return (int)(Math.Clamp(v, 0, 1) * 255.0f + 0.5f);
+        }
+
+        public static uint Vec4ToU32(Vector4 value)
+        {
+            uint o;
+            o  = ((uint)ColF32ToU8(value.X)) << U32_R_SHIFT;
+            o |= ((uint)ColF32ToU8(value.Y)) << U32_G_SHIFT;
+            o |= ((uint)ColF32ToU8(value.Z)) << U32_B_SHIFT;
+            o |= ((uint)ColF32ToU8(value.W)) << U32_A_SHIFT;
+            return o;
+        }
+
+        public static uint Vec3ToU32(Vector3 value, float alpha = 1f)
+        {
+            uint o;
+            o  = ((uint)ColF32ToU8(value.X)) << U32_R_SHIFT;
+            o |= ((uint)ColF32ToU8(value.Y)) << U32_G_SHIFT;
+            o |= ((uint)ColF32ToU8(value.Z)) << U32_B_SHIFT;
+            o |= ((uint)ColF32ToU8(alpha)) << U32_A_SHIFT;
+            return o;
         }
     }
 }

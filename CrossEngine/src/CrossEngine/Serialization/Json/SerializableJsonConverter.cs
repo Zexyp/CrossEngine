@@ -52,7 +52,7 @@ namespace CrossEngine.Serialization.Json
 
             Type type = Resolver?.Resolve(typeString) ?? Type.GetType(typeString);
 
-            Debug.Assert(type != null);
+            Debug.Assert(type != null, $"Type '{typeString}' not resolved");
 
             var serializable = (ISerializable)Activator.CreateInstance(type);
 

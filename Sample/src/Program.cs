@@ -41,6 +41,7 @@ using CrossEngine.Platform.Wasm;
 using CrossEngine.Platform.Windows;
 using CrossEngine.Platform.OpenGL.Debugging;
 using ImGuiNET;
+using Sample.Components;
 #endif
 
 namespace Sample
@@ -60,12 +61,43 @@ namespace Sample
 
         class SampleApp : RuntimeApplication
         {
+            static float MaxDistance;
+
+            public override void OnInit()
+            {
+                base.OnInit();
+
+                var os = Manager.GetService<OverlayService>();
+                os.AddOverlay(new HelloOverlay());
+#if DEBUG
+                os.AddOverlay(new DebugOverlay());
+#endif
+            }
+
             class HelloOverlay : Overlay
             {
                 protected override void Content()
                 {
-                    var mat = Matrix4x4.CreateTranslation(new Vector3(-Size.X / 2, Size.Y / 2, 0));
-                    var t = $"{1d / Time.UnscaledDelta:000.00} fps\n{Time.UnscaledDelta * 1000:00.000} ms";
+                    MaxDistance = Math.Max(PipeManagerComponent.distance, MaxDistance);
+                    var cornerMat = Matrix4x4.CreateTranslation(new (-Size.X / 2, Size.Y / 2, 0));
+                    var mat = Matrix4x4.CreateScale(2) * cornerMat;
+                    TextRendererUtil.DrawText(mat, $"Distance: {PipeManagerComponent.distance:0.00} m", new Vector4(1, 0, 0, 1));
+                    mat = Matrix4x4.CreateScale(1.5f) * Matrix4x4.CreateTranslation(new (0, -TextRendererUtil.SymbolHeight * 2, 0)) * cornerMat;
+                    TextRendererUtil.DrawText(mat, $"Best: {MaxDistance}", new Vector4(1, 0, 0, 1));
+                }
+            }
+
+            class DebugOverlay : Overlay
+            {
+                protected override void Content()
+                {
+                    var t = 
+$@"{1d / Time.UnscaledDelta:000.00} fps
+{Time.UnscaledDelta * 1000:00.000} ms
+distance: {PipeManagerComponent.distance}
+stop: {PipeManagerComponent.stop}";
+                    var height = t.Count(ch => ch == '\n') + 1;
+                    var mat = Matrix4x4.CreateTranslation(new Vector3(-Size.X / 2, -Size.Y / 2 + height * TextRendererUtil.SymbolHeight, 0));
                     TextRendererUtil.DrawText(mat, t, new Vector4(1, 0, 0, 1));
                 }
             }

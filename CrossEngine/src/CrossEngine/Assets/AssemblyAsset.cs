@@ -24,7 +24,7 @@ namespace CrossEngine.Assets
 
         public override async Task Load(IAssetLoadContext context)
         {
-            loadContext = AssemblyManager.Load(await context.OpenRelativeStream(RelativePath), out Assembly);
+            (loadContext, Assembly) = await AssemblyManager.Load(context.GetFullPath(RelativePath));
         }
 
         public override async Task Unload(IAssetLoadContext context)

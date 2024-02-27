@@ -33,15 +33,11 @@ namespace CrossEngine.Assets
 #endif
         }
 
-        public static T Get<T>(Guid id) where T : Asset
-        {
-            return (T)Get(typeof(T), id);
-        }
+        public static T Get<T>(Guid id) where T : Asset => _current.Get<T>(id);
+        public static Asset Get(Type typeOfAsset, Guid id) => _current.Get(typeOfAsset, id);
 
-        public static Asset Get(Type typeOfAsset, Guid id)
-        {
-            return _current.Get(typeOfAsset, id);
-        }
+        public static T GetNamed<T>(string name) where T : Asset => _current.GetNamed<T>(name);
+        public static Asset GetNamed(Type typeOfAsset, string name) => _current.GetNamed(typeOfAsset, name);
 
         public static void Bind(AssetPool pool)
         {
@@ -52,7 +48,6 @@ namespace CrossEngine.Assets
 
         public static async Task<AssetPool> ReadFile(string filepath)
         {
-            AssetService.Log.Trace($"read file '{filepath}'");
             using (Stream stream = await PlatformHelper.FileRead(filepath))
             {
                 var pool = JsonSerializer.Deserialize<AssetPool>(stream, _jso);
@@ -63,7 +58,6 @@ namespace CrossEngine.Assets
 
         public static void WriteFile(AssetPool pool, string filepath)
         {
-            AssetService.Log.Trace($"write file '{filepath}'");
             using (Stream stream = PlatformHelper.FileWrite(filepath))
             {
                 string prevdir = pool.Directory;
