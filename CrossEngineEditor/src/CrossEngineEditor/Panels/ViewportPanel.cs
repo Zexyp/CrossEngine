@@ -118,8 +118,6 @@ namespace CrossEngineEditor.Panels
 
         protected override void OnCameraResize()
         {
-            base.OnCameraResize();
-
             if (!_perspective)
                 _editorCamera.SetOrtho((ViewportSize.X / ViewportSize.Y) * _zoom, 1 * _zoom, -_far, _far);
             else

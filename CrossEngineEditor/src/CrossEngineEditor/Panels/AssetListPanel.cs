@@ -130,7 +130,6 @@ namespace CrossEngineEditor.Panels
                                     if (asset.Loaded) Context.Assets.UnloadAsset(asset);
                                     if (!asset.Loaded) Context.Assets.LoadAsset(asset);
                                 }
-                                InspectDrawer.DrawMember(typeof(Asset).GetMember(nameof(Asset.Id))[0], asset);
                                 InspectDrawer.Inspect(asset);
 
                                 ImGui.TreePop();

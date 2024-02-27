@@ -1,13 +1,16 @@
 ﻿using CrossEngine.Debugging;
 using CrossEngineEditor;
 
-internal class Program
+namespace CrossEngineEditor
 {
-    static void Main(string[] args)
+    internal class Program
     {
-        var app = new EditorApplication();
-        app.Run();
+        static void Main(string[] args)
+        {
+            var app = new EditorApplication();
+            app.Run();
 
-        GPUGC.PrintCollected();
+            GPUGC.PrintCollected();
+        }
     }
 }

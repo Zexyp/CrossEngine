@@ -12,7 +12,7 @@ namespace CrossEngine.Rendering.Renderables
         virtual Vector4 TextureOffsets => new Vector4(0, 0, 1, 1);
         virtual WeakReference<Texture> Texture => null;
         virtual BlendMode Blend => BlendMode.Opaque;
-        virtual Vector4 DrawOffsets => throw new NotImplementedException();
+        virtual Vector4 DrawOffsets => new Vector4(0, 0, 1, 1);
     }
 
     class SpriteRenderable : Renderable<ISpriteRenderData>
@@ -39,10 +39,11 @@ namespace CrossEngine.Rendering.Renderables
                 Renderer2D.SetBlending(data.Blend);
             }
 
+            var matrix = Matrix4x4.CreateScale(new Vector3(data.DrawOffsets.Z, data.DrawOffsets.W, 1)) * Matrix4x4.CreateTranslation(new Vector3(data.DrawOffsets.X, data.DrawOffsets.Y, 1)) * data.Transform;
             if (data.Texture == null)
-                Renderer2D.DrawQuad(data.Transform, data.Color, data.EntityId);
+                Renderer2D.DrawQuad(matrix, data.Color, data.EntityId);
             else
-                Renderer2D.DrawTexturedQuad(data.Transform, data.Texture, data.Color, data.TextureOffsets, data.EntityId);
+                Renderer2D.DrawTexturedQuad(matrix, data.Texture, data.Color, data.TextureOffsets, data.EntityId);
         }
     }
 }

@@ -8,6 +8,7 @@ using CrossEngine.Ecs;
 using CrossEngine.Events;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace CrossEngineRuntime
 {
@@ -65,15 +66,19 @@ namespace CrossEngineRuntime
                 if (scenes == null)
                     throw new Exception("no scenes?");
 
-                scene = scenes.First().Scene;
+                var sceneAsset = scenes.First();
+                if (!sceneAsset.Loaded)
+                    throw new Exception("scene not loaded");
+
+                scene = sceneAsset.Scene;
 
                 var msg = "scene\n";
                 foreach (var entity in scene.Entities)
                 {
-                    msg += $"\tentity '{entity.Id}'\n";
+                    msg += $"    entity '{entity.Id}'\n";
                     foreach (var component in entity.Components)
                     {
-                        msg += $"\t\tcomponent '{component.GetType().FullName}'\n";
+                        msg += $"        component '{component.GetType().FullName}'\n";
                     }
                 }
                 Console.WriteLine(msg);

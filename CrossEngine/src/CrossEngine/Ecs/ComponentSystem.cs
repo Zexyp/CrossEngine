@@ -22,7 +22,7 @@ namespace CrossEngine.Ecs
     public abstract class ComponentSystem
     {
         internal protected EcsWorld World { get; internal set; }
-        protected bool Started = false;
+        internal bool Started = false;
 
         public virtual void OnAttach() { }
         public virtual void OnDetach() { }

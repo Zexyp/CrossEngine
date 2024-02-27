@@ -475,7 +475,7 @@ namespace CrossEngineEditor.Utils
                 EditResult er = EditResult.None;
                 var v = (Asset)value;
 
-                if (ImGui.BeginCombo(name, v?.Id.ToString()))
+                if (ImGui.BeginCombo(name, v?.GetName() ?? ""))
                 {
                     var coll = AssetManager.Current?.GetCollection(type);
 
@@ -483,7 +483,7 @@ namespace CrossEngineEditor.Utils
                         foreach (Asset item in coll)
                         {
                             bool isSelected = item == v;
-                            if (ImGui.Selectable(item.Id.ToString(), isSelected))
+                            if (ImGui.Selectable(item.GetName(), isSelected))
                             {
                                 value = item;
                                 er = EditResult.Full;

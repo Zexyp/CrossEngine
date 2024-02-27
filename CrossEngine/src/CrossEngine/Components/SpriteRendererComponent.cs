@@ -16,6 +16,8 @@ namespace CrossEngine.Components
 {
     public class SpriteRendererComponent : Component, ISpriteRenderData
     {
+        [EditorDrag]
+        public Vector4 DrawOffsets { get; set; } = new Vector4(0, 0, 1, 1);
         [EditorColor]
         public Vector4 Color { get; set; } = Vector4.One;
         [EditorEnum]
@@ -24,11 +26,12 @@ namespace CrossEngine.Components
         [EditorAsset]
         public SpriteAsset Sprite;
 
-        Matrix4x4 IObjectRenderData.Transform => Entity.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity;
+        Matrix4x4 IObjectRenderData.Transform => Entity?.Transform?.WorldTransformMatrix ?? Matrix4x4.Identity;
         int ISpriteRenderData.EntityId => Entity?.Id.GetHashCode() ?? 0;
         Vector4 ISpriteRenderData.TextureOffsets => Sprite?.TextureOffsets ?? new Vector4(0, 0, 1, 1);
         WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Texture?.Texture;
         BlendMode ISpriteRenderData.Blend => Blend;
+        Vector4 ISpriteRenderData.DrawOffsets => DrawOffsets;
 
         public override object Clone()
         {
@@ -36,6 +39,7 @@ namespace CrossEngine.Components
             comp.Color = this.Color;
             comp.Blend = this.Blend;
             comp.Sprite = this.Sprite;
+            comp.DrawOffsets = this.DrawOffsets;
             return comp;
         }
 
@@ -44,6 +48,7 @@ namespace CrossEngine.Components
             info.AddValue(nameof(Color), Color);
             info.AddValue(nameof(Sprite), Sprite);
             info.AddValue(nameof(Blend), Blend);
+            info.AddValue(nameof(DrawOffsets), DrawOffsets);
         }
 
         protected internal override void OnDeserialize(SerializationInfo info)
@@ -51,6 +56,7 @@ namespace CrossEngine.Components
             Color = info.GetValue(nameof(Color), Color);
             Sprite = info.GetValue<SpriteAsset>(nameof(Sprite), Sprite);
             Blend = info.GetValue(nameof(Blend), Blend);
+            DrawOffsets = info.GetValue(nameof(DrawOffsets), DrawOffsets);
         }
     }
 }

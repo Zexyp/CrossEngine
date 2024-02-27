@@ -1,8 +1,10 @@
 ﻿using CrossEngine.Components;
 using CrossEngine.Ecs;
+using CrossEngine.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,6 +13,7 @@ namespace CrossEngine.Systems
     internal class ScriptSystem : UnicastSystem<ScriptComponent>, IUpdatedSystem, IFixedUpdatedSystem
     {
         List<ScriptComponent> _components = new();
+        static internal Logger Log = new Logger("scripts");
 
         public ScriptSystem() : base(true)
         {
@@ -54,24 +57,24 @@ namespace CrossEngine.Systems
         private void OnComponentEnabledChanged(Component sender)
         {
             var component = (ScriptComponent)sender;
-            if (component.Enabled) component.OnEnable();
-            else component.OnDisable();
+            if (component.Enabled) Try(component.OnEnable);
+            else Try(component.OnDisable);
         }
 
         private void StartComponent(ScriptComponent component)
         {
             component.EnabledChanged += OnComponentEnabledChanged;
 
-            component.OnAttach();
+            Try(component.OnAttach);
             if (component.Enabled)
-                component.OnEnable();
+                Try(component.OnEnable);
         }
 
         private void StopComponent(ScriptComponent component)
         {
             if (component.Enabled)
-                component.OnDisable();
-            component.OnDetach();
+                Try(component.OnDisable);
+            Try(component.OnDetach);
 
             component.EnabledChanged -= OnComponentEnabledChanged;
         }
@@ -81,7 +84,7 @@ namespace CrossEngine.Systems
             for (int i = 0; i < _components.Count; i++)
             {
                 var c = _components[i];
-                if (c.Enabled) c.OnUpdate();
+                if (c.Enabled) Try(c.OnUpdate);
             }
         }
 
@@ -90,7 +93,20 @@ namespace CrossEngine.Systems
             for (int i = 0; i < _components.Count; i++)
             {
                 var c = _components[i];
-                if (c.Enabled) c.OnFixedUpdate();
+                if (c.Enabled) Try(c.OnFixedUpdate);
+            }
+        }
+
+        private void Try(Action call)
+        {
+            try
+            {
+                call.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"working with script mishap: {ex}");
+                throw;
             }
         }
     }

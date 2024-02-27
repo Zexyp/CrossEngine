@@ -58,7 +58,7 @@ namespace CrossEngine.Components
                 _rotation = value;
                 _dirtyLocal = true;
 
-                _eulerAnglesCache = QuaternionExtension.ToEuler(value);
+                _eulerAnglesCache = QuaternionExtension.ToEuler(value) * MathExtension.ToDegConstF;
                 MarkForUpdate();
             }
         }
@@ -78,6 +78,7 @@ namespace CrossEngine.Components
                 MarkForUpdate();
             }
         }
+        // in degrees
         [EditorDrag]
         public Vector3 EulerRotation
         {
@@ -90,9 +91,9 @@ namespace CrossEngine.Components
                 if (_eulerAnglesCache == value) return;
 
                 _eulerAnglesCache = value;
-                _eulerAnglesCache = new Vector3(_eulerAnglesCache.X % (MathF.PI * 2), _eulerAnglesCache.Y % (MathF.PI * 2), _eulerAnglesCache.Z % (MathF.PI * 2));
+                _eulerAnglesCache = new Vector3(_eulerAnglesCache.X % 360, _eulerAnglesCache.Y % 360, _eulerAnglesCache.Z % 360);
                 
-                _rotation = QuaternionExtension.RotateXYZ(_eulerAnglesCache);
+                _rotation = QuaternionExtension.RotateXYZ(_eulerAnglesCache * MathExtension.ToRadConstF);
                 MarkForUpdate();
             }
         }

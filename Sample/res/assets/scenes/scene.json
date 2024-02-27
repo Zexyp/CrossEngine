@@ -31,19 +31,21 @@
             "X": 1,
             "Y": 1,
             "Z": 1,
-            "W": 1
+            "W": 0.1
           },
-          "Sprite": "965b0b95-d54e-4079-b423-87aa8c0e5a1c",
-          "Blend": 1
+          "Sprite": "5ac044df-9092-42d1-8393-6f3ca2e270d0",
+          "Blend": 1,
+          "DrawOffsets": {
+            "X": 0,
+            "Y": 0,
+            "Z": 1,
+            "W": 1
+          }
         },
         {
           "$type": "CrossEngine.Components.TagComponent",
           "Enabled": true,
           "Tag": "#8100FFFF"
-        },
-        {
-          "$type": "CrossEngineSandbox.HelloComponent",
-          "Enabled": true
         },
         {
           "$type": "CrossEngine.Components.OrthographicCameraComponent",
@@ -52,6 +54,181 @@
           "Far": 1,
           "Near": -1,
           "Size": 10
+        },
+        {
+          "$type": "Sample.Components.SceneSetupComponent",
+          "Enabled": true
+        },
+        {
+          "$type": "Sample.Components.PipeManagerComponent",
+          "Enabled": true,
+          "bottomTag": "pipe-bottom",
+          "topTag": "pipe-top"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": "75441834-bf87-40d2-b7c6-b095c0894039",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Enabled": true,
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.TagComponent",
+          "Enabled": true,
+          "Tag": "bird"
+        },
+        {
+          "$type": "CrossEngine.Components.SpriteRendererComponent",
+          "Enabled": true,
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1,
+            "W": 1
+          },
+          "Sprite": "97fecce4-69b3-4abf-af41-d1f098c04652",
+          "Blend": 1,
+          "DrawOffsets": {
+            "X": 0,
+            "Y": 0,
+            "Z": 1,
+            "W": 1
+          }
+        },
+        {
+          "$type": "Sample.Components.BirdComponent",
+          "Enabled": true,
+          "veloctity": 0,
+          "gravity": -1,
+          "mass": 5,
+          "spriteFalling": "b36ea3fc-d5c4-4739-b693-d1cd86a30c48",
+          "spritePush": "b6c8c502-2b19-4bd0-9425-de160fdf795c",
+          "spriteIdle": "97fecce4-69b3-4abf-af41-d1f098c04652"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": "6ae62821-359f-45b7-a5b5-b6241f378f3d",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Enabled": true,
+          "Position": {
+            "X": 10,
+            "Y": -4.5,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.TagComponent",
+          "Enabled": true,
+          "Tag": "pipe-bottom"
+        },
+        {
+          "$type": "CrossEngine.Components.SpriteRendererComponent",
+          "Enabled": true,
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1,
+            "W": 1
+          },
+          "Sprite": "b96a4f93-e223-46a2-af3a-854f2b57c7b6",
+          "Blend": 1,
+          "DrawOffsets": {
+            "X": 0,
+            "Y": 0,
+            "Z": 1,
+            "W": 6
+          }
+        },
+        {
+          "$type": "Sample.Components.PipeComponent",
+          "Enabled": false
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": "65ddef12-701a-4ff9-a44b-619f4e698333",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Enabled": true,
+          "Position": {
+            "X": 10,
+            "Y": 4.5,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 1,
+            "W": -4.371139E-08
+          },
+          "Scale": {
+            "X": -1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.TagComponent",
+          "Enabled": true,
+          "Tag": "pipe-top"
+        },
+        {
+          "$type": "CrossEngine.Components.SpriteRendererComponent",
+          "Enabled": true,
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1,
+            "W": 1
+          },
+          "Sprite": "b96a4f93-e223-46a2-af3a-854f2b57c7b6",
+          "Blend": 1,
+          "DrawOffsets": {
+            "X": 0,
+            "Y": 0,
+            "Z": 1,
+            "W": 6
+          }
+        },
+        {
+          "$type": "Sample.Components.PipeComponent",
+          "Enabled": false
         }
       ]
     }

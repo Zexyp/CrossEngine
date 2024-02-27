@@ -31,12 +31,22 @@ namespace CrossEngine.Assets
     {
         public Guid Id { get; internal set; }
         public abstract bool Loaded { get; }
+        [EditorString]
+        public string Name;
 
         public abstract Task Load(IAssetLoadContext context);
         public abstract Task Unload(IAssetLoadContext context);
 
-        public virtual void GetObjectData(SerializationInfo info) => info.AddValue(nameof(Id), Id);
-        public virtual void SetObjectData(SerializationInfo info) => Id = info.GetValue(nameof(Id), Id);
+        public virtual void GetObjectData(SerializationInfo info)
+        {
+            info.AddValue(nameof(Id), Id);
+            info.AddValue(nameof(Name), Name);
+        }
+        public virtual void SetObjectData(SerializationInfo info)
+        {
+            Id = info.GetValue(nameof(Id), Id);
+            Name = info.GetValue(nameof(Name), Name);
+        }
 
         protected void SetChildId<T>(T value, ref T asset, ref Guid guid) where T : Asset
         {
@@ -44,6 +54,8 @@ namespace CrossEngine.Assets
             if (asset != null) guid = asset.Id;
             else guid = Guid.Empty;
         }
+
+        public string GetName() => Name != null ? Name : Id.ToString();
     }
 
     public class DependantAssetAttribute : Attribute

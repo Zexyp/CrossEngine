@@ -58,6 +58,7 @@ namespace CrossEngine.Ecs
             for (int i = 0; i < _systems.Count; i++)
             {
                 _systems[i].OnStart();
+                _systems[i].Started = true;
             }
         }
 
@@ -65,6 +66,7 @@ namespace CrossEngine.Ecs
         {
             for (int i = _systems.Count - 1; i >= 0; i--)
             {
+                _systems[i].Started = false;
                 _systems[i].OnStop();
             }
         }
