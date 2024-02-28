@@ -66,6 +66,7 @@ namespace CrossEngine.Assemblies
 
             Assembly assembly = context.LoadFromStream(await PlatformHelper.FileRead(path));
             
+            // this shoudld prevent duplicit static structures
             foreach (var defaultAssembly in AssemblyLoadContext.Default.Assemblies)
             {
                 if (assembly.FullName != defaultAssembly.FullName)
