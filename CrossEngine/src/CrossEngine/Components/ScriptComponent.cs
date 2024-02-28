@@ -65,7 +65,7 @@ namespace CrossEngine.Components
             {
                 var f = fields[i];
                 if (!f.FieldType.IsPrimitive)
-                    ScriptSystem.Log.Warn("non primitive field");
+                    ScriptSystem.Log.Debug("non primitive field");
                 ScriptSystem.Log.Trace($"enumerating field '{f.Name}'");
                 callback.Invoke(f);
             }

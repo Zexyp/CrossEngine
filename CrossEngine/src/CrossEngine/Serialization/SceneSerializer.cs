@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -28,7 +29,7 @@ namespace CrossEngine.Serialization
 
     class CrossAssemblyTypeResolver : TypeResolver
     {
-        public override Type Resolve(string str) => Type.GetType(str, false) ?? AssemblyManager.GetType(str);
+        public override Type Resolve(string str) => Type.GetType(str, false) ?? Assembly.GetEntryAssembly().GetType(str, false) ?? AssemblyManager.GetType(str);
     }
 
     public static class SceneSerializer

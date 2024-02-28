@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Formats.Asn1.AsnWriter;
@@ -20,12 +22,12 @@ namespace Sample.Components
         [EditorString]
         public string bottomTag;
         [EditorDrag]
-        public float timer = 3;
+        public float timer = 2;
 
-        public const float SpawnPosition = 10;
-        public static bool stop = false;
-        public static float speed = 3;
-        internal static float distance = 0;
+        public const float SpawnPosition = 16;
+        internal static bool stop = false;
+        internal static float speed = 4;
+        internal static bool start = false;
 
         Random random = new Random();
         Entity top;
@@ -44,16 +46,21 @@ namespace Sample.Components
                         bottom = ent;
                 }
             }
+
+            timeAgregate = timer;
         }
 
         protected override void OnUpdate()
         {
-            distance += speed * Time.DeltaF;
+            if (stop || !start)
+                return;
+
+            SampleApp.Distance += speed * Time.DeltaF;
         }
 
         protected override void OnFixedUpdate()
         {
-            if (stop)
+            if (stop || !start)
                 return;
 
             timeAgregate += (float)Time.FixedUnscaledDelta;

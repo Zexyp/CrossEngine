@@ -6,11 +6,14 @@ using System.Collections.Generic;
 
 using CrossEngine.Events;
 using CrossEngine.Display;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Inputs
 {
     public static class Input
     {
+        internal static Logger Log = new Logger("inputs");
+
         // TODO: rewrite, use devices
 
         static internal Mouse mouse;
@@ -18,6 +21,7 @@ namespace CrossEngine.Inputs
 
         static public void ForceReset()
         {
+            Log.Warn("reset is not fully implemented");
             throw new NotImplementedException();
 
             //mouseDelta = Vector2.Zero;

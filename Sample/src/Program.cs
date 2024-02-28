@@ -10,6 +10,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Linq;
+using System.Runtime.Loader;
+using System.Reflection;
 
 using CrossEngine;
 using CrossEngine.Display;
@@ -33,6 +35,9 @@ using CrossEngine.Core;
 using CrossEngineRuntime;
 using CrossEngine.Assets;
 using CrossEngine.Platform;
+
+using Sample.Components;
+
 #if WASM
 using CrossEngine.Platform.Wasm;
 #endif
@@ -41,7 +46,6 @@ using CrossEngine.Platform.Wasm;
 using CrossEngine.Platform.Windows;
 using CrossEngine.Platform.OpenGL.Debugging;
 using ImGuiNET;
-using Sample.Components;
 #endif
 
 namespace Sample
@@ -58,48 +62,82 @@ namespace Sample
 #endif
             GPUGC.PrintCollected();
         }
+    }
 
-        class SampleApp : RuntimeApplication
+    class SampleApp : RuntimeApplication
+    {
+        public static float MaxDistance;
+        public static float Distance;
+
+        static SampleApp Instance;
+
+        public override void OnInit()
         {
-            static float MaxDistance;
+            base.OnInit();
 
-            public override void OnInit()
-            {
-                base.OnInit();
+            Debug.Assert(Instance == null);
+            Instance = this;
 
-                var os = Manager.GetService<OverlayService>();
-                os.AddOverlay(new HelloOverlay());
+            var os = Manager.GetService<OverlayService>();
+            os.AddOverlay(new HelloOverlay());
 #if DEBUG
-                os.AddOverlay(new DebugOverlay());
+            os.AddOverlay(new DebugOverlay());
 #endif
-            }
+        }
 
-            class HelloOverlay : Overlay
+        class HelloOverlay : Overlay
+        {
+            protected override void Content()
             {
-                protected override void Content()
+                MaxDistance = Math.Max(Distance, MaxDistance);
+                var cornerMat = Matrix4x4.CreateTranslation(new(-Size.X / 2, Size.Y / 2, 0));
+                var mat = Matrix4x4.CreateScale(2) * cornerMat;
+                TextRendererUtil.DrawText(mat, $"Distance: {Distance / 6:0.00} m", Vector4.One);
+                mat = Matrix4x4.CreateScale(1.5f) * Matrix4x4.CreateTranslation(new(0, -TextRendererUtil.SymbolHeight * 2, 0)) * cornerMat;
+                TextRendererUtil.DrawText(mat, $"Best: {MaxDistance / 6:0.00} m", Vector4.One);
+
+                if (PipeManagerComponent.stop)
                 {
-                    MaxDistance = Math.Max(PipeManagerComponent.distance, MaxDistance);
-                    var cornerMat = Matrix4x4.CreateTranslation(new (-Size.X / 2, Size.Y / 2, 0));
-                    var mat = Matrix4x4.CreateScale(2) * cornerMat;
-                    TextRendererUtil.DrawText(mat, $"Distance: {PipeManagerComponent.distance:0.00} m", new Vector4(1, 0, 0, 1));
-                    mat = Matrix4x4.CreateScale(1.5f) * Matrix4x4.CreateTranslation(new (0, -TextRendererUtil.SymbolHeight * 2, 0)) * cornerMat;
-                    TextRendererUtil.DrawText(mat, $"Best: {MaxDistance}", new Vector4(1, 0, 0, 1));
+                    TextRendererUtil.DrawText(Matrix4x4.CreateScale(2), "Press 'Space' to retry", Vector4.One);
+                    if (Input.GetKeyDown(Key.Space) || Input.GetMouseDown(Button.Left))
+                    {
+                        Distance = 0;
+
+                        PipeManagerComponent.stop = false;
+                        PipeManagerComponent.start = false;
+                        
+                        SceneManager.Stop(Instance.scene);
+                        SceneManager.Unload(Instance.scene);
+                        AssetManager.UnloadAsync().ContinueWith(t =>
+                        {
+                        Instance.scene = null;
+                        AssetManager.LoadAsync().ContinueWith(t =>
+                        {
+                        SceneManager.Load(Instance.scene = AssetManager.GetNamed<SceneAsset>("sc-main").Scene);
+                        SceneManager.Start(Instance.scene);
+                        });
+                        });
+                    }
                 }
             }
+        }
 
-            class DebugOverlay : Overlay
+        class DebugOverlay : Overlay
+        {
+            float scale = .75f;
+            protected override void Content()
             {
-                protected override void Content()
-                {
-                    var t = 
+                var t =
 $@"{1d / Time.UnscaledDelta:000.00} fps
 {Time.UnscaledDelta * 1000:00.000} ms
-distance: {PipeManagerComponent.distance}
-stop: {PipeManagerComponent.stop}";
-                    var height = t.Count(ch => ch == '\n') + 1;
-                    var mat = Matrix4x4.CreateTranslation(new Vector3(-Size.X / 2, -Size.Y / 2 + height * TextRendererUtil.SymbolHeight, 0));
-                    TextRendererUtil.DrawText(mat, t, new Vector4(1, 0, 0, 1));
-                }
+quad stat: {Renderer2D.data.quads.Stats.ItemCount} => {Renderer2D.data.quads.Stats.DrawCalls}
+stop: {PipeManagerComponent.stop}
+start: {PipeManagerComponent.start}";
+                Renderer2D.ResetStats();
+                var height = t.Count(ch => ch == '\n') + 1;
+                var cornerMat = Matrix4x4.CreateTranslation(new(-Size.X / 2, -Size.Y / 2, 0));
+                var mat = Matrix4x4.CreateScale(scale) * Matrix4x4.CreateTranslation(new Vector3(0, height * TextRendererUtil.SymbolHeight * scale, 0)) * cornerMat;
+                TextRendererUtil.DrawText(mat, t, new Vector4(1, 0, 0, 1));
             }
         }
     }
