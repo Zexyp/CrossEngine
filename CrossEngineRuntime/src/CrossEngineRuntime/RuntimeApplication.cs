@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Linq;
-
+using CrossEngine.Assemblies;
 using CrossEngine.Assets;
 using CrossEngine.Core;
 using CrossEngine.Debugging;
 using CrossEngine.Ecs;
 using CrossEngine.Events;
+using CrossEngine.Logging;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
 using static System.Formats.Asn1.AsnWriter;
@@ -52,7 +53,7 @@ namespace CrossEngineRuntime
 #endif
         }
 
-        Scene scene;
+        protected Scene scene;
 
         public override async void OnInit()
         {
@@ -72,16 +73,16 @@ namespace CrossEngineRuntime
 
                 scene = sceneAsset.Scene;
 
-                var msg = "scene\n";
-                foreach (var entity in scene.Entities)
-                {
-                    msg += $"    entity '{entity.Id}'\n";
-                    foreach (var component in entity.Components)
-                    {
-                        msg += $"        component '{component.GetType().FullName}'\n";
-                    }
-                }
-                Console.WriteLine(msg);
+                //var msg = "scene\n";
+                //foreach (var entity in scene.Entities)
+                //{
+                //    msg += $"    entity '{entity.Id}'\n";
+                //    foreach (var component in entity.Components)
+                //    {
+                //        msg += $"        component '{component.GetType().FullName}'\n";
+                //    }
+                //}
+                //Log.Default.Debug(msg);
 
                 SceneManager.Load(scene);
                 SceneManager.Start(scene);

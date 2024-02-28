@@ -36,26 +36,49 @@ namespace Sample.Components
         {
             veloctity += gravity * Time.DeltaF;
 
-            if (Input.GetKeyDown(Key.Space) && !PipeManagerComponent.stop)
+            if ((Input.GetKeyDown(Key.Space) || Input.GetMouseDown(Button.Left)) && !PipeManagerComponent.stop)
                 veloctity = .5f;
 
-            Entity.Transform.Position += new Vector3(0, veloctity, 0) / mass;
-            Entity.Transform.Position = Vector3.Clamp(Entity.Transform.Position, new Vector3(0, -5, 0), new Vector3(0, 5, 0));
+            if (PipeManagerComponent.start)
+            {
+                Entity.Transform.Position += new Vector3(0, veloctity, 0) / mass;
+
+                if (!PipeManagerComponent.stop && (Entity.Transform.Position.Y > 5 || Entity.Transform.Position.Y < -5))
+                    Die();
+
+                Entity.Transform.Position = Vector3.Clamp(Entity.Transform.Position, new Vector3(0, -5, 0), new Vector3(0, 5, 0));
+            }
 
             if (PipeManagerComponent.stop)
                 return;
 
-            Entity.Transform.EulerRotation = new Vector3(0, 0, veloctity) * MathExtension.ToDegConstF;
+            if (PipeManagerComponent.start)
+                Entity.Transform.EulerRotation = new Vector3(0, 0, veloctity) * MathExtension.ToDegConstF;
 
             if (!Entity.TryGetComponent<SpriteRendererComponent>(out var spriteRender))
                 return;
 
             if (veloctity < 0)
                 spriteRender.Sprite = spriteFalling;
-            else if (Input.GetKey(Key.Space))
+            else if (Input.GetKey(Key.Space) || Input.GetMouse(Button.Left))
                 spriteRender.Sprite = spritePush;
             else
                 spriteRender.Sprite = spriteIdle;
+
+            if (!PipeManagerComponent.start)
+            {
+                var v = MathF.Sin(Time.ElapsedF * 3);
+
+                if (v < -.5f)
+                    spriteRender.Sprite = spriteFalling;
+                else if (v > .5f)
+                    spriteRender.Sprite = spritePush;
+                else
+                    spriteRender.Sprite = spriteIdle;
+
+                Entity.Transform.Position = new Vector3(0, MathF.Sin(Time.ElapsedF * 3 - MathF.PI / 2) * .25f, 0);
+                Entity.Transform.EulerRotation = new Vector3(0, 0, v * .25f) * MathExtension.ToDegConstF;
+            }
 
             var pos = Entity.Transform.Position;
             foreach (var ent in SceneManager.Current.Entities.Where(e => e.HasComponent<PipeComponent>()))
@@ -68,11 +91,16 @@ namespace Sample.Components
                         pos.Y + hitboxSize / 2 > compare.Y - sprite.DrawOffsets.W / 2 &&
                         pos.Y - hitboxSize / 2 < compare.Y + sprite.DrawOffsets.W / 2)
                     {
-                        veloctity = .5f;
-                        PipeManagerComponent.stop = true;
+                        Die();
                     }
                 }
             }
+        }
+
+        private void Die()
+        {
+            veloctity = .5f;
+            PipeManagerComponent.stop = true;
         }
     }
 }

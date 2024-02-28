@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define AVOID_SPACE
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,9 +9,7 @@ using System.Numerics;
 
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
-using System.Security.Cryptography;
 using CrossEngine.Debugging;
-using CrossEngine.Assets;
 using CrossEngine.Assets.Loaders;
 
 namespace CrossEngine.Utils
@@ -50,11 +50,13 @@ namespace CrossEngine.Utils
             {
                 // what was i drinking while writing this code is uncertain
                 // special characters
+#if AVOID_SPACE
                 if (text[i] == ' ')
                 {
                     column++;
                     continue;
                 }
+#endif
                 if (text[i] == '\n')
                 {
                     line++;

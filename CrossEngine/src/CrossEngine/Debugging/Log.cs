@@ -97,14 +97,14 @@ namespace CrossEngine.Logging
                     case LogLevel.Debug:
                     case LogLevel.Info:
                     case LogLevel.Warn:
-                        Console.Out.WriteLine(message);
+                        Console.Out.WriteLineAsync(message);
                         break;
                     case LogLevel.Error:
                     case LogLevel.Fatal:
-                        Console.Error.WriteLine(message);
+                        Console.Error.WriteLineAsync(message);
                         break;
                     default:
-                        Console.WriteLine(message);
+                        Console.Out.WriteLineAsync(message);
                         break;
                 }
 

@@ -26,7 +26,8 @@ namespace CrossEngine.Assemblies
         {
             Loaded = _loaded.AsReadOnly();
 
-            Log.Trace("initial assemblies:\n    " + string.Join("\n    ", _loaded.Select(a => GetPrintName(a))));
+            Log.Trace("default load context:\n" + string.Join("\n", AssemblyLoadContext.Default.Assemblies.Select(a => GetPrintName(a))));
+            Log.Debug("initial assemblies:\n" + string.Join("\n", _loaded.Select(a => GetPrintName(a))));
         }
 
         public static IEnumerable<Type> GetSubclasses(Type type)
@@ -59,24 +60,40 @@ namespace CrossEngine.Assemblies
 
         public static async Task<(AssemblyLoadContext Context, Assembly Assembly)> Load(string path)
         {
+            Debug.Assert(path != null);
+
             var context = new AssemblyLoadContext(null, true);
 
             Assembly assembly = context.LoadFromStream(await PlatformHelper.FileRead(path));
+            
+            foreach (var defaultAssembly in AssemblyLoadContext.Default.Assemblies)
+            {
+                if (assembly.FullName != defaultAssembly.FullName)
+                    continue;
+
+                context.Unload();
+
+                return (AssemblyLoadContext.Default, defaultAssembly);
+            }
+            
             _contexts.Add(context, assembly);
             _loaded.Add(assembly);
+
+            var tmpa = assembly;
+            context.Unloading += c => Log.Info($"assembly unloading '{GetPrintName(tmpa)}'");
 
             await LoadDependencies(path, assembly, context);
 
             Log.Info($"assembly loaded '{GetPrintName(assembly)}'");
-
-            var tmpa = assembly;
-            context.Unloading += c => Log.Info($"assembly unloading '{GetPrintName(tmpa)}'");
              
             return (context, assembly);
         }
 
         public static void Unload(AssemblyLoadContext context)
         {
+            if (context == AssemblyLoadContext.Default)
+                return;
+
             Debug.Assert(context != null);
 
             _loaded.Remove(_contexts[context]);
