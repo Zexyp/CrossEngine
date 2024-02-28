@@ -90,15 +90,22 @@ namespace Sample
             protected override void Content()
             {
                 MaxDistance = Math.Max(Distance, MaxDistance);
-                var cornerMat = Matrix4x4.CreateTranslation(new(-Size.X / 2, Size.Y / 2, 0));
-                var mat = Matrix4x4.CreateScale(2) * cornerMat;
-                TextRendererUtil.DrawText(mat, $"Distance: {Distance / 6:0.00} m", Vector4.One);
-                mat = Matrix4x4.CreateScale(1.5f) * Matrix4x4.CreateTranslation(new(0, -TextRendererUtil.SymbolHeight * 2, 0)) * cornerMat;
-                TextRendererUtil.DrawText(mat, $"Best: {MaxDistance / 6:0.00} m", Vector4.One);
+                var cornerMat = Matrix4x4.CreateTranslation(new(-Size.X / 2 + 24, Size.Y / 2 - 24, 0));
+                var distanceTextSize = 3;
+                var mat = Matrix4x4.CreateScale(distanceTextSize) * cornerMat;
+                TextRendererUtil.DrawText(mat, $"Distance: {Distance / 6:0.00} m", ColorHelper.U32ToVec4(0xffffdb46));
+                var bestTextSize = 2;
+                mat = Matrix4x4.CreateScale(bestTextSize) * Matrix4x4.CreateTranslation(new(0, -TextRendererUtil.SymbolHeight * distanceTextSize, 0)) * cornerMat;
+                TextRendererUtil.DrawText(mat, $"Best: {MaxDistance / 6:0.00} m", ColorHelper.U32ToVec4(0xffffdb46));
 
+                var centerishMat = Matrix4x4.CreateTranslation(new(-TextRendererUtil.SymbolHeight * 6, -Size.Y / 4, 0));
+                if (!PipeManagerComponent.start)
+                {
+                    TextRendererUtil.DrawText(Matrix4x4.CreateScale(2) * centerishMat, "Press to start", Vector4.One);
+                }
                 if (PipeManagerComponent.stop)
                 {
-                    TextRendererUtil.DrawText(Matrix4x4.CreateScale(2), "Press 'Space' to retry", Vector4.One);
+                    TextRendererUtil.DrawText(Matrix4x4.CreateScale(2) * centerishMat, "Press to retry", Vector4.One);
                     if (Input.GetKeyDown(Key.Space) || Input.GetMouseDown(Button.Left))
                     {
                         Distance = 0;
