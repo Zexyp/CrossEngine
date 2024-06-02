@@ -5,10 +5,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CrossEngineEditor.Popups
+namespace CrossEngineEditor.Utils.UI
 {
-    internal abstract class EditorPopup
+    internal abstract class Popup
     {
+        public void Open()
+        {
+            ImGui.OpenPopup(this.GetHashCode().ToString());
+        }
+
         public void Draw()
         {
             if (ImGui.BeginPopup(this.GetHashCode().ToString()))
@@ -18,6 +23,7 @@ namespace CrossEngineEditor.Popups
                 ImGui.EndPopup();
             }
         }
+        
         abstract protected void DrawPopupContent();
     }
 }

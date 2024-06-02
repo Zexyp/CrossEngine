@@ -20,10 +20,12 @@ namespace CrossEngineEditor.Panels
     {
         public InspectorPanel() : base("Inspector")
         {
-            
+            typeSelect = new TypeSelectPopup(typeof(Component)) { Callback = (sender, type) => { Context.ActiveEntity.AddComponent((Component)Activator.CreateInstance(type)); } };
         }
 
         static DragDropContext<Component> ddComponentContext = new DragDropContext<Component>();
+
+        TypeSelectPopup typeSelect;
 
         protected override void DrawWindowContent()
         {
@@ -89,42 +91,12 @@ namespace CrossEngineEditor.Panels
 
             if (ImGui.Button("Add Component"))
             {
-                ImGui.OpenPopup(componentPopup);
+                typeSelect.Open();
             }
 
-            if (ImGui.BeginPopup(componentPopup))
-            {
-                AddComponentPopup();
-
-                ImGui.EndPopup();
-            }
+            typeSelect.Draw();
 
             ddComponentContext.Update();
-        }
-
-        private void AddComponentPopup()
-        {
-            // TODO: consider cashing this
-
-            var typeOfComponent = typeof(Component);
-            foreach (var assembly in AssemblyManager.Loaded)
-            {
-                ImGui.SeparatorText(assembly.GetName().Name);
-
-                var types = assembly.GetTypes();
-                for (int i = 0; i < types.Length; i++)
-                {
-                    var t = types[i];
-
-                    if (t.IsPublic && !t.IsAbstract && t.IsSubclassOf(typeOfComponent))
-                    {
-                        if (ImGui.Selectable(t.FullName))
-                        {
-                            Context.ActiveEntity.AddComponent((Component)Activator.CreateInstance(t));
-                        }
-                    }
-                }
-            }
         }
     }
 }

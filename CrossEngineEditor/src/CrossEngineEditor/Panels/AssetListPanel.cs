@@ -4,6 +4,7 @@ using CrossEngine.Logging;
 using CrossEngine.Services;
 using CrossEngine.Utils.Editor;
 using CrossEngineEditor.Utils;
+using CrossEngineEditor.Utils.UI;
 using ImGuiNET;
 using System;
 using System.Collections;
@@ -21,11 +22,14 @@ namespace CrossEngineEditor.Panels
         public AssetListPanel() : base("Asset List")
         {
             WindowFlags |= ImGuiWindowFlags.MenuBar;
+
+            typeSelect = new TypeSelectPopup(typeof(Asset)) { Callback = (sender, type) => { Context.Assets.Add((Asset)Activator.CreateInstance(type)); } };
         }
+
+        TypeSelectPopup typeSelect;
 
         protected override void DrawWindowContent()
         {
-            const string createPopup = "Create Asset";
             var openCreatePopup = false;
 
             if (ImGui.BeginMenuBar())
@@ -74,14 +78,9 @@ namespace CrossEngineEditor.Panels
             }
 
             if (openCreatePopup)
-                ImGui.OpenPopup(createPopup);
+                typeSelect.Open();
 
-            if (ImGui.BeginPopup(createPopup))
-            {
-                CreateAssetPopup();
-
-                ImGui.EndPopup();
-            }
+            typeSelect.Draw();
 
             if (Context.Assets == null)
                 return;
@@ -145,31 +144,6 @@ namespace CrossEngineEditor.Panels
                 }
 
                 ImGui.EndTable();
-            }
-        }
-
-        private void CreateAssetPopup()
-        {
-            // TODO: consider cashing this
-
-            var type = typeof(Asset);
-            foreach (var assembly in AssemblyManager.Loaded)
-            {
-                ImGui.SeparatorText(assembly.GetName().Name);
-
-                var types = assembly.GetTypes();
-                for (int i = 0; i < types.Length; i++)
-                {
-                    var t = types[i];
-
-                    if (t.IsPublic && !t.IsAbstract && t.IsSubclassOf(type))
-                    {
-                        if (ImGui.Selectable(t.FullName))
-                        {
-                            Context.Assets.Add((Asset)Activator.CreateInstance(t));
-                        }
-                    }
-                }
             }
         }
     }

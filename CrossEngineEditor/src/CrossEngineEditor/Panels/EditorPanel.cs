@@ -44,7 +44,7 @@ namespace CrossEngineEditor.Panels
 
         public EditorPanel()
         {
-            this.WindowName = $"Unnamed Panel ({this.GetType().FullName})";
+            this.WindowName = $"Unnamed Panel '{this.GetType().FullName}'";
         }
 
         public void Draw()

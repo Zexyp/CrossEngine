@@ -348,6 +348,7 @@ namespace CrossEngineEditor
             {
                 var p = _panels[i];
 
+                ImGui.PushID(p.GetHashCode());
                 try
                 {
                     p.Draw();
@@ -356,6 +357,7 @@ namespace CrossEngineEditor
                 {
                     Log.Error($"incident while drawing a panel '{p.WindowName}' ({p.GetType().FullName}): {e}");
                 }
+                ImGui.PopID();
             }
         }
         #endregion
