@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using CrossEngine.Events;
 using CrossEngine.Logging;
+using CrossEngine.Profiling;
 
 namespace CrossEngine.Ecs
 {
@@ -89,6 +90,8 @@ namespace CrossEngine.Ecs
 
         public void AddEntity(Entity entity)
         {
+            Profiler.BeginScope();
+
             entity.ComponentAdded += OnEntityComponentAdded;
             entity.ComponentRemoved += OnEntityComponentRemoved;
             entity.ChildAdded += OnEntityChildAdded;
@@ -97,10 +100,14 @@ namespace CrossEngine.Ecs
             AttachEntity(entity);
 
             Log.Trace($"entity added '{entity.Id}'");
+            
+            Profiler.EndScope();
         }
 
         public void RemoveEntity(Entity entity)
         {
+            Profiler.BeginScope();
+
             DetachEntity(entity);
 
             entity.ChildAdded -= OnEntityChildAdded;
@@ -109,6 +116,8 @@ namespace CrossEngine.Ecs
             entity.ComponentRemoved -= OnEntityComponentRemoved;
             
             Log.Trace($"entity removed '{entity.Id}'");
+
+            Profiler.EndScope();
         }
 
         public void Update()
@@ -169,6 +178,8 @@ namespace CrossEngine.Ecs
 
         private void OnEntityComponentAdded(Entity sender, Component component)
         {
+            Profiler.Function();
+
             Log.Trace($"adding component '{component.GetType().FullName}'");
             component.Entity = sender;
             ComponentRegister?.Invoke(component);
@@ -176,6 +187,8 @@ namespace CrossEngine.Ecs
 
         private void OnEntityComponentRemoved(Entity sender, Component component)
         {
+            Profiler.Function();
+
             Log.Trace($"removing component '{component.GetType().FullName}'");
             ComponentUnregister?.Invoke(component);
             component.Entity = null;
@@ -183,32 +196,44 @@ namespace CrossEngine.Ecs
 
         private void OnEntityChildAdded(Entity sender, Entity child)
         {
+            Profiler.Function();
+
             Log.Trace("child add");
             AddEntity(child);
         }
 
         private void OnEntityChildRemoved(Entity sender, Entity child)
         {
+            Profiler.Function();
+
             Log.Trace("child remove");
             RemoveEntity(child);
         }
 
         private void AttachEntity(Entity entity)
         {
+            Profiler.BeginScope();
+
             for (int i = 0; i < entity.Components.Count; i++)
             {
                 var component = entity.Components[i];
                 OnEntityComponentAdded(entity, component);
             }
+
+            Profiler.EndScope();
         }
 
         private void DetachEntity(Entity entity)
         {
+            Profiler.BeginScope();
+
             for (int i = 0; i < entity.Components.Count; i++)
             {
                 var component = entity.Components[i];
                 OnEntityComponentRemoved(entity, component);
             }
+
+            Profiler.EndScope();
         }
     }
 }

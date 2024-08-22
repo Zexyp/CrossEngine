@@ -34,7 +34,7 @@ namespace Sample.Components
         Entity bottom;
         float timeAgregate;
 
-        protected override void OnAttach()
+        void OnAttach()
         {
             foreach (var ent in SceneManager.Current.Entities)
             {
@@ -50,7 +50,7 @@ namespace Sample.Components
             timeAgregate = timer;
         }
 
-        protected override void OnUpdate()
+        void OnUpdate()
         {
             if (stop || !start)
                 return;
@@ -58,7 +58,7 @@ namespace Sample.Components
             SampleApp.Distance += speed * Time.DeltaF;
         }
 
-        protected override void OnFixedUpdate()
+        void OnFixedUpdate()
         {
             if (stop || !start)
                 return;

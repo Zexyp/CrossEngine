@@ -13,14 +13,12 @@ namespace CrossEngine.Components
 {
     public class ScriptComponent : Component
     {
-        protected internal virtual void OnEnable() { }
-        protected internal virtual void OnDisable() { }
-        
-        protected internal virtual void OnAttach() { }
-        protected internal virtual void OnDetach() { }
-
-        protected internal virtual void OnUpdate() { }
-        protected internal virtual void OnFixedUpdate() { }
+        internal const string FuncNameOnEnable = "OnEnable";
+        internal const string FuncNameOnDisable = "OnDisable";
+        internal const string FuncNameOnAttach = "OnAttach";
+        internal const string FuncNameOnDetach = "OnDetach";
+        internal const string FuncNameOnUpdate = "OnUpdate";
+        internal const string FuncNameOnFixedUpdate = "OnFixedUpdate";
 
         public override object Clone()
         {

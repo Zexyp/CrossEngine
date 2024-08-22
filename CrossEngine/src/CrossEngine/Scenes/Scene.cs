@@ -16,6 +16,7 @@ using CrossEngine.Assets;
 using System.Drawing;
 using CrossEngine.Services;
 using System.Diagnostics;
+using CrossEngine.Profiling;
 
 namespace CrossEngine.Scenes
 {
@@ -63,6 +64,8 @@ namespace CrossEngine.Scenes
 
         public void AddEntity(Entity entity)
         {
+            Profiler.BeginScope();
+
             Debug.Assert(entity.Parent == null);
 
             if (entity.Id == Guid.Empty)
@@ -83,6 +86,8 @@ namespace CrossEngine.Scenes
             entity.ParentChanged += OnEntityParentChanged;
 
             SceneService.Log.Trace($"added entity '{entity.Id}'");
+
+            Profiler.EndScope();
         }
 
         private void OnEntityParentChanged(Entity obj)
@@ -93,6 +98,8 @@ namespace CrossEngine.Scenes
 
         public void RemoveEntity(Entity entity)
         {
+            Profiler.BeginScope();
+
             entity.ParentChanged -= OnEntityParentChanged;
 
             // collapse gap
@@ -112,6 +119,8 @@ namespace CrossEngine.Scenes
             _roots.Remove(entity);
 
             SceneService.Log.Trace($"removed entity '{entity.Id}'");
+
+            Profiler.EndScope();
         }
 
         public void ShifEntity(Entity entity, int destinationIndex)
