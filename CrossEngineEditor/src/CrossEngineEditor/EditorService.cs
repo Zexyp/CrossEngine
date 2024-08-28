@@ -4,23 +4,27 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
-using CrossEngineEditor.Panels;
 using CrossEngine.Utils;
+using CrossEngine.Logging;
+using CrossEngine.Serialization;
+using CrossEngine.Utils.ImGui;
+using CrossEngine.Assets;
+
+using CrossEngineEditor.Utils;
+using CrossEngineEditor.Panels;
+using CrossEngineEditor.Popups;
+
 using ImGuiNET;
+using StbImageSharp;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using CrossEngine.Logging;
 using System.Diagnostics;
-using CrossEngineEditor.Utils;
-using StbImageSharp;
-using CrossEngine.Assets;
 using System.Text.Json;
-using CrossEngine.Serialization;
-using CrossEngine.Utils.ImGui;
 using System.Threading.Channels;
 
 namespace CrossEngineEditor
@@ -29,7 +33,9 @@ namespace CrossEngineEditor
     {
         readonly EditorContext Context = new EditorContext();
         readonly List<EditorPanel> _panels = new List<EditorPanel>();
+        readonly List<EditorPopup> _popups = new List<EditorPopup>();
         readonly List<EditorPanel> _registeredPanels = new List<EditorPanel>();
+        public EditorPreferences Preferences = new EditorPreferences();
         //readonly List<EditorModal> _modals = new List<EditorModal>();
         private Window window = null;
         internal static Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
@@ -37,6 +43,12 @@ namespace CrossEngineEditor
         public override void OnStart()
         {
             Log.Info("editor started");
+
+            string preferencesPath = "preferences.json";
+            if (File.Exists(preferencesPath))
+            {
+                Preferences = EditorPreferences.Read(preferencesPath);
+            }
         }
 
         public override void OnDestroy()
@@ -126,7 +138,7 @@ namespace CrossEngineEditor
             scene.CreateEntity();
             scene.CreateEntity();
             scene.Entities[1].Parent = scene.Entities[0];
-            scene.Entities[0].AddComponent<CrossEngine.Components.OrthographicCameraComponent>();
+            scene.Entities[0].AddComponent(new CrossEngine.Components.OrthographicCameraComponent() { Primary = true, Size = 5 });
             scene.Entities[0].AddComponent<CrossEngine.Components.PerspectiveCameraComponent>();
             scene.Entities[0].AddComponent<CrossEngine.Components.SpriteRendererComponent>();
             scene.Entities[0].AddComponent<CrossEngine.Components.TagComponent>();
@@ -204,6 +216,14 @@ namespace CrossEngineEditor
                     ImGui.EndMenu();
                 }
 
+                if (ImGui.BeginMenu("Edit"))
+                {
+                    if (ImGui.MenuItem("Preferences"))
+                        PushPanel(new PreferencesPanel());
+
+                    ImGui.EndMenu();
+                }
+
                 if (ImGui.BeginMenu("Scene"))
                 {
                     if (ImGui.MenuItem("New"))
@@ -247,8 +267,8 @@ namespace CrossEngineEditor
                         for (int i = 0; i < _registeredPanels.Count; i++)
                         {
                             var p = _registeredPanels[i];
-                            if (ImGui.MenuItem(p.WindowName, null, p.Open ?? false))
-                                p.Open = !p.Open;
+                            if (ImGui.MenuItem(p.WindowName, null, p.Open ?? true))
+                                p.Open = (p.Open ?? true) ? false : null;
                         }
 
                         ImGui.EndMenu();
@@ -286,6 +306,8 @@ namespace CrossEngineEditor
         private void RegisterPanel(EditorPanel panel)
         {
             if (_registeredPanels.Contains(panel)) throw new InvalidOperationException();
+
+            panel.Open = (panel.Open ?? true) ? null : false;
 
             _registeredPanels.Add(panel);
 

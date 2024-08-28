@@ -9,6 +9,7 @@ using CrossEngine.Rendering.Cameras;
 using CrossEngine.Utils;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
+using CrossEngine.Systems;
 
 namespace CrossEngineEditor.Panels
 {
@@ -58,7 +59,19 @@ namespace CrossEngineEditor.Panels
             }
 
             if (Scene == null)
+            {
+                ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
+                ImGui.Text("Nothing to render");
+                ImGui.PopStyleColor();
                 return;
+            }
+            if (Scene.World.GetSystem<RenderSystem>().PrimaryCamera == null && DrawCamera == null)
+            {
+                ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
+                ImGui.Text("No camera");
+                ImGui.PopStyleColor();
+                return;
+            }
 
             // needs to be set back so SceneManager can render only from given scene data
             // as of latest rewrite this is not valid

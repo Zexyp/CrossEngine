@@ -22,7 +22,7 @@ namespace CrossEngineEditor
 {
     internal class EditorApplication : Application
     {
-        public static EditorApplication Instance;
+        public static EditorApplication Instance; // 🖕
 
         public EditorApplication()
         {
@@ -33,6 +33,7 @@ namespace CrossEngineEditor
             //AppDomain.CurrentDomain.ProcessExit <- this is nice but works like ass
             Console.CancelKeyPress += (object? sender, ConsoleCancelEventArgs e) =>
             {
+                Console.WriteLine("Interrupted");
                 CloseWait();
                 Environment.Exit(25);
             };

@@ -43,9 +43,9 @@ namespace CrossEngineEditor.Panels
                     if (ImGui.BeginMenu("Viewport"))
                     {
                         if (ImGui.MenuItem("Top", null, false) &&
-                            (_viewDirty = true)) ;
+                            (_viewDirty = true)) throw new NotImplementedException();
                         if (ImGui.MenuItem("Bottom", null, false) &&
-                            (_viewDirty = true)) ;
+                            (_viewDirty = true)) throw new NotImplementedException();
                         ImGui.Separator();
                         if (ImGui.MenuItem("Front", null, _cameraRotation == Quaternion.Identity) &&
                             (_viewDirty = true))
@@ -55,9 +55,9 @@ namespace CrossEngineEditor.Panels
                             _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI);
                         ImGui.Separator();
                         if (ImGui.MenuItem("Right", null, false) &&
-                            (_viewDirty = true)) ;
+                            (_viewDirty = true)) throw new NotImplementedException();
                         if (ImGui.MenuItem("Left", null, false) &&
-                            (_viewDirty = true)) ;
+                            (_viewDirty = true)) throw new NotImplementedException();
 
                         ImGui.EndMenu();
                     }
@@ -81,7 +81,49 @@ namespace CrossEngineEditor.Panels
                 Context.ActiveEntity = Context.Scene.GetEntity(result);
             }
 
-            else if (ImGui.IsItemHovered() && Focused)
+
+            if (!false) // mouse
+                MouseControl();
+            else
+                TouchpadControl();
+
+            if (_projectionDirty)
+                OnCameraResize();
+
+            if (_viewDirty)
+                UpdateView();
+        }
+
+        private void MouseControl()
+        {
+            var io = ImGui.GetIO();
+
+            if (ImGui.IsItemHovered() && Focused)
+            {
+                // zoom
+                if (io.MouseWheel != 0)
+                {
+                    _zoom -= io.MouseWheel * .5f / (1f / _zoom * 4f);
+                    _zoom = Math.Max(_zoom, 0.1f);
+
+                    _projectionDirty = true;
+                }
+            }
+
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle) && Focused)
+            {
+                // pan
+                _cameraPosition += Vector3.Transform(new Vector3(-io.MouseDelta.X / ViewportSize.Y * _zoom, io.MouseDelta.Y / ViewportSize.Y * _zoom, 0), _cameraRotation);
+
+                _viewDirty = true;
+            }
+        }
+
+        private void TouchpadControl()
+        {
+            var io = ImGui.GetIO();
+
+            if (ImGui.IsItemHovered() && Focused)
             {
                 // zoom
                 if (io.KeyCtrl && io.MouseWheel != 0)
@@ -103,12 +145,6 @@ namespace CrossEngineEditor.Panels
                     _viewDirty = true;
                 }
             }
-
-            if (_projectionDirty)
-                OnCameraResize();
-
-            if (_viewDirty)
-                UpdateView();
         }
 
         private void UpdateView()
