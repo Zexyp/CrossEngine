@@ -8,12 +8,12 @@ namespace Sample.Components
 {
     public class SceneSetupComponent : ScriptComponent
     {
-        protected override void OnAttach()
+        void OnAttach()
         {
             SceneManager.Current.RenderData.ClearColor = ColorHelper.U32ToVec4(0xffb1d1ff);
         }
 
-        protected override void OnUpdate()
+        void OnUpdate()
         {
             if (Input.GetKeyDown(Key.Space) || Input.GetMouseDown(Button.Left))
             {

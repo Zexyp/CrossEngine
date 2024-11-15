@@ -2,6 +2,7 @@
 using CrossEngine.Components;
 using CrossEngine.Core;
 using CrossEngine.Ecs;
+using CrossEngine.Profiling;
 using CrossEngine.Scenes;
 using CrossEngine.Utils.Editor;
 using System;
@@ -17,7 +18,7 @@ namespace Sample.Components
     {
         static Random random = new Random();
 
-        protected override void OnAttach()
+        void OnAttach()
         {
             SpriteAsset[] sprites = new SpriteAsset[]
             {
@@ -29,7 +30,7 @@ namespace Sample.Components
             Entity.GetComponent<SpriteRendererComponent>().Sprite = sprites[random.Next(sprites.Length)];
         }
 
-        protected override void OnUpdate()
+        void OnUpdate()
         {
             if (PipeManagerComponent.stop)
                 return;
@@ -37,7 +38,9 @@ namespace Sample.Components
             Entity.Transform.WorldPosition += new Vector3(-PipeManagerComponent.speed, 0, 0) * Time.DeltaF;
             if (Entity.Transform.WorldPosition.X < -PipeManagerComponent.SpawnPosition)
             {
+                Profiler.BeginScope("spawn remove");
                 SceneManager.Current.RemoveEntity(Entity);
+                Profiler.EndScope();
             }
         }
     }

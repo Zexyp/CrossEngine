@@ -32,7 +32,7 @@ namespace Sample.Components
         [EditorAsset]
         public float hitboxSize = .5f;
 
-        protected override void OnUpdate()
+        void OnUpdate()
         {
             veloctity += gravity * Time.DeltaF;
 
