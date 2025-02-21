@@ -27,7 +27,7 @@ namespace CrossEngine.Platform.Windows
         public override IntPtr Handle => _nativeHandle;
         public WindowHandle NativeHandle => _nativeHandle;
 
-        public override event OnEventFunction Event;
+        public override event Action<Display.Window, Event> Event;
 
         private WindowHandle _nativeHandle = WindowHandle.None;
         private static Logger Log = new Logger("GLFW");
@@ -136,27 +136,27 @@ namespace CrossEngine.Platform.Windows
                 Data.Width = (uint)width;
                 Data.Height = (uint)height;
 
-                Event?.Invoke(new WindowResizeEvent((uint)width, (uint)height));
+                Event?.Invoke(this, new WindowResizeEvent((uint)width, (uint)height));
             });
 
             Glfw.SetWindowPositionCallback(_nativeHandle, _positionCallbackHolder = (IntPtr window, double x, double y) =>
             {
-                Event?.Invoke(new WindowMovedEvent((float)x, (float)y));
+                Event?.Invoke(this, new WindowMovedEvent((float)x, (float)y));
             });
 
             Glfw.SetWindowRefreshCallback(_nativeHandle, _refreshCallbackHolder = (IntPtr window) =>
             {
-                Event?.Invoke(new WindowRefreshEvent());
+                Event?.Invoke(this, new WindowRefreshEvent());
             });
 
             Glfw.SetCloseCallback(_nativeHandle, _closeCallbackHolder = (IntPtr window) =>
             {
-                Event?.Invoke(new WindowCloseEvent());
+                Event?.Invoke(this, new WindowCloseEvent());
             });
 
             Glfw.SetWindowFocusCallback(_nativeHandle, _focusCallbackHolder = (IntPtr window, bool focused) =>
             {
-                Event?.Invoke(new WindowFucusEvent(focused));
+                Event?.Invoke(this, new WindowFucusEvent(focused));
             });
 
             Glfw.SetKeyCallback(_nativeHandle, _keyCallbackHolder = (IntPtr window, Keys key, int scanCode, InputState state, ModifierKeys mods) =>
@@ -166,19 +166,19 @@ namespace CrossEngine.Platform.Windows
                     case InputState.Press:
                         {
                             Keyboard.Add((CrossEngine.Inputs.Key)key);
-                            Event?.Invoke(new KeyPressedEvent((CrossEngine.Inputs.Key)key));
+                            Event?.Invoke(this, new KeyPressedEvent((CrossEngine.Inputs.Key)key));
                         }
                         break;
                     case InputState.Release:
                         {
                             Keyboard.Remove((CrossEngine.Inputs.Key)key);
-                            Event?.Invoke(new KeyReleasedEvent((CrossEngine.Inputs.Key)key));
+                            Event?.Invoke(this, new KeyReleasedEvent((CrossEngine.Inputs.Key)key));
                         }
                         break;
                     case InputState.Repeat:
                         {
                             Keyboard.Add((CrossEngine.Inputs.Key)key);
-                            Event?.Invoke(new KeyPressedEvent((CrossEngine.Inputs.Key)key, true));
+                            Event?.Invoke(this, new KeyPressedEvent((CrossEngine.Inputs.Key)key, true));
                         }
                         break;
                 }
@@ -186,7 +186,7 @@ namespace CrossEngine.Platform.Windows
 
             Glfw.SetCharCallback(_nativeHandle, _charCallbackHolder = (IntPtr window, uint codePoint) =>
             {
-                Event?.Invoke(new KeyCharEvent((char)codePoint));
+                Event?.Invoke(this, new KeyCharEvent((char)codePoint));
             });
 
             Glfw.SetMouseButtonCallback(_nativeHandle, _mouseButtonCallbackHolder = (IntPtr window, MouseButton button, InputState state, ModifierKeys modifiers) =>
@@ -196,13 +196,13 @@ namespace CrossEngine.Platform.Windows
                     case InputState.Press:
                         {
                             Mouse.Add((CrossEngine.Inputs.Button)button);
-                            Event?.Invoke(new MousePressedEvent((CrossEngine.Inputs.Button)button));
+                            Event?.Invoke(this, new MousePressedEvent((CrossEngine.Inputs.Button)button));
                         }
                         break;
                     case InputState.Release:
                         {
                             Mouse.Remove((CrossEngine.Inputs.Button)button);
-                            Event?.Invoke(new MouseReleasedEvent((CrossEngine.Inputs.Button)button));
+                            Event?.Invoke(this, new MouseReleasedEvent((CrossEngine.Inputs.Button)button));
                         }
                         break;
                 }
@@ -211,13 +211,13 @@ namespace CrossEngine.Platform.Windows
             Glfw.SetScrollCallback(_nativeHandle, _scrollCallbackHolder = (IntPtr window, double x, double y) =>
             {
                 Mouse.Scroll(new((float)x, (float)y));
-                Event?.Invoke(new MouseScrolledEvent((float)x, (float)y));
+                Event?.Invoke(this, new MouseScrolledEvent((float)x, (float)y));
             });
 
             Glfw.SetCursorPositionCallback(_nativeHandle, _cursorPositionCallbackHolder = (IntPtr window, double x, double y) =>
             {
                 Mouse.Position(new((float)x, (float)y));
-                Event?.Invoke(new MouseMovedEvent((float)x, (float)y));
+                Event?.Invoke(this, new MouseMovedEvent((float)x, (float)y));
             });
         }
     }

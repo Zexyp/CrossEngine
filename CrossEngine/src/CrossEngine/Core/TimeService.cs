@@ -7,9 +7,9 @@ using System.Diagnostics;
 
 using CrossEngine;
 using CrossEngine.Profiling;
-using CrossEngine.Core;
+using CrossEngine.Services;
 
-namespace CrossEngine.Services
+namespace CrossEngine.Core
 {
     public class TimeService : Service, IUpdatedService
     {

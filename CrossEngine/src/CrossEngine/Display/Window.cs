@@ -52,7 +52,7 @@ namespace CrossEngine.Display
         public readonly Mouse Mouse = new Mouse();
 
         // event emission
-        public abstract event OnEventFunction Event;
+        public abstract event Action<Window, Event> Event;
 
         public Window()
         {

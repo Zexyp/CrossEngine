@@ -183,7 +183,7 @@ namespace CrossEngine.Utils.ImGui
             ImGuiNET.ImGui.DestroyContext(Context);
         }
 
-        private void OnEvent(Event e)
+        private void OnEvent(Window w, Event e)
         {
             new EventDispatcher(e)
                 .Dispatch<WindowResizeEvent>(wre => WindowResized(new IntVec2((int)wre.Width, (int)wre.Height)))

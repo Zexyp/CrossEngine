@@ -13,6 +13,7 @@ using System.Drawing;
 
 #if PASTEL
 using Pastel;
+using System.IO;
 #endif
 
 #if WASM
@@ -38,13 +39,15 @@ namespace CrossEngine.Logging
     {
         public static readonly Logger Default = new Logger("Default");
 
-        private static Mutex mutex = new Mutex();
-
         public static LogLevel GlobalLevel;
-
         // https://no-color.org/
         public static bool EnableColors = Environment.GetEnvironmentVariable("NO_COLOR") == null;
 
+        public static TextWriter WriterOut = Console.Out;
+        public static TextWriter WriterError = Console.Error;
+
+        //private static Mutex mutex = new Mutex();
+        
         public static void Init(LogLevel? level = null, bool? enableColors = null)
         {
             GlobalLevel = level ?? GlobalLevel;
@@ -57,7 +60,7 @@ namespace CrossEngine.Logging
 
         public static void Print(LogLevel level, string message, uint? color = null)
         {
-            mutex.WaitOne();
+            //mutex.WaitOne();
 
             if (GlobalLevel <= level)
             {
@@ -97,14 +100,14 @@ namespace CrossEngine.Logging
                     case LogLevel.Debug:
                     case LogLevel.Info:
                     case LogLevel.Warn:
-                        Console.Out.WriteLineAsync(message);
+                        WriterOut.WriteLineAsync(message);
                         break;
                     case LogLevel.Error:
                     case LogLevel.Fatal:
-                        Console.Error.WriteLineAsync(message);
+                        WriterError.WriteLineAsync(message);
                         break;
                     default:
-                        Console.Out.WriteLineAsync(message);
+                        WriterOut.WriteLineAsync(message);
                         break;
                 }
 
@@ -168,7 +171,7 @@ namespace CrossEngine.Logging
 #endif
             }
 
-            mutex.ReleaseMutex();
+            //mutex.ReleaseMutex();
         }
     }
 

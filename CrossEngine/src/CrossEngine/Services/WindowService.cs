@@ -100,11 +100,11 @@ namespace CrossEngine.Services
             Window.Dispose();
         }
 
-        private void OnWindowEvent(Event e)
+        private void OnWindowEvent(Window w, Event e)
         {
             WindowEvent?.Invoke(this, e);
 
-            Manager.Event(e);
+            Manager.SendEvent(e);
         }
 
         private void Loop()
@@ -157,7 +157,7 @@ namespace CrossEngine.Services
                 }
                 else
                 {
-                    if (!_lastFrameSkipped) ;//Logging.Log.Default.Trace("skipping frame(s)");
+                    if (!_lastFrameSkipped) Logging.Log.Default.Trace("skipping frame(s)");
                     _lastFrameSkipped = true;
                     Profiler.Function("frame skip");
                 }

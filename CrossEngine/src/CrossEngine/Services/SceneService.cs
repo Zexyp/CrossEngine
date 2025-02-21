@@ -2,7 +2,7 @@
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Scenes;
-using CrossEngine.Systems;
+using CrossEngine.Core;
 using CrossEngine.Utils;
 using System;
 using System.Collections.Generic;
@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using CrossEngine.Display;
 
 namespace CrossEngine.Services
 {
@@ -45,7 +46,7 @@ namespace CrossEngine.Services
             Manager.GetService<RenderService>().Frame += OnRender;
         }
 
-        private void OnWindowEvent(Event e)
+        private void OnWindowEvent(Window w, Event e)
         {
             if (e is WindowResizeEvent wre)
                 OnWindowResize(wre.Width, wre.Height);
