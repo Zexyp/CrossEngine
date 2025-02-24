@@ -90,7 +90,7 @@ namespace CrossEngine.Rendering
 			"void main()\n" +
 			"{\n" +
             "    vec4 texColor = vColor;\n" +
-#if !OPENGL_ES
+#if false
 			"    texColor *= texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
 #else
             "    switch (int(vTexIndex))\n" +

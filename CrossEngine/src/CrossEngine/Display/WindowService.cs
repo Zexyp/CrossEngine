@@ -1,4 +1,4 @@
-﻿using CrossEngine.Display;
+﻿using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Platform;
 using CrossEngine.Profiling;
@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CrossEngine.Services
+namespace CrossEngine.Display
 {
     public class WindowService : Service, IScheduledService, IUpdatedService
     {
@@ -100,7 +100,7 @@ namespace CrossEngine.Services
             Window.Dispose();
         }
 
-        private void OnWindowEvent(Window w, Event e)
+        private void OnWindowEvent(Event e)
         {
             WindowEvent?.Invoke(this, e);
 

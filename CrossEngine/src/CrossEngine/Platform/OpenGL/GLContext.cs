@@ -1,29 +1,30 @@
 ﻿using System;
-using GLFW;
+using Silk.NET.GLFW;
 using Silk.NET.OpenGL;
 
 using CrossEngine.Rendering;
 using CrossEngine.Logging;
+using static CrossEngine.Platform.Glfw.GlfwWindow;
 
 namespace CrossEngine.Platform.OpenGL
 {
-    internal class GLContext : GraphicsContext
+    internal unsafe class GLContext : GraphicsContext
     {
-        Window _window;
+        WindowHandle* _window = null;
 
         public static Silk.NET.OpenGL.GL gl;
 
         internal static Func<string, IntPtr> loader;
 
-        public GLContext(Window window)
+        public unsafe GLContext(WindowHandle* window)
         {
             _window = window;
         }
 
         public override unsafe void Init()
         {
-            Glfw.MakeContextCurrent(_window);
-            loader = Glfw.GetProcAddress;
+            glfw.MakeContextCurrent(_window);
+            loader = glfw.GetProcAddress;
 
 
             gl = GL.GetApi(loader);
@@ -34,9 +35,14 @@ namespace CrossEngine.Platform.OpenGL
 #endif
         }
 
-        public override void SwapBuffers()
+        public override void MakeCurrent()
         {
-            Glfw.SwapBuffers(_window);
+            glfw.MakeContextCurrent(_window);
+        }
+
+        public unsafe override void SwapBuffers()
+        {
+            glfw.SwapBuffers(_window);
         }
 
         public override void Shutdown()

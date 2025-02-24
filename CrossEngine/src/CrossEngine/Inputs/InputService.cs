@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using CrossEngine.Display;
 using CrossEngine.Events;
-using CrossEngine.Inputs;
+using CrossEngine.Services;
 using CrossEngine.Profiling;
 
-namespace CrossEngine.Services
+namespace CrossEngine.Inputs
 {
     public class InputService : Service, IUpdatedService
     {
@@ -20,17 +20,17 @@ namespace CrossEngine.Services
         public override void OnAttach()
         {
             var ws = Manager.GetService<WindowService>();
-            ws.WindowEvent += HandleEvent;
             Input.keyboard = keyboard;
             Input.mouse = mouse;
+            ws.WindowEvent += HandleEvent;
         }
 
         public override void OnDetach()
         {
             var ws = Manager.GetService<WindowService>();
+            ws.WindowEvent -= HandleEvent;
             Input.keyboard = null;
             Input.mouse = null;
-            ws.WindowEvent -= HandleEvent;
         }
 
         public void OnUpdate()

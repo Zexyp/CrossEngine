@@ -46,7 +46,7 @@ namespace CrossEngine.Services
             Manager.GetService<RenderService>().Frame += OnRender;
         }
 
-        private void OnWindowEvent(Window w, Event e)
+        private void OnWindowEvent(Event e)
         {
             if (e is WindowResizeEvent wre)
                 OnWindowResize(wre.Width, wre.Height);

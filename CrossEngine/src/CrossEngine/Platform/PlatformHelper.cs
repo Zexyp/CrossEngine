@@ -22,8 +22,8 @@ namespace CrossEngine.Platform
 
         internal static Window CreateWindow()
         {
-#if WINDOWS
-            return new CrossEngine.Platform.Windows.GlfwWindow();
+#if WINDOWS || LINUX
+            return new CrossEngine.Platform.Glfw.GlfwWindow();
 #elif WASM
             return new CrossEngine.Platform.Wasm.CanvasWindow();
 #else
@@ -33,7 +33,7 @@ namespace CrossEngine.Platform
 
         internal static GraphicsApi GetGraphicsApi()
         {
-#if WINDOWS
+#if WINDOWS || LINUX
             return GraphicsApi.OpenGL;
 #elif WASM
             return GraphicsApi.OpenGLES;
@@ -44,7 +44,7 @@ namespace CrossEngine.Platform
 
         public static Task<Stream> FileRead(string path)
         {
-#if WINDOWS
+#if WINDOWS || LINUX
             Log.Trace($"file read '{path}'");
             return Task.FromResult((Stream)File.OpenRead(path));
 #elif WASM
@@ -57,7 +57,7 @@ namespace CrossEngine.Platform
 
         public static Stream FileWrite(string path)
         {
-#if WINDOWS
+#if WINDOWS || LINUX
             Log.Trace($"file write '{path}'");
             var stream = File.OpenWrite(path);
             stream.SetLength(0);

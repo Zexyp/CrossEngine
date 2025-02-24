@@ -1,4 +1,4 @@
-﻿#if WINDOWS
+﻿#if WINDOWS || LINUX
 #define PASTEL
 #endif
 
@@ -37,7 +37,7 @@ namespace CrossEngine.Logging
 
     public static class Log
     {
-        public static readonly Logger Default = new Logger("Default");
+        public static readonly Logger Default = new Logger("default");
 
         public static LogLevel GlobalLevel;
         // https://no-color.org/
@@ -64,7 +64,7 @@ namespace CrossEngine.Logging
 
             if (GlobalLevel <= level)
             {
-#if WINDOWS
+#if WINDOWS || LINUX
 
 #if !PASTEL
 #warning Custom colors not supported
