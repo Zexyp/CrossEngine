@@ -47,7 +47,7 @@ namespace CrossEngine.Services
                 OnWindowResize(ws.MainWindow.Width, ws.MainWindow.Height);
             });
             Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
-            Manager.GetService<RenderService>().Frame += OnRender;
+            Manager.GetService<RenderService>().Draw += OnRender;
         }
 
         private void OnWindowEvent(Event e)
@@ -67,7 +67,7 @@ namespace CrossEngine.Services
 
         public override void OnDetach()
         {
-            Manager.GetService<RenderService>().Frame -= OnRender;
+            Manager.GetService<RenderService>().Draw -= OnRender;
             Manager.GetService<TimeService>().FixedUpdate -= OnFixedUpdate;
             ws.Execute(() => { ws.MainWindow.Event -= OnWindowEvent; ws = null; });
         }

@@ -273,7 +273,7 @@ void main()
             DrawLine(new Vector3(max.X, max.Y, min.Z), new Vector3(min.X, max.Y, min.Z), color);
         }
 
-        static public void DrawCircle(Matrix4x4 matrix, Vector4 color, int segments = 16, float radius = 1.0f)
+        static public void DrawCircle(Matrix4x4 matrix, Vector4 color, float radius = 1.0f, int segments = 16)
         {
             Vector3[] points = new Vector3[segments];
             float increment = MathF.PI * 2 / points.Length;
@@ -305,11 +305,11 @@ void main()
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(0, 0, len), matrix), new Vector4(0, 0, 1, 1));
         }
 
-        static public void DrawSphere(Matrix4x4 matrix, Vector4 color, int segments = 16, float radius = 1.0f)
+        static public void DrawSphere(Matrix4x4 matrix, Vector4 color, float radius = 1.0f, int segments = 16)
         {
-            DrawCircle(Matrix4x4.CreateRotationX(MathF.PI / 2) * matrix, color, segments, radius);
-            DrawCircle(Matrix4x4.CreateRotationY(MathF.PI / 2) * matrix, color, segments, radius);
-            DrawCircle(Matrix4x4.CreateRotationZ(MathF.PI / 2) * matrix, color, segments, radius);
+            DrawCircle(Matrix4x4.CreateRotationX(MathF.PI / 2) * matrix, color, radius, segments);
+            DrawCircle(Matrix4x4.CreateRotationY(MathF.PI / 2) * matrix, color, radius, segments);
+            DrawCircle(Matrix4x4.CreateRotationZ(MathF.PI / 2) * matrix, color, radius, segments);
         }
         #endregion
     }

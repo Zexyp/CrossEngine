@@ -26,8 +26,8 @@ namespace CrossEngine.Utils.ImGui
         public override void OnDetach()
         {
             var rs = Manager.GetService<RenderService>();
-            rs.BeforeFrame -= OnBeforeFrame;
-            rs.AfterFrame -= OnAfterFrame;
+            rs.BeforeDraw -= OnBeforeDraw;
+            rs.AfterDraw -= OnAfterDraw;
 
             rs.Execute(() =>
             {
@@ -38,8 +38,8 @@ namespace CrossEngine.Utils.ImGui
         public override unsafe void OnAttach()
         {
             var rs = Manager.GetService<RenderService>();
-            rs.BeforeFrame += OnBeforeFrame;
-            rs.AfterFrame += OnAfterFrame;
+            rs.BeforeDraw += OnBeforeDraw;
+            rs.AfterDraw += OnAfterDraw;
 
             rs.Execute(() =>
             {
@@ -59,12 +59,12 @@ namespace CrossEngine.Utils.ImGui
             });
         }
 
-        private void OnBeforeFrame(RenderService rs)
+        private void OnBeforeDraw(RenderService rs)
         {
             controller.Update(Time.UnscaledDeltaF);
         }
 
-        private unsafe void OnAfterFrame(RenderService rs)
+        private unsafe void OnAfterDraw(RenderService rs)
         {
             var w = Manager.GetService<WindowService>().MainWindow;
             rs.RendererApi.SetViewport(0, 0, w.Width, w.Height);

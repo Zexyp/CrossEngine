@@ -20,9 +20,9 @@ namespace CrossEngine.Services
     public class RenderService : Service, IScheduledService
     {
         public RendererApi RendererApi { get; private set; }
-        public event Action<RenderService> Frame;
-        public event Action<RenderService> BeforeFrame;
-        public event Action<RenderService> AfterFrame;
+        public event Action<RenderService> Draw;
+        public event Action<RenderService> BeforeDraw;
+        public event Action<RenderService> AfterDraw;
         public bool IgnoreRefresh { get; set; } = false;
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
@@ -107,9 +107,9 @@ namespace CrossEngine.Services
 
             _scheduler.RunOnCurrentThread();
 
-            BeforeFrame?.Invoke(this);
-            Frame?.Invoke(this);
-            AfterFrame?.Invoke(this);
+            BeforeDraw?.Invoke(this);
+            Draw?.Invoke(this);
+            AfterDraw?.Invoke(this);
 
             Profiler.EndScope();
 

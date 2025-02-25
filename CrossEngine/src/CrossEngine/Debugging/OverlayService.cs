@@ -20,7 +20,7 @@ namespace CrossEngine.Debugging
         {
             var rs = Manager.GetService<RenderService>();
             var ws = Manager.GetService<WindowService>();
-            rs.Frame += OnRender;
+            rs.Draw += OnRender;
             ws.WindowEvent += OnEvent;
             ws.Execute(() => OnResize(ws.MainWindow.Width, ws.MainWindow.Height));
         }
@@ -29,7 +29,7 @@ namespace CrossEngine.Debugging
         {
             var rs = Manager.GetService<RenderService>();
             var ws = Manager.GetService<WindowService>();
-            rs.Frame -= OnRender;
+            rs.Draw -= OnRender;
             ws.WindowEvent -= OnEvent;
         }
 
