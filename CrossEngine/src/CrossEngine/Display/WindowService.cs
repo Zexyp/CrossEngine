@@ -5,6 +5,7 @@ using CrossEngine.Profiling;
 using CrossEngine.Utils;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,9 +20,9 @@ namespace CrossEngine.Display
             ThreadLoop,
         }
 
-        public Window Window { get; private set; }
-        public event Action<WindowService, Event> WindowEvent;
-        public event Action<WindowService> WindowUpdate;
+        public Window MainWindow { get; private set; }
+        public event Action<Window, Event> WindowEvent;
+        public event Action<Window> WindowUpdate;
         public int MaxFrameDuration = (int)(1d / 30 * 1000);
 
         Thread _windowThread;
@@ -67,23 +68,26 @@ namespace CrossEngine.Display
         {
             _scheduler.RunOnCurrentThread();
 
-            WindowUpdate?.Invoke(this);
-            Window.Keyboard.Update();
-            Window.Mouse.Update();
+            var w = MainWindow;
+            WindowUpdate?.Invoke(w);
+            w.Keyboard.Update();
+            w.Mouse.Update();
 
             Profiler.BeginScope($"{nameof(CrossEngine.Display.Window)}.{nameof(CrossEngine.Display.Window.PollEvents)}");
-            Window.PollEvents();
+            w.PollEvents();
             Profiler.EndScope();
         }
 
         private void Setup()
         {
             // setup
-            Window = PlatformHelper.CreateWindow();
+            MainWindow = PlatformHelper.CreateWindow();
 
-            Window.Event += OnWindowEvent;
+            MainWindow.Event += OnWindowEvent;
 
-            Window.Create();
+            MainWindow.Init();
+            
+            MainWindow.Create();
 
             _scheduler.RunOnCurrentThread();
         }
@@ -92,17 +96,17 @@ namespace CrossEngine.Display
         {
             _scheduler.RunOnCurrentThread();
 
-            Window.Event -= OnWindowEvent;
+            MainWindow.Event -= OnWindowEvent;
 
             // destroy
-            Window.Destroy();
+            MainWindow.Destroy();
 
-            Window.Dispose();
+            MainWindow.Dispose();
         }
 
         private void OnWindowEvent(Event e)
         {
-            WindowEvent?.Invoke(this, e);
+            WindowEvent?.Invoke(MainWindow, e);
 
             Manager.SendEvent(e);
         }

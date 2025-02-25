@@ -22,7 +22,7 @@ namespace CrossEngine.Debugging
             var ws = Manager.GetService<WindowService>();
             rs.Frame += OnRender;
             ws.WindowEvent += OnEvent;
-            ws.Execute(() => OnResize(ws.Window.Width, ws.Window.Height));
+            ws.Execute(() => OnResize(ws.MainWindow.Width, ws.MainWindow.Height));
         }
 
         public override void OnDetach()
@@ -33,7 +33,7 @@ namespace CrossEngine.Debugging
             ws.WindowEvent -= OnEvent;
         }
 
-        private void OnEvent(WindowService ws, Event e)
+        private void OnEvent(Window ws, Event e)
         {
             if (e is WindowResizeEvent wre)
                 OnResize(wre.Width, wre.Height);

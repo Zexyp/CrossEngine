@@ -27,7 +27,7 @@ namespace CrossEngine.Services
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
         bool _running = false;
-        GraphicsContext Context;
+        GraphicsContext _context;
         GraphicsApi _api;
 
         public RenderService()
@@ -55,11 +55,13 @@ namespace CrossEngine.Services
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent += OnWindowEvent;
             ws.WindowUpdate += OnWindowUpdate;
-            Context = ws.Window.Context;
+            
+            _context = ws.MainWindow.Context;
+            _context.Init();
 
             RendererApi.Init();
             RendererApi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
-            RendererApi.SetViewport(0, 0, ws.Window.Width, ws.Window.Height);
+            RendererApi.SetViewport(0, 0, ws.MainWindow.Width, ws.MainWindow.Height);
 
             Prepare();
         }
@@ -71,32 +73,37 @@ namespace CrossEngine.Services
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent -= OnWindowEvent;
             ws.WindowUpdate -= OnWindowUpdate;
+            
+            ws.MainWindow.Context.Dispose();
 
             RendererApi.Dispose();
             RendererApi = null;
-            Context.Dispose();
-            Context = null;
+            
+            _context.Dispose();
+            _context = null;
         }
 
-        private void OnWindowEvent(WindowService ws, Event e)
+        private void OnWindowEvent(Window w, Event e)
         {
             // this is supposed to fix state when resizing window
             // it's unfortunate that when just holding the window nothing happens
             // also used when window dictates it's own redrawing
             if (!IgnoreRefresh && (e is WindowRefreshEvent))
-                DrawPresent();
+                DrawPresent(w.Context);
             if (e is WindowResizeEvent wre)
                 RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
         }
 
-        private void OnWindowUpdate(WindowService obj)
+        private void OnWindowUpdate(Window w)
         {
-            DrawPresent();
+            DrawPresent(w.Context);
         }
 
-        private void DrawPresent()
+        private void DrawPresent(GraphicsContext context)
         {
             Profiler.BeginScope("Render");
+            
+            context.MakeCurrent();
 
             _scheduler.RunOnCurrentThread();
 
@@ -108,7 +115,7 @@ namespace CrossEngine.Services
 
             Profiler.BeginScope("Swap");
 
-            Context.SwapBuffers();
+            context.SwapBuffers();
 
             Profiler.EndScope();
         }

@@ -65,7 +65,7 @@ namespace CrossEngine.Display
             GC.SuppressFinalize(this);
         }
 
-        //public abstract void SetIcon(System.Drawing.Image image);
+        public abstract void Init();
         public abstract void Create();
         public abstract void Destroy();
         public abstract void PollEvents();

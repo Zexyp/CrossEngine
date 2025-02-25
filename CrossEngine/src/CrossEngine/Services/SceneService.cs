@@ -41,7 +41,11 @@ namespace CrossEngine.Services
         public override void OnAttach()
         {
             ws = Manager.GetService<WindowService>();
-            ws.Execute(() => { ws.Window.Event += OnWindowEvent; OnWindowResize(ws.Window.Width, ws.Window.Height); });
+            ws.Execute(() =>
+            {
+                ws.MainWindow.Event += OnWindowEvent;
+                OnWindowResize(ws.MainWindow.Width, ws.MainWindow.Height);
+            });
             Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
             Manager.GetService<RenderService>().Frame += OnRender;
         }
@@ -65,7 +69,7 @@ namespace CrossEngine.Services
         {
             Manager.GetService<RenderService>().Frame -= OnRender;
             Manager.GetService<TimeService>().FixedUpdate -= OnFixedUpdate;
-            ws.Execute(() => { ws.Window.Event -= OnWindowEvent; ws = null; });
+            ws.Execute(() => { ws.MainWindow.Event -= OnWindowEvent; ws = null; });
         }
 
         public override void OnDestroy()
@@ -105,7 +109,7 @@ namespace CrossEngine.Services
         {
             var configValue = config ?? default;
             if (configValue.Resize)
-                scene.RenderData.PerformResize(ws.Window.Width, ws.Window.Height);
+                scene.RenderData.PerformResize(ws.MainWindow.Width, ws.MainWindow.Height);
             _scenes.Add((scene, configValue));
             scene.Load();
             Log.Info("scene pushed");

@@ -45,7 +45,7 @@ namespace CrossEngine.Utils.ImGui
             {
                 controller = new MyImGuiController(
                     CrossEngine.Platform.OpenGL.GLContext.gl,
-                    Manager.GetService<WindowService>().Window,
+                    Manager.GetService<WindowService>().MainWindow,
                     () =>
                     {
                         var io = IG.GetIO();
@@ -66,7 +66,7 @@ namespace CrossEngine.Utils.ImGui
 
         private unsafe void OnAfterFrame(RenderService rs)
         {
-            var w = Manager.GetService<WindowService>().Window;
+            var w = Manager.GetService<WindowService>().MainWindow;
             rs.RendererApi.SetViewport(0, 0, w.Width, w.Height);
             controller.Render();
         }

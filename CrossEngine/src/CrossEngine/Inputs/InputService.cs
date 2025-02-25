@@ -53,7 +53,7 @@ namespace CrossEngine.Inputs
             Profiler.EndScope();
         }
 
-        private void HandleEvent(WindowService ws, Event e)
+        private void HandleEvent(Window ws, Event e)
         {
             _events.Enqueue(e);
         }

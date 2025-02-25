@@ -40,11 +40,11 @@ namespace CrossEngine.Platform.Glfw
             Title = title;
         }
 
-        public override void Create()
+        public override void Init()
         {
             glfw.Init();
 
-            //Glfw.SetErrorCallback(GlfwErrorCallback);
+            glfw.SetErrorCallback(GlfwErrorCallback);
 
             glfw.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGL);
             glfw.WindowHint(WindowHintInt.ContextVersionMajor, 3);
@@ -53,7 +53,10 @@ namespace CrossEngine.Platform.Glfw
             //Glfw.WindowHint(Hint.Doublebuffer, true);
             //Glfw.WindowHint(Hint.Decorated, true);
             //Glfw.WindowHint(Hint.OpenglForwardCompatible, true);
+        }
 
+        public override void Create()
+        {
             _nativeHandle = glfw.CreateWindow(
                 (int)Data.Width,
                 (int)Data.Height,
@@ -114,10 +117,15 @@ namespace CrossEngine.Platform.Glfw
 
         protected override (uint Width, uint Height) GetMonitorSize() => throw new NotImplementedException(); //((uint)glfw.PrimaryMonitor.WorkArea.Width, (uint)glfw.PrimaryMonitor.WorkArea.Height);
 
-        //private void GlfwErrorCallback(ErrorCode code, IntPtr message)
-        //{
-        //    Log.Error(((int)code) + " (" + code.ToString() + "): " + Marshal.PtrToStringAnsi(message));
-        //}
+        private void GlfwErrorCallback(ErrorCode code, string message)
+        {
+            Log.Error(((int)code) + " (" + code.ToString() + "): " + message);
+        }
+
+        public override void Dispose()
+        {
+            glfw.Terminate();
+        }
 
         private Silk.NET.GLFW.GlfwCallbacks.WindowSizeCallback _windowSizeCallbackHolder;
         private Silk.NET.GLFW.GlfwCallbacks.WindowCloseCallback _closeCallbackHolder;
