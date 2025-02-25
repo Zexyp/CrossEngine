@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFrameworks>net7.0</TargetFrameworks> <!-- i don't get this -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Windows Debug;Windows Profiling;Linux Debug;Linux Profiling;Web</Configurations>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputType>Library</OutputType>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <!-- resources -->

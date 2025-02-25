@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CrossEngine.Services;
 using CrossEngine.Profiling;
 using System.Threading;
+using CrossEngine.Events;
 using CrossEngine.Logging;
 
 namespace CrossEngine.Core
@@ -59,6 +60,8 @@ namespace CrossEngine.Core
 
         public virtual void OnInit()
         {
+            Manager.Event += OnEvent;
+            
             Manager.InitServices();
 
             Manager.AttachServices();
@@ -69,11 +72,19 @@ namespace CrossEngine.Core
             Manager.DetachServices();
 
             Manager.ShutdownServices();
+
+            Manager.Event -= OnEvent;
         }
 
         public virtual void OnUpdate()
         {
             Manager.Update();
+        }
+
+        public virtual void OnEvent(Event e)
+        {
+            if (e is WindowCloseEvent wce && !wce.Handled)
+                Close();
         }
 
         public void Close()

@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Display
 {
@@ -31,6 +32,7 @@ namespace CrossEngine.Display
         bool _running = false;
         AutoResetEvent _render = new AutoResetEvent(false);
         AutoResetEvent _main = new AutoResetEvent(false);
+        private Logger _log = new Logger("window-service");
 
         public WindowService(Mode mode)
         {
@@ -161,7 +163,7 @@ namespace CrossEngine.Display
                 }
                 else
                 {
-                    if (!_lastFrameSkipped) Logging.Log.Default.Trace("skipping frame(s)");
+                    if (!_lastFrameSkipped) _log.Trace("skipping frame(s)");
                     _lastFrameSkipped = true;
                     Profiler.Function("frame skip");
                 }
