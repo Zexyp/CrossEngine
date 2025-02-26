@@ -17,21 +17,9 @@ namespace CrossEngine.Debugging
 
         protected Vector2 Size;
         
-        protected Vector2 LeftBottom;
-        protected Vector2 LeftTop;
-        protected Vector2 RightBottom;
-        protected Vector2 RightTop;
-        protected Vector2 Center;
-
         public virtual void Resize(float width, float height)
         {
             Size = new Vector2(width, height);
-            
-            LeftTop = Vector2.Zero;
-            LeftBottom = new Vector2(0, Size.Y);
-            RightBottom = new Vector2(Size.X, Size.Y);
-            RightTop = new Vector2(Size.X, 0);
-            Center = new Vector2(Size.X / 2, Size.Y / 2);
             
             Camera.ProjectionMatrix = Matrix4x4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
         }

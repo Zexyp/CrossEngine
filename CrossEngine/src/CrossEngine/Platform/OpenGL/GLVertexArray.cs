@@ -25,7 +25,7 @@ namespace CrossEngine.Platform.OpenGL
         internal uint _rendererId;
         private uint _vertexBufferIndex;
         private WeakReference<IndexBuffer> _indexBuffer;
-        private List<VertexBuffer> _vertexBuffers = new List<VertexBuffer>();
+        private List<WeakReference<VertexBuffer>> _vertexBuffers = new List<WeakReference<VertexBuffer>>();
 
         public unsafe GLVertexArray()
         {
@@ -84,14 +84,14 @@ namespace CrossEngine.Platform.OpenGL
 
             var vertexBuffer = vb.GetValue();
 
-            Debug.Assert(vertexBuffer.GetLayout() != null && vertexBuffer.GetLayout().GetElements().Length > 0);
+            Debug.Assert(vertexBuffer.GetLayout() != null && vertexBuffer.GetLayout().Elements.Count > 0);
 
             gl.BindVertexArray(_rendererId);
             vertexBuffer.Bind();
 
             var layout = vertexBuffer.GetLayout();
-            var elements = layout.GetElements();
-            for (int i = 0; i < elements.Length; i++)
+            var elements = layout.Elements;
+            for (int i = 0; i < elements.Count; i++)
             {
                 var element = elements[i];
                 switch (element.Type)
@@ -106,7 +106,7 @@ namespace CrossEngine.Platform.OpenGL
                                 (int)element.GetComponentCount(),
                                 GLUtils.GetGLBaseDataType(element.Type),
                                 element.Normalized,
-                                layout.GetStride(),
+                                layout.Stride,
                                 (void*)element.Offset);
                             gl.VertexAttribDivisor(_vertexBufferIndex, element.Divisor);
                             _vertexBufferIndex++;
@@ -122,7 +122,7 @@ namespace CrossEngine.Platform.OpenGL
                             gl.VertexAttribIPointer(_vertexBufferIndex,
                                 (int)element.GetComponentCount(),
                                 GLUtils.GetGLBaseDataType(element.Type),
-                                layout.GetStride(),
+                                layout.Stride,
                                 (void*)element.Offset);
                             gl.VertexAttribDivisor(_vertexBufferIndex, element.Divisor);
                             _vertexBufferIndex++;
@@ -139,7 +139,7 @@ namespace CrossEngine.Platform.OpenGL
                                     count,
                                     GLUtils.GetGLBaseDataType(element.Type),
                                     element.Normalized,
-                                    layout.GetStride(),
+                                    layout.Stride,
                                     (void*)(element.Offset + sizeof(float) * count * ii));
                                 gl.VertexAttribDivisor(_vertexBufferIndex, element.Divisor);
                                 _vertexBufferIndex++;
@@ -150,7 +150,7 @@ namespace CrossEngine.Platform.OpenGL
                 }
             }
 
-            _vertexBuffers.Add(vertexBuffer);
+            _vertexBuffers.Add(vb);
         }
 
         public override void SetIndexBuffer(WeakReference<IndexBuffer> indexBuffer)

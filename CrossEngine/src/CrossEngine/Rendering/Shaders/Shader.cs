@@ -85,6 +85,11 @@ namespace CrossEngine.Rendering.Shaders
 
         public static WeakReference<Shader> Create(string source, ShaderType type)
         {
+            return Create(new WeakReference<Shader>(null), source, type);
+        }
+        
+        public static WeakReference<Shader> Create(WeakReference<Shader> shader, string source, ShaderType type)
+        {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;

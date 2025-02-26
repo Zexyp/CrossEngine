@@ -17,6 +17,7 @@ namespace CrossEngine.Utils.ImGui
         MyImGuiController controller;
 
         private string fontpath = null;
+        private Logger _log = new Logger("imgui-service");
 
         public ImGuiService(string fontpath = null)
         {
@@ -25,6 +26,8 @@ namespace CrossEngine.Utils.ImGui
 
         public override void OnDetach()
         {
+            _log.Trace("detaching");
+
             var rs = Manager.GetService<RenderService>();
             rs.BeforeDraw -= OnBeforeDraw;
             rs.AfterDraw -= OnAfterDraw;
@@ -37,6 +40,8 @@ namespace CrossEngine.Utils.ImGui
 
         public override unsafe void OnAttach()
         {
+            _log.Trace("attaching");
+            
             var rs = Manager.GetService<RenderService>();
             rs.BeforeDraw += OnBeforeDraw;
             rs.AfterDraw += OnAfterDraw;

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
-
+using CrossEngine.Logging;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
@@ -91,6 +91,8 @@ void main()
 
         public static unsafe void Init(RendererApi rapi)
         {
+            Log.Default.Debug($"initializing {nameof(LineRenderer)}");
+
             _rapi = rapi;
 
             data.lineVertexArray = VertexArray.Create();
@@ -114,6 +116,8 @@ void main()
 
         public static void Shutdown()
         {
+            Log.Default.Debug($"shutting down {nameof(LineRenderer)}");
+
             data.lineShader.Dispose();
             data.lineVertexArray.Dispose();
             data.lineVertexBuffer.Dispose();

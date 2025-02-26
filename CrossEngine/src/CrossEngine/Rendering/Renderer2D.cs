@@ -9,6 +9,7 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Textures;
 using System.Linq;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Rendering
 {
@@ -129,7 +130,7 @@ namespace CrossEngine.Rendering
 			"\n" +
 			"void main()\n" +
 			"{\n" +
-#if !OPENGL_ES
+#if false
 			"    vec4 texColor = texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
 #else
             "    vec4 texColor;\n" +
@@ -235,6 +236,8 @@ namespace CrossEngine.Rendering
 
 		public static unsafe void Init(RendererApi rapi)
 		{
+			Log.Default.Debug($"initializing {nameof(Renderer2D)}");
+			
 			_rapi = rapi;
 
 			var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex).GetValue();
@@ -255,10 +258,10 @@ namespace CrossEngine.Rendering
 				samplers[i] = (int)i;
 			var shader = data.regularShader.GetValue();
 			shader.Use();
-			shader.SetParameter1("uTextures", samplers);
+			shader.SetParameterIntVec("uTextures", samplers);
 			shader = data.discardingShader.GetValue();
 			shader.Use();
-			shader.SetParameter1("uTextures", samplers);
+			shader.SetParameterIntVec("uTextures", samplers);
 
 			//data.cameraUniformBuffer = new UniformBuffer(null, sizeof(Renderer2DData.CameraData), BufferUsage.DynamicDraw);
 			//data.cameraUniformBuffer.BindTo(0);
@@ -321,6 +324,8 @@ namespace CrossEngine.Rendering
 
 		public static void Shutdown()
 		{
+			Log.Default.Debug($"shutting down {nameof(Renderer2D)}");
+			
 			data.discardingShader.Dispose();
 			data.regularShader.Dispose();
 			data.whiteTexture.Dispose();

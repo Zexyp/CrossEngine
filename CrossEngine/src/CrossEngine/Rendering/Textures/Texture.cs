@@ -58,6 +58,7 @@ namespace CrossEngine.Rendering.Textures
             return Create(new WeakReference<Texture>(null), width, height, internalFormat);
         }
 
+        // pain
         public static WeakReference<Texture> Create(WeakReference<Texture> wr, uint width, uint height, ColorFormat internalFormat)
         {
             switch (RendererApi.GetApi())

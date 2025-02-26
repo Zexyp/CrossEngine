@@ -29,7 +29,7 @@ namespace CrossEngine.Utils
             public float SymbolWidth;
             public float SymbolHeight;
             public Vector4 SymbolMargin;
-            public byte[] SymbolAtlasData;
+            public byte[] SymbolAtlasData; // yes, is a bit stupid
             // mby add texture here
         }
         
@@ -65,8 +65,6 @@ namespace CrossEngine.Utils
 
         public static void DrawText(Matrix4x4 transform, string text, Vector4 color, int entID = 0)
         {
-            Debug.Assert(Mode == DrawMode.YUp || Mode == DrawMode.YDown);
-            
             if (text == null)
                 return;
 
@@ -83,6 +81,7 @@ namespace CrossEngine.Utils
                     scaleY = -Data.SymbolHeight;
                     offsetY = -Data.SymbolHeight;
                     break;
+                default: Debug.Assert(false, "Invalid DrawMode"); break;
             };
 
             transform = Matrix4x4.CreateScale(new Vector3(Data.SymbolWidth, scaleY, 1)) * Matrix4x4.CreateTranslation(new Vector3(Data.SymbolWidth / 2, -offsetY / 2, 0)) * transform;

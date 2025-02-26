@@ -27,6 +27,8 @@ namespace CrossEngine.Display
 
     public abstract class Window : IDisposable
     {
+        // interface should have handle, window data, get rapi/context
+        
         protected struct WindowData
         {
             public uint Width, Height;

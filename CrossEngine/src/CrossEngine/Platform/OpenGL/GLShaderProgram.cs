@@ -55,8 +55,8 @@ namespace CrossEngine.Platform.OpenGL
 
             _rendererId = gl.CreateProgram();
 
-            Attributes = _attributes;
-            Uniforms = _uniforms;
+            Attributes = _attributes.AsReadOnly();
+            Uniforms = _uniforms.AsReadOnly();
 
             GC.KeepAlive(this);
             GPUGC.Register(this);
@@ -216,33 +216,33 @@ namespace CrossEngine.Platform.OpenGL
 
         // ##### simple #####
 
-        public override void SetParameter1(string name, float value)
+        public override void SetParameterFloat(string name, float value)
         {
             gl.Uniform1(GetUniformLocation(name), value);
         }
 
-        public override void SetParameter1(string name, int value)
+        public override void SetParameterInt(string name, int value)
         {
             gl.Uniform1(GetUniformLocation(name), value);
         }
 
         // ##### vec2 #####
 
-        public override void SetParameter2(string name, float x, float y)
+        public override void SetParameterVec2(string name, float x, float y)
         {
             gl.Uniform2(GetUniformLocation(name), x, y);
         }
 
         // ##### vec3 #####
 
-        public override void SetParameter3(string name, float x, float y, float z)
+        public override void SetParameterVec3(string name, float x, float y, float z)
         {
             gl.Uniform3(GetUniformLocation(name), x, y, z);
         }
 
         // ##### vec4 #####
 
-        public override void SetParameter4(string name, float x, float y, float z, float w)
+        public override void SetParameterVec4(string name, float x, float y, float z, float w)
         {
             gl.Uniform4(GetUniformLocation(name), x, y, z, w);
         }
@@ -256,7 +256,7 @@ namespace CrossEngine.Platform.OpenGL
 
         // ##### other #####
 
-        public override unsafe void SetParameter1(string name, int[] intVec)
+        public override unsafe void SetParameterIntVec(string name, int[] intVec)
         {
             Debug.Assert(intVec.Length > 0);
 
