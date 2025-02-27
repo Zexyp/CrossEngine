@@ -5,11 +5,11 @@ using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Meshes;
 
-public class Mesh<T> : IDisposable where T : struct
+public class Mesh<T> where T : struct
 {
-    WeakReference<VertexArray> va;
-    WeakReference<IndexBuffer> ib;
-    WeakReference<VertexBuffer> vb;
+    public WeakReference<VertexArray> va;
+    public WeakReference<IndexBuffer> ib;
+    public WeakReference<VertexBuffer> vb;
     
     T[] vertices;
     uint[] indices;

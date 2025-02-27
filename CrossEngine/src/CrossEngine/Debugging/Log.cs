@@ -5,15 +5,11 @@
 using System;
 
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Collections.Generic;
-using System.Threading;
 using System.Drawing;
+using System.IO;
 
 #if PASTEL
 using Pastel;
-using System.IO;
 #endif
 
 #if WASM
@@ -177,10 +173,11 @@ namespace CrossEngine.Logging
 
     public class Logger
     {
-        public string Pattern = "[%t][%n][%l]: ";
         // %t - time
         // %n - name
         // %l - level
+        // %m - message
+        public string Pattern = "[%t][%n][%l]: %m";
         public string DateTimeFormat = "HH:mm:ss";
 
         public string Name = "";
@@ -193,12 +190,13 @@ namespace CrossEngine.Logging
             this.LogLevel = level;
         }
 
-        protected string FillPattern(LogLevel level)
+        protected string FillPattern(LogLevel level, string message)
         {
             return Pattern
                 .Replace("%t", DateTime.Now.ToString(DateTimeFormat))
                 .Replace("%n", Name)
-                .Replace("%l", level.ToString());
+                .Replace("%l", level.ToString())
+                .Replace("%m", message);
         }
 
 #nullable enable
@@ -207,8 +205,7 @@ namespace CrossEngine.Logging
         {
             if (this.LogLevel > LogLevel.Trace) return;
             Log.Print(LogLevel.Trace,
-                FillPattern(LogLevel.Trace) +
-                (args?.Length != 0 ? String.Format(format, args) : format),
+                FillPattern(LogLevel.Trace, (args?.Length != 0 ? String.Format(format, args) : format)),
                 Color);
         }
 
@@ -217,8 +214,7 @@ namespace CrossEngine.Logging
         {
             if (this.LogLevel > LogLevel.Debug) return;
             Log.Print(LogLevel.Debug,
-                FillPattern(LogLevel.Debug) +
-                (args?.Length != 0 ? String.Format(format, args) : format),
+                FillPattern(LogLevel.Debug, (args?.Length != 0 ? String.Format(format, args) : format)),
                 Color);
         }
 
@@ -226,8 +222,7 @@ namespace CrossEngine.Logging
         {
             if (this.LogLevel > LogLevel.Info) return;
             Log.Print(LogLevel.Info,
-                FillPattern(LogLevel.Info) +
-                (args?.Length != 0 ? String.Format(format, args) : format),
+                FillPattern(LogLevel.Info, (args?.Length != 0 ? String.Format(format, args) : format)),
                 Color);
         }
 
@@ -235,8 +230,7 @@ namespace CrossEngine.Logging
         {
             if (this.LogLevel > LogLevel.Warn) return;
             Log.Print(LogLevel.Warn,
-                FillPattern(LogLevel.Warn) +
-                (args?.Length != 0 ? String.Format(format, args) : format),
+                FillPattern(LogLevel.Warn, (args?.Length != 0 ? String.Format(format, args) : format)),
                 Color);
         }
 
@@ -244,8 +238,7 @@ namespace CrossEngine.Logging
         {
             if (this.LogLevel > LogLevel.Error) return;
             Log.Print(LogLevel.Error,
-                FillPattern(LogLevel.Error) +
-                (args?.Length != 0 ? String.Format(format, args) : format),
+                FillPattern(LogLevel.Error, (args?.Length != 0 ? String.Format(format, args) : format)),
                 Color);
         }
 
@@ -253,8 +246,7 @@ namespace CrossEngine.Logging
         {
             if (this.LogLevel > LogLevel.Fatal) return;
             Log.Print(LogLevel.Fatal,
-                FillPattern(LogLevel.Fatal) +
-                (args?.Length != 0 ? String.Format(format, args) : format),
+                FillPattern(LogLevel.Fatal, (args?.Length != 0 ? String.Format(format, args) : format)),
                 Color);
         }
 #nullable restore

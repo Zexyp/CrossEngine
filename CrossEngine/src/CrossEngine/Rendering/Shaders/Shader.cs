@@ -88,13 +88,13 @@ namespace CrossEngine.Rendering.Shaders
             return Create(new WeakReference<Shader>(null), source, type);
         }
         
-        public static WeakReference<Shader> Create(WeakReference<Shader> shader, string source, ShaderType type)
+        public static WeakReference<Shader> Create(WeakReference<Shader> wr, string source, ShaderType type)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<Shader>(new GLShader(source, type));
+                case GraphicsApi.OpenGL: wr.SetTarget(new GLShader(source, type)); return wr;
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

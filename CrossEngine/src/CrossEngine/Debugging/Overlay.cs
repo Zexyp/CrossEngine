@@ -26,15 +26,14 @@ namespace CrossEngine.Debugging
 
         public virtual void Draw()
         {
-            Renderer2D.BeginScene(Camera.ViewProjectionMatrix);
-            LineRenderer.BeginScene(Camera.ViewProjectionMatrix);
+            Renderer2D.BeginScene(((ICamera)Camera).GetViewProjectionMatrix());
+            LineRenderer.BeginScene(((ICamera)Camera).GetViewProjectionMatrix());
             
-            var prevTextMode = TextRendererUtil.Mode;
-            TextRendererUtil.Mode = TextRendererUtil.DrawMode.YDown;
+            var prevTextMode = TextRendererUtil.SetMode(TextRendererUtil.DrawMode.YDown);
             
             Content();
             
-            TextRendererUtil.Mode = prevTextMode;
+            TextRendererUtil.SetMode(prevTextMode);
             
             LineRenderer.EndScene();
             Renderer2D.EndScene();

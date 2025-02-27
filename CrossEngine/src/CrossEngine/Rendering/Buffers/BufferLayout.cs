@@ -137,6 +137,8 @@ namespace CrossEngine.Rendering.Buffers
 
             if (ShaderTypeSwitch.ContainsKey(structure)) // check for elements (because vectors have floats)
             {
+                Log.Default.Warn("no name buffer element will be assigned");
+
                 layout._elements = new[] {new BufferElement(ShaderTypeSwitch[structure], null)};
                 layout.Stride = (uint)Marshal.SizeOf(structure);
                 

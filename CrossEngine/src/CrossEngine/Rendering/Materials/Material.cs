@@ -11,19 +11,24 @@ namespace CrossEngine.Rendering.Materials;
 public class Material
 {
     private WeakReference<ShaderProgram> Shader;
-    private Dictionary<string, object> Parameters;
-    private Dictionary<string, WeakReference<Texture>> Samplers;
+    public Dictionary<string, object> Parameters = new Dictionary<string, object>();
+    public Dictionary<string, WeakReference<Texture>> Samplers = new Dictionary<string, WeakReference<Texture>>();
 
     public Material(WeakReference<ShaderProgram> shader = null)
     {
         Shader = shader;
     }
 
-    public void Update()
+    public void Use()
     {
         var shader = Shader.GetValue();
         shader.Use();
-
+        
+        Update(shader);
+    }
+    
+    void Update(ShaderProgram shader)
+    {
         UpdateParameters(shader);
         UpdateSamplers(shader);
     }

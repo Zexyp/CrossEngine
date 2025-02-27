@@ -121,6 +121,9 @@
   <data name="DebugFontAtlas" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\res\utils\debug_font_atlas.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="DefaultTexture" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\res\default_texture.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="Logo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\res\logo.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

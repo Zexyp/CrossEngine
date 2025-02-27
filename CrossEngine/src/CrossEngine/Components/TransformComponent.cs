@@ -11,13 +11,6 @@ using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
-    interface ITransform
-    {
-        Vector3 Position { get; }
-        Quaternion Rotation { get; }
-        Vector3 Scale { get; }
-    }
-
     [AllowSinglePerEntity]
     public class TransformComponent : Component
     {

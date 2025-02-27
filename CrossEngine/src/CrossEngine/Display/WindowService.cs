@@ -145,7 +145,9 @@ namespace CrossEngine.Display
         {
             
         }
+
         bool _lastFrameSkipped = false;
+        
         public void OnUpdate()
         {
             if (!_running)
@@ -157,14 +159,17 @@ namespace CrossEngine.Display
                 if (_render.WaitOne(MaxFrameDuration))
                 {
                     _lastFrameSkipped = false;
+                    
                     _render.Reset();
                     Profiler.Function("signaling render");
                     _main.Set();
                 }
                 else
                 {
-                    if (!_lastFrameSkipped) _log.Trace("skipping frame(s)");
+                    if (!_lastFrameSkipped)
+                        _log.Trace("skipping frame(s)");
                     _lastFrameSkipped = true;
+
                     Profiler.Function("frame skip");
                 }
             }

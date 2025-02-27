@@ -14,10 +14,11 @@ namespace CrossEngine.Core
 {
     public abstract class Application : IDisposable
     {
-        public ServiceManager Manager = new ServiceManager();
+        public readonly ServiceManager Manager = new ServiceManager();
+        protected static Logger Log = new Logger("app");
+
         private bool running = true;
         private EventWaitHandle wait = new EventWaitHandle(false, EventResetMode.ManualReset);
-        private static Logger Log = new Logger("app");
 
         public void Run()
         {
@@ -43,7 +44,7 @@ namespace CrossEngine.Core
                 Profiler.EndScope();
             }
 
-            Log.Trace("destroying");
+            Log.Trace("destroying (may hang due to scheduled task)");
 
             OnDestroy();
 
@@ -84,7 +85,10 @@ namespace CrossEngine.Core
         public virtual void OnEvent(Event e)
         {
             if (e is WindowCloseEvent wce && !wce.Handled)
+            {
                 Close();
+                wce.Handled = true;
+            }
         }
 
         public void Close()

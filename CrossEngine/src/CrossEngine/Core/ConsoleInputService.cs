@@ -32,6 +32,7 @@ namespace CrossEngine.Core
         Logger _log = new Logger("cin");
         StringBuilder _inputBuffer = new StringBuilder();
         bool _enableLineInput = false;
+        bool _consolCancelActive = true; // allows for termination if the app does not update
 
         public override void OnStart()
         {
@@ -48,6 +49,8 @@ namespace CrossEngine.Core
 
         public override void OnDestroy()
         {
+            Console.CancelKeyPress -= OnCancelKeyPress;
+
             _thread = null;
         }
 
@@ -56,6 +59,7 @@ namespace CrossEngine.Core
 
         public void OnUpdate()
         {
+            _consolCancelActive = true;
             while (_queue.TryDequeue(out var ch))
             {
                 Manager.SendEvent(new KeyCharEvent(ch.KeyChar));
@@ -99,9 +103,19 @@ namespace CrossEngine.Core
 
         private void OnCancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
-            Manager.SendEvent(new WindowCloseEvent());
+            _log.Trace("keyboard interrupt");
 
-            e.Cancel = true;
+            var wce = new WindowCloseEvent();
+            Manager.SendEvent(wce);
+
+            e.Cancel = wce.Handled && _consolCancelActive;
+            _consolCancelActive = false;
+
+            if (!e.Cancel)
+            {
+                _log.Trace("terminating");
+                Environment.Exit(1);
+            }
         }
     }
 }

@@ -11,7 +11,6 @@ namespace CrossEngine.Rendering.Cameras
         //_viewMatrix = Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
         public Matrix4x4 ViewMatrix { get; set; } = Matrix4x4.Identity;
         public Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.CreateScale(0.1f);
-        public Matrix4x4 ViewProjectionMatrix { get => ViewMatrix * ProjectionMatrix; }
 
         public Frustum Frustum => Frustum.Create(ProjectionMatrix, ViewMatrix);
 
@@ -24,6 +23,9 @@ namespace CrossEngine.Rendering.Cameras
         {
             ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(fov, aspect, near, far);
         }
+
+        public Matrix4x4 GetViewMatrix() => ViewMatrix;
+        public Matrix4x4 GetMatrix() => Matrix4x4Extension.Invert(ViewMatrix);
 
         //public virtual void GetObjectData(SerializationInfo info)
         //{

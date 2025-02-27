@@ -25,17 +25,17 @@ namespace CrossEngine.Rendering
 		}
 	}
 
-	public enum BlendMode
-	{
-		Opaque = default,
-		Blend,
-		Clip,
-	}
+    public enum BlendMode
+    {
+        Opaque = default,
+        Blend,
+        Clip,
+    }
 
-	public class Renderer2D
+    public class Renderer2D
 	{
-		#region Shader Sources
-		static readonly string VertexShaderSource =
+        #region Shader Sources
+        static readonly string VertexShaderSource =
 #if !OPENGL_ES
 			"#version 330 core\n" +
 #else
@@ -449,6 +449,7 @@ namespace CrossEngine.Rendering
 					_rapi.SetBlendFunc(BlendFunc.None);
 					shader = data.discardingShader.GetValue();
 					break;
+				default: Debug.Assert(false); break;
 			}
 
 			Debug.Assert(shader != null);
@@ -463,9 +464,11 @@ namespace CrossEngine.Rendering
         }
 		#endregion
 
-		public static void SetBlending(BlendMode mode)
+		public static BlendMode SetBlending(BlendMode mode)
 		{
-			data.blending = mode;
+			var last = data.blending;
+            data.blending = mode;
+			return last;
 		}
 
 		#region Quads

@@ -43,22 +43,22 @@ namespace CrossEngine.Platform.OpenGL.Debugging
             {
                 case GLEnum.DebugSeverityHigh:
                     {
-                        GLLog.Error("[high]: " + text);
+                        GLLog.Error("[high]:\n" + text);
                     }
                     break;
                 case GLEnum.DebugSeverityMedium:
                     {
-                        GLLog.Warn("[medium]: " + text);
+                        GLLog.Warn("[medium]:\n" + text);
                     }
                     break;
                 case GLEnum.DebugSeverityLow:
                     {
-                        GLLog.Info("[low]: " + text);
+                        GLLog.Info("[low]:\n" + text);
                     }
                     break;
                 case GLEnum.DebugSeverityNotification:
                     {
-                        GLLog.Trace("[notification]: " + text);
+                        GLLog.Trace("[notification]:\n" + text);
                     }
                     break;
                 default:

@@ -123,7 +123,7 @@ namespace CrossEngine.Assemblies
 
                 if (name.Name.StartsWith("System."))
                 {
-                    Log.Trace($"skip loading system like '{GetPrintName(name)}'");
+                    Log.Trace($"skip loading system-like '{GetPrintName(name)}'");
                     continue;
                 }
 

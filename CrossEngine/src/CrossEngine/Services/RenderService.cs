@@ -13,7 +13,8 @@ using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Platform;
-using CrossEngine.Assets.Loaders;
+using CrossEngine.Loaders;
+using CrossEngine.Rendering.Shaders;
 
 namespace CrossEngine.Services
 {
@@ -39,10 +40,14 @@ namespace CrossEngine.Services
         {
             var ws = Manager.GetService<WindowService>();
             ws.Execute(Setup);
+
+            CallingThreadSetup();
         }
 
         public override void OnDetach()
         {
+            CallingThreadDestroy();
+
             var ws = Manager.GetService<WindowService>();
             ws.Execute(Destroy);
         }
@@ -52,6 +57,8 @@ namespace CrossEngine.Services
 
         private void Setup()
         {
+            RendererApi = RendererApi.Create(_api);
+
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent += OnWindowEvent;
             ws.WindowUpdate += OnWindowUpdate;
@@ -83,6 +90,18 @@ namespace CrossEngine.Services
             _context = null;
         }
 
+        private void CallingThreadSetup()
+        {
+            ShaderPreprocessor.ServiceRequest = action => Execute(action);
+            TextureLoader.ServiceRequest = action => Execute(action);
+        }
+
+        private void CallingThreadDestroy()
+        {
+            TextureLoader.ServiceRequest = null;
+            ShaderPreprocessor.ServiceRequest = null;
+        }
+
         private void OnWindowEvent(Window w, Event e)
         {
             // this is supposed to fix state when resizing window
@@ -90,6 +109,7 @@ namespace CrossEngine.Services
             // also used when window dictates it's own redrawing
             if (!IgnoreRefresh && (e is WindowRefreshEvent))
                 DrawPresent(w.Context);
+
             if (e is WindowResizeEvent wre)
                 RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
         }
@@ -122,9 +142,15 @@ namespace CrossEngine.Services
 
         private void Prepare()
         {
+            void OnServiceRequest(Action action) => action.Invoke();
+
+            ShaderPreprocessor.ServiceRequest = OnServiceRequest;
+            ShaderPreprocessor.Init();
+            TextureLoader.ServiceRequest = OnServiceRequest;
+            TextureLoader.Init();
+
             Renderer2D.Init(RendererApi);
             LineRenderer.Init(RendererApi);
-            
             TextRendererUtil.Init();
 
             _scheduler.RunOnCurrentThread();
@@ -134,21 +160,26 @@ namespace CrossEngine.Services
         {
             _scheduler.RunOnCurrentThread();
 
-            Renderer2D.Shutdown();
-            LineRenderer.Shutdown();
-            
             TextRendererUtil.Shutdown();
+            LineRenderer.Shutdown();
+            Renderer2D.Shutdown();
+
+            TextureLoader.Shutdown();
+            TextureLoader.ServiceRequest = null;
+            ShaderPreprocessor.Shutdown();
+            ShaderPreprocessor.ServiceRequest = null;
         }
+
+        private void OnInternalServiceReqest(Action action) => Execute(action);
 
         public override void OnStart()
         {
-            RendererApi = RendererApi.Create(_api);
-            TextureLoader.InternalInit();
+            
         }
 
         public override void OnDestroy()
         {
-            
+
         }
     }
 }

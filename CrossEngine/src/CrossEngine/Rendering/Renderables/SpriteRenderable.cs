@@ -21,7 +21,7 @@ namespace CrossEngine.Rendering.Renderables
 
         public override void Begin(ICamera camera)
         {
-            Renderer2D.BeginScene(camera.ViewProjectionMatrix);
+            Renderer2D.BeginScene(((ICamera)camera).GetViewProjectionMatrix());
         }
 
         public override void End()
