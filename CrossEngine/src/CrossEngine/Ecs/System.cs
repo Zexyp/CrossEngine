@@ -19,21 +19,22 @@ namespace CrossEngine.Ecs
         void OnFixedUpdate();
     }
 
-    public abstract class ComponentSystem
+    public abstract class System
     {
-        internal protected EcsWorld World { get; internal set; }
-        internal bool Started = false;
+        internal protected World World { get; internal set; }
 
-        public virtual void OnAttach() { }
-        public virtual void OnDetach() { }
-        public virtual void OnStart() { }
-        public virtual void OnStop() { }
-
-        public abstract void Register(Component component);
-        public abstract void Unregister(Component component);
+        protected internal virtual void OnInit() { }
+        protected internal virtual void OnShutdown() { }
+        
+        protected internal virtual void OnAttach() { }
+        protected internal virtual void OnDetach() { }
+        
+        protected internal virtual void OnStart() { }
+        protected internal virtual void OnStop() { }
     }
 
-    public abstract class UnicastSystem<T> : ComponentSystem where T : Component
+    /*
+    public abstract class UnicastSystem<T> : System where T : Component
     {
         private bool inherit;
 
@@ -54,7 +55,7 @@ namespace CrossEngine.Ecs
         public abstract void Unregister(T component);
     }
 
-    public abstract class MulticastSystem<T> : ComponentSystem where T : ITuple
+    public abstract class MulticastSystem<T> : System where T : ITuple
     {
         private bool inherit;
 
@@ -75,4 +76,5 @@ namespace CrossEngine.Ecs
             }
         }
     }
+    */
 }

@@ -12,22 +12,8 @@ namespace CrossEngine.Ecs
     public abstract class Component : ICloneable, ISerializable
     {
         public Entity Entity { get; internal set; }
-        public event Action<Component> EnabledChanged;
 
-        public bool Enabled
-        {
-            get => _enabled;
-            set
-            {
-                if (value == _enabled) return;
-                
-                _enabled = value;
-
-                EnabledChanged?.Invoke(this);
-            }
-        }
-
-        private bool _enabled = true;
+        public bool Enabled;
 
         public Component()
         {
@@ -57,16 +43,11 @@ namespace CrossEngine.Ecs
             OnDeserialize(info);
         }
 
-        //protected internal virtual void OnEnable() { }
-        //protected internal virtual void OnDisable() { }
-        //
-        //protected internal virtual void OnAttach() { }
-        //protected internal virtual void OnDetach() { }
-
         protected internal virtual void OnSerialize(SerializationInfo info) { }
         protected internal virtual void OnDeserialize(SerializationInfo info) { }
     }
 
+    [Obsolete("not implemented")]
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     class AllowSinglePerEntityAttribute : Attribute
     {

@@ -59,26 +59,6 @@
     <PackageReference Include="StbImageSharp" Version="2.27.13" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="src\CrossEngine\Assets\**" />
-    <Compile Remove="src\CrossEngine\Components\**" />
-    <Compile Remove="src\CrossEngine\Ecs\**" />
-    <Compile Remove="src\CrossEngine\Scenes\**" />
-    <Compile Remove="src\CrossEngine\Systems\**" />
-    <EmbeddedResource Remove="src\CrossEngine\Assets\**" />
-    <EmbeddedResource Remove="src\CrossEngine\Components\**" />
-    <EmbeddedResource Remove="src\CrossEngine\Ecs\**" />
-    <EmbeddedResource Remove="src\CrossEngine\Scenes\**" />
-    <EmbeddedResource Remove="src\CrossEngine\Systems\**" />
-    <None Remove="src\CrossEngine\Assets\**" />
-    <None Remove="src\CrossEngine\Components\**" />
-    <None Remove="src\CrossEngine\Ecs\**" />
-    <Compile Remove="src\CrossEngine\Services\AssetService.cs" />
-    <Compile Remove="src\CrossEngine\Services\SceneService.cs" />
-    <None Remove="src\CrossEngine\Scenes\**" />
-    <None Remove="src\CrossEngine\Systems\**" />
-  </ItemGroup>
-
   <!-- exclude platform -->
   <ItemGroup>
     <Compile Remove="src\CrossEngine\Platform\*\**" />
@@ -87,6 +67,12 @@
     <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
     <EmbeddedResource Remove="src\CrossEngine\Utils\ImGui\**" />
     <None Remove="src\CrossEngine\Utils\ImGui\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Remove="src\CrossEngine\Scenes\SceneRenderData.cs" />
+    <Compile Remove="src\CrossEngine\Scenes\SceneRenderer.cs" />
+    <Compile Remove="src\CrossEngine\Scenes\SceneService.cs" />
   </ItemGroup>
 
   <!--
