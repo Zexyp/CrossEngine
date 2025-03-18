@@ -8,6 +8,8 @@ using System.Diagnostics;
 using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Profiling;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace CrossEngine.Ecs
 {
@@ -18,8 +20,12 @@ namespace CrossEngine.Ecs
 
         Dictionary<Type[], Dictionary<Entity, Component[]>> indexes = new(new TypeArrayEqualityComparer());
         Dictionary<Type, List<Component>> _simpleArray = new();
+
+        // callbacks
         Dictionary<Type, Action<Component>> _registerCallbacks = new();
+        Dictionary<Type, Action<Component>> _registerCallbacksInherit = new();
         Dictionary<Type, Action<Component>> _unregisterCallbacks = new();
+        Dictionary<Type, Action<Component>> _unregisterCallbacksInherit = new();
 
         public void AddComponent(Component component)
         {
@@ -34,7 +40,7 @@ namespace CrossEngine.Ecs
                 bool contianed = index.Value.ContainsKey(component.Entity);
                 var array = contianed ? index.Value[component.Entity] : new Component[index.Key.Length];
                 
-                Debug.Assert(array[Array.IndexOf(index.Key, type)] == null);
+                Debug.Assert(array[Array.IndexOf(index.Key, type)] == null, "peak laziness");
                 
                 array[Array.IndexOf(index.Key, type)] = component;
                 if (!contianed)
@@ -45,7 +51,7 @@ namespace CrossEngine.Ecs
                 _simpleArray.Add(type, new());
             _simpleArray[type].Add(component);
 
-            if (_registerCallbacks.TryGetValue(type, out var action)) action?.Invoke(component);
+            NotifyRegister(component);
         }
 
         public void RemoveComponent(Component component)
@@ -70,7 +76,7 @@ namespace CrossEngine.Ecs
             Debug.Assert(_simpleArray.ContainsKey(type));
             _simpleArray[type].Remove(component);
 
-            if (_unregisterCallbacks.TryGetValue(type, out var action)) action?.Invoke(component);
+            NotifyUnregister(component);
         }
 
         public void MakeIndex(Type[] types)
@@ -97,27 +103,97 @@ namespace CrossEngine.Ecs
         }
 
         // this is pure ass
-        public void AddNotifyRegister(Type type, Action<Component> callback)
+        public void AddNotifyRegister(Type type, Action<Component> callback, bool inherit = false)
         {
-            _registerCallbacks.Add(type, callback);
+            if (!inherit)
+            {
+                if (!_registerCallbacks.ContainsKey(type))
+                    _registerCallbacks[type] = callback;
+                else
+                    _registerCallbacks[type] += callback;
+            }
+            else
+            {
+                if (!_registerCallbacksInherit.ContainsKey(type))
+                    _registerCallbacksInherit[type] = callback;
+                else
+                    _registerCallbacksInherit[type] += callback;
+            }
         }
 
-        public void AddNotifyUnregister(Type type, Action<Component> callback)
+        public void AddNotifyUnregister(Type type, Action<Component> callback, bool inherit = false)
         {
-            _unregisterCallbacks.Add(type, callback);
+            if (!inherit)
+            {
+                if (!_unregisterCallbacks.ContainsKey(type))
+                    _unregisterCallbacks[type] = callback;
+                else
+                    _unregisterCallbacks[type] += callback;
+            }
+            else
+            {
+                if (!_unregisterCallbacksInherit.ContainsKey(type))
+                    _unregisterCallbacksInherit[type] = callback;
+                else
+                    _unregisterCallbacksInherit[type] += callback;
+            }
         }
 
         public void RemoveNotifyRegister(Type type, Action<Component> callback)
         {
-            _registerCallbacks.Remove(type);
+            if (_registerCallbacks.ContainsKey(type))
+            {
+                _registerCallbacks[type] -= callback;
+                if (_registerCallbacks[type] == null)
+                    _registerCallbacks.Remove(type);
+            }
+            if (_registerCallbacksInherit.ContainsKey(type))
+            {
+                _registerCallbacksInherit[type] -= callback;
+                if (_registerCallbacksInherit[type] == null)
+                    _registerCallbacksInherit.Remove(type);
+            }
         }
 
         public void RemoveNotifyUnregister(Type type, Action<Component> callback)
         {
-            _unregisterCallbacks.Remove(type);
+            if (_unregisterCallbacks.ContainsKey(type))
+            {
+                _unregisterCallbacks[type] -= callback;
+                if (_unregisterCallbacks[type] == null)
+                    _unregisterCallbacks.Remove(type);
+            }
+            if (_unregisterCallbacksInherit.ContainsKey(type))
+            {
+                _unregisterCallbacksInherit[type] -= callback;
+                if (_unregisterCallbacksInherit[type] == null)
+                    _unregisterCallbacksInherit.Remove(type);
+            }
         }
 
-        public class TypeArrayEqualityComparer : IEqualityComparer<Type[]>
+        private void NotifyRegister(Component component)
+        {
+            var type = component.GetType();
+            if (_registerCallbacks.TryGetValue(type, out var action)) action.Invoke(component);
+            foreach (var pair in _registerCallbacksInherit)
+            {
+                if (pair.Key.IsAssignableFrom(type))
+                    pair.Value.Invoke(component);
+            }
+        }
+
+        private void NotifyUnregister(Component component)
+        {
+            var type = component.GetType();
+            if (_unregisterCallbacks.TryGetValue(type, out var action)) action.Invoke(component);
+            foreach (var pair in _unregisterCallbacksInherit)
+            {
+                if (pair.Key.IsAssignableFrom(type))
+                    pair.Value.Invoke(component);
+            }
+        }
+
+        class TypeArrayEqualityComparer : IEqualityComparer<Type[]>
         {
             public bool Equals(Type[] x, Type[] y)
             {

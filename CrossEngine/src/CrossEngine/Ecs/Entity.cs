@@ -20,6 +20,7 @@ namespace CrossEngine.Ecs
         
         public readonly ReadOnlyCollection<Component> Components;
         public readonly ReadOnlyCollection<Entity> Children;
+        //public TransformComponent Transform { get; private set; }
         
         public Entity Parent
         {

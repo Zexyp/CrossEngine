@@ -43,11 +43,10 @@ namespace CrossEngine.Ecs
             OnDeserialize(info);
         }
 
-        protected internal virtual void OnSerialize(SerializationInfo info) { }
-        protected internal virtual void OnDeserialize(SerializationInfo info) { }
+        protected internal virtual void OnSerialize(SerializationInfo info) => Serializer.UseAttributesWrite(this, info);
+        protected internal virtual void OnDeserialize(SerializationInfo info) => Serializer.UseAttributesRead(this, info);
     }
 
-    [Obsolete("not implemented")]
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     class AllowSinglePerEntityAttribute : Attribute
     {
