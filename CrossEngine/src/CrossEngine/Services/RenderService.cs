@@ -15,6 +15,8 @@ using CrossEngine.Utils;
 using CrossEngine.Platform;
 using CrossEngine.Loaders;
 using CrossEngine.Rendering.Shaders;
+using CrossEngine.Rendering.Buffers;
+using System.Numerics;
 
 namespace CrossEngine.Services
 {
@@ -25,11 +27,12 @@ namespace CrossEngine.Services
         public event Action<RenderService> BeforeDraw;
         public event Action<RenderService> AfterDraw;
         public bool IgnoreRefresh { get; set; } = false;
+        public ISurface MainSurface => _surface;
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
-        bool _running = false;
         GraphicsContext _context;
         GraphicsApi _api;
+        ScreenSurface _surface = new ScreenSurface();
 
         public RenderService()
         {
@@ -67,8 +70,9 @@ namespace CrossEngine.Services
             _context.Init();
 
             RendererApi.Init();
-            RendererApi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
+            RendererApi.SetClearColor(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
             RendererApi.SetViewport(0, 0, ws.MainWindow.Width, ws.MainWindow.Height);
+            _surface.DoResize(ws.MainWindow.Width, ws.MainWindow.Height);
 
             Prepare();
         }
@@ -111,7 +115,10 @@ namespace CrossEngine.Services
                 DrawPresent(w.Context);
 
             if (e is WindowResizeEvent wre)
+            {
                 RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
+                _surface.DoResize(wre.Width, wre.Height);
+            }
         }
 
         private void OnWindowUpdate(Window w)
@@ -128,6 +135,7 @@ namespace CrossEngine.Services
             _scheduler.RunOnCurrentThread();
 
             BeforeDraw?.Invoke(this);
+            _surface.DoUpdate();
             Draw?.Invoke(this);
             AfterDraw?.Invoke(this);
 
@@ -180,6 +188,23 @@ namespace CrossEngine.Services
         public override void OnDestroy()
         {
 
+        }
+
+        class ScreenSurface : ISurface
+        {
+            public WeakReference<Framebuffer> Buffer => null;
+            public Vector2 Size { get; private set; }
+
+            public event Action<ISurface, float, float> Resize;
+            public event Action<ISurface> Update;
+
+            public void DoResize(float width, float height)
+            {
+                Size = new(width, height);
+                Resize?.Invoke(this, width, height);
+            }
+
+            public void DoUpdate() => Update?.Invoke(this);
         }
     }
 }
