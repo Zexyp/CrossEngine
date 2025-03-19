@@ -9,10 +9,12 @@ using CrossEngine.Components;
 using CrossEngine.Display;
 using CrossEngine.Ecs;
 using CrossEngine.Events;
+using CrossEngine.Rendering;
+using ImGuiNET;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.Components
 {
-    public class RenderSystem : UnicastSystem<CameraComponent>
+    public class RenderSystem : CrossEngine.Ecs.System
     {
         public CameraComponent? PrimaryCamera
         {
@@ -29,19 +31,56 @@ namespace CrossEngine.Systems
             }
         }
         
-        public event Action<RenderSystem> PrimaryCameraChanged;
+        event Action<RenderSystem> PrimaryCameraChanged;
         
         private CameraComponent? _primaryCamera = null;
         private Vector2 _lastSize = Vector2.One;
+        private ISurface _surface;
 
-        public void Resize(float width, float height)
+        public void SetSurface(ISurface surface)
+        {
+            if (_surface != null)
+            {
+                _surface.Resize -= OnResize;
+                _surface.Update -= OnRender;
+            }
+            _surface = surface;
+            if (_surface != null)
+            {
+                _surface.Resize += OnResize;
+                _surface.Update += OnRender;
+                _lastSize = _surface.Size;
+                OnResize(_surface, _lastSize.X, _lastSize.Y);
+            }
+        }
+
+        private void OnResize(ISurface sender, float width, float height)
         {
             _lastSize = new(width, height);
             _primaryCamera?.Resize(width, height);
         }
 
-        public override void Register(CameraComponent component)
+        private void OnRender(ISurface sender)
         {
+            
+        }
+
+        protected internal override void OnInit()
+        {
+            World.Storage.AddNotifyRegister(typeof(CameraComponent), RegisterCamera, true);
+            World.Storage.AddNotifyUnregister(typeof(CameraComponent), UnregisterCamera, true);
+        }
+
+        protected internal override void OnShutdown()
+        {
+            World.Storage.RemoveNotifyRegister(typeof(CameraComponent), RegisterCamera);
+            World.Storage.RemoveNotifyUnregister(typeof(CameraComponent), UnregisterCamera);
+        }
+
+        private void RegisterCamera(Component c)
+        {
+            CameraComponent component = (CameraComponent)c;
+
             if (component.Primary)
             {
                 Deprioritize(PrimaryCamera);
@@ -51,8 +90,10 @@ namespace CrossEngine.Systems
             component.PrimaryChanged += OnCameraPrimaryChanged;
         }
 
-        public override void Unregister(CameraComponent component)
+        private void UnregisterCamera(Component c)
         {
+            CameraComponent component = (CameraComponent)c;
+
             component.PrimaryChanged -= OnCameraPrimaryChanged;
 
             if (component == PrimaryCamera)

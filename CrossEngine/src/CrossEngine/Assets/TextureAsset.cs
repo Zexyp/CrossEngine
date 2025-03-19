@@ -1,5 +1,5 @@
 ﻿using CrossEngine.Assets;
-using CrossEngine.Assets.Loaders;
+using CrossEngine.Loaders;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Serialization;
 using CrossEngine.Utils;
@@ -33,7 +33,7 @@ namespace CrossEngine.Assets
         {
             using (Stream stream = await context.OpenRelativeStream(RelativePath))
             {
-                Texture = context.GetLoader<TextureLoader>().ScheduleTextureLoad(stream);
+                Texture = TextureLoader.LoadTextureFromStream(stream);
             }
             
             _loaded = true;
@@ -43,7 +43,8 @@ namespace CrossEngine.Assets
         {
             _loaded = false;
 
-            context.GetLoader<TextureLoader>().ScheduleTextureUnload(Texture);
+            throw new NotImplementedException();
+            //context.GetLoader<TextureLoader>().ScheduleTextureUnload(Texture);
             Texture = null;
         }
 

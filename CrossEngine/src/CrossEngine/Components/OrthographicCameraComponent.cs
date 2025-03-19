@@ -58,7 +58,7 @@ namespace CrossEngine.Components
 
         private float _far = 1;
         private float _near = -1;
-        private float _size = 1;
+        private float _size = 10;
         private float _aspect = 1;
         private bool _projectionDirty = true;
         private Matrix4x4 _projection = Matrix4x4.Identity;

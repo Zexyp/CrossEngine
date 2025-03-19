@@ -13,7 +13,7 @@ namespace CrossEngine.Ecs
     {
         public Entity Entity { get; internal set; }
 
-        public bool Enabled;
+        //public bool Enabled;
 
         public Component()
         {
@@ -26,20 +26,20 @@ namespace CrossEngine.Ecs
             Log.Default.Trace("using default ctor for cloning of component");
 
             var comp = (Component)Activator.CreateInstance(this.GetType());
-            comp.Enabled = this.Enabled;
+            //comp.Enabled = this.Enabled;
             
             return comp;
         }
 
         void ISerializable.GetObjectData(SerializationInfo info)
         {
-            info.AddValue("Enabled", Enabled);
+            //info.AddValue("Enabled", Enabled);
             OnSerialize(info);
         }
 
         void ISerializable.SetObjectData(SerializationInfo info)
         {
-            Enabled = info.GetValue<bool>("Enabled");
+            //Enabled = info.GetValue<bool>("Enabled");
             OnDeserialize(info);
         }
 

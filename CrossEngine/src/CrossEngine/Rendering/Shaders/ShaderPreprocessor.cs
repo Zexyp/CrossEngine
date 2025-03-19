@@ -2,6 +2,7 @@
 
 using CrossEngine.Logging;
 using CrossEngine.Platform;
+using CrossEngine.Profiling;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 using System;
@@ -76,8 +77,9 @@ void main() {
 
         public static WeakReference<ShaderProgram> CreateProgramFromStream(Stream stream, Func<string, Stream> includeCallback = null)
         {
-
+            Profiler.BeginScope("shader preprocessor");
             var sources = SplitSources(stream, includeCallback);
+            Profiler.EndScope();
 
             var program = new WeakReference<ShaderProgram>(null);
 

@@ -8,6 +8,7 @@ using CrossEngine.Logging;
 
 using CrossEngine.Platform.OpenGL;
 
+// todo: manual dispose object inheritance
 namespace CrossEngine.Rendering
 {
     class DummyRendererApi : RendererApi

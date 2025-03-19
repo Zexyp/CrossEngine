@@ -27,9 +27,9 @@ namespace CrossEngine.Platform.OpenGL
 
         public override unsafe void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)
         {
-            var vb = vertexArray.GetValue();
-            var ib = vb.GetIndexBuffer().GetValue();
-            vb.Bind();
+            var va = vertexArray.GetValue();
+            var ib = va.GetIndexBuffer().GetValue();
+            va.Bind();
             uint count = (indexCount != 0) ? indexCount : ib.Count;
             gl.DrawElements(GLEnum.Triangles, count, GLUtils.ToGLIndexDataType(ib.DataType), null);
             // TODO: consider unbinding to keep the vertex array state safe

@@ -13,17 +13,15 @@ namespace CrossEngine.Assets
 {
     public static class AssetManager
     {
-        public static AssetPool Current { get => _current; }
+        public static AssetList Current { get => _current; }
         
-        internal static AssetService service;
-        
-        private static AssetPool _current;
+        private static AssetList _current;
         private static JsonSerializerOptions _jso;
 
         static AssetManager()
         {
             _jso = new JsonSerializerOptions();
-            foreach (var item in CrossEngine.Serialization.SceneSerializer.BaseConverters)
+            foreach (var item in Serialization.Serializer.BaseJsonConverters)
             {
                 _jso.Converters.Add(item);
             }
@@ -39,24 +37,22 @@ namespace CrossEngine.Assets
         public static T GetNamed<T>(string name) where T : Asset => _current.GetNamed<T>(name);
         public static Asset GetNamed(Type typeOfAsset, string name) => _current.GetNamed(typeOfAsset, name);
 
-        public static void Bind(AssetPool pool)
+        public static void Bind(AssetList pool)
         {
-            _current?.BindLoaders(null);
             _current = pool;
-            _current?.BindLoaders(service.Loaders.ToArray());
         }
 
-        public static async Task<AssetPool> ReadFile(string filepath)
+        public static async Task<AssetList> ReadFile(string filepath)
         {
             using (Stream stream = await PlatformHelper.FileRead(filepath))
             {
-                var pool = JsonSerializer.Deserialize<AssetPool>(stream, _jso);
+                var pool = JsonSerializer.Deserialize<AssetList>(stream, _jso);
                 pool.Directory = Path.Join(Path.GetDirectoryName(filepath), pool.Directory);
                 return pool;
             }
         }
 
-        public static void WriteFile(AssetPool pool, string filepath)
+        public static void WriteFile(AssetList pool, string filepath)
         {
             using (Stream stream = PlatformHelper.FileWrite(filepath))
             {
@@ -65,26 +61,6 @@ namespace CrossEngine.Assets
                 JsonSerializer.Serialize(stream, pool, _jso);
                 pool.Directory = prevdir;
             }
-        }
-
-        public static void Load()
-        {
-            service.LoadAsync(_current).Wait();
-        }
-
-        public static void Unload()
-        {
-            service.UnloadAsync(_current).Wait();
-        }
-
-        public static Task LoadAsync()
-        {
-            return service.LoadAsync(_current);
-        }
-
-        public static Task UnloadAsync()
-        {
-            return service.UnloadAsync(_current);
         }
     }
 }

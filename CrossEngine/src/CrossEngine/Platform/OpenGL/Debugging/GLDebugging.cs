@@ -25,7 +25,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
         static GLDebugging()
         {
             GLLog = new Logger("OpenGL");
-            GLLog.Pattern = "[%t][%n]";
+            GLLog.Pattern = "[%t][%n]%m";
         }
 
         static public void GLError(string text)
@@ -71,7 +71,7 @@ namespace CrossEngine.Platform.OpenGL.Debugging
 
         public static unsafe void Enable(LogLevel level = LogLevel.Trace)
         {
-            GLLog.LogLevel = level;
+            GLLog.Level = level;
             gl.DebugMessageCallback(GLMessage, null);
             gl.Enable(GLEnum.DebugOutput);
             gl.Enable(GLEnum.DebugOutputSynchronous);

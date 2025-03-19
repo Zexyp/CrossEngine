@@ -7,6 +7,7 @@ using CrossEngine.Serialization;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using System.Linq;
+using CrossEngine.Components;
 
 // TODO: inherit not implemented
 
@@ -20,7 +21,7 @@ namespace CrossEngine.Ecs
         
         public readonly ReadOnlyCollection<Component> Components;
         public readonly ReadOnlyCollection<Entity> Children;
-        //public TransformComponent Transform { get; private set; }
+        public TransformComponent? Transform { get; private set; }
         
         public Entity Parent
         {
@@ -75,6 +76,12 @@ namespace CrossEngine.Ecs
 
         public Component AddComponent(Component component)
         {
+            if (component is TransformComponent tc)
+            {
+                Debug.Assert(Transform == null);
+                Transform = tc;
+            }
+
             _components.Add(component);
 
             ComponentAdded?.Invoke(this, component);
@@ -89,6 +96,12 @@ namespace CrossEngine.Ecs
             ComponentRemoved?.Invoke(this, component);
 
             _components.Remove(component);
+
+            if (component is TransformComponent tc)
+            {
+                Debug.Assert(Transform == tc);
+                Transform = null;
+            }
         }
 
         public void RemoveComponent(Type type)

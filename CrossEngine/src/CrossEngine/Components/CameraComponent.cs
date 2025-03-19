@@ -9,16 +9,25 @@ using CrossEngine.Ecs;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Rendering.Culling;
 using CrossEngine.Serialization;
-using CrossEngine.Systems;
+using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Components
 {
     public class CameraComponent : Component, ICamera
     {
-        public Matrix4x4 ViewMatrix { get => Matrix4x4.CreateTranslation(-Entity?.Transform?.Position ?? Vector3.Zero) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Entity?.Transform?.Rotation ?? Quaternion.Identity)); }
+        public Matrix4x4 ViewMatrix
+        {
+            get
+            {
+                var transform = Entity?.Transform;
+                return Matrix4x4.CreateTranslation(-transform?.Position ?? Vector3.Zero) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(transform?.Rotation ?? Quaternion.Identity));
+            }
+        }
         public virtual Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.Identity;
-        public Frustum Frustum => Frustum.Create(ProjectionMatrix, ViewMatrix);
+
+        Matrix4x4 ICamera.GetViewMatrix() => ViewMatrix;
+        Matrix4x4 ITransform.GetMatrix() => Matrix4x4Extension.Invert(ViewMatrix);
 
         [EditorValue]
         public bool Primary
@@ -34,7 +43,7 @@ namespace CrossEngine.Components
             }
         }
 
-        public event Action<CameraComponent> PrimaryChanged;
+        internal event Action<CameraComponent> PrimaryChanged;
 
         private bool _primary;
 

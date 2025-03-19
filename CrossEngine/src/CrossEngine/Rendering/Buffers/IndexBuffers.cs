@@ -14,6 +14,9 @@ namespace CrossEngine.Rendering.Buffers
     {
         None = 0,
 
+        //Int,
+        //Short,
+        //Byte,
         UInt,
         UShort,
         UByte,

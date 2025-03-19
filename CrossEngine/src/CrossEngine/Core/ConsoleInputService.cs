@@ -42,7 +42,7 @@ namespace CrossEngine.Core
 
             //_queue.Clear(); // trust issues
 
-            _thread = new Thread(Loop);
+            _thread = new Thread(() => Application.SafeExecute(Loop)) { Name = "console" };
             _thread.IsBackground = true;
             _thread.Start();
         }

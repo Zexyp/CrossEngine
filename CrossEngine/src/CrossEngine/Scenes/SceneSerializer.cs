@@ -16,18 +16,6 @@ namespace CrossEngine.Serialization
 {
     public static class SceneSerializer
     {
-        // TODO: move this somewhere
-        public static readonly JsonConverter[] BaseConverters = new JsonConverter[]
-        {
-            new SerializableJsonConverter(),
-
-            new Vector2JsonConverter(),
-            new Vector3JsonConverter(),
-            new Vector4JsonConverter(),
-            new QuaternionJsonConverter(),
-            new Matrix4x4JsonConverter()
-        };
-
         static readonly JsonSerializerOptions options;
         static readonly TypeResolver resolver;
 
@@ -49,7 +37,7 @@ namespace CrossEngine.Serialization
                     new AssetGuidJsonConverter(),
 
                     new SceneJsonConverter(),
-                }.Concat(BaseConverters))
+                }.Concat(Serialization.Serializer.BaseJsonConverters))
             {
                 options.Converters.Add(item);
             }

@@ -15,6 +15,6 @@ namespace CrossEngine.Rendering.Cameras
         virtual Matrix4x4 GetViewProjectionMatrix() => GetViewMatrix() * ProjectionMatrix;
         virtual Matrix4x4 GetViewMatrix() => Matrix4x4Extension.Invert(GetMatrix());
 
-        abstract Frustum Frustum { get; }
+        virtual Frustum Frustum { get => throw new NotImplementedException(); }
     }
 }

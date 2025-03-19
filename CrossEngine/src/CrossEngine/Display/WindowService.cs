@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using CrossEngine.Logging;
+using CrossEngine.Core;
 
 namespace CrossEngine.Display
 {
@@ -44,7 +45,7 @@ namespace CrossEngine.Display
             _running = true;
             if (_mode == Mode.ThreadLoop)
             {
-                _windowThread = new Thread(Loop);
+                _windowThread = new Thread(() => Application.SafeExecute(Loop)) { Name = "window" };
                 _windowThread.Start();
             }
             else

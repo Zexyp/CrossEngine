@@ -22,41 +22,8 @@ namespace CrossEngine.Core
 
         public void Run()
         {
-            wait.Reset();
-
-            Log.Trace("running");
-
-#if PROFILING
-            Profiler.BeginSession("session", "profiling.json");
-#endif
-            Log.Trace("intializing");
-
-            OnInit();
-            
-            Log.Trace("intialized");
-
-            while (running)
-            {
-                Profiler.BeginScope("Update");
-
-                OnUpdate();
-
-                Profiler.EndScope();
-            }
-
-            Log.Trace("destroying (may hang due to scheduled task)");
-
-            OnDestroy();
-
-            Log.Trace("destroyed");
-
-#if PROFILING
-            Profiler.EndSession();
-#endif
-
-            Log.Trace("ended");
-
-            wait.Set();
+            Thread.CurrentThread.Name = "main";
+            SafeExecute(InternalRun);
         }
 
         public virtual void OnInit()
@@ -102,9 +69,62 @@ namespace CrossEngine.Core
             wait.WaitOne();
         }
 
+        // what the
         public void Dispose()
         {
             GC.SuppressFinalize(this);
+        }
+
+        internal static void SafeExecute(Action action)
+        {
+            try
+            {
+                action.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal($"a wild unhandled exception has appeared in thread '{Thread.CurrentThread.Name}':\n{ex}");
+                throw;
+            }
+        }
+
+        private void InternalRun()
+        {
+            wait.Reset();
+
+            Log.Trace("running");
+
+#if PROFILING
+                Profiler.BeginSession("session", "profiling.json");
+#endif
+            Log.Trace("intializing");
+
+            OnInit();
+
+            Log.Trace("intialized");
+
+            while (running)
+            {
+                Profiler.BeginScope("Update");
+
+                OnUpdate();
+
+                Profiler.EndScope();
+            }
+
+            Log.Trace("destroying (may hang due to scheduled task(s))");
+
+            OnDestroy();
+
+            Log.Trace("destroyed");
+
+#if PROFILING
+                Profiler.EndSession();
+#endif
+
+            Log.Trace("ended");
+
+            wait.Set();
         }
     }
 }

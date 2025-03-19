@@ -9,6 +9,7 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Platform.OpenGL;
 using StbImageSharp;
 using CrossEngine.Utils;
+using CrossEngine.Profiling;
 
 namespace CrossEngine.Loaders
 {
@@ -58,13 +59,17 @@ namespace CrossEngine.Loaders
 
         public static WeakReference<Texture> LoadTextureFromBytes(byte[] filedata, ColorFormat? desiredFormat = null)
         {
+            Profiler.BeginScope("texture parsing");
             ImageResult result = ImageResult.FromMemory(filedata);
+            Profiler.EndScope();
             return InternalLoad(result, desiredFormat);
         }
 
         public static WeakReference<Texture> LoadTextureFromStream(Stream filedata, ColorFormat? desiredFormat = null)
         {
+            Profiler.BeginScope("texture parsing");
             ImageResult result = ImageResult.FromStream(filedata);
+            Profiler.EndScope();
             return InternalLoad(result, desiredFormat);
         }
 

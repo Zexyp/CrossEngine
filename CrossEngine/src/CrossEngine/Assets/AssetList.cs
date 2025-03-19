@@ -11,20 +11,18 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    public class AssetPool : IAssetLoadContext, ISerializable
+    public class AssetList : IAssetLoadContext, ISerializable
     {
         [EditorString]
         public string Directory = "./";
 
-        OrderedDictionary<Type, IDictionary> _collections = new();
+        Dictionary<Type, IDictionary> _collections = new();
         bool _loaded = false;
-        Loader[] _loaders = null;
 
         public void Add(Asset asset)
         {
@@ -33,19 +31,15 @@ namespace CrossEngine.Assets
 
             Type type = asset.GetType();
             if (!_collections.ContainsKey(type))
-            {
-                var col = new Dictionary<Guid, Asset>();
-                if (type.IsDefined(typeof(DependantAssetAttribute), false))
-                    _collections.Add(type, col);
-                else
-                    _collections.Insert(0, type, col);
-            }
+                _collections.Add(type, new Dictionary<Guid, Asset>());
+            
             _collections[type].Add(asset.Id, asset);
         }
 
         public void Remove(Asset asset)
         {
             Type type = asset.GetType();
+            
             var col = _collections[type];
             col.Remove(asset.Id);
 
@@ -166,12 +160,7 @@ namespace CrossEngine.Assets
             return result;
         }
 
-        public void BindLoaders(Loader[] loaders)
-        {
-            _loaders = loaders;
-        }
-
-        public async Task<bool> LoadAsset(Asset asset)
+        private async Task<bool> LoadAsset(Asset asset)
         {
             try
             {
@@ -181,13 +170,13 @@ namespace CrossEngine.Assets
             }
             catch (Exception ex)
             {
-                AssetService.Log.Error($"failed to load asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
-                AssetService.Log.Trace($"load asset failiure details: {ex}");
+                Log.Default.Error($"failed to load asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
+                Log.Default.Trace($"load asset failiure details: {ex}");
                 return false;
             }
         }
 
-        public async Task<bool> UnloadAsset(Asset asset)
+        private async Task<bool> UnloadAsset(Asset asset)
         {
             try
             {
@@ -197,8 +186,8 @@ namespace CrossEngine.Assets
             }
             catch (Exception ex)
             {
-                AssetService.Log.Error($"failed to unload asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
-                AssetService.Log.Trace($"unload asset failiure details: {ex}");
+                Log.Default.Error($"failed to unload asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
+                Log.Default.Trace($"unload asset failiure details: {ex}");
                 return false;
             }
         }
@@ -214,28 +203,9 @@ namespace CrossEngine.Assets
             return Path.Join(Directory, realtivePath);
         }
 
-        async Task IAssetLoadContext.LoadChild(Type type, Guid id, Action<Asset> returnCallback)
+        public Asset GetDependency(Type type, Guid id)
         {
-            var ch = (Asset)_collections[type][id];
-            returnCallback.Invoke(ch);
-
-            await LoadAsset(ch);
-        }
-
-        async Task IAssetLoadContext.FreeChild(Asset asset)
-        {
-            await UnloadAsset((Asset)_collections[asset.GetType()][asset.Id]);
-        }
-
-        public Loader GetLoader(Type type)
-        {
-            for (int i = 0; i < _loaders.Length; i++)
-            {
-                var l = _loaders[i];
-                if (l.GetType() == type)
-                    return l;
-            }
-            return null;
+            throw new NotImplementedException();
         }
         #endregion
 

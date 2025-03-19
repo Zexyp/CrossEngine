@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 
 namespace CrossEngine.Utils;
@@ -7,15 +8,21 @@ public interface ITransform
     Matrix4x4 GetMatrix();
 }
 
-public class Transform : ITransform
+public interface ITransformCache : ITransform
+{
+    event Action<ITransformCache> Invalidated;
+}
+
+public class Transform : ITransformCache
 {
     public Vector3 Position
     {
         get => _translation;
         set
         {
-            _dirty = true;
             _translation = value;
+            _dirty = true;
+            Invalidated?.Invoke(this);
         }
     }
     public Quaternion Rotation
@@ -23,8 +30,9 @@ public class Transform : ITransform
         get => _rotation;
         set
         {
-            _dirty = true;
             _rotation = value;
+            _dirty = true;
+            Invalidated?.Invoke(this);
         }
     }
     public Vector3 Scale
@@ -32,9 +40,26 @@ public class Transform : ITransform
         get => _scale;
         set
         {
-            _dirty = true;
             _scale = value;
+            _dirty = true;
+            Invalidated?.Invoke(this);
         }
+    }
+
+    public Vector3 WorldPosition
+    {
+        get => throw new NotImplementedException();
+        set => throw new NotImplementedException();
+    }
+    public Quaternion WorldRotation
+    {
+        get => throw new NotImplementedException();
+        set => throw new NotImplementedException();
+    }
+    public Vector3 WorldScale
+    {
+        get => throw new NotImplementedException();
+        set => throw new NotImplementedException();
     }
 
     public Vector3 Euler
@@ -42,22 +67,47 @@ public class Transform : ITransform
         get => QuaternionExtension.ToEuler(_rotation);
         set
         {
-            _dirty = true;
             _rotation = QuaternionExtension.RotateXYZ(value);
+            _dirty = true;
+            Invalidated?.Invoke(this);
+        }
+    }
+
+    public ITransformCache WorldTransformProvider
+    {
+        get => _worldTransformProvider;
+        set
+        {
+            if (_worldTransformProvider != null) _worldTransformProvider.Invalidated -= OnParentInvlaidated;
+            _worldTransformProvider = value;
+            if (_worldTransformProvider != null) _worldTransformProvider.Invalidated += OnParentInvlaidated;
+            _dirty = true;
+            Invalidated?.Invoke(this);
         }
     }
 
     private bool _dirty = true;
+    private Matrix4x4 _worldCache = Matrix4x4.Identity;
+    private Vector3 _translation = Vector3.Zero;
+    private Quaternion _rotation = Quaternion.Identity;
+    private Vector3 _scale = Vector3.One;
+    private ITransformCache _worldTransformProvider = null;
 
-    private Matrix4x4 _matrix;
-    private Vector3 _translation;
-    private Quaternion _rotation;
-    private Vector3 _scale;
+    public event Action<ITransformCache> Invalidated;
 
-    public Matrix4x4 GetMatrix() {
+    public Matrix4x4 GetWorldTransform()
+    {
         if (_dirty)
-            _matrix = Matrix4x4.CreateScale(Scale) * Matrix4x4.CreateFromQuaternion(Rotation) * Matrix4x4.CreateTranslation(Position);
+            _worldCache = (_worldTransformProvider != null) ? (GetTransoform() * _worldTransformProvider.GetMatrix()) : GetTransoform();
         _dirty = false;
-        return _matrix;
+        return _worldCache;
+    }
+    public Matrix4x4 GetTransoform() => Matrix4x4.CreateScale(Scale) * Matrix4x4.CreateFromQuaternion(Rotation) * Matrix4x4.CreateTranslation(Position);
+
+    Matrix4x4 ITransform.GetMatrix() => GetWorldTransform();
+
+    private void OnParentInvlaidated(ITransformCache transform)
+    {
+        _dirty = true;
     }
 }

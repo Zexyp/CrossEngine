@@ -13,14 +13,14 @@ namespace CrossEngine.Serialization.Json
     {
         public override bool CanConvert(Type typeToConvert) => typeToConvert == typeof(Entity);
 
-        Dictionary<Guid, Entity> _pool = new();
-        List<(Entity Entity, Guid Id)> _bindToParent = new();
+        Dictionary<int, Entity> _pool = new();
+        List<(Entity Entity, int Id)> _bindToParent = new();
 
         protected override void OnSerializeContent(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options, SerializationInfo info)
         {
             var entity = (Entity)value;
             if (entity.Parent != null)
-                writer.WriteString("Parent", entity.Parent.Id);
+                writer.WriteNumber("Parent", entity.Parent.Id);
         }
 
         protected override void OnDeserializeContent(JsonElement reader, ISerializable value, JsonSerializerOptions options, SerializationInfo info)
@@ -28,7 +28,7 @@ namespace CrossEngine.Serialization.Json
             var entity = (Entity)value;
             _pool.Add(entity.Id, entity);
             if (reader.TryGetProperty("Parent", out var element))
-                _bindToParent.Add((entity, element.GetGuid()));
+                _bindToParent.Add((entity, element.GetInt32()));
         }
 
         public void Init()

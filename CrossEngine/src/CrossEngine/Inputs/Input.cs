@@ -14,9 +14,9 @@ namespace CrossEngine.Inputs
     {
         private static Logger _log = new Logger("input");
 
-        [ThreadStatic]
+        //[ThreadStatic]
         static internal Mouse mouse;
-        [ThreadStatic]
+        //[ThreadStatic]
         static internal Keyboard keyboard;
 
         static public void ForceReset()

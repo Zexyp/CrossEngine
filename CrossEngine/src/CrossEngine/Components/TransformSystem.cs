@@ -7,57 +7,54 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 
-using CrossEngine.Components;
 using CrossEngine.Profiling;
 using CrossEngine.Ecs;
-using System.ComponentModel;
 
-namespace CrossEngine.Systems
+namespace CrossEngine.Components
 {
-    public class TransformSystem : UnicastSystem<TransformComponent>, IUpdatedSystem
+    // handles sparse transform hierarchy connections
+    public class TransformSystem : CrossEngine.Ecs.System
     {
-        private readonly List<TransformComponent> _roots = new List<TransformComponent>();
-#if DEBUG_TRANSFORMS
-        private readonly List<TransformComponent> _components = new List<TransformComponent>();
-#endif
-
-        public override void Register(TransformComponent component)
+        protected internal override void OnInit()
         {
-            ParentCheck(component);
-            component.ParentChanged += ParentCheck;
+            World.Storage.AddNotifyRegister(typeof(TransformComponent), Register);
+            World.Storage.AddNotifyUnregister(typeof(TransformComponent), Unregister);
+        }
 
-#if DEBUG_TRANSFORMS
-            _components.Add(component);
-#endif
+        protected internal override void OnShutdown()
+        {
+            World.Storage.RemoveNotifyRegister(typeof(TransformComponent), Register);
+            World.Storage.RemoveNotifyUnregister(typeof(TransformComponent), Unregister);
+        }
+
+        private void Register(Component component)
+        {
+            var trans = (TransformComponent)component;
 
             component.Entity.ParentChanged += OnEntityParentChanged;
 
-            AttachTransform(component);
+            AttachTransform(trans);
+        }
+
+        public void Unregister(Component component)
+        {
+            var trans = (TransformComponent)component;
+            
+            DetachTransform(trans);
+
+            component.Entity.ParentChanged -= OnEntityParentChanged;
         }
 
         private void OnEntityParentChanged(Entity sender)
         {
-            sender.Transform.Parent = GetTopTransformComponent(sender);
+            sender.GetComponent<TransformComponent>().Parent = GetTopTransformComponent(sender);
         }
 
-        public override void Unregister(TransformComponent component)
-        {
-            DetachTransform(component);
-
-            component.Entity.ParentChanged -= OnEntityParentChanged;
-
-#if DEBUG_TRANSFORMS
-            _components.Remove(component);
-#endif
-
-            component.ParentChanged -= ParentCheck;
-            _roots.Remove(component);
-        }
-
-        public void OnUpdate()
+        void OnUpdate()
         {
             Profiler.BeginScope($"{nameof(TransformSystem)}.{nameof(TransformSystem.OnUpdate)}");
 
+            /*
             void RecursiveUpdate(TransformComponent c)
             {
                 c.Update();
@@ -77,19 +74,19 @@ namespace CrossEngine.Systems
             //{
             //    RecursiveUpdate(component);
             //});
+            */
 
             Profiler.EndScope();
         }
 
-#if DEBUG_TRANSFORMS
-        public void DebugRender()
+        public void RenderDebugLines()
         {
-            for (int i = 0; i < _components.Count; i++)
+            var arr = World.Storage.GetArray(typeof(TransformComponent));
+            for (int i = 0; i < arr.Count; i++)
             {
-                Rendering.LineRenderer.DrawAxies(_components[i].WorldTransformMatrix);
+                Rendering.LineRenderer.DrawAxies(((TransformComponent)arr[i]).GetWorldTransformMatrix());
             }
         }
-#endif
 
         // i do not care about memory
         private TransformComponent[] GetBottomTransformComponents(Entity root)
@@ -120,12 +117,6 @@ namespace CrossEngine.Systems
             return GetTopTransformComponent(ent.Parent);
         }
 
-        private void ParentCheck(TransformComponent component)
-        {
-            if (component.Parent == null) _roots.Add(component);
-            else _roots.Remove(component);
-        }
-
         private void AttachTransform(TransformComponent component)
         {
             // basically insert yourself
@@ -140,10 +131,13 @@ namespace CrossEngine.Systems
 
         private void DetachTransform(TransformComponent component)
         {
-            // bridge the connection
-            while (component.Children.Count > 0)
-                component.Children[0].Parent = component.Parent;
-
+            // bridge the connections
+            var parent = GetTopTransformComponent(component.Entity);
+            var children = GetBottomTransformComponents(component.Entity);
+            for (int i = 0; i < children.Length; i++)
+            {
+                children[i].Parent = parent;
+            }
             component.Parent = null;
         }
     }

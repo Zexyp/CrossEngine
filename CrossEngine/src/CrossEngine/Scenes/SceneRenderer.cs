@@ -12,7 +12,7 @@ using CrossEngine.Utils;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Renderables;
 
-namespace CrossEngine.Rendering
+namespace CrossEngine.Scenes
 {
     public static class SceneRenderer
     {

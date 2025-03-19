@@ -648,6 +648,7 @@ namespace CrossEngine.Utils
         }
     }
 
+    // todo: merge with VecColor
     public static class ColorHelper
     {
         //public static Vector3 RGBFromUInt(uint color)

@@ -1,6 +1,4 @@
-﻿using CrossEngine.Components;
-using CrossEngine.Systems;
-using CrossEngine.Ecs;
+﻿using CrossEngine.Ecs;
 
 using System;
 using System.Collections.Generic;
@@ -12,53 +10,36 @@ using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Serialization;
 using System.Collections.ObjectModel;
-using CrossEngine.Assets;
 using System.Drawing;
 using CrossEngine.Services;
 using System.Diagnostics;
+using CrossEngine.Logging;
 using CrossEngine.Profiling;
+using CrossEngine.Components;
 
 namespace CrossEngine.Scenes
 {
     public class Scene : ICloneable
     {
-        public readonly EcsWorld World = new EcsWorld();
-        public readonly SceneRenderData RenderData = new SceneRenderData();
-        public readonly ReadOnlyCollection<Entity> Entities;
-        readonly SceneLayerRenderData _defaultLayer = new SceneLayerRenderData();
         bool _loaded = false;
         readonly List<Entity> _roots = new();
-        public bool Started { get; private set; } = false;
         readonly List<Entity> _entities = new List<Entity>();
+        readonly Dictionary<int, Entity> _ids = new Dictionary<int, Entity>();
+        public readonly World World = new World();
+        public readonly ReadOnlyCollection<Entity> Entities;
 
         public Scene()
         {
             Entities = _entities.AsReadOnly();
 
-            _defaultLayer = new SceneLayerRenderData();
-            RenderData.Layers.Add(_defaultLayer);
-
-            var rs = new RenderSystem();
-            rs.PrimaryCameraChanged += (rsys) => { _defaultLayer.Camera = rsys.PrimaryCamera; };
-            RenderData.Resize += (s, w, h) => rs.Resize(w, h);
-
             World.RegisterSystem(new TransformSystem());
-            World.RegisterSystem(rs);
-            World.RegisterSystem(new SpriteRendererSystem(_defaultLayer));
-            World.RegisterSystem(new UISystem(RenderData));
-            World.RegisterSystem(new ScriptSystem());
+            World.RegisterSystem(new RenderSystem());
         }
 
-        #region Entity Methods
-        public Entity GetEntity(int hashCode)
+        public Entity GetEntityById(int id)
         {
-            for (int i = 0; i < _entities.Count; i++)
-            {
-                var ent = _entities[i];
-                if (ent.Id.GetHashCode() == hashCode)
-                    return ent;
-            }
-
+            if (_ids.TryGetValue(id, out Entity entity))
+                return entity;
             return null;
         }
 
@@ -68,32 +49,24 @@ namespace CrossEngine.Scenes
 
             Debug.Assert(entity.Parent == null);
 
-            if (entity.Id == Guid.Empty)
-                entity.Id = Guid.NewGuid();
+            if (entity.Id == 0)
+                entity.Id = entity.GetHashCode();
 
             _entities.Add(entity);
 
-            if (entity.Parent == null) _roots.Add(entity);
+            if (entity.Parent == null)
+                _roots.Add(entity);
 
             if (_loaded)
                 World.AddEntity(entity);
 
-            for (int i = 0; i < entity.Children.Count; i++)
-            {
-                AddEntity(entity.Children[i]);
-            }
+            Debug.Assert(entity.Children.Count == 0);
 
             entity.ParentChanged += OnEntityParentChanged;
 
-            SceneService.Log.Trace($"added entity '{entity.Id}'");
+            Log.Default.Trace($"added entity '{entity.Id}'");
 
             Profiler.EndScope();
-        }
-
-        private void OnEntityParentChanged(Entity obj)
-        {
-            if (obj.Parent == null) _roots.Add(obj);
-            else _roots.Remove(obj);
         }
 
         public void RemoveEntity(Entity entity)
@@ -118,12 +91,18 @@ namespace CrossEngine.Scenes
 
             _roots.Remove(entity);
 
-            SceneService.Log.Trace($"removed entity '{entity.Id}'");
+            Log.Default.Trace($"removed entity '{entity.Id}'");
 
             Profiler.EndScope();
         }
+        
+        private void OnEntityParentChanged(Entity obj)
+        {
+            if (obj.Parent == null) _roots.Add(obj);
+            else _roots.Remove(obj);
+        }
 
-        public void ShifEntity(Entity entity, int destinationIndex)
+        public void MoveEntity(Entity entity, int destinationIndex)
         {
             if (!_entities.Contains(entity)) throw new InvalidOperationException("Scene does not contain entity!");
             if (destinationIndex < 0 || destinationIndex > _entities.Count - 1) throw new IndexOutOfRangeException("Invalid index!");
@@ -146,71 +125,50 @@ namespace CrossEngine.Scenes
             AddEntity(entity);
             return entity;
         }
-        #endregion
 
-        public void Load()
+        public void Init()
         {
             _loaded = true;
+            World.Init();
             for (int i = 0; i < _entities.Count; i++)
             {
                 World.AddEntity(_entities[i]);
             }
         }
 
-        public void Unload()
+        public void Deinit()
         {
             for (int i = 0; i < _entities.Count; i++)
             {
                 World.RemoveEntity(_entities[i]);
             }
+            World.Deinit();
             _loaded = false;
         }
 
         public void Start()
         {
             World.Start();
-            Started = true;
         }
 
         public void Stop()
         {
-            Started = false;
             World.Stop();
         }
 
         public void Update()
         {
-            World.Update();
+            //World.Update();
         }
 
         public void FixedUpdate()
         {
-            World.FixedUpdate();
+            //World.FixedUpdate();
         }
 
         public object Clone()
         {
-            Scene scene = new Scene();
-            void AddChildren(Entity clone, Entity original)
-            {
-                for (int i = 0; i < original.Children.Count; i++)
-                {
-                    var ch = original.Children[i];
-                    var cch = (Entity)ch.Clone();
-                    scene.AddEntity(cch);
-                    AddChildren(cch, ch);
-                    cch.Parent = clone;
-                }
-            }
-
-            for (int i = 0; i < this._roots.Count; i++)
-            {
-                var entity = this._roots[i];
-                var centity = (Entity)entity.Clone();
-                scene.AddEntity(centity);
-                AddChildren(centity, entity);
-            }
-            return scene;
+            throw new NotImplementedException();
         }
     }
 }
