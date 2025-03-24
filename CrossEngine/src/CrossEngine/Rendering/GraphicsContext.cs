@@ -4,8 +4,11 @@ namespace CrossEngine.Rendering
 {
     public abstract class GraphicsContext : IDisposable
     {
-        // static Current
-        // GraphicsApi Api
+        [ThreadStatic]
+        static GraphicsContext _current;
+        public static GraphicsContext Current { get => _current; internal set => _current = value; }
+        public RendererApi Api { get; internal set; }
+
         public abstract void Init();
         public abstract void Shutdown();
         public abstract void SwapBuffers();

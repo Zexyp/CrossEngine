@@ -20,6 +20,7 @@ using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL
 {
+    // todo: attribute matching
     class GLVertexArray : VertexArray
     {
         internal uint _rendererId;

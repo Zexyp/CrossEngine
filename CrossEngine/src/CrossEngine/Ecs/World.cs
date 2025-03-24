@@ -34,15 +34,16 @@ namespace CrossEngine.Ecs
             var type = component.GetType();
             foreach (var index in indexes)
             {
-                if (!index.Key.Contains(type)) // skip if not needed
+                int subclassIdx = GetSubclassIndex(index.Key, type);
+                if (subclassIdx == -1) // skip if not needed
                     continue;
                 
                 bool contianed = index.Value.ContainsKey(component.Entity);
                 var array = contianed ? index.Value[component.Entity] : new Component[index.Key.Length];
                 
-                Debug.Assert(array[Array.IndexOf(index.Key, type)] == null, "peak laziness");
+                Debug.Assert(array[subclassIdx] == null, "peak laziness");
                 
-                array[Array.IndexOf(index.Key, type)] = component;
+                array[subclassIdx] = component;
                 if (!contianed)
                     index.Value.Add(component.Entity, array);
             }
@@ -61,13 +62,14 @@ namespace CrossEngine.Ecs
             var type = component.GetType();
             foreach (var index in indexes)
             {
-                if (!index.Key.Contains(type)) // skip if not needed
+                int subclassIdx = GetSubclassIndex(index.Key, type);
+                if (subclassIdx == -1) // skip if not needed
                     continue;
                 
                 if (!index.Value.ContainsKey(component.Entity)) // continue if not found
                     continue;
                 
-                index.Value[component.Entity][Array.IndexOf(index.Key, type)] = null;
+                index.Value[component.Entity][subclassIdx] = null;
 
                 if (index.Value[component.Entity].All(c => c == null))
                     index.Value.Remove(component.Entity);
@@ -86,7 +88,7 @@ namespace CrossEngine.Ecs
 
         public void DropIndex(Type[] types)
         {
-            throw new NotImplementedException();
+            indexes.Remove(types);
         }
 
         public IEnumerable<Component[]> IterateIndex(Type[] types)
@@ -193,7 +195,17 @@ namespace CrossEngine.Ecs
             }
         }
 
-        class TypeArrayEqualityComparer : IEqualityComparer<Type[]>
+        private int GetSubclassIndex(Type[] types, Type type)
+        {
+            for (int i = 0; i < types.Length; i++)
+            {
+                if (types[i].IsAssignableFrom(type))
+                    return i;
+            }
+            return -1;
+        }
+
+        private class TypeArrayEqualityComparer : IEqualityComparer<Type[]>
         {
             public bool Equals(Type[] x, Type[] y)
             {

@@ -50,4 +50,24 @@ namespace CrossEngine.Assets
 
         public string GetName() => Name != null ? Name : Id.ToString();
     }
+
+    public abstract class FileAsset : Asset
+    {
+        [EditorString]
+        public string RelativePath;
+
+        public override void GetObjectData(SerializationInfo info)
+        {
+            base.GetObjectData(info);
+
+            info.AddValue(nameof(RelativePath), RelativePath);
+        }
+
+        public override void SetObjectData(SerializationInfo info)
+        {
+            base.SetObjectData(info);
+
+            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
+        }
+    }
 }

@@ -38,7 +38,7 @@ namespace CrossEngine.Logging
 
         public static LogLevel GlobalLevel;
         // https://no-color.org/
-        public static bool EnableColors = Environment.GetEnvironmentVariable("NO_COLOR") == null;
+        public static bool EnableColors = Environment.GetEnvironmentVariable("NO_COLOR") == null && !Console.IsOutputRedirected;
 
         public static TextWriter WriterOut = Console.Out;
         public static TextWriter WriterError = Console.Error;

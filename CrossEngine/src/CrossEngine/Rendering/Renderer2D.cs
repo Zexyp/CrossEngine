@@ -686,7 +686,6 @@ namespace CrossEngine.Rendering
 		}
 		#endregion
 
-
 		//// simple
 		//public static void DrawQuad(Vector2 position, Vector2 size, Vector4 color) => DrawQuad(new Vector3(position, 0.0f), size, color);
 		//public static void DrawQuad(Vector3 position, Vector2 size, Vector4 color)

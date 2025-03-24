@@ -13,6 +13,7 @@ using CrossEngine.Core;
 
 namespace CrossEngine.Display
 {
+    // todo: consider isurface for window
     public class WindowService : Service, IScheduledService, IUpdatedService
     {
         public enum Mode
@@ -45,7 +46,7 @@ namespace CrossEngine.Display
             _running = true;
             if (_mode == Mode.ThreadLoop)
             {
-                _windowThread = new Thread(() => Application.SafeExecute(Loop)) { Name = "window" };
+                _windowThread = new Thread(() => Application.ThreadWrapper(Loop)) { Name = "window" };
                 _windowThread.Start();
             }
             else

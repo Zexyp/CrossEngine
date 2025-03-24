@@ -55,11 +55,11 @@ namespace CrossEngine.Platform
 #endif
         }
 
-        public static Stream FileWrite(string path)
+        public static Stream FileCreate(string path)
         {
 #if WINDOWS || LINUX
             Log.Trace($"file write '{path}'");
-            var stream = File.OpenWrite(path);
+            var stream = File.Create(path);
             stream.SetLength(0);
             return stream;
 #elif WASM

@@ -14,6 +14,7 @@ namespace CrossEngine.Loaders
 {
     public static class MeshLoader
     {
+        [ThreadStatic]
         internal static Action<Action> ServiceRequest;
         
         public struct WavefrontVertex
@@ -32,13 +33,13 @@ namespace CrossEngine.Loaders
 
         static readonly NumberFormatInfo numbForm = new NumberFormatInfo() { NumberDecimalSeparator = "." };
 
-        public static Mesh<WavefrontVertex> LoadObj(string filepath)
+        public static Mesh<WavefrontVertex> LoadObj(Stream stream)
         {
             List<WavefrontVertex> vertices = new();
             List<Vector3> position = new();
             List<Vector3> normal = new();
             List<Vector2> texture = new();
-            using (StreamReader reader = File.OpenText(filepath))
+            using (StreamReader reader = new StreamReader(stream))
             {
                 string line;
                 while ((line = reader.ReadLine()) != null)
@@ -100,7 +101,13 @@ namespace CrossEngine.Loaders
             }
 
             Mesh<WavefrontVertex> mesh = new(vertices.ToArray());
+            ServiceRequest.Invoke(mesh.Setup);
             return mesh;
+        }
+
+        public static void Free(IMesh mesh)
+        {
+            ServiceRequest.Invoke(mesh.Dispose);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

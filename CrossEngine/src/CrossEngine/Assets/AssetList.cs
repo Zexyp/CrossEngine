@@ -55,7 +55,7 @@ namespace CrossEngine.Assets
                 throw new InvalidOperationException();
 
             if (!_collections.ContainsKey(type))
-                return null;
+                throw new KeyNotFoundException();
 
             return (Asset)_collections[type][id];
         }
@@ -68,22 +68,22 @@ namespace CrossEngine.Assets
                 throw new InvalidOperationException();
 
             if (!_collections.ContainsKey(type))
-                return null;
+                throw new KeyNotFoundException();
 
             foreach (Asset asset in _collections[type].Values)
             {
                 if (asset.Name == name)
                     return asset;
             }
-            return null;
+            throw new KeyNotFoundException();
         }
 
         public ICollection<T>? GetCollection<T>() where T : Asset
         {
             var type = typeof(T);
-            
+
             if (!_collections.ContainsKey(type))
-                return null;
+                throw new KeyNotFoundException();
 
             return new CastWrapCollection<T>(_collections[type].Values);
         }
@@ -94,7 +94,7 @@ namespace CrossEngine.Assets
                 throw new InvalidOperationException();
 
             if (!_collections.ContainsKey(ofType))
-                return null;
+                throw new KeyNotFoundException();
 
             return (ICollection<Asset>)_collections[ofType].Values;
         }

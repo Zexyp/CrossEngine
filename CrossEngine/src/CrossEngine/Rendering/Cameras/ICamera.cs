@@ -11,10 +11,15 @@ namespace CrossEngine.Rendering.Cameras
 {
     public interface ICamera : ITransform
     {
-        Matrix4x4 ProjectionMatrix { get; set; }
+        Matrix4x4 ProjectionMatrix { get; }
         virtual Matrix4x4 GetViewProjectionMatrix() => GetViewMatrix() * ProjectionMatrix;
         virtual Matrix4x4 GetViewMatrix() => Matrix4x4Extension.Invert(GetMatrix());
 
         virtual Frustum Frustum { get => throw new NotImplementedException(); }
+    }
+
+    public interface IResizableCamera : ICamera
+    {
+        void Resize(float width, float height);
     }
 }

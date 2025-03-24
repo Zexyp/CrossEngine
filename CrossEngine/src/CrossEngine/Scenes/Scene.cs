@@ -21,12 +21,14 @@ namespace CrossEngine.Scenes
 {
     public class Scene : ICloneable
     {
-        bool _loaded = false;
+        public readonly World World = new World();
+        public readonly ReadOnlyCollection<Entity> Entities;
+        public bool Started { get; private set; } = false;
+
+        bool _initialized = false;
         readonly List<Entity> _roots = new();
         readonly List<Entity> _entities = new List<Entity>();
         readonly Dictionary<int, Entity> _ids = new Dictionary<int, Entity>();
-        public readonly World World = new World();
-        public readonly ReadOnlyCollection<Entity> Entities;
 
         public Scene()
         {
@@ -57,7 +59,7 @@ namespace CrossEngine.Scenes
             if (entity.Parent == null)
                 _roots.Add(entity);
 
-            if (_loaded)
+            if (_initialized)
                 World.AddEntity(entity);
 
             Debug.Assert(entity.Children.Count == 0);
@@ -84,7 +86,7 @@ namespace CrossEngine.Scenes
             // remove parenting
             entity.Parent = null;
 
-            if (_loaded)
+            if (_initialized)
                 World.RemoveEntity(entity);
 
             _entities.Remove(entity);
@@ -128,7 +130,7 @@ namespace CrossEngine.Scenes
 
         public void Init()
         {
-            _loaded = true;
+            _initialized = true;
             World.Init();
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -143,27 +145,29 @@ namespace CrossEngine.Scenes
                 World.RemoveEntity(_entities[i]);
             }
             World.Deinit();
-            _loaded = false;
+            _initialized = false;
         }
 
         public void Start()
         {
             World.Start();
+            Started = true;
         }
 
         public void Stop()
         {
+            Started = false;
             World.Stop();
         }
 
         public void Update()
         {
-            //World.Update();
+            World.Update();
         }
 
         public void FixedUpdate()
         {
-            //World.FixedUpdate();
+            World.FixedUpdate();
         }
 
         public object Clone()

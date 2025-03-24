@@ -45,7 +45,7 @@ namespace CrossEngine.Components
             }
         }
         [EditorDrag]
-        public float FOV
+        public float Fov
         {
             get => _fov;
             set
@@ -83,7 +83,7 @@ namespace CrossEngine.Components
             comp.Primary = this.Primary;
             comp.Near = this.Near;
             comp.Far = this.Far;
-            comp.FOV = this.FOV;
+            comp.Fov = this.Fov;
             return comp;
         }
 
@@ -92,7 +92,7 @@ namespace CrossEngine.Components
             info.AddValue(nameof(Primary), Primary);
             info.AddValue(nameof(Near), Near);
             info.AddValue(nameof(Far), Far);
-            info.AddValue(nameof(FOV), FOV);
+            info.AddValue(nameof(Fov), Fov);
         }
 
         protected internal override void OnDeserialize(SerializationInfo info)
@@ -100,7 +100,7 @@ namespace CrossEngine.Components
             Primary = info.GetValue(nameof(Primary), Primary);
             Near = info.GetValue(nameof(Near), Near);
             Far = info.GetValue(nameof(Far), Far);
-            FOV = info.GetValue(nameof(FOV), FOV);
+            Fov = info.GetValue(nameof(Fov), Fov);
         }
     }
 }

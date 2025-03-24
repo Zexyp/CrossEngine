@@ -72,7 +72,6 @@
   <ItemGroup>
     <Compile Remove="src\CrossEngine\Scenes\SceneRenderData.cs" />
     <Compile Remove="src\CrossEngine\Scenes\SceneRenderer.cs" />
-    <Compile Remove="src\CrossEngine\Scenes\SceneService.cs" />
   </ItemGroup>
 
   <!--

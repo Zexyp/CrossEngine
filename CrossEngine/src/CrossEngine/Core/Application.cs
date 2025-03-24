@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace CrossEngine.Core
         public void Run()
         {
             Thread.CurrentThread.Name = "main";
-            SafeExecute(InternalRun);
+            ThreadWrapper(InternalRun);
         }
 
         public virtual void OnInit()
@@ -75,8 +76,12 @@ namespace CrossEngine.Core
             GC.SuppressFinalize(this);
         }
 
-        internal static void SafeExecute(Action action)
+        internal static void ThreadWrapper(Action action)
         {
+            var culture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+            culture.NumberFormat.NumberDecimalSeparator = ".";
+            Thread.CurrentThread.CurrentCulture = culture;
+            
             try
             {
                 action.Invoke();

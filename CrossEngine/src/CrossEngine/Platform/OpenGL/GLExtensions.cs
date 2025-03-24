@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Runtime.InteropServices;
+
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -20,7 +22,7 @@ namespace CrossEngine.Platform.OpenGL
             _extensions = new string[num];
             for (int i = 0; i < num; i++)
             {
-                _extensions[i] = GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Extensions, (uint)i));
+                _extensions[i] = Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Extensions, (uint)i));
             }
         }
 

@@ -14,7 +14,7 @@ using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Components
 {
-    public class CameraComponent : Component, ICamera
+    public class CameraComponent : Component, IResizableCamera
     {
         public Matrix4x4 ViewMatrix
         {

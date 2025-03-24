@@ -8,6 +8,8 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
 using CrossEngine.Utils;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -293,7 +295,7 @@ namespace CrossEngine.Platform.OpenGL
                 fixed (byte* p = infoLog)
                 {
                     gl.GetProgramInfoLog(_rendererId, length, &length, p);
-                    message = GLHelper.PtrToStringUtf8((IntPtr)p);
+                    message = Marshal.PtrToStringUTF8((IntPtr)p);
                 }
                 RendererApi.Log.Error("shader program linking failed!\n" + message);
                 return true;

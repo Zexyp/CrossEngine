@@ -11,6 +11,7 @@ namespace CrossEngine.Rendering.Textures
     public static class TextureAtlas
     {
         // margin: left, top, right, bottom
+        // offsets: offx, offy, scalex, scaley
         public static Vector4[] CreateOffsets(Vector2 sheetSize, Vector2 spriteSize, int numTiles, Vector4 margin = default)
         {
             Vector4[] spriteOffsets = new Vector4[numTiles];

@@ -98,11 +98,11 @@ public class Transform : ITransformCache
     public Matrix4x4 GetWorldTransform()
     {
         if (_dirty)
-            _worldCache = (_worldTransformProvider != null) ? (GetTransoform() * _worldTransformProvider.GetMatrix()) : GetTransoform();
+            _worldCache = (_worldTransformProvider != null) ? (GetTransform() * _worldTransformProvider.GetMatrix()) : GetTransform();
         _dirty = false;
         return _worldCache;
     }
-    public Matrix4x4 GetTransoform() => Matrix4x4.CreateScale(Scale) * Matrix4x4.CreateFromQuaternion(Rotation) * Matrix4x4.CreateTranslation(Position);
+    public Matrix4x4 GetTransform() => Matrix4x4.CreateScale(Scale) * Matrix4x4.CreateFromQuaternion(Rotation) * Matrix4x4.CreateTranslation(Position);
 
     Matrix4x4 ITransform.GetMatrix() => GetWorldTransform();
 

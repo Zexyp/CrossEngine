@@ -21,7 +21,7 @@ using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL
 {
-    public class GLFramebuffer : Framebuffer
+    class GLFramebuffer : Framebuffer
     {
         public static uint MaxFramebufferSize = 8192;
 

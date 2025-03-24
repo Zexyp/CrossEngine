@@ -4,6 +4,8 @@ using System.Numerics;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
+using System.Runtime.InteropServices;
+
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -20,9 +22,9 @@ namespace CrossEngine.Platform.OpenGL
         public override unsafe void Init()
         {
             Log.Debug("opengl info:\nversion: {0}\nrenderer: {1}\nvendor: {2}",
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Version)),
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Renderer)),
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Vendor)));
+                Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Version)),
+                Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Renderer)),
+                Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Vendor)));
         }
 
         public override unsafe void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)

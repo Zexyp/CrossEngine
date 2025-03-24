@@ -1,34 +1,36 @@
 using System;
+using System.Collections;
 using System.Numerics;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Meshes;
 
-public interface IMesh
+public interface IMesh : IDisposable
 {
     WeakReference<VertexArray> VA { get; }
+    IList Vertices { get; }
+    bool Indexed { get; }
 }
 
 public class Mesh<T> : IMesh where T : struct
 {
     public WeakReference<VertexArray> VA { get; private set; }
+    public T[] Vertices;
+
+    bool IMesh.Indexed => false;
+    IList IMesh.Vertices => Vertices;
     WeakReference<VertexBuffer> vb;
     
-    public T[] Vertices;
     
     public Mesh(T[] vertices)
     {
         this.Vertices = vertices;
-
-        SetupMesh();
     }
 
-    private unsafe void SetupMesh()
+    public virtual unsafe void Setup()
     {
         VA = VertexArray.Create();
-        VA.GetValue().Bind(); // needs to be bound because it was ONLY created
-
         fixed (T* verteciesp = &Vertices[0])
             vb = VertexBuffer.Create(verteciesp, (uint)(sizeof(T) * Vertices.Length));
 
@@ -37,11 +39,9 @@ public class Mesh<T> : IMesh where T : struct
 
         vb.GetValue().SetLayout(layout);
         VA.GetValue().AddVertexBuffer(vb);
-
-        VA.GetValue().Unbind();
     }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         VA.Dispose();
         vb.Dispose();
@@ -51,53 +51,35 @@ public class Mesh<T> : IMesh where T : struct
     }
 }
 
-/*
-public class IndexedMesh<T> : IMesh where T : struct
+public class IndexedMesh<T> : Mesh<T>, IMesh where T : struct
 {
-    public WeakReference<VertexArray> VA { get; private set; }
+
+    public uint[] Indices;
+
+    bool IMesh.Indexed => true;
     WeakReference<IndexBuffer> ib;
-    WeakReference<VertexBuffer> vb;
 
-    T[] vertices;
-    uint[] indices;
-
-    public IndexedMesh(T[] vertices, uint[] indices)
+    public IndexedMesh(T[] vertices, uint[] indices) : base(vertices)
     {
-        this.vertices = vertices;
-        this.indices = indices;
-
-        SetupMesh();
+        this.Indices = indices;
     }
 
-    private unsafe void SetupMesh()
+    public override unsafe void Setup()
     {
-        VA = VertexArray.Create();
-        VA.GetValue().Bind(); // needs to be bound because it was ONLY created
+        base.Setup();
 
-        fixed (T* verteciesp = &vertices[0])
-            vb = VertexBuffer.Create(verteciesp, (uint)(sizeof(T) * vertices.Length));
-        fixed (uint* indicesp = &indices[0])
-            ib = IndexBuffer.Create(indicesp, (uint)indices.Length, IndexDataType.UInt);
+        fixed (uint* indicesp = &Indices[0])
+            ib = IndexBuffer.Create(indicesp, (uint)Indices.Length, IndexDataType.UInt);
 
-        // this is really nice
-        BufferLayout layout = BufferLayout.FromStructType<T>();
-
-        vb.GetValue().SetLayout(layout);
-        VA.GetValue().AddVertexBuffer(vb);
         VA.GetValue().SetIndexBuffer(ib);
-
-        VA.GetValue().Unbind();
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        VA.Dispose();
-        vb.Dispose();
+        base.Dispose();
+
         ib.Dispose();
 
-        vb = null;
         ib = null;
-        VA = null;
     }
 }
-*/

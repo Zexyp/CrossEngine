@@ -31,7 +31,7 @@ public class TransformComponent : Component, ITransform
 
     private readonly Transform _transform = new Transform();
 
-    public Matrix4x4 GetTransformMatrix() => _transform.GetTransoform();
+    public Matrix4x4 GetTransformMatrix() => _transform.GetTransform();
     public Matrix4x4 GetWorldTransformMatrix() => _transform.GetWorldTransform();
     Matrix4x4 ITransform.GetMatrix() => GetWorldTransformMatrix();
 }

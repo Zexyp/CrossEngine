@@ -14,20 +14,15 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    public class TextureAsset : Asset
+    public class TextureAsset : FileAsset
     {
-        public override bool Loaded { get => _loaded; }
-
         public WeakReference<Texture> Texture = null;
 
-        [EditorString]
-        public string RelativePath;
+        public override bool Loaded => Texture != null;
 
         //[EditorEnum]
         //[EditorNullable]
         //public ColorFormat? Format = null;
-
-        private bool _loaded = false;
 
         public override async Task Load(IAssetLoadContext context)
         {
@@ -35,31 +30,12 @@ namespace CrossEngine.Assets
             {
                 Texture = TextureLoader.LoadTextureFromStream(stream);
             }
-            
-            _loaded = true;
         }
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            _loaded = false;
-
-            throw new NotImplementedException();
-            //context.GetLoader<TextureLoader>().ScheduleTextureUnload(Texture);
+            TextureLoader.Free(Texture);            
             Texture = null;
-        }
-
-        public override void GetObjectData(SerializationInfo info)
-        {
-            base.GetObjectData(info);
-
-            info.AddValue(nameof(RelativePath), RelativePath);
-        }
-
-        public override void SetObjectData(SerializationInfo info)
-        {
-            base.SetObjectData(info);
-
-            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
         }
     }
 }

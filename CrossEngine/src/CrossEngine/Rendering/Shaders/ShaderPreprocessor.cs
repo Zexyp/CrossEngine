@@ -18,6 +18,7 @@ namespace CrossEngine.Rendering.Shaders
 {
     public static class ShaderPreprocessor
     {
+        [ThreadStatic]
         internal static Action<Action> ServiceRequest;
 
         private const string DefaultShaderProgramSource =
@@ -153,5 +154,9 @@ void main() {
             return new ShaderSources() { Fragment = builderFragment.ToString(), Vertex = builderVertex.ToString() };
         }
 
+        public static void Free(WeakReference<ShaderProgram> program)
+        {
+            ServiceRequest.Invoke(program.Dispose);
+        }
     }
 }

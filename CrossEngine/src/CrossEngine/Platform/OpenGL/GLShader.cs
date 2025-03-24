@@ -4,6 +4,8 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
+using System.Runtime.InteropServices;
+
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -67,7 +69,7 @@ namespace CrossEngine.Platform.OpenGL
                 fixed (byte* p = infoLog)
                 {
                     gl.GetShaderInfoLog(_rendererId, length, &length, p);
-                    message = GLHelper.PtrToStringUtf8((IntPtr)p);
+                    message = Marshal.PtrToStringUTF8((IntPtr)p);
                 }
                 RendererApi.Log.Error($"{Type} shader compilation failed!\n" + message);
                 return true;

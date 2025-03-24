@@ -10,7 +10,7 @@ using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL.Debugging
 {
-    public static class GLError
+    static class GLError
     {
         public static bool activeAssert;
 

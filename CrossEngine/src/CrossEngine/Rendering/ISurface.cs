@@ -13,9 +13,40 @@ namespace CrossEngine.Rendering
     {
         public WeakReference<Framebuffer> Buffer { get; }
         public Vector2 Size { get; }
-        // mby graphics context??
+        [Obsolete("not implemented")]
+        virtual GraphicsContext Context { get => throw new NotImplementedException(); }
 
         public event Action<ISurface, float, float> Resize;
         public event Action<ISurface> Update;
+
+        void DoResize(float width, float height) => throw new NotSupportedException();
+        void DoUpdate() => throw new NotSupportedException();
+    }
+
+    public class FramebufferSurface : ISurface
+    {
+        public WeakReference<Framebuffer> Buffer { get; set; }
+
+        public Vector2 Size { get; private set; }
+
+        public event Action<ISurface, float, float> Resize;
+        public event Action<ISurface> Update;
+
+        public FramebufferSurface(WeakReference<Framebuffer> buffer)
+        {
+            Buffer = buffer;
+        }
+
+        public void DoResize(float width, float height)
+        {
+            Size = new(width, height);
+            Buffer.GetValue().Resize((uint)width, (uint)height);
+            Resize?.Invoke(this, width, height);
+        }
+
+        public void DoUpdate()
+        {
+            Update?.Invoke(this);
+        }
     }
 }

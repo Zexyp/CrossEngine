@@ -11,6 +11,8 @@ namespace CrossEngine.Rendering.Renderables
 {
     public interface IRenderable
     {
+        RendererApi RApi { set; }
+
         virtual void Begin(ICamera camera) { }
         virtual void End() { }
 
@@ -19,6 +21,8 @@ namespace CrossEngine.Rendering.Renderables
 
     public abstract class Renderable<T> : IRenderable where T : IObjectRenderData
     {
+        public RendererApi RApi { get; set; }
+
         public virtual void Begin(ICamera camera) { }
         public virtual void End() { }
 
@@ -43,6 +47,7 @@ namespace CrossEngine.Rendering.Renderables
     public interface IObjectRenderData
     {
         Matrix4x4 Transform { get; }
+        virtual bool Visible { get => throw new NotImplementedException(); }
     }
 
     //interface IDrawable<T, D> where T : Renderable<D> where D : IObjectRenderData

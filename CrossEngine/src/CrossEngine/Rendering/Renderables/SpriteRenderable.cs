@@ -21,13 +21,13 @@ namespace CrossEngine.Rendering.Renderables
 
         public override void Begin(ICamera camera)
         {
+            _lastBlend = null;
             Renderer2D.BeginScene(((ICamera)camera).GetViewProjectionMatrix());
         }
 
         public override void End()
         {
             Renderer2D.EndScene();
-            _lastBlend = null;
         }
 
         public override void Submit(ISpriteRenderData data)
@@ -39,7 +39,7 @@ namespace CrossEngine.Rendering.Renderables
                 Renderer2D.SetBlending(data.Blend);
             }
 
-            var matrix = Matrix4x4.CreateScale(new Vector3(data.DrawOffsets.Z, data.DrawOffsets.W, 1)) * Matrix4x4.CreateTranslation(new Vector3(data.DrawOffsets.X, data.DrawOffsets.Y, 1)) * data.Transform;
+            var matrix = Matrix4x4.CreateScale(new Vector3(data.DrawOffsets.Z, data.DrawOffsets.W, 1)) * Matrix4x4.CreateTranslation(new Vector3(data.DrawOffsets.X, data.DrawOffsets.Y, 0)) * data.Transform;
             if (data.Texture == null)
                 Renderer2D.DrawQuad(matrix, data.Color, data.EntityId);
             else

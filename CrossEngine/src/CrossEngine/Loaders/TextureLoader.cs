@@ -73,6 +73,11 @@ namespace CrossEngine.Loaders
             return InternalLoad(result, desiredFormat);
         }
 
+        public static void Free(WeakReference<Texture> texture)
+        {
+            ServiceRequest.Invoke(texture.Dispose);
+        }
+
         private static unsafe WeakReference<Texture> InternalLoad(ImageResult result, ColorFormat? desiredFormat = null)
         {
             var gapi = RendererApi.GetApi();

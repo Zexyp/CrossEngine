@@ -54,7 +54,7 @@ namespace CrossEngine.Assets
 
         public static void WriteFile(AssetList pool, string filepath)
         {
-            using (Stream stream = PlatformHelper.FileWrite(filepath))
+            using (Stream stream = PlatformHelper.FileCreate(filepath))
             {
                 string prevdir = pool.Directory;
                 pool.Directory = Path.GetRelativePath(Path.GetDirectoryName(filepath), pool.Directory);

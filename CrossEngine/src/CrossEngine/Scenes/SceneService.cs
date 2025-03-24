@@ -11,28 +11,23 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using CrossEngine.Display;
+using CrossEngine.Services;
+using CrossEngine.Components;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace CrossEngine.Scenes
 {
     public class SceneService : Service, IUpdatedService, IScheduledService
     {
-        public struct SceneConfig
-        {
-            public bool Update;
-            public bool Render;
-            public bool Resize;
-        }
-
-        readonly List<(Scene Scene, SceneConfig Config)> _scenes = new();
+        readonly List<Scene> _scenes = new();
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
 
-        static internal Logger Log = new Logger("scenes");
-
-        private WindowService ws;
+        static readonly internal Logger Log = new Logger("scene-service");
 
         public override void OnStart()
         {
+            Debug.Assert(SceneManager.service == null);
             SceneManager.service = this;
 
             _scheduler.RunOnCurrentThread();
@@ -40,85 +35,47 @@ namespace CrossEngine.Scenes
 
         public override void OnAttach()
         {
-            ws = Manager.GetService<WindowService>();
-            ws.Execute(() =>
-            {
-                ws.MainWindow.Event += OnWindowEvent;
-                OnWindowResize(ws.MainWindow.Width, ws.MainWindow.Height);
-            });
             Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
-            Manager.GetService<RenderService>().Draw += OnRender;
-        }
-
-        private void OnWindowEvent(Event e)
-        {
-            if (e is WindowResizeEvent wre)
-                OnWindowResize(wre.Width, wre.Height);
-        }
-
-        private void OnWindowResize(float width, float height)
-        {
-            for (int i = 0; i < _scenes.Count; i++)
-            {
-                if (_scenes[i].Config.Resize)
-                    _scenes[i].Scene.RenderData.PerformResize(width, height);
-            }
         }
 
         public override void OnDetach()
         {
-            Manager.GetService<RenderService>().Draw -= OnRender;
             Manager.GetService<TimeService>().FixedUpdate -= OnFixedUpdate;
-            ws.Execute(() => { ws.MainWindow.Event -= OnWindowEvent; ws = null; });
         }
 
         public override void OnDestroy()
         {
             _scheduler.RunOnCurrentThread();
 
-            Debug.Assert(_scenes.Count == 0);
+            while (_scenes.Count > 0)
+            {
+                var scn = _scenes[0];
+                if (scn.Started)
+                    Stop(scn);
+                Remove(scn);
+            }
+
+            Debug.Assert(SceneManager.service == this);
             SceneManager.service = null;
         }
 
-        public SceneConfig GetConfig(Scene scene)
+        public void Push(Scene scene)
         {
-            for (int i = 0; i < _scenes.Count; i++)
-            {
-                if (scene == _scenes[i].Scene)
-                    return _scenes[i].Config;
-            }
+            _scenes.Add(scene);
+            scene.Init();
 
-            throw new KeyNotFoundException();
-        }
+            AttachRendering(scene);
 
-        public void SetConfig(Scene scene, SceneConfig config)
-        {
-            for (int i = 0; i < _scenes.Count; i++)
-            {
-                if (scene != _scenes[i].Scene)
-                    continue;
-
-                _scenes[i] = (_scenes[i].Scene, config);
-                return;
-            }
-
-            throw new KeyNotFoundException();
-        }
-
-        public void Push(Scene scene, SceneConfig? config = null)
-        {
-            var configValue = config ?? default;
-            if (configValue.Resize)
-                scene.RenderData.PerformResize(ws.MainWindow.Width, ws.MainWindow.Height);
-            _scenes.Add((scene, configValue));
-            scene.Load();
             Log.Info("scene pushed");
         }
 
         public void Remove(Scene scene)
         {
-            scene.Unload();
-            _scenes.RemoveAll(e => e.Scene == scene);
+            DetachRendering(scene);
+
+            scene.Deinit();
+            _scenes.Remove(scene);
+            
             Log.Info("scene removed");
         }
 
@@ -128,23 +85,23 @@ namespace CrossEngine.Scenes
 
             for (int i = 0; i < _scenes.Count; i++)
             {
-                if (!_scenes[i].Config.Update || !_scenes[i].Scene.Started)
+                if (!_scenes[i].Started)
                     continue;
 
-                SceneManager.Current = _scenes[i].Scene;
+                SceneManager.Current = _scenes[i];
                 SceneManager.Current.Update();
                 SceneManager.Current = null;
             }
         }
 
-        private void OnFixedUpdate(TimeService obj)
+        public void OnFixedUpdate(TimeService obj)
         {
             for (int i = 0; i < _scenes.Count; i++)
             {
-                if (!_scenes[i].Config.Update || !_scenes[i].Scene.Started)
+                if (!_scenes[i].Started)
                     continue;
 
-                SceneManager.Current = _scenes[i].Scene;
+                SceneManager.Current = _scenes[i];
                 SceneManager.Current.FixedUpdate();
                 SceneManager.Current = null;
             }
@@ -164,18 +121,27 @@ namespace CrossEngine.Scenes
             SceneManager.Current = null;
         }
 
-        public void OnRender(RenderService rs)
-        {
-            for (int i = 0; i < _scenes.Count; i++)
-            {
-                if (!_scenes[i].Config.Render)
-                    continue;
-
-                SceneRenderer.DrawScene(_scenes[i].Scene.RenderData, rs.RendererApi);
-            }
-        }
-
         public Task Execute(Action action) => _scheduler.Schedule(action);
         public TaskScheduler GetScheduler() => _scheduler;
+
+        private void AttachRendering(Scene scene)
+        {
+            Manager.GetService<RenderService>().Execute(() =>
+            {
+                var rs = scene.World.GetSystem<RenderSystem>();
+                rs.rapi = Manager.GetService<RenderService>().RendererApi;
+                rs.SetSurface(Manager.GetService<RenderService>().MainSurface);
+            });
+        }
+
+        private void DetachRendering(Scene scene)
+        {
+            Manager.GetService<RenderService>().Execute(() =>
+            {
+                var rs = scene.World.GetSystem<RenderSystem>();
+                rs.SetSurface(null);
+                rs.rapi = null;
+            });
+        }
     }
 }
