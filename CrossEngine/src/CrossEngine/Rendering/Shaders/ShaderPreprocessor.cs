@@ -26,8 +26,9 @@ namespace CrossEngine.Rendering.Shaders
 #version 330 core
 layout(location = 0) in vec3 aPosition;
 uniform mat4 uViewProjection = mat4(1);
+uniform mat4 uModel = mat4(1);
 void main() {
-    gl_Position = uViewProjection * vec4(aPosition, 1.0);
+    gl_Position = uViewProjection * uModel * vec4(aPosition, 1.0);
 }
 
 #type fragment

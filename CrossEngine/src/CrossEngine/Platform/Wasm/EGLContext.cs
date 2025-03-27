@@ -14,7 +14,7 @@ namespace CrossEngine.Platform.Wasm
 
         public override void Init()
         {
-            var display = EGL.GetDisplay(IntPtr.Zero);
+            display = EGL.GetDisplay(IntPtr.Zero);
             if (display == IntPtr.Zero)
                 throw new Exception("Display was null");
 
@@ -46,12 +46,12 @@ namespace CrossEngine.Platform.Wasm
                 throw new Exception("BindApi() failed");
 
             int[] ctxAttribs = new int[] { EGL.EGL_CONTEXT_CLIENT_VERSION, 3, EGL.EGL_NONE };
-            var context = EGL.CreateContext(display, config, (IntPtr)EGL.EGL_NO_CONTEXT, ctxAttribs);
+            context = EGL.CreateContext(display, config, (IntPtr)EGL.EGL_NO_CONTEXT, ctxAttribs);
             if (context == IntPtr.Zero)
                 throw new Exception("CreateContext() failed");
 
             // now create the surface
-            var surface = EGL.CreateWindowSurface(display, config, IntPtr.Zero, IntPtr.Zero);
+            surface = EGL.CreateWindowSurface(display, config, IntPtr.Zero, IntPtr.Zero);
             if (surface == IntPtr.Zero)
                 throw new Exception("CreateWindowSurface() failed");
 
@@ -73,6 +73,11 @@ namespace CrossEngine.Platform.Wasm
         public override void SwapBuffers()
         {
             
+        }
+
+        public override void MakeCurrent()
+        {
+            EGL.MakeCurrent(display, surface, surface, context);
         }
     }
 }

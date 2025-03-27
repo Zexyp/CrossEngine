@@ -12,7 +12,6 @@ using CrossEngine.Events;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Rendering.Renderables;
-using ImGuiNET;
 
 namespace CrossEngine.Components
 {

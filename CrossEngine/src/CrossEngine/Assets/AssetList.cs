@@ -78,7 +78,7 @@ namespace CrossEngine.Assets
             throw new KeyNotFoundException();
         }
 
-        public ICollection<T>? GetCollection<T>() where T : Asset
+        public ICollection<T> GetCollection<T>() where T : Asset
         {
             var type = typeof(T);
 
@@ -88,7 +88,20 @@ namespace CrossEngine.Assets
             return new CastWrapCollection<T>(_collections[type].Values);
         }
 
-        public ICollection<Asset>? GetCollection(Type ofType)
+        public bool TryGetCollection<T>(out ICollection<T> collection) where T : Asset
+        {
+            var type = typeof(T);
+
+            collection = default;
+
+            if (!_collections.ContainsKey(type))
+                return false;
+
+            collection = new CastWrapCollection<T>(_collections[type].Values);
+            return true;
+        }
+
+        public ICollection<Asset> GetCollection(Type ofType)
         {
             if (!ofType.IsSubclassOf(typeof(Asset)))
                 throw new InvalidOperationException();
@@ -97,6 +110,20 @@ namespace CrossEngine.Assets
                 throw new KeyNotFoundException();
 
             return (ICollection<Asset>)_collections[ofType].Values;
+        }
+
+        public bool TryGetCollection(Type ofType, out ICollection<Asset> collection)
+        {
+            if (!ofType.IsSubclassOf(typeof(Asset)))
+                throw new InvalidOperationException();
+
+            collection = default;
+
+            if (!_collections.ContainsKey(ofType))
+                return false;
+
+            collection = (ICollection<Asset>)_collections[ofType].Values;
+            return true;
         }
 
         public bool HasCollection<T>() where T : Asset

@@ -1,12 +1,17 @@
 ﻿using System;
-using Silk.NET.OpenGL;
-
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
+
+#if WASM
+using GLEnum = Silk.NET.OpenGLES.GLEnum;
+using static CrossEngine.Platform.Wasm.EGLContext;
+#else
+using GLEnum = Silk.NET.OpenGL.GLEnum;
 using static CrossEngine.Platform.OpenGL.GLContext;
+#endif
 
 namespace CrossEngine.Platform.OpenGL.Debugging
 {

@@ -15,7 +15,7 @@ namespace CrossEngine.Platform.Wasm
         public override double Time => _time;
         public override bool ShouldClose { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public override nint Handle => throw new System.NotImplementedException();
-        public override event OnEventFunction Event;
+        public override event Action<Event> Event;
 
         private double _time;
         private static CanvasWindow _instance;
@@ -25,6 +25,11 @@ namespace CrossEngine.Platform.Wasm
             _instance = this;
         }
 
+        public override void Init()
+        {
+            Interop.Initialize();
+        }
+
         public override unsafe void Create()
         {
             // idk why but context needs to be created before interop initializes
@@ -32,8 +37,6 @@ namespace CrossEngine.Platform.Wasm
             Context.Init();
 
             SetupCallbacks();
-
-            Interop.Initialize();
 
             // very sketchy
             var holder = this;
