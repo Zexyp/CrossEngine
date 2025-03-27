@@ -32,7 +32,10 @@ namespace CrossEngineEditor.Panels
             var entity = Context.ActiveEntity;
 
             if (entity == null)
+            {
+                ImGui.Text("No entity selected");
                 return;
+            }
 
             var style = ImGui.GetStyle();
 
@@ -49,7 +52,7 @@ namespace CrossEngineEditor.Panels
                 ddComponentContext.MarkSource(component);
                 if (ddComponentContext.MarkTarget())
                 {
-                    entity.ShiftComponent(ddComponentContext.Source, entity.Components.IndexOf(component));
+                    entity.MoveComponent(ddComponentContext.Source, entity.Components.IndexOf(component));
                     ddComponentContext.End();
                 }
 
@@ -60,10 +63,10 @@ namespace CrossEngineEditor.Panels
                     component.Enabled = enabled;
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - (collapsingHeaderButtonOffset * 2 + style.FramePadding.X + style.FramePadding.Y));
                 if (ImGui.ArrowButton("up", ImGuiDir.Up))
-                    entity.ShiftComponent(component, Math.Max(0, i - 1));
+                    entity.MoveComponent(component, Math.Max(0, i - 1));
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - (collapsingHeaderButtonOffset * 3 + style.FramePadding.X + style.FramePadding.Y));
                 if (ImGui.ArrowButton("down", ImGuiDir.Down))
-                    entity.ShiftComponent(component, Math.Min(entity.Components.Count - 1, i + 1));
+                    entity.MoveComponent(component, Math.Min(entity.Components.Count - 1, i + 1));
 
                 if (collapsingHeader)
                 {

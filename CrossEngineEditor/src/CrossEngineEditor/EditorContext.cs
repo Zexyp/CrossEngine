@@ -10,7 +10,14 @@ using CrossEngine.Assets;
 
 namespace CrossEngineEditor
 {
-    public class EditorContext
+    public interface IEditorContext
+    {
+        Scene? Scene { get; }
+        Entity? ActiveEntity { get; set; }
+        AssetList? Assets { get; set; }
+    }
+
+    class EditorContext : IEditorContext
     {
         public enum Playmode
         {
@@ -46,7 +53,7 @@ namespace CrossEngineEditor
                 ActiveEntityChanged?.Invoke(old);
             }
         }
-        public AssetPool Assets
+        public AssetList Assets
         {
             get => _assets;
             set
@@ -74,8 +81,9 @@ namespace CrossEngineEditor
 
         private Entity _activeEntity = null;
         private Scene _scene = null;
-        private AssetPool _assets = null;
+        private AssetList _assets = null;
         private Playmode _mode = Playmode.None;
+        // private GraphicsContext Graphics;
 
         // will we ever get here??
         //public readonly List<Entity> SelectedEntities = new List<Entity>();
@@ -83,7 +91,7 @@ namespace CrossEngineEditor
         // no sender parameter since editor context is read-only and only one
         public event Action<Entity> ActiveEntityChanged;
         public event Action<Scene> SceneChanged;
-        public event Action<AssetPool> AssetsChanged;
+        public event Action<AssetList> AssetsChanged;
         public event Action ModeChanged;
 
         public void Clear()

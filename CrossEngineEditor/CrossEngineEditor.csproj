@@ -1,38 +1,83 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <ApplicationIcon>icon.ico</ApplicationIcon>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>res\icon.ico</ApplicationIcon>
+    <Configurations>Windows Debug;Windows Profiling;Linux Debug;Linux Profiling</Configurations>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <Compile Remove="vendor\**" />
-        <EmbeddedResource Remove="vendor\**" />
-        <None Remove="vendor\**" />
-    </ItemGroup>
+  <!-- defines and optimization -->
+  <PropertyGroup Condition="'$(Configuration)'=='Windows Debug'">
+    <DefineConstants>DEBUG;WINDOWS</DefineConstants>
+    <Optimize>False</Optimize>
+    <OSPlatform>Windows</OSPlatform>
+  </PropertyGroup>
 
-    <ItemGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Windows Profiling'">
+    <DefineConstants>DEBUG;WINDOWS;PROFILING</DefineConstants>
+    <Optimize>False</Optimize>
+    <OSPlatform>Windows</OSPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Linux Debug'">
+    <DefineConstants>DEBUG;LINUX</DefineConstants>
+    <Optimize>False</Optimize>
+    <OSPlatform>Linux</OSPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Linux Profiling'">
+    <DefineConstants>DEBUG;LINUX;PROFILING</DefineConstants>
+    <Optimize>False</Optimize>
+    <OSPlatform>Linux</OSPlatform>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="vendor\**" />
+    <EmbeddedResource Remove="vendor\**" />
+    <None Remove="vendor\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="res\fonts\JetBrainsMono[wght].ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>res\fonts\JetBrainsMono[wght].ttf</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+
+
+  <Choose>
+
+    <!-- windows -->
+    <When Condition="'$(OSPlatform)'=='Windows'">
+
+      <!-- include platform -->
+      
+      <!-- packages -->
+      <ItemGroup>
         <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\**" />
         <Compile Remove="vendor\ShellFileDialogs\ShellFileDialogs\ShellFileDialogs.csproj" />
-    </ItemGroup>
+      </ItemGroup>
 
-    <ItemGroup>
-      <Content Include="icon.ico" />
-    </ItemGroup>
+    </When>
 
-    <ItemGroup>
-        <ContentWithTargetPath Include="res\fonts\JetBrainsMono[wght].ttf">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-            <TargetPath>res\fonts\JetBrainsMono[wght].ttf</TargetPath>
-        </ContentWithTargetPath>
-    </ItemGroup>
-  
+    <!-- linux -->
+    <When Condition="'$(OSPlatform)'=='Linux'">
+
+      <!-- include platform -->
+      
+      <!-- packages -->
+      <ItemGroup>
+      </ItemGroup>
+
+    </When>
+
+  </Choose>
+
 </Project>

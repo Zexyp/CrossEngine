@@ -3,27 +3,29 @@ using System;
 using System.Numerics;
 
 using CrossEngine;
+using CrossEngine.Components;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Utils;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
+using CrossEngine.Ecs;
 
 namespace CrossEngineEditor.Panels
 {
-    class SceneViewPanel : EditorPanel
+    public class SceneViewPanel : EditorPanel
     {
-        protected virtual ICamera DrawCamera { get; }
+        protected virtual ICamera DrawCamera { get => null; }
         protected virtual Scene Scene { get => Context.Scene; }
 
         protected Vector2 ViewportSize { get; private set; }
         protected WeakReference<Framebuffer> Framebuffer { get; private set; }
         protected bool ViewportResized;
-        protected bool Drawing = true;
         private RenderService rs;
+        private ISurface surface;
 
-        public SceneViewPanel(RenderService rs)
+        public SceneViewPanel(RenderService rs) : base("Scene View")
         {
             this.rs = rs;
         }
@@ -48,8 +50,8 @@ namespace CrossEngineEditor.Panels
                 {
                     ViewportSize = viewportPanelSize;
 
-                    var fb = Framebuffer.GetValue();
-                    fb.Resize((uint)ViewportSize.X, (uint)ViewportSize.Y);
+                    //var fb = Framebuffer.GetValue();
+                    //fb.Resize((uint)ViewportSize.X, (uint)ViewportSize.Y);
 
                     OnCameraResize();
 
@@ -57,25 +59,31 @@ namespace CrossEngineEditor.Panels
                 }
             }
 
-            if (Scene == null)
+            if (Scene?.Initialized != true || Framebuffer == null)
                 return;
 
             // needs to be set back so SceneManager can render only from given scene data
             // as of latest rewrite this is not valid
-            var lastSceneOutput = Scene.RenderData.Output;
+            // wtf is this comment
+            var renderSys = Scene.World.GetSystem<RenderSystem>();
+            var lastSceneOutput = renderSys.SetSurface(surface);
+            renderSys.OverrideCamera = DrawCamera;
+
+            Framebuffer.GetValue().Bind();
+            surface.Context.Api.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
+            surface.Context.Api.Clear();
+            surface.DoUpdate();
+            Framebuffer.GetValue().Unbind();
+
+            renderSys.OverrideCamera = null;
+            Scene.World.GetSystem<RenderSystem>().SetSurface(lastSceneOutput);
 
             // draw the framebuffer as image
-            Scene.RenderData.Output = Framebuffer;
-            if (Drawing)
-            {
-                SceneRenderer.DrawScene(Scene.RenderData, rs.RendererApi, DrawCamera);
-            }
             ImGui.Image(new IntPtr(Framebuffer.GetValue()?.GetColorAttachmentRendererID(0) ?? 0),
                 ViewportSize,
                 new Vector2(0, 1),
                 new Vector2(1, 0));
 
-            Scene.RenderData.Output = lastSceneOutput;
         }
 
         public override void OnOpen()
@@ -95,6 +103,8 @@ namespace CrossEngineEditor.Panels
             rs.Execute(() =>
             {
                 Framebuffer = CrossEngine.Rendering.Buffers.Framebuffer.Create(ref spec);
+                surface = new FramebufferSurface(Framebuffer) {Context = rs.MainSurface.Context};
+                OnCameraResize();
             });
         }
 
@@ -109,7 +119,7 @@ namespace CrossEngineEditor.Panels
 
         protected virtual void OnCameraResize()
         {
-            Scene?.RenderData.PerformResize(ViewportSize.X, ViewportSize.Y);
+            surface.DoResize(ViewportSize.X, ViewportSize.Y);
         }
     }
 }

@@ -3,6 +3,7 @@ using CrossEngine.Assets;
 using CrossEngine.Logging;
 using CrossEngine.Services;
 using CrossEngine.Utils.Editor;
+using CrossEngineEditor.Platform;
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Utils.UI;
 using ImGuiNET;
@@ -38,18 +39,24 @@ namespace CrossEngineEditor.Panels
                 {
                     if (ImGui.MenuItem("New"))
                     {
-                        Context.Assets = new AssetPool();
+                        void CreateAssets() => Context.Assets = new AssetList();
+
+                        EditorApplication.Instance.Manager.GetService<EditorService>().DestructiveDialog(CreateAssets, Context.Assets != null);
                     }
                     if (ImGui.MenuItem("Load..."))
                     {
-                        var filepath = ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
-                        if (filepath != null)
-                            AssetManager.ReadFile(filepath).ContinueWith(t => Context.Assets = t.Result);
+                        void LoadAssets()
+                        {
+                            var filepath = EditorPlatformHelper.FileOpenDialog();
+                            if (filepath != null)
+                                AssetManager.ReadFile(filepath).ContinueWith(t => Context.Assets = t.Result);
+                        }
+                        EditorApplication.Instance.Manager.GetService<EditorService>().DestructiveDialog(LoadAssets, Context.Assets != null);
                     }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Save As...", Context.Assets != null))
                     {
-                        var filepath = ShellFileDialogs.FileSaveDialog.ShowDialog(0, null, null, null, null);
+                        var filepath = EditorPlatformHelper.FileSaveDialog();
                         if (filepath != null)
                             AssetManager.WriteFile(Context.Assets, filepath);
                     }

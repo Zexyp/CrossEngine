@@ -13,7 +13,11 @@ namespace CrossEngineEditor.Panels
     {
         private bool? _open = true;
 
-        public string WindowName = "";
+        public string WindowName
+        {
+            get => _windowName;
+            set => _windowName = string.IsNullOrEmpty(value) ? $"Unnamed Window '{this.GetType().FullName}' ({this.GetHashCode()})" : value;
+        }
         public bool? Open
         {
             get => _open;
@@ -21,21 +25,22 @@ namespace CrossEngineEditor.Panels
             {
                 if (value == _open) return;
                 _open = value;
-                UpdateOpenState();
+                _openStateDirty = true;
             }
         }
 
-        public bool Attached { get; internal set; }
-
-        public event Action<EditorPanel> InnerBeforeDrawCallback;
-        public event Action<EditorPanel> InnerAfterDrawCallback;
+        //event Action<EditorPanel> InnerBeforeDrawCallback;
+        //event Action<EditorPanel> InnerAfterDrawCallback;
 
         protected ImGuiWindowFlags WindowFlags = ImGuiWindowFlags.None;
-        protected Vector2 WindowSize;
-        protected Vector2 WindowPosition;
-        protected bool Focused;
+        protected Vector2 WindowSize { get; private set; }
+        protected Vector2 WindowPosition { get; private set; }
+        protected bool Focused { get; private set; }
 
-        internal EditorContext Context;
+        internal IEditorContext Context;
+
+        private bool _openStateDirty;
+        private string _windowName;
 
         public EditorPanel(string name)
         {
@@ -44,11 +49,17 @@ namespace CrossEngineEditor.Panels
 
         public EditorPanel()
         {
-            this.WindowName = $"Unnamed Panel ({this.GetType().FullName})";
+            this.WindowName = default;
         }
 
         public void Draw()
         {
+            if (_openStateDirty)
+            {
+                UpdateOpenState();
+                _openStateDirty = false;
+            }
+            
             if (_open != null && !(bool)_open) return;
 
             ImGui.PushID(this.GetHashCode());
@@ -62,8 +73,6 @@ namespace CrossEngineEditor.Panels
             
             if (windowOpen)
             {
-                EndPrepareWindow();
-
                 WindowSize = ImGui.GetWindowSize();
                 WindowPosition = ImGui.GetWindowPos();
                 var io = ImGui.GetIO();
@@ -76,9 +85,9 @@ namespace CrossEngineEditor.Panels
                     ImGui.SetWindowFocus();
                 Focused = ImGui.IsWindowFocused();
 
-                InnerBeforeDrawCallback?.Invoke(this);
+                //InnerBeforeDrawCallback?.Invoke(this);
                 DrawWindowContent();
-                InnerAfterDrawCallback?.Invoke(this);
+                //InnerAfterDrawCallback?.Invoke(this);
 
                 ImGui.End();
             }
