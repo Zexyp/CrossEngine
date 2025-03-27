@@ -22,12 +22,8 @@ namespace CrossEngine.Services
 {
     public class RenderService : Service, IScheduledService
     {
-        public RendererApi RendererApi { get; private set; }
-        public event Action<RenderService> Draw;
-        public event Action<RenderService> BeforeDraw;
-        public event Action<RenderService> AfterDraw;
         public bool IgnoreRefresh { get; set; } = false;
-        public ISurface MainSurface => _surface;
+        public ScreenSurface MainSurface => _surface;
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
         GraphicsContext _context;
@@ -60,18 +56,19 @@ namespace CrossEngine.Services
 
         private void Setup()
         {
-            RendererApi = RendererApi.Create(_api);
-
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent += OnWindowEvent;
             ws.WindowUpdate += OnWindowUpdate;
             
             _context = ws.MainWindow.Context;
+            _context.Api = RendererApi.Create(_api);
             _context.Init();
 
-            RendererApi.Init();
-            RendererApi.SetClearColor(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
-            RendererApi.SetViewport(0, 0, ws.MainWindow.Width, ws.MainWindow.Height);
+            _context.Api.Init();
+            _context.Api.SetClearColor(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+            _context.Api.SetViewport(0, 0, ws.MainWindow.Width, ws.MainWindow.Height);
+            
+            _surface.Context = _context;
             _surface.DoResize(ws.MainWindow.Width, ws.MainWindow.Height);
 
             Prepare();
@@ -87,8 +84,8 @@ namespace CrossEngine.Services
             
             ws.MainWindow.Context.Dispose();
 
-            RendererApi.Dispose();
-            RendererApi = null;
+            _context.Api.Dispose();
+            _context.Api = null;
             
             _context.Dispose();
             _context = null;
@@ -110,6 +107,8 @@ namespace CrossEngine.Services
 
         private void OnWindowEvent(Window w, Event e)
         {
+            GraphicsContext.Current = w.Context;
+
             // this is supposed to fix state when resizing window
             // it's unfortunate that when just holding the window nothing happens
             // also used when window dictates it's own redrawing
@@ -118,14 +117,18 @@ namespace CrossEngine.Services
 
             if (e is WindowResizeEvent wre)
             {
-                RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
+                w.Context.Api.SetViewport(0, 0, wre.Width, wre.Height);
                 _surface.DoResize(wre.Width, wre.Height);
             }
+            
+            GraphicsContext.Current = null;
         }
 
         private void OnWindowUpdate(Window w)
         {
+            GraphicsContext.Current = w.Context;
             DrawPresent(w.Context);
+            GraphicsContext.Current = null;
         }
 
         private void DrawPresent(GraphicsContext context)
@@ -136,10 +139,7 @@ namespace CrossEngine.Services
 
             _scheduler.RunOnCurrentThread();
 
-            BeforeDraw?.Invoke(this);
             _surface.DoUpdate();
-            Draw?.Invoke(this);
-            AfterDraw?.Invoke(this);
 
             Profiler.EndScope();
 
@@ -160,8 +160,8 @@ namespace CrossEngine.Services
             TextureLoader.Init();
             MeshLoader.ServiceRequest = OnServiceRequest;
 
-            Renderer2D.Init(RendererApi);
-            LineRenderer.Init(RendererApi);
+            Renderer2D.Init(_context.Api);
+            LineRenderer.Init(_context.Api);
             TextRendererUtil.Init();
 
             _scheduler.RunOnCurrentThread();
@@ -194,13 +194,16 @@ namespace CrossEngine.Services
 
         }
 
-        class ScreenSurface : ISurface
+        public class ScreenSurface : ISurface
         {
             public WeakReference<Framebuffer> Buffer => null;
             public Vector2 Size { get; private set; }
+            public GraphicsContext Context { get; set; }
 
             public event Action<ISurface, float, float> Resize;
+            public event Action<ISurface> BeforeUpdate;
             public event Action<ISurface> Update;
+            public event Action<ISurface> AfterUpdate;
 
             public void DoResize(float width, float height)
             {
@@ -208,7 +211,12 @@ namespace CrossEngine.Services
                 Resize?.Invoke(this, width, height);
             }
 
-            public void DoUpdate() => Update?.Invoke(this);
+            public void DoUpdate()
+            {
+                BeforeUpdate?.Invoke(this);
+                Update?.Invoke(this);
+                AfterUpdate?.Invoke(this);
+            }
         }
     }
 }

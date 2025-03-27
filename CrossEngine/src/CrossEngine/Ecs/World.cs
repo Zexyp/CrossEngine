@@ -16,8 +16,6 @@ namespace CrossEngine.Ecs
     // TODO: multiple occurrences
     public class ComponentStorage
     {
-        static Logger _log = new Logger("comp-store");
-
         Dictionary<Type[], Dictionary<Entity, Component[]>> indexes = new(new TypeArrayEqualityComparer());
         Dictionary<Type, List<Component>> _simpleArray = new();
 
@@ -29,8 +27,6 @@ namespace CrossEngine.Ecs
 
         public void AddComponent(Component component)
         {
-            _log.Trace($"add comp {component}");
-
             var type = component.GetType();
             foreach (var index in indexes)
             {
@@ -57,8 +53,6 @@ namespace CrossEngine.Ecs
 
         public void RemoveComponent(Component component)
         {
-            _log.Trace($"remove comp {component}");
-
             var type = component.GetType();
             foreach (var index in indexes)
             {

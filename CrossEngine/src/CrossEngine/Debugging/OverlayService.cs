@@ -16,30 +16,36 @@ namespace CrossEngine.Debugging
         readonly List<Overlay> _overlays = new List<Overlay>();
         private float _lastWidth, _lastHeight;
 
+        public OverlayService()
+        {
+            
+        }
+
+        public OverlayService(params Overlay[] overlays)
+        {
+            for (int i = 0; i < overlays.Length; i++)
+            {
+                AddOverlay(overlays[i]);
+            }
+        }
+
         public override void OnAttach()
         {
             var rs = Manager.GetService<RenderService>();
-            var ws = Manager.GetService<WindowService>();
-            rs.Draw += OnRender;
-            ws.WindowEvent += OnEvent;
-            ws.Execute(() => OnResize(ws.MainWindow.Width, ws.MainWindow.Height));
+            rs.MainSurface.AfterUpdate += OnRender;
+            rs.MainSurface.Resize += OnResize;
+            rs.Execute(() => OnResize(rs.MainSurface, rs.MainSurface.Size.X, rs.MainSurface.Size.Y));
         }
 
         public override void OnDetach()
         {
             var rs = Manager.GetService<RenderService>();
-            var ws = Manager.GetService<WindowService>();
-            rs.Draw -= OnRender;
-            ws.WindowEvent -= OnEvent;
+            rs.MainSurface.AfterUpdate -= OnRender;
+            rs.MainSurface.Resize -= OnResize;
+
         }
 
-        private void OnEvent(Window ws, Event e)
-        {
-            if (e is WindowResizeEvent wre)
-                OnResize(wre.Width, wre.Height);
-        }
-
-        private void OnResize(float width, float height)
+        private void OnResize(ISurface surface, float width, float height)
         {
             _lastWidth = width;
             _lastHeight = height;
@@ -49,8 +55,9 @@ namespace CrossEngine.Debugging
             }
         }
 
-        void OnRender(RenderService rs)
+        void OnRender(ISurface surface)
         {
+            surface.Context.Api.SetViewport(0, 0, (uint)_lastWidth, (uint)_lastHeight);
             for (int i = 0; i < _overlays.Count; i++)
             {
                 _overlays[i].Draw();

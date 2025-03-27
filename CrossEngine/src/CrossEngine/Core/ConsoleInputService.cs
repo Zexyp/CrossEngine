@@ -38,6 +38,8 @@ namespace CrossEngine.Core
         {
             Debug.Assert(_thread == null);
 
+            // provides a nice smooth shutdown
+            //AppDomain.CurrentDomain.ProcessExit <- this is nice but works like ass
             Console.CancelKeyPress += OnCancelKeyPress;
 
             //_queue.Clear(); // trust issues

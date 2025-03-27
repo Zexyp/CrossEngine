@@ -24,8 +24,8 @@ namespace CrossEngine.Scenes
         public readonly World World = new World();
         public readonly ReadOnlyCollection<Entity> Entities;
         public bool Started { get; private set; } = false;
+        public bool Initialized { get; private set; } = false;
 
-        bool _initialized = false;
         readonly List<Entity> _roots = new();
         readonly List<Entity> _entities = new List<Entity>();
         readonly Dictionary<int, Entity> _ids = new Dictionary<int, Entity>();
@@ -55,11 +55,12 @@ namespace CrossEngine.Scenes
                 entity.Id = entity.GetHashCode();
 
             _entities.Add(entity);
+            _ids[entity.Id] = entity;
 
             if (entity.Parent == null)
                 _roots.Add(entity);
 
-            if (_initialized)
+            if (Initialized)
                 World.AddEntity(entity);
 
             Debug.Assert(entity.Children.Count == 0);
@@ -86,16 +87,24 @@ namespace CrossEngine.Scenes
             // remove parenting
             entity.Parent = null;
 
-            if (_initialized)
+            if (Initialized)
                 World.RemoveEntity(entity);
 
             _entities.Remove(entity);
+            _ids.Remove(entity.Id);
 
             _roots.Remove(entity);
 
             Log.Default.Trace($"removed entity '{entity.Id}'");
 
+            entity.Id = 0;
+
             Profiler.EndScope();
+        }
+
+        public Entity GetEntity(int id)
+        {
+            return _ids.TryGetValue(id, out Entity entity) ? entity : null;
         }
         
         private void OnEntityParentChanged(Entity obj)
@@ -130,7 +139,7 @@ namespace CrossEngine.Scenes
 
         public void Init()
         {
-            _initialized = true;
+            Initialized = true;
             World.Init();
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -145,7 +154,7 @@ namespace CrossEngine.Scenes
                 World.RemoveEntity(_entities[i]);
             }
             World.Deinit();
-            _initialized = false;
+            Initialized = false;
         }
 
         public void Start()

@@ -1,4 +1,6 @@
-﻿using CrossEngine.Services;
+﻿//#define LOG_FRAME_SKIP
+
+using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Platform;
 using CrossEngine.Profiling;
@@ -148,8 +150,10 @@ namespace CrossEngine.Display
             
         }
 
+#if LOG_FRAME_SKIP
         bool _lastFrameSkipped = false;
-        
+#endif
+
         public void OnUpdate()
         {
             if (!_running)
@@ -160,17 +164,21 @@ namespace CrossEngine.Display
                 Profiler.Function("waiting for render");
                 if (_render.WaitOne(MaxFrameDuration))
                 {
+#if LOG_FRAME_SKIP
                     _lastFrameSkipped = false;
-                    
+#endif
+
                     _render.Reset();
                     Profiler.Function("signaling render");
                     _main.Set();
                 }
                 else
                 {
+#if LOG_FRAME_SKIP
                     if (!_lastFrameSkipped)
                         _log.Trace("skipping frame(s)");
                     _lastFrameSkipped = true;
+#endif
 
                     Profiler.Function("frame skip");
                 }

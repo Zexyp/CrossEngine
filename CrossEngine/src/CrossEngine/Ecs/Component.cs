@@ -13,7 +13,8 @@ namespace CrossEngine.Ecs
     {
         public Entity Entity { get; internal set; }
 
-        //public bool Enabled;
+        [Obsolete("not implemented")]
+        public bool Enabled;
 
         public Component()
         {

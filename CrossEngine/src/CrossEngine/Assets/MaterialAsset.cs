@@ -12,7 +12,7 @@ namespace CrossEngine.Assets
     {
         public Material Material;
 
-        public override bool Loaded => throw new NotImplementedException();
+        public override bool Loaded => Material != null;
 
         public override Task Load(IAssetLoadContext context)
         {

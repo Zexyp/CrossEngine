@@ -30,14 +30,17 @@ namespace CrossEngine.Rendering.Renderables
 
         public override void Submit(IMeshRenderData data)
         {
+            if (data.Mesh == null)
+                return;
+
             ShaderProgram shader = (data.Material?.Shader ?? CrossEngine.Rendering.Shaders.ShaderPreprocessor.DefaultShaderProgram).GetValue();
             shader.Use();
             shader.SetParameterMat4("uViewProjection", _camera.GetViewProjectionMatrix());
 
             if (data.Mesh.Indexed)
-                RApi.DrawIndexed(data.Mesh.VA);
+                GraphicsContext.Current.Api.DrawIndexed(data.Mesh.VA);
             else
-                RApi.DrawArray(data.Mesh.VA, (uint)data.Mesh.Vertices.Count);
+                GraphicsContext.Current.Api.DrawArray(data.Mesh.VA, (uint)data.Mesh.Vertices.Count);
         }
     }
 }

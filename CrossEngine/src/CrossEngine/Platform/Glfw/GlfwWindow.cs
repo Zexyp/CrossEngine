@@ -111,11 +111,18 @@ namespace CrossEngine.Platform.Glfw
 
         protected override void UpdateFullscreen()
         {
-            throw new NotImplementedException();
-            //glfw.SetWindowMonitor(_nativeHandle, Data.Fullscreen ? glfw.GetPrimaryMonitor() : GLFW.Monitor.None, glfw.GetPrimaryMonitor().WorkArea.X, glfw.PrimaryMonitor.WorkArea.Y, (int)Data.Width, (int)Data.Height, 60);
+            int x, y, width, height;
+            glfw.SetWindowAttrib(_nativeHandle, WindowAttributeSetter.Decorated, !Data.Fullscreen);
+            glfw.GetMonitorWorkarea(glfw.GetPrimaryMonitor(), out x, out y, out width, out height);
+            glfw.SetWindowMonitor(_nativeHandle, Data.Fullscreen ? glfw.GetWindowMonitor(_nativeHandle) : null, x, y, width, height, 60);
         }
 
-        protected override (uint Width, uint Height) GetMonitorSize() => throw new NotImplementedException(); //((uint)glfw.PrimaryMonitor.WorkArea.Width, (uint)glfw.PrimaryMonitor.WorkArea.Height);
+        protected override (uint Width, uint Height) GetMonitorSize()
+        {
+            int width, height;
+            glfw.GetMonitorWorkarea(glfw.GetPrimaryMonitor(), out _, out _, out width, out height);
+            return ((uint)width, (uint)height);
+        }
 
         private void GlfwErrorCallback(ErrorCode code, string message)
         {

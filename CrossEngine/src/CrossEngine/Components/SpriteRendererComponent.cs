@@ -31,7 +31,7 @@ namespace CrossEngine.Components
         public SpriteAsset Sprite;
 
         Matrix4x4 IObjectRenderData.Transform => Entity?.Transform?.GetWorldTransformMatrix() ?? Matrix4x4.Identity;
-        int ISpriteRenderData.EntityId => Entity?.Id.GetHashCode() ?? 0;
+        int ISpriteRenderData.EntityId => Entity?.Id ?? 0;
         Vector4 ISpriteRenderData.TextureOffsets => Sprite?.TextureOffsets ?? new Vector4(0, 0, 1, 1);
         WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Texture?.Texture;
         BlendMode ISpriteRenderData.Blend => Blend;

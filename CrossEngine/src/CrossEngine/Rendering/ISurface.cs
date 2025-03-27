@@ -13,8 +13,7 @@ namespace CrossEngine.Rendering
     {
         public WeakReference<Framebuffer> Buffer { get; }
         public Vector2 Size { get; }
-        [Obsolete("not implemented")]
-        virtual GraphicsContext Context { get => throw new NotImplementedException(); }
+        public GraphicsContext Context { get; }
 
         public event Action<ISurface, float, float> Resize;
         public event Action<ISurface> Update;
@@ -28,6 +27,7 @@ namespace CrossEngine.Rendering
         public WeakReference<Framebuffer> Buffer { get; set; }
 
         public Vector2 Size { get; private set; }
+        public GraphicsContext Context { get; set; }
 
         public event Action<ISurface, float, float> Resize;
         public event Action<ISurface> Update;

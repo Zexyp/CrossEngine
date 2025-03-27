@@ -11,8 +11,6 @@ namespace CrossEngine.Rendering.Renderables
 {
     public interface IRenderable
     {
-        RendererApi RApi { set; }
-
         virtual void Begin(ICamera camera) { }
         virtual void End() { }
 
@@ -21,8 +19,6 @@ namespace CrossEngine.Rendering.Renderables
 
     public abstract class Renderable<T> : IRenderable where T : IObjectRenderData
     {
-        public RendererApi RApi { get; set; }
-
         public virtual void Begin(ICamera camera) { }
         public virtual void End() { }
 

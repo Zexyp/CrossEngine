@@ -18,13 +18,14 @@ namespace CrossEngine.Components
 {
     public class RenderSystem : CrossEngine.Ecs.System
     {
-        public IResizableCamera OverrideCamera
+        public ICamera OverrideCamera
         {
             get => _overrideCamera;
             set
             {
                 _overrideCamera = value;
-                _overrideCamera?.Resize(_lastSize.X, _lastSize.Y);
+                if (_overrideCamera != null && _overrideCamera is IResizableCamera rc)
+                    rc.Resize(_lastSize.X, _lastSize.Y);
             }
         }
 
@@ -44,14 +45,14 @@ namespace CrossEngine.Components
         event Action<RenderSystem> PrimaryCameraChanged;
         
         private CameraComponent? _primaryCamera = null;
-        private IResizableCamera _overrideCamera;
+        private ICamera _overrideCamera;
         private Vector2 _lastSize = Vector2.One;
         private ISurface _surface;
 
-        internal RendererApi rapi;
-
-        public void SetSurface(ISurface surface)
+        public ISurface SetSurface(ISurface surface)
         {
+            var old = _surface;
+            
             if (_surface != null)
             {
                 _surface.Resize -= OnResize;
@@ -62,25 +63,35 @@ namespace CrossEngine.Components
             {
                 _surface.Resize += OnResize;
                 _surface.Update += OnRender;
-                _lastSize = _surface.Size;
-                OnResize(_surface, _lastSize.X, _lastSize.Y);
+                if (_lastSize != _surface.Size)
+                {
+                    _lastSize = _surface.Size;
+                    OnResize(_surface, _lastSize.X, _lastSize.Y);
+                }
             }
+            
+            return old;
         }
 
         private void OnResize(ISurface sender, float width, float height)
         {
             _lastSize = new(width, height);
             _primaryCamera?.Resize(width, height);
-            _overrideCamera?.Resize(width, height);
+            if (_overrideCamera != null && _overrideCamera is IResizableCamera rc)
+                rc.Resize(width, height);
         }
 
         private void OnRender(ISurface sender)
         {
-            rapi.Clear();
+            _surface.Context.Api.SetViewport(0, 0, (uint)_surface.Size.X, (uint)_surface.Size.Y);
+            
             var camera = OverrideCamera ?? PrimaryCamera;
+            if (camera == null)
+                return;
+
             var srenderable = new SpriteRenderable();
+            var mrenderable = new MeshRenderable();
             srenderable.Begin(camera);
-            var mrenderable = new MeshRenderable() { RApi = rapi };
             mrenderable.Begin(camera);
             foreach (ISpriteRenderData src in World.Storage.IterateIndex(new[] { typeof(ISpriteRenderData) }).Select(v => v[0]))
             {

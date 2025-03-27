@@ -61,10 +61,15 @@ namespace CrossEngine.Scenes
 
         public void Push(Scene scene)
         {
-            _scenes.Add(scene);
-            scene.Init();
+            PushBackground(scene);
 
             AttachRendering(scene);
+        }
+
+        public void PushBackground(Scene scene)
+        {
+            _scenes.Add(scene);
+            scene.Init();
 
             Log.Info("scene pushed");
         }
@@ -129,8 +134,8 @@ namespace CrossEngine.Scenes
             Manager.GetService<RenderService>().Execute(() =>
             {
                 var rs = scene.World.GetSystem<RenderSystem>();
-                rs.rapi = Manager.GetService<RenderService>().RendererApi;
-                rs.SetSurface(Manager.GetService<RenderService>().MainSurface);
+                var sur = Manager.GetService<RenderService>().MainSurface;
+                rs.SetSurface(sur);
             });
         }
 
@@ -140,7 +145,6 @@ namespace CrossEngine.Scenes
             {
                 var rs = scene.World.GetSystem<RenderSystem>();
                 rs.SetSurface(null);
-                rs.rapi = null;
             });
         }
     }

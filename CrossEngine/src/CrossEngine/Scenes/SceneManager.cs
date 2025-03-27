@@ -16,6 +16,9 @@ namespace CrossEngine.Scenes
         private static Scene _current;
 
         public static void Push(Scene scene) => service.Execute(() => service.Push(scene));
+        public static void PushBackground(Scene scene) => service.Execute(() => service.PushBackground(scene));
         public static void Remove(Scene scene) => service.Execute(() => service.Remove(scene));
+        public static void Start(Scene scene) => service.Execute(() => service.Start(scene));
+        public static void Stop(Scene scene) => service.Execute(() => service.Stop(scene));
     }
 }

@@ -160,7 +160,7 @@ namespace CrossEngine.Assets
             return result;
         }
 
-        private async Task<bool> LoadAsset(Asset asset)
+        public async Task<bool> LoadAsset(Asset asset)
         {
             try
             {
@@ -176,7 +176,7 @@ namespace CrossEngine.Assets
             }
         }
 
-        private async Task<bool> UnloadAsset(Asset asset)
+        public async Task<bool> UnloadAsset(Asset asset)
         {
             try
             {
