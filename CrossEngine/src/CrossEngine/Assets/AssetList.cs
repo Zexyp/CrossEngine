@@ -197,7 +197,7 @@ namespace CrossEngine.Assets
             }
             catch (Exception ex)
             {
-                Log.Default.Error($"failed to load asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
+                Log.Default.Error($"failed to load asset '{asset}': {ex.GetType().FullName}: {ex.Message}");
                 Log.Default.Trace($"load asset failiure details: {ex}");
                 return false;
             }
@@ -213,7 +213,7 @@ namespace CrossEngine.Assets
             }
             catch (Exception ex)
             {
-                Log.Default.Error($"failed to unload asset '{asset}':\n{ex.GetType().FullName}: {ex.Message}");
+                Log.Default.Error($"failed to unload asset '{asset}': {ex.GetType().FullName}: {ex.Message}");
                 Log.Default.Trace($"unload asset failiure details: {ex}");
                 return false;
             }

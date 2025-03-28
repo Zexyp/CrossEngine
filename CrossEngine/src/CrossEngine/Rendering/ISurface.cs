@@ -32,7 +32,7 @@ namespace CrossEngine.Rendering
         public event Action<ISurface, float, float> Resize;
         public event Action<ISurface> Update;
 
-        public FramebufferSurface(WeakReference<Framebuffer> buffer)
+        public FramebufferSurface(WeakReference<Framebuffer> buffer = null)
         {
             Buffer = buffer;
         }

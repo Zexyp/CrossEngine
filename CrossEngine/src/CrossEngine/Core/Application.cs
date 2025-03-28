@@ -78,6 +78,8 @@ namespace CrossEngine.Core
 
         internal static void ThreadWrapper(Action action)
         {
+            Log.Trace($"wrapping thread '{Thread.CurrentThread.Name}'...");
+
             var culture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
             culture.NumberFormat.NumberDecimalSeparator = ".";
             Thread.CurrentThread.CurrentCulture = culture;

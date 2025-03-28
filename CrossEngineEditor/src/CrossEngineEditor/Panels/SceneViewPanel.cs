@@ -23,7 +23,7 @@ namespace CrossEngineEditor.Panels
         protected WeakReference<Framebuffer> Framebuffer { get; private set; }
         protected bool ViewportResized;
         private RenderService rs;
-        private ISurface surface;
+        protected ISurface Surface;
 
         public SceneViewPanel(RenderService rs) : base("Scene View")
         {
@@ -66,13 +66,13 @@ namespace CrossEngineEditor.Panels
             // as of latest rewrite this is not valid
             // wtf is this comment
             var renderSys = Scene.World.GetSystem<RenderSystem>();
-            var lastSceneOutput = renderSys.SetSurface(surface);
+            var lastSceneOutput = renderSys.SetSurface(Surface);
             renderSys.OverrideCamera = DrawCamera;
 
             Framebuffer.GetValue().Bind();
-            surface.Context.Api.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
-            surface.Context.Api.Clear();
-            surface.DoUpdate();
+            Surface.Context.Api.Clear();
+            Surface.DoUpdate();
+            AugmentSceneRender();
             Framebuffer.GetValue().Unbind();
 
             renderSys.OverrideCamera = null;
@@ -103,7 +103,7 @@ namespace CrossEngineEditor.Panels
             rs.Execute(() =>
             {
                 Framebuffer = CrossEngine.Rendering.Buffers.Framebuffer.Create(ref spec);
-                surface = new FramebufferSurface(Framebuffer) {Context = rs.MainSurface.Context};
+                Surface = new FramebufferSurface(Framebuffer) { Context = rs.MainSurface.Context };
                 OnCameraResize();
             });
         }
@@ -119,7 +119,9 @@ namespace CrossEngineEditor.Panels
 
         protected virtual void OnCameraResize()
         {
-            surface.DoResize(ViewportSize.X, ViewportSize.Y);
+            Surface.DoResize(ViewportSize.X, ViewportSize.Y);
         }
+
+        protected virtual void AugmentSceneRender() { }
     }
 }

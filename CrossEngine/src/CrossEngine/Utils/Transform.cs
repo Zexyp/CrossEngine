@@ -48,7 +48,7 @@ public class Transform : ITransformCache
 
     public Vector3 WorldPosition
     {
-        get => throw new NotImplementedException();
+        get => _worldTransformProvider == null ? _translation : Vector3.Transform(_translation, _worldTransformProvider.GetMatrix());
         set => throw new NotImplementedException();
     }
     public Quaternion WorldRotation

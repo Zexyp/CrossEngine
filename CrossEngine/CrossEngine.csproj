@@ -53,7 +53,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Web'">
-    <DefineConstants>WASM;OPENGL_ES</DefineConstants>
+    <DefineConstants>DEBUG;WASM;OPENGL_ES</DefineConstants>
     <OSPlatform>Web</OSPlatform>
   </PropertyGroup>
 

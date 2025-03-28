@@ -10,6 +10,8 @@ using CrossEngine.Platform.OpenGL;
 using StbImageSharp;
 using CrossEngine.Utils;
 using CrossEngine.Profiling;
+using CrossEngine.Platform;
+using System.Threading.Tasks;
 
 namespace CrossEngine.Loaders
 {
@@ -49,9 +51,9 @@ namespace CrossEngine.Loaders
             DefaultTexture = null;
         }
 
-        public static WeakReference<Texture> LoadTextureFromFile(string filepath, ColorFormat? desiredFormat = null)
+        public static async Task<WeakReference<Texture>> LoadTextureFromFile(string filepath, ColorFormat? desiredFormat = null)
         {
-            using (Stream stream = File.OpenRead(filepath))
+            using (Stream stream = await PlatformHelper.FileRead(filepath))
             {
                 return LoadTextureFromStream(stream, desiredFormat);
             }

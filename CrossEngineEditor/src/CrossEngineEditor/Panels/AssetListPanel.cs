@@ -14,6 +14,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CrossEngineEditor.Panels
@@ -49,7 +50,10 @@ namespace CrossEngineEditor.Panels
                         {
                             var filepath = EditorPlatformHelper.FileOpenDialog();
                             if (filepath != null)
-                                AssetManager.ReadFile(filepath).ContinueWith(t => Context.Assets = t.Result);
+                            {
+                                var task = AssetManager.ReadFile(filepath);
+                                Context.Assets = task.Result;
+                            }
                         }
                         EditorApplication.Instance.Manager.GetService<EditorService>().DestructiveDialog(LoadAssets, Context.Assets != null);
                     }
@@ -73,9 +77,13 @@ namespace CrossEngineEditor.Panels
                     ImGui.Separator();
                     if (ImGui.MenuItem("Reload All", Context.Assets != null))
                     {
-                        var last = Context.Assets;
-                        Context.Assets = null;
-                        Context.Assets = last;
+                        void ReloadAssets()
+                        {
+                            var last = Context.Assets;
+                            Context.Assets = null;
+                            Context.Assets = last;
+                        }
+                        EditorApplication.Instance.Manager.GetService<EditorService>().DestructiveDialog(ReloadAssets);
                     }
 
                     ImGui.EndMenu();

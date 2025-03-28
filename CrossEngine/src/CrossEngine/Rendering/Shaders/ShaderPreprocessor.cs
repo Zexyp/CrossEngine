@@ -21,21 +21,37 @@ namespace CrossEngine.Rendering.Shaders
         [ThreadStatic]
         internal static Action<Action> ServiceRequest;
 
+#if !OPENGL_ES
+        private const string ShaderProfile = "core";
+        private const string ShaderVersion = "330";
+        private const string ShaderPrecision = "";
+        private const string ShaderMatInit = " = mat4(1)";
+#else
+        private const string ShaderProfile = "es";
+        private const string ShaderVersion = "300";
+        private const string ShaderPrecision = "precision highp float;";
+        private const string ShaderMatInit = "";
+#endif
+
         private const string DefaultShaderProgramSource =
-@"#type vertex
-#version 330 core
+$@"#type vertex
+#version {ShaderVersion} {ShaderProfile}
+{ShaderPrecision}
 layout(location = 0) in vec3 aPosition;
-uniform mat4 uViewProjection = mat4(1);
-uniform mat4 uModel = mat4(1);
-void main() {
+uniform mat4 uViewProjection{ShaderMatInit};
+uniform mat4 uModel{ShaderMatInit};
+void main() {{
     gl_Position = uViewProjection * uModel * vec4(aPosition, 1.0);
-}
+}}
 
 #type fragment
-#version 330 core
-void main() {
-    gl_FragColor = vec4(1, 0, 1, 1);
-}";
+#version {ShaderVersion} {ShaderProfile}
+{ShaderPrecision}
+layout(location = 0) out vec4 oColor;
+void main() {{
+    oColor = vec4(1, 0, 1, 1); // gl_FragColor no workie in es
+}}
+";
         public static WeakReference<ShaderProgram> DefaultShaderProgram { get; private set; }
 
         static Logger _log = new Logger("shader-preproc");

@@ -44,8 +44,8 @@ namespace CrossEngine.Platform
 
         public static Task<Stream> FileRead(string path)
         {
-#if WINDOWS || LINUX
             Log.Trace($"file read '{path}'");
+#if WINDOWS || LINUX
             return Task.FromResult((Stream)File.OpenRead(path));
 #elif WASM
             // .Result creates deadlock
@@ -57,8 +57,8 @@ namespace CrossEngine.Platform
 
         public static Stream FileCreate(string path)
         {
-#if WINDOWS || LINUX
             Log.Trace($"file write '{path}'");
+#if WINDOWS || LINUX
             var stream = File.Create(path);
             stream.SetLength(0);
             return stream;

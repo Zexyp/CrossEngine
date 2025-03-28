@@ -477,9 +477,7 @@ namespace CrossEngineEditor.Utils
 
                 if (ImGui.BeginCombo(name, v?.GetName() ?? ""))
                 {
-                    var coll = AssetManager.Current?.GetCollection(type);
-
-                    if (coll != null)
+                    if (AssetManager.Current?.TryGetCollection(type, out var coll) == true)
                         foreach (Asset item in coll)
                         {
                             bool isSelected = item == v;

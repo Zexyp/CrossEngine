@@ -44,7 +44,7 @@ namespace CrossEngine.Components
                 _projectionDirty = true;
             }
         }
-        [EditorDrag]
+        [EditorDrag(Min = 0.1f, Max = 179f)]
         public float Fov
         {
             get => _fov;

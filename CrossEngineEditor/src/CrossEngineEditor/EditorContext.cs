@@ -36,8 +36,6 @@ namespace CrossEngineEditor
                 var old = _scene;
                 _scene = value;
 
-                ActiveEntity = null;
-
                 SceneChanged?.Invoke(old);
             }
         }
@@ -61,8 +59,6 @@ namespace CrossEngineEditor
                 if (value == _assets) return;
                 var old = _assets;
                 _assets = value;
-
-                Scene = null;
 
                 AssetsChanged?.Invoke(old);
             }

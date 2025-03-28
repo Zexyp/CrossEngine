@@ -13,7 +13,7 @@ namespace CrossEngine.Debugging
 {
     public class OverlayService : Service
     {
-        readonly List<Overlay> _overlays = new List<Overlay>();
+        readonly List<IOverlay> _overlays = new List<IOverlay>();
         private float _lastWidth, _lastHeight;
 
         public OverlayService()
@@ -21,7 +21,7 @@ namespace CrossEngine.Debugging
             
         }
 
-        public OverlayService(params Overlay[] overlays)
+        public OverlayService(params IOverlay[] overlays)
         {
             for (int i = 0; i < overlays.Length; i++)
             {
@@ -64,12 +64,12 @@ namespace CrossEngine.Debugging
             }
         }
 
-        public void AddOverlay(Overlay overlay)
+        public void AddOverlay(IOverlay overlay)
         {
             _overlays.Add(overlay);
             overlay.Resize(_lastWidth, _lastHeight);
         }
-        public void RemoveOverlay(Overlay overlay) => _overlays.Remove(overlay);
+        public void RemoveOverlay(IOverlay overlay) => _overlays.Remove(overlay);
 
         public override void OnStart()
         {

@@ -12,6 +12,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Debugging;
 using CrossEngine.Loaders;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Utils
 {
@@ -43,6 +44,8 @@ namespace CrossEngine.Utils
         
         public static void Init()
         {
+            Log.Default.Debug($"initializing {nameof(TextRendererUtil)}");
+
             data.AtlasTexture = TextureLoader.LoadTextureFromBytes(Properties.Resources.DebugFontAtlas);
             var tex = data.AtlasTexture.GetValue();
             tex.SetFilterParameter(FilterParameter.Nearest);
@@ -51,6 +54,8 @@ namespace CrossEngine.Utils
 
         public static void Shutdown()
         {
+			Log.Default.Debug($"shutting down {nameof(TextRendererUtil)}");
+            
             data.AtlasTexture.Dispose();
             data.AtlasTexture = null;
         }

@@ -1,8 +1,11 @@
-﻿using CrossEngine.Rendering.Cameras;
+﻿using CrossEngine.Components;
+using CrossEngine.Rendering.Cameras;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
 using CrossEngine.Utils;
+using CrossEngineEditor.Viewport;
 using ImGuiNET;
+using Silk.NET.GLFW;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,11 +30,17 @@ namespace CrossEngineEditor.Panels
         private bool _perspective = false;
         private bool _projectionDirty = true;
         private bool _viewDirty = true;
+        private readonly List<IViewportOverlay> _overlays = new();
+        private Vector2 _lookRot = Vector2.Zero;
 
         public ViewportPanel(RenderService rs) : base(rs)
         {
             WindowName = "Viewport";
             WindowFlags = ImGuiWindowFlags.MenuBar;
+
+            AddOverlay(new TransformsOverlay());
+            AddOverlay(new SelectedOverlay());
+            AddOverlay(new CameraOverlay());
         }
 
         protected override void DrawWindowContent()
@@ -40,24 +49,66 @@ namespace CrossEngineEditor.Panels
             {
                 if (ImGui.BeginMenu("View"))
                 {
-                    if (ImGui.BeginMenu("Viewport"))
+                    if (ImGui.MenuItem("Perspective", null, _perspective))
                     {
-                        if (ImGui.MenuItem("Top", null, false) &&
-                            (_viewDirty = true)) ;
-                        if (ImGui.MenuItem("Bottom", null, false) &&
-                            (_viewDirty = true)) ;
+                        _perspective = !_perspective;
+                        _projectionDirty = true;
+                        _viewDirty = true;
+                    }
+
+                    if (ImGui.BeginMenu("Camera"))
+                    {
+                        _viewDirty |= ImGui.DragFloat("FOV", ref _fov);
+                        _viewDirty |= ImGui.DragFloat("Near", ref _near);
+                        _viewDirty |= ImGui.DragFloat("Far", ref _far);
+                        _viewDirty |= ImGui.DragFloat("Zoom", ref _zoom);
+
+                        ImGui.EndMenu();
+                    }
+
+                    ImGui.Separator();
+
+                    if (ImGui.BeginMenu("Viewpoint"))
+                    {
+                        var cam = Context.Scene?.Initialized == true ? Context.Scene?.World.GetSystem<RenderSystem>().PrimaryCamera : null;
+                        if (ImGui.MenuItem("Camera", null, _editorCamera.ViewMatrix == cam?.ViewMatrix, cam != null)) {
+                            _editorCamera.ViewMatrix = cam.ViewMatrix;
+                        }
+
                         ImGui.Separator();
-                        if (ImGui.MenuItem("Front", null, _cameraRotation == Quaternion.Identity) &&
-                            (_viewDirty = true))
+
+                        if (ImGui.MenuItem("Top", null, false))
+                        {
+                            throw new NotImplementedException();
+                            _viewDirty = true;
+                        }
+                        if (ImGui.MenuItem("Bottom", null, false))
+                        {
+                            throw new NotImplementedException();
+                            _viewDirty = true;
+                        }
+                        ImGui.Separator();
+                        if (ImGui.MenuItem("Front", null, _cameraRotation == Quaternion.Identity))
+                        {
                             _cameraRotation = Quaternion.Identity;
-                        if (ImGui.MenuItem("Back", null, _cameraRotation == Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI)) &&
-                            (_viewDirty = true))
+                            _viewDirty = true;
+                        }
+                        if (ImGui.MenuItem("Back", null, _cameraRotation == Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI)))
+                        {
                             _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI);
+                            _viewDirty = true;
+                        }
                         ImGui.Separator();
-                        if (ImGui.MenuItem("Right", null, false) &&
-                            (_viewDirty = true)) ;
-                        if (ImGui.MenuItem("Left", null, false) &&
-                            (_viewDirty = true)) ;
+                        if (ImGui.MenuItem("Right", null, false))
+                        {
+                            throw new NotImplementedException();
+                            _viewDirty = true;
+                        }
+                        if (ImGui.MenuItem("Left", null, false))
+                        {
+                            throw new NotImplementedException();
+                            _viewDirty = true;
+                        }
 
                         ImGui.EndMenu();
                     }
@@ -81,10 +132,34 @@ namespace CrossEngineEditor.Panels
                 Context.ActiveEntity = Context.Scene.GetEntity(result);
             }
 
-            else if (ImGui.IsItemHovered() && Focused)
+            else
+            {
+                if (!_perspective)
+                {
+                    OrthoControl(io);
+                }
+                else
+                {
+                    if (true) // mouse
+                        PerspectiveMouseControl(io);
+                    else
+                        PerspectiveTouchpadControl(io);
+                }
+            }
+
+            if (_projectionDirty)
+                UpdateProjection();
+
+            if (_viewDirty)
+                UpdateView();
+        }
+
+        private void OrthoControl(in ImGuiIOPtr io)
+        {
+            if (ImGui.IsItemHovered() && Focused)
             {
                 // zoom
-                if (io.KeyCtrl && io.MouseWheel != 0)
+                if (!io.KeyShift && io.MouseWheel != 0)
                 {
                     _zoom -= io.MouseWheel * .5f / (1f / _zoom * 4f);
                     _zoom = Math.Max(_zoom, 0.1f);
@@ -93,9 +168,9 @@ namespace CrossEngineEditor.Panels
                 }
 
                 // pan
-                if (io.KeyAlt && (io.MouseWheel != 0 || io.MouseWheelH != 0))
+                if (io.KeyShift && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
-                    if (io.KeyShift)
+                    if (io.KeyAlt)
                         _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * .25f, io.MouseWheelH * _zoom * .25f, 0), _cameraRotation);
                     else
                         _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * .25f, io.MouseWheel * _zoom * .25f, 0), _cameraRotation);
@@ -104,27 +179,145 @@ namespace CrossEngineEditor.Panels
                 }
             }
 
-            if (_projectionDirty)
-                OnCameraResize();
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle) && Focused)
+            {
+                // pan
+                _cameraPosition += Vector3.Transform(new Vector3(-io.MouseDelta.X / ViewportSize.Y * _zoom, io.MouseDelta.Y / ViewportSize.Y * _zoom, 0), _cameraRotation);
 
-            if (_viewDirty)
-                UpdateView();
+                _viewDirty = true;
+            }
+        }
+
+        private void PerspectiveMouseControl(in ImGuiIOPtr io)
+        {
+            if (ImGui.IsItemHovered() && Focused)
+            {
+                // zoom
+                if (io.MouseWheel != 0)
+                {
+                    _zoom -= io.MouseWheel * .5f / (1f / _zoom * 4f);
+                    _zoom = Math.Max(_zoom, 0.1f);
+
+                    _viewDirty = true;
+                }
+            }
+
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle) && Focused)
+            {
+                // pan
+                if (io.KeyShift)
+                    _cameraPosition += Vector3.Transform(new Vector3(-io.MouseDelta.X / ViewportSize.Y * _zoom, io.MouseDelta.Y / ViewportSize.Y * _zoom, 0), _cameraRotation);
+                // rotate
+                else
+                {
+                    _lookRot += new Vector2(-io.MouseDelta.X, -io.MouseDelta.Y) / 256;
+                    _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _lookRot.X) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, _lookRot.Y);
+                }
+
+                _viewDirty = true;
+            }
+        }
+
+        private void PerspectiveTouchpadControl(in ImGuiIOPtr io)
+        {
+            if (ImGui.IsItemHovered() && Focused)
+            {
+                // zoom
+                if (!io.KeyShift && io.KeyCtrl && io.MouseWheel != 0)
+                {
+                    _zoom -= io.MouseWheel * .5f / (1f / _zoom * 4f);
+                    _zoom = Math.Max(_zoom, 0.1f);
+
+                    _projectionDirty = true;
+                }
+
+                // pan
+                if (io.KeyShift && (io.MouseWheel != 0 || io.MouseWheelH != 0))
+                {
+                    if (io.KeyAlt)
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * .25f, io.MouseWheelH * _zoom * .25f, 0), _cameraRotation);
+                    else
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * .25f, io.MouseWheel * _zoom * .25f, 0), _cameraRotation);
+
+                    _viewDirty = true;
+                }
+
+                // rotate
+                if (io.MouseWheel != 0 || io.MouseWheelH != 0)
+                {
+                    if (io.KeyAlt)
+                        _lookRot += new Vector2(-io.MouseWheel * _zoom * .25f, io.MouseWheelH * _zoom * .25f) / 256;
+                    else
+                        _lookRot += new Vector2(-io.MouseWheelH * _zoom * .25f, io.MouseWheel * _zoom * .25f) / 256;
+
+                    //LookRot.Y = Math.Clamp(LookRot.Y, -MathF.PI / 2, MathF.PI / 2);
+
+                    
+                    _viewDirty = true;
+                }
+            }
         }
 
         private void UpdateView()
         {
-            _editorCamera.ViewMatrix = Matrix4x4.CreateTranslation(-_cameraPosition) * Matrix4x4.CreateFromQuaternion(_cameraRotation);
+            if (!_perspective)
+                _editorCamera.ViewMatrix = Matrix4x4.CreateTranslation(-_cameraPosition) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(_cameraRotation));
+            else
+                _editorCamera.ViewMatrix = Matrix4x4.CreateTranslation(-_cameraPosition) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(_cameraRotation)) * Matrix4x4.CreateTranslation(new Vector3(0, 0, -_zoom));
+            _viewDirty = false;
+        }
+
+        private void UpdateProjection()
+        {
+            if (!_perspective)
+                _editorCamera.SetOrtho((ViewportSize.X / ViewportSize.Y) * _zoom, 1 * _zoom, -_far, _far);
+            else
+                _editorCamera.SetPerspective(_fov * (MathF.PI / 180), (ViewportSize.X / ViewportSize.Y), _near, _far);
+            _projectionDirty = false;
         }
 
         protected override void OnCameraResize()
         {
             base.OnCameraResize();
 
-            if (!_perspective)
-                _editorCamera.SetOrtho((ViewportSize.X / ViewportSize.Y) * _zoom, 1 * _zoom, -_far, _far);
-            else
-                throw new NotImplementedException();
-            _projectionDirty = false;
+            UpdateProjection();
+
+            for (int i = 0; i < _overlays.Count; i++)
+            {
+                _overlays[i].Resize(ViewportSize.X, ViewportSize.Y);
+            }
+        }
+
+        public override void OnAttach()
+        {
+            base.OnAttach();
+
+            for (int i = 0; i < _overlays.Count; i++)
+            {
+                _overlays[i].Context = Context;
+            }
+        }
+
+        protected override void AugmentSceneRender()
+        {
+            for (int i = 0; i < _overlays.Count; i++)
+            {
+                _overlays[i].Draw();
+            }
+        }
+
+        private void AddOverlay(IViewportOverlay overlay)
+        {
+            overlay.EditorCamera = _editorCamera;
+            overlay.Context = Context;
+            _overlays.Add(overlay);
+        }
+
+        private void RemoveOverlay(IViewportOverlay overlay)
+        {
+            _overlays.Remove(overlay);
+            overlay.EditorCamera = null;
+            overlay.Context = null;
         }
     }
 }

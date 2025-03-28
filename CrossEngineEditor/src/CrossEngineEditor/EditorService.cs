@@ -33,7 +33,7 @@ namespace CrossEngineEditor
     internal class EditorService : Service
     {
         readonly EditorContext Context = new EditorContext();
-        readonly PanelManager Panels = new PanelManager();
+        public readonly PanelManager Panels = new PanelManager();
         private Window window = null;
         internal static Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
         
@@ -151,7 +151,7 @@ namespace CrossEngineEditor
 
         private void Deinit()
         {
-            Context.Clear();
+            //Context.Clear();
 
             Context.AssetsChanged -= OnContextAssetsChanged;
             Context.SceneChanged -= OnContextSceneChanged;
@@ -230,7 +230,7 @@ namespace CrossEngineEditor
 
                         DestructiveDialog(CreateScene, Context.Scene != null);
                     }
-                    if (ImGui.BeginMenu("Load"))
+                    if (ImGui.BeginMenu("Load", Context.Assets != null))
                     {
                         if (Context.Assets?.HasCollection<SceneAsset>() == true)
                         {
@@ -239,22 +239,15 @@ namespace CrossEngineEditor
                                 if (!item.Loaded) ImGui.BeginDisabled();
                                 if (ImGui.Selectable(item.GetName(), item.Scene != null && item.Scene == Context.Scene))
                                 {
-                                    Context.Scene = null;
-                                    Context.Scene = item.Scene;
+                                    void LoadScene()
+                                    {
+                                        Context.Scene = null;
+                                        Context.Scene = item.Scene;
+                                    }
+                                    DestructiveDialog(LoadScene, Context.Scene != null);
                                 }
                                 if (!item.Loaded) ImGui.EndDisabled();
                             }
-                            ImGui.Separator();
-                        }
-                        if (ImGui.MenuItem("File..."))
-                        {
-                            void LoadScene()
-                            {
-                                using (Stream stream = File.OpenRead(EditorPlatformHelper.FileOpenDialog()))
-                                    Context.Scene = SceneSerializer.DeserializeJson(stream);
-                            }
-
-                            DestructiveDialog(LoadScene, Context.Scene != null);
                         }
 
                         ImGui.EndMenu();
@@ -323,6 +316,8 @@ namespace CrossEngineEditor
         
         private void OnContextSceneChanged(Scene old)
         {
+            Context.ActiveEntity = null;
+
             if (old != null) SceneManager.Remove(old);
 
             if (Context.Scene != null) SceneManager.PushBackground(Context.Scene);
@@ -330,6 +325,8 @@ namespace CrossEngineEditor
 
         private void OnContextAssetsChanged(AssetList old)
         {
+            Context.Scene = null;
+
             if (old != null) AssetManager.Current.UnloadAll();
 
             AssetManager.Bind(Context.Assets);
