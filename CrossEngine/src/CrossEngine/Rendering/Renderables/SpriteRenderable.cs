@@ -8,7 +8,6 @@ namespace CrossEngine.Rendering.Renderables
     interface ISpriteRenderData : IObjectRenderData
     {
         Vector4 Color { get; }
-        virtual int EntityId => 0;
         virtual Vector4 TextureOffsets => new Vector4(0, 0, 1, 1);
         virtual WeakReference<Texture> Texture => null;
         virtual BlendMode Blend => BlendMode.Opaque;
@@ -41,9 +40,9 @@ namespace CrossEngine.Rendering.Renderables
 
             var matrix = Matrix4x4.CreateScale(new Vector3(data.DrawOffsets.Z, data.DrawOffsets.W, 1)) * Matrix4x4.CreateTranslation(new Vector3(data.DrawOffsets.X, data.DrawOffsets.Y, 0)) * data.Transform;
             if (data.Texture == null)
-                Renderer2D.DrawQuad(matrix, data.Color, data.EntityId);
+                Renderer2D.DrawQuad(matrix, data.Color, data.Id);
             else
-                Renderer2D.DrawTexturedQuad(matrix, data.Texture, data.Color, data.TextureOffsets, data.EntityId);
+                Renderer2D.DrawTexturedQuad(matrix, data.Texture, data.Color, data.TextureOffsets, data.Id);
         }
     }
 }

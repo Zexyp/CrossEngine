@@ -56,7 +56,7 @@ namespace CrossEngineEditor.Viewport
 
         public void Draw()
         {
-            var cam = Context.Scene.World.GetSystem<RenderSystem>().PrimaryCamera;
+            var cam = Context.Scene?.World.GetSystem<RenderSystem>().PrimaryCamera;
             if (cam == null)
                 return;
             var camTrans = cam.Entity?.Transform?.GetWorldTransformMatrix() ?? Matrix4x4.Identity;

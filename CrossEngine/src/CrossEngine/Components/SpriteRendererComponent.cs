@@ -14,7 +14,7 @@ using CrossEngine.Serialization;
 
 namespace CrossEngine.Components
 {
-    public class SpriteRendererComponent : Component, ISpriteRenderData
+    public class SpriteRendererComponent : RendererComponent, ISpriteRenderData
     {
         [Serialize]
         [EditorDrag]
@@ -30,8 +30,6 @@ namespace CrossEngine.Components
         [EditorAsset]
         public SpriteAsset Sprite;
 
-        Matrix4x4 IObjectRenderData.Transform => Entity?.Transform?.GetWorldTransformMatrix() ?? Matrix4x4.Identity;
-        int ISpriteRenderData.EntityId => Entity?.Id ?? 0;
         Vector4 ISpriteRenderData.TextureOffsets => Sprite?.TextureOffsets ?? new Vector4(0, 0, 1, 1);
         WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Texture?.Texture;
         BlendMode ISpriteRenderData.Blend => Blend;

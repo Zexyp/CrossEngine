@@ -301,6 +301,8 @@ namespace CrossEngine.Ecs
             {
                 _systems[i].OnShutdown();
             }
+            
+            Debug.Assert(Storage.Indexes.Length == 0);
         }
 
         public void Start()

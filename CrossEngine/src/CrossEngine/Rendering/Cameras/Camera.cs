@@ -21,11 +21,11 @@ namespace CrossEngine.Rendering.Cameras
 
         public void SetPerspective(float fov, float aspect, float near = .1f, float far = 1000)
         {
-            ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(fov, aspect, near, far);
+            ProjectionMatrix = Matrix4x4Extension.CreatePerspectiveFieldOfView(fov, aspect, near, far);
         }
 
         public Matrix4x4 GetViewMatrix() => ViewMatrix;
-        public Matrix4x4 GetMatrix() => Matrix4x4Extension.Invert(ViewMatrix);
+        Matrix4x4 ITransform.GetMatrix() => Matrix4x4Extension.Invert(ViewMatrix);
 
         //public virtual void GetObjectData(SerializationInfo info)
         //{

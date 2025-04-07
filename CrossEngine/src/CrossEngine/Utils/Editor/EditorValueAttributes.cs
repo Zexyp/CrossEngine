@@ -372,12 +372,6 @@ namespace CrossEngine.Utils.Editor
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorBooleanValueAttribute : EditorValueAttribute
-    {
-        
-    }
-
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorDisplayAttribute : EditorValueAttribute
     {
 

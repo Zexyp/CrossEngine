@@ -17,6 +17,7 @@ namespace CrossEngine.Ecs
     public class Entity : ICloneable, ISerializable
     {
         public int Id { get; internal set; } = 0;
+        public string Name;
         protected internal World World { get; internal set; }
         
         public readonly ReadOnlyCollection<Component> Components;
@@ -192,6 +193,7 @@ namespace CrossEngine.Ecs
         void ISerializable.GetObjectData(SerializationInfo info)
         {
             info.AddValue("Id", Id);
+            info.AddValue("Name", Name);
             info.AddValue("Components", _components.ToArray());
         }
 
@@ -199,7 +201,9 @@ namespace CrossEngine.Ecs
         {
             Debug.Assert(_components.Count == 0);
 
-            Id = info.GetValue<int>("Id");
+            Id = info.GetValue("Id", Id);
+            Name = info.GetValue("Name", Name);
+
             var comps = info.GetValue<Component[]>("Components");
             for (int i = 0; i < comps.Length; i++)
             {

@@ -46,10 +46,15 @@ namespace CrossEngine.Assets
         {
             using (Stream stream = await PlatformHelper.FileRead(filepath))
             {
-                var pool = JsonSerializer.Deserialize<AssetList>(stream, _jso);
+                var pool = Read(stream);
                 pool.Directory = Path.Join(Path.GetDirectoryName(filepath), pool.Directory);
                 return pool;
             }
+        }
+
+        public static AssetList Read(Stream stream)
+        {
+            return JsonSerializer.Deserialize<AssetList>(stream, _jso);
         }
 
         public static void WriteFile(AssetList pool, string filepath)
@@ -58,9 +63,14 @@ namespace CrossEngine.Assets
             {
                 string prevdir = pool.Directory;
                 pool.Directory = Path.GetRelativePath(Path.GetDirectoryName(filepath), pool.Directory);
-                JsonSerializer.Serialize(stream, pool, _jso);
+                Write(pool, stream);
                 pool.Directory = prevdir;
             }
+        }
+
+        public static void Write(AssetList pool, Stream stream)
+        {
+            JsonSerializer.Serialize(stream, pool, _jso);
         }
     }
 }

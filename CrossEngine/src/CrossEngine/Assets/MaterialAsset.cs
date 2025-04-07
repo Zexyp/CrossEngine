@@ -10,7 +10,7 @@ namespace CrossEngine.Assets
 {
     public class MaterialAsset : Asset
     {
-        public Material Material;
+        public IMaterial Material;
 
         public override bool Loaded => Material != null;
 

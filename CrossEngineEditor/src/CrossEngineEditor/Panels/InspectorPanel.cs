@@ -37,7 +37,10 @@ namespace CrossEngineEditor.Panels
                 return;
             }
 
-            var style = ImGui.GetStyle();
+            if (entity.Name != null) ImGui.InputText("Name", ref entity.Name, 36);
+            else if (ImGui.Button("Name")) entity.Name = "";
+
+                var style = ImGui.GetStyle();
 
             for (int i = 0; i < entity.Components.Count; i++)
             {

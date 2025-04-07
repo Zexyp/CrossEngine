@@ -11,6 +11,7 @@ using CrossEngine.Utils;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
 using CrossEngine.Ecs;
+using CrossEngine.Platform.OpenGL;
 
 namespace CrossEngineEditor.Panels
 {
@@ -70,8 +71,10 @@ namespace CrossEngineEditor.Panels
             renderSys.OverrideCamera = DrawCamera;
 
             Framebuffer.GetValue().Bind();
+            ((GLFramebuffer)Framebuffer.GetValue()).EnableAllColorAttachments(true);
             Surface.Context.Api.Clear();
             Surface.DoUpdate();
+            ((GLFramebuffer)Framebuffer.GetValue()).EnableColorAttachment(1, false);
             AugmentSceneRender();
             Framebuffer.GetValue().Unbind();
 

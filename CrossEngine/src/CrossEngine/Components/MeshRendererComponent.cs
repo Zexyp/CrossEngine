@@ -14,7 +14,7 @@ using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Components
 {
-    public class MeshRendererComponent : Component, IMeshRenderData
+    public class MeshRendererComponent : RendererComponent, IMeshRenderData
     {
         [EditorNullable]
         [Serialize]
@@ -26,7 +26,6 @@ namespace CrossEngine.Components
         public MeshAsset Mesh;
 
         IMesh IMeshRenderData.Mesh => Mesh?.Mesh;
-        Material IMeshRenderData.Material => Material?.Material;
-        Matrix4x4 IObjectRenderData.Transform => Entity.Transform?.GetWorldTransformMatrix() ?? Matrix4x4.Identity;
+        IMaterial IMeshRenderData.Material => Material?.Material;
     }
 }

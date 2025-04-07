@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngine", "CrossEngine\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngineEditor", "CrossEngineEditor\CrossEngineEditor.csproj", "{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngineSandbox", "CrossEngineSandbox\CrossEngineSandbox.csproj", "{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample", "Sample\Sample.csproj", "{B9591FC0-3FA8-4E05-9904-1EB4B1AEEE7E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngineRuntime", "CrossEngineRuntime\CrossEngineRuntime.csproj", "{6C89D462-7865-48AF-BC93-D0D7D40FE859}"
@@ -37,24 +35,17 @@ Global
 		{4917BF5E-6BB1-40EA-8AF6-FBD2784CA153}.Profiling|Web.Build.0 = Web|Any CPU
 		{4917BF5E-6BB1-40EA-8AF6-FBD2784CA153}.Profiling|Windows.ActiveCfg = Windows Profiling|Any CPU
 		{4917BF5E-6BB1-40EA-8AF6-FBD2784CA153}.Profiling|Windows.Build.0 = Windows Profiling|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Linux.ActiveCfg = Debug|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Linux.Build.0 = Debug|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Linux.ActiveCfg = Linux Debug|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Linux.Build.0 = Linux Debug|Any CPU
 		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Web.ActiveCfg = Debug|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Web.Build.0 = Debug|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Windows.ActiveCfg = Debug|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Windows.Build.0 = Debug|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Linux.ActiveCfg = Profiling|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Linux.Build.0 = Profiling|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Windows.ActiveCfg = Windows Debug|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Debug|Windows.Build.0 = Windows Debug|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Linux.ActiveCfg = Linux Profiling|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Linux.Build.0 = Linux Profiling|Any CPU
 		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Web.ActiveCfg = Profiling|Any CPU
 		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Web.Build.0 = Profiling|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Windows.ActiveCfg = Profiling|Any CPU
-		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Windows.Build.0 = Profiling|Any CPU
-		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Debug|Linux.ActiveCfg = Debug|Any CPU
-		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Debug|Web.ActiveCfg = Debug|Any CPU
-		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Debug|Windows.ActiveCfg = Debug|Any CPU
-		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Profiling|Linux.ActiveCfg = Profiling|Any CPU
-		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Profiling|Web.ActiveCfg = Profiling|Any CPU
-		{BC3D6F28-1E51-4E31-BE46-CE813235CAEE}.Profiling|Windows.ActiveCfg = Profiling|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Windows.ActiveCfg = Windows Profiling|Any CPU
+		{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}.Profiling|Windows.Build.0 = Windows Profiling|Any CPU
 		{B9591FC0-3FA8-4E05-9904-1EB4B1AEEE7E}.Debug|Linux.ActiveCfg = Debug|Any CPU
 		{B9591FC0-3FA8-4E05-9904-1EB4B1AEEE7E}.Debug|Linux.Build.0 = Debug|Any CPU
 		{B9591FC0-3FA8-4E05-9904-1EB4B1AEEE7E}.Debug|Web.ActiveCfg = Debug|Any CPU
@@ -79,18 +70,18 @@ Global
 		{6C89D462-7865-48AF-BC93-D0D7D40FE859}.Profiling|Web.Build.0 = Profiling|Any CPU
 		{6C89D462-7865-48AF-BC93-D0D7D40FE859}.Profiling|Windows.ActiveCfg = Profiling|Any CPU
 		{6C89D462-7865-48AF-BC93-D0D7D40FE859}.Profiling|Windows.Build.0 = Profiling|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Linux.ActiveCfg = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Linux.Build.0 = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Web.ActiveCfg = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Web.Build.0 = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Windows.ActiveCfg = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Windows.Build.0 = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Linux.ActiveCfg = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Linux.Build.0 = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Web.ActiveCfg = Release|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Web.Build.0 = Release|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Windows.ActiveCfg = Debug|Any CPU
-		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Windows.Build.0 = Debug|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Linux.ActiveCfg = Linux Debug|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Linux.Build.0 = Linux Debug|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Web.ActiveCfg = Web|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Web.Build.0 = Web|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Windows.ActiveCfg = Windows Debug|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Debug|Windows.Build.0 = Windows Debug|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Linux.ActiveCfg = Linux Profiling|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Linux.Build.0 = Linux Profiling|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Web.ActiveCfg = Web|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Web.Build.0 = Web|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Windows.ActiveCfg = Windows Profiling|Any CPU
+		{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}.Profiling|Windows.Build.0 = Windows Profiling|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

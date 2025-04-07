@@ -27,25 +27,38 @@ using CrossEngine.Rendering;
 using CrossEngineEditor.Modals;
 using CrossEngineEditor.Platform;
 using System.IO;
+using CrossEngine.Events;
 
 namespace CrossEngineEditor
 {
     internal class EditorService : Service
     {
-        readonly EditorContext Context = new EditorContext();
         public readonly PanelManager Panels = new PanelManager();
+        public IniFile Preferences;
+        
+        internal const string PreferencesPath = "preferences.ini";
+        internal Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
+        
+        readonly EditorContext Context = new EditorContext();
         private Window window = null;
-        internal static Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
         
         public override void OnStart()
         {
+            if (!File.Exists(PreferencesPath))
+                File.Create(PreferencesPath).Close();
+            Preferences = IniFile.Load(File.OpenRead(PreferencesPath));
+            
             Panels.Init(Context);
             
             Log.Info("editor started");
+
+            Manager.Event += OnEvent;
         }
 
         public override void OnDestroy()
         {
+            Manager.Event -= OnEvent;
+
             Panels.Destroy();
             
             Log.Info("editor closed");
@@ -117,6 +130,15 @@ namespace CrossEngineEditor
 
             Profiler.EndScope();
         }
+        
+        private void OnEvent(CrossEngine.Events.Event e)
+        {
+            if (e is WindowCloseEvent wce)
+            {
+                DestructiveDialog(EditorApplication.Instance.Close);
+                wce.Handled = true;
+            }
+        }
 
         private void InternalRender()
         {
@@ -134,6 +156,7 @@ namespace CrossEngineEditor
             EndDockspace();
         }
 
+        // pretty weird
         private void Init()
         {
             Context.AssetsChanged += OnContextAssetsChanged;
@@ -215,10 +238,19 @@ namespace CrossEngineEditor
                     if (ImGui.MenuItem("Open...")) throw new NotImplementedException();
                     ImGui.Separator();
                     if (ImGui.MenuItem("Save...")) throw new NotImplementedException();
+                    if (ImGui.MenuItem("Save As...")) throw new NotImplementedException();
                     ImGui.Separator();
                     if (ImGui.MenuItem("Quit"))
-                        EditorApplication.Instance.Close();
+                        DestructiveDialog(EditorApplication.Instance.Close);
 
+                    ImGui.EndMenu();
+                }
+
+                if (ImGui.BeginMenu("Edit"))
+                {
+                    if (ImGui.MenuItem("Preferences..."))
+                        Panels.PushModal(new PreferencesModal());
+                    
                     ImGui.EndMenu();
                 }
 
@@ -261,13 +293,8 @@ namespace CrossEngineEditor
                                 SceneSerializer.SerializeJson(stream, Context.Scene);
                     }
                     if (ImGui.MenuItem("Dump", Context.Scene != null))
-                        using (Stream stream = new MemoryStream())
-                        using (StreamReader reader = new StreamReader(stream))
-                        {
+                        using (var stream = Console.OpenStandardOutput())
                             SceneSerializer.SerializeJson(stream, Context.Scene);
-                            stream.Position = 0;
-                            reader.ReadToEndAsync().ContinueWith(t => Console.Out.WriteLineAsync(t.Result));
-                        }
 
                     ImGui.EndMenu();
                 }

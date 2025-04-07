@@ -44,6 +44,7 @@ namespace CrossEngine.Rendering.Renderables
     {
         Matrix4x4 Transform { get; }
         virtual bool Visible { get => throw new NotImplementedException(); }
+        virtual int Id { get => throw new NotImplementedException(); }
     }
 
     //interface IDrawable<T, D> where T : Renderable<D> where D : IObjectRenderData

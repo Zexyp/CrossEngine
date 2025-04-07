@@ -12,9 +12,11 @@ namespace CrossEngine.Platform.OpenGL
     {
         WindowHandle* _window = null;
 
-        public static Silk.NET.OpenGL.GL gl;
+        [ThreadStatic]
+        internal static Silk.NET.OpenGL.GL gl;
 
-        internal static Func<string, IntPtr> loader;
+        private Func<string, IntPtr> loader;
+        private Silk.NET.OpenGL.GL _gl;
 
         public unsafe GLContext(WindowHandle* window)
         {
@@ -23,11 +25,12 @@ namespace CrossEngine.Platform.OpenGL
 
         public override unsafe void Init()
         {
-            glfw.MakeContextCurrent(_window);
             loader = glfw.GetProcAddress;
 
-
-            gl = GL.GetApi(loader);
+            _gl = GL.GetApi(loader);
+            
+            MakeCurrent();
+            
             GLExtensions.Load();
 
 #if DEBUG
@@ -38,6 +41,7 @@ namespace CrossEngine.Platform.OpenGL
         public override void MakeCurrent()
         {
             glfw.MakeContextCurrent(_window);
+            gl = _gl;
         }
 
         public unsafe override void SwapBuffers()

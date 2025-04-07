@@ -10,7 +10,11 @@ public interface IMesh : IDisposable
 {
     WeakReference<VertexArray> VA { get; }
     IList Vertices { get; }
-    bool Indexed { get; }
+}
+
+public interface IIndexedMesh : IMesh
+{
+    IList Indices { get; }
 }
 
 public class Mesh<T> : IMesh where T : struct
@@ -18,7 +22,6 @@ public class Mesh<T> : IMesh where T : struct
     public WeakReference<VertexArray> VA { get; private set; }
     public T[] Vertices;
 
-    bool IMesh.Indexed => false;
     IList IMesh.Vertices => Vertices;
     WeakReference<VertexBuffer> vb;
     
@@ -51,12 +54,11 @@ public class Mesh<T> : IMesh where T : struct
     }
 }
 
-public class IndexedMesh<T> : Mesh<T>, IMesh where T : struct
+public class IndexedMesh<T> : Mesh<T>, IIndexedMesh where T : struct
 {
-
     public uint[] Indices;
 
-    bool IMesh.Indexed => true;
+    IList IIndexedMesh.Indices => Indices;
     WeakReference<IndexBuffer> ib;
 
     public IndexedMesh(T[] vertices, uint[] indices) : base(vertices)

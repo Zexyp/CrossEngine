@@ -4,7 +4,7 @@ using System.IO;
 
 namespace CrossEngineEditor.Modals;
 
-public class CreateProjectModal : EditorModal
+class CreateProjectModal : EditorModal
 {
     public CreateProjectModal() : base("Create Project")
     {

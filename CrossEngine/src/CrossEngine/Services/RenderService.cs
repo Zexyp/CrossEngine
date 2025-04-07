@@ -107,7 +107,7 @@ namespace CrossEngine.Services
 
         private void OnWindowEvent(Window w, Event e)
         {
-            GraphicsContext.Current = w.Context;
+            GraphicsContext.SetupCurrent(w.Context);
 
             // this is supposed to fix state when resizing window
             // it's unfortunate that when just holding the window nothing happens
@@ -121,21 +121,24 @@ namespace CrossEngine.Services
                 _surface.DoResize(wre.Width, wre.Height);
             }
             
-            GraphicsContext.Current = null;
+            GraphicsContext.SetupCurrent(null);
         }
 
         private void OnWindowUpdate(Window w)
         {
-            GraphicsContext.Current = w.Context;
+            GraphicsContext.SetupCurrent(w.Context);
+            
             DrawPresent(w.Context);
-            GraphicsContext.Current = null;
+            
+            GraphicsContext.SetupCurrent(null);
         }
 
         private void DrawPresent(GraphicsContext context)
         {
             Profiler.BeginScope("Render");
             
-            context.MakeCurrent();
+            // setup current makes this automatic
+            //context.MakeCurrent();
 
             _scheduler.RunOnCurrentThread();
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -47,6 +48,7 @@ namespace CrossEngine.Components
         private ICamera _overrideCamera;
         private Vector2 _lastSize = Vector2.One;
         private ISurface _surface;
+        private readonly Dictionary<Type, IRenderable> _renderables = new Dictionary<Type, IRenderable>(new InterfaceTypeComparer<IObjectRenderData>());
 
         public ISurface SetSurface(ISurface surface)
         {
@@ -88,34 +90,34 @@ namespace CrossEngine.Components
             if (camera == null)
                 return;
 
-            var srenderable = new SpriteRenderable();
-            var mrenderable = new MeshRenderable();
-            srenderable.Begin(camera);
-            mrenderable.Begin(camera);
-            foreach (ISpriteRenderData src in World.Storage.IterateIndex(new[] { typeof(ISpriteRenderData) }).Select(v => v[0]))
+            foreach (var rend in _renderables.Values)
             {
-                srenderable.Submit(src);
+                rend.Begin(camera);
             }
-            foreach (IMeshRenderData mrc in World.Storage.IterateIndex(new[] { typeof(IMeshRenderData) }).Select(v => v[0]))
+            foreach (IObjectRenderData rd in World.Storage.IterateIndex(new[] { typeof(RendererComponent) }).Select(v => v[0]))
             {
-                mrenderable.Submit(mrc);
+                _renderables[rd.GetType()].Submit(rd);
             }
-            srenderable.End();
-            mrenderable.End();
+            foreach (var rend in _renderables.Values)
+            {
+                rend.End();
+            }
         }
 
         protected internal override void OnInit()
         {
-            World.Storage.MakeIndex(new[] { typeof(ISpriteRenderData) });
-            World.Storage.MakeIndex(new[] { typeof(IMeshRenderData) });
+            World.Storage.MakeIndex(new[] { typeof(RendererComponent) });
             World.Storage.AddNotifyRegister(typeof(CameraComponent), RegisterCamera, true);
             World.Storage.AddNotifyUnregister(typeof(CameraComponent), UnregisterCamera, true);
+
+            Debug.Assert(_renderables.Count == 0);
+            _renderables.Add(typeof(ISpriteRenderData), new SpriteRenderable());
+            _renderables.Add(typeof(IMeshRenderData), new MeshRenderable());
         }
 
         protected internal override void OnShutdown()
         {
-            World.Storage.DropIndex(new[] { typeof(ISpriteRenderData) });
-            World.Storage.DropIndex(new[] { typeof(IMeshRenderData) });
+            World.Storage.DropIndex(new[] { typeof(RendererComponent) });
             World.Storage.RemoveNotifyRegister(typeof(CameraComponent), RegisterCamera);
             World.Storage.RemoveNotifyUnregister(typeof(CameraComponent), UnregisterCamera);
         }
@@ -162,6 +164,35 @@ namespace CrossEngine.Components
             component.PrimaryChanged -= OnCameraPrimaryChanged;
             component.Primary = false;
             component.PrimaryChanged += OnCameraPrimaryChanged;
+        }
+
+        // pot of boiling shit
+        private class InterfaceTypeComparer<T> : IEqualityComparer<Type>
+        {
+            public bool Equals(Type x, Type y)
+            {
+                if (x == y) return true;
+                if (x.IsAssignableFrom(y)) return true;
+                return false;
+            }
+
+            public int GetHashCode(Type obj)
+            {
+                if (obj.IsInterface)
+                    return obj.GetHashCode();
+
+                Type baseInterface = null;
+                var ints = obj.GetInterfaces();
+                for (int i = 0; i < ints.Length; i++)
+                {
+                    if (!typeof(T).IsAssignableFrom(ints[i]))
+                        continue;
+
+                    baseInterface = ints[i];
+                    break;
+                }
+                return baseInterface?.GetHashCode() ?? obj.GetHashCode();
+            }
         }
     }
 }

@@ -10,7 +10,10 @@ namespace CrossEngine.Platform.Wasm
         private nint display;
         private nint surface;
 
+        [ThreadStatic]
         internal static GL gl;
+        
+        private GL _gl;
 
         public override void Init()
         {
@@ -60,7 +63,7 @@ namespace CrossEngine.Platform.Wasm
 
             //TrampolineFuncs.ApplyWorkaroundFixingInvocations();
 
-            gl = GL.GetApi(EGL.GetProcAddress);
+            _gl = GL.GetApi(EGL.GetProcAddress);
         }
 
         public override void Shutdown()
@@ -78,6 +81,7 @@ namespace CrossEngine.Platform.Wasm
         public override void MakeCurrent()
         {
             EGL.MakeCurrent(display, surface, surface, context);
+            gl = _gl;
         }
     }
 }

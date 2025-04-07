@@ -1,6 +1,7 @@
 ﻿using CrossEngine.Assemblies;
 using CrossEngine.Assets;
 using CrossEngine.Logging;
+using CrossEngine.Serialization;
 using CrossEngine.Services;
 using CrossEngine.Utils.Editor;
 using CrossEngineEditor.Platform;
@@ -10,6 +11,7 @@ using ImGuiNET;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -42,7 +44,7 @@ namespace CrossEngineEditor.Panels
                     {
                         void CreateAssets() => Context.Assets = new AssetList();
 
-                        EditorApplication.Instance.Manager.GetService<EditorService>().DestructiveDialog(CreateAssets, Context.Assets != null);
+                        EditorApplication.Service.DestructiveDialog(CreateAssets, Context.Assets != null);
                     }
                     if (ImGui.MenuItem("Load..."))
                     {
@@ -55,7 +57,7 @@ namespace CrossEngineEditor.Panels
                                 Context.Assets = task.Result;
                             }
                         }
-                        EditorApplication.Instance.Manager.GetService<EditorService>().DestructiveDialog(LoadAssets, Context.Assets != null);
+                        EditorApplication.Service.DestructiveDialog(LoadAssets, Context.Assets != null);
                     }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Save As...", Context.Assets != null))
@@ -63,6 +65,11 @@ namespace CrossEngineEditor.Panels
                         var filepath = EditorPlatformHelper.FileSaveDialog();
                         if (filepath != null)
                             AssetManager.WriteFile(Context.Assets, filepath);
+                    }
+                    if (ImGui.MenuItem("Dump", Context.Assets != null))
+                    {
+                        using (var stream = Console.OpenStandardOutput())
+                            AssetManager.Write(Context.Assets, stream);
                     }
 
                     ImGui.EndMenu();
@@ -83,7 +90,7 @@ namespace CrossEngineEditor.Panels
                             Context.Assets = null;
                             Context.Assets = last;
                         }
-                        EditorApplication.Instance.Manager.GetService<EditorService>().DestructiveDialog(ReloadAssets);
+                        EditorApplication.Service.DestructiveDialog(ReloadAssets);
                     }
 
                     ImGui.EndMenu();

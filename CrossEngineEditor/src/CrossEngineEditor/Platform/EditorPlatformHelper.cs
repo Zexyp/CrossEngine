@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 #if WINDOWS
 using ShellFileDialogs;
+#elif LINUX
+using System.Diagnostics;
+using NativeFileDialogSharp;
 #endif
 
 namespace CrossEngineEditor.Platform
@@ -17,7 +20,9 @@ namespace CrossEngineEditor.Platform
 #if WINDOWS
             return ShellFileDialogs.FileSaveDialog.ShowDialog(0, null, null, null, null);
 #elif LINUX
-#error Nope
+            var result = Dialog.FileSave();
+            Debug.Assert(!result.IsError);
+            return result.Path;
 #endif
         }
 
@@ -26,7 +31,9 @@ namespace CrossEngineEditor.Platform
 #if WINDOWS
             return ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
 #elif LINUX
-#error Nope
+            var result = Dialog.FileOpen();
+            Debug.Assert(!result.IsError);
+            return result.Path;
 #endif
         }
     }

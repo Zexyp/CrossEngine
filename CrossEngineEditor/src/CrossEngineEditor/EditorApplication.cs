@@ -24,7 +24,8 @@ namespace CrossEngineEditor
 {
     internal class EditorApplication : Application
     {
-        public static EditorApplication Instance;
+        public static EditorApplication Instance { get; private set; }
+        public static EditorService Service { get; private set; }
 
         public EditorApplication()
         {
@@ -47,7 +48,8 @@ namespace CrossEngineEditor
             //Manager.Register(new AssetService());
             Manager.Register(new OverlayService(mo = new MetricsOverlay()));
 
-            Manager.Register(new EditorService());
+            // yippee
+            Manager.Register(Service = new EditorService());
 
             // configure
         }
@@ -71,6 +73,7 @@ namespace CrossEngineEditor
         {
             base.OnDestroy();
             Instance = null;
+            Service = null;
         }
     }
 }

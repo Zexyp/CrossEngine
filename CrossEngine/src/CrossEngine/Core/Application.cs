@@ -29,20 +29,20 @@ namespace CrossEngine.Core
 
         public virtual void OnInit()
         {
-            Manager.Event += OnEvent;
-            
             Manager.InitServices();
 
             Manager.AttachServices();
+            
+            Manager.Event += OnEvent;
         }
 
         public virtual void OnDestroy()
         {
+            Manager.Event -= OnEvent;
+
             Manager.DetachServices();
 
             Manager.ShutdownServices();
-
-            Manager.Event -= OnEvent;
         }
 
         public virtual void OnUpdate()

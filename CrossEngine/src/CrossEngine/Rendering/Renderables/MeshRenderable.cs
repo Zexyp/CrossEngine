@@ -17,32 +17,13 @@ namespace CrossEngine.Rendering.Renderables
     interface IMeshRenderData : IObjectRenderData
     {
         IMesh Mesh { get; }
-        Material Material { get; }
+        IMaterial Material { get; }
     }
 
     class MeshRenderable : Renderable<IMeshRenderData>
     {
-        private const string DefaultShaderSource =
-@"#type vertex
-#version 330 core
-layout(location = 0) in vec3 aPosition;
-uniform mat4 uViewProjection = mat4(1);
-uniform mat4 uModel = mat4(1);
-void main() {
-    gl_Position = uViewProjection * uModel * vec4(aPosition, 1.0);
-}
-
-#type fragment
-#version 330 core
-layout(location = 0) out vec4 oColor;
-layout(location = 1) out int oEntityIDColor;
-uniform int uEntityID;
-void main() {
-    oColor = vec4(1, 0, 1, 1);
-    oEntityIDColor = uEntityID;
-}";
-
         ICamera _camera;
+        IMaterial defaultMaterial = new DefaultMaterial();
 
         public override void Begin(ICamera camera)
         {
@@ -54,12 +35,15 @@ void main() {
             if (data.Mesh == null)
                 return;
 
-            ShaderProgram shader = (data.Material?.Shader ?? CrossEngine.Rendering.Shaders.ShaderPreprocessor.DefaultShaderProgram).GetValue();
+            IMaterial mater = (data.Material ?? defaultMaterial);
+            ShaderProgram shader = mater.Shader.GetValue();
             shader.Use();
+            mater.Update(shader);
             shader.SetParameterMat4("uViewProjection", _camera.GetViewProjectionMatrix());
             shader.SetParameterMat4("uModel", data.Transform);
+            shader.SetParameterInt("uEntityID", data.Id);
 
-            if (data.Mesh.Indexed)
+            if (data.Mesh is IIndexedMesh)
                 GraphicsContext.Current.Api.DrawIndexed(data.Mesh.VA);
             else
                 GraphicsContext.Current.Api.DrawArray(data.Mesh.VA, (uint)data.Mesh.Vertices.Count);

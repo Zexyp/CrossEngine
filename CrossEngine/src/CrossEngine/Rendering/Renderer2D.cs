@@ -30,6 +30,7 @@ namespace CrossEngine.Rendering
         Opaque = default,
         Blend,
         Clip,
+		Add,
     }
 
     public class Renderer2D
@@ -449,7 +450,11 @@ namespace CrossEngine.Rendering
 					_rapi.SetBlendFunc(BlendFunc.None);
 					shader = data.discardingShader.GetValue();
 					break;
-				default: Debug.Assert(false); break;
+                case BlendMode.Add:
+                    _rapi.SetBlendFunc(BlendFunc.One);
+                    shader = data.regularShader.GetValue();
+                    break;
+                default: Debug.Assert(false); break;
 			}
 
 			Debug.Assert(shader != null);

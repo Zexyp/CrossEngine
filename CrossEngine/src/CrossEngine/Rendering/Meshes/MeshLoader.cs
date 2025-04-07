@@ -31,7 +31,7 @@ namespace CrossEngine.Loaders
             }
         }
 
-        static readonly NumberFormatInfo numbForm = new NumberFormatInfo() { NumberDecimalSeparator = "." };
+        static readonly NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = "." };
 
         public static Mesh<WavefrontVertex> LoadObj(Stream stream)
         {
@@ -111,6 +111,6 @@ namespace CrossEngine.Loaders
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float FloatParse(in string s) => float.Parse(s, numbForm);
+        private static float FloatParse(in string s) => float.Parse(s, nfi);
     }
 }

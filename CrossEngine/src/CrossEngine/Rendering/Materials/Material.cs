@@ -1,16 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Numerics;
+using CrossEngine.Loaders;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Materials;
 
-public class Material
+public interface IMaterial
 {
-    public WeakReference<ShaderProgram> Shader;
+    WeakReference<ShaderProgram> Shader { get; }
+    void Update(ShaderProgram shader);
+}
+
+public class Material : IMaterial
+{
+    public WeakReference<ShaderProgram> Shader { get; set; }
     public Dictionary<string, object> Parameters = new Dictionary<string, object>();
     public Dictionary<string, WeakReference<Texture>> Samplers = new Dictionary<string, WeakReference<Texture>>();
 
@@ -27,7 +35,7 @@ public class Material
         Update(shader);
     }
     
-    void Update(ShaderProgram shader)
+    public void Update(ShaderProgram shader)
     {
         UpdateParameters(shader);
         UpdateSamplers(shader);
@@ -59,5 +67,41 @@ public class Material
             pair.Value.GetValue().Bind((uint)slot);
             slot++;
         }
+    }
+}
+
+class DefaultMaterial : IMaterial
+{
+    private const string DefaultShaderSource =
+@"#type vertex
+#version 330 core
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec2 aTexCoord;
+out vec2 vTexCoord;
+uniform mat4 uViewProjection = mat4(1);
+uniform mat4 uModel = mat4(1);
+void main() {
+    vTexCoord = aTexCoord;
+    gl_Position = uViewProjection * uModel * vec4(aPosition, 1.0);
+}
+
+#type fragment
+#version 330 core
+layout(location = 0) out vec4 oColor;
+layout(location = 1) out int oEntityIDColor;
+in vec2 vTexCoord;
+uniform int uEntityID;
+uniform sampler2D uTexture;
+void main() {
+    oColor = texture(uTexture, vTexCoord);
+    oEntityIDColor = uEntityID;
+}";
+
+    public WeakReference<ShaderProgram> Shader { get; } = ShaderPreprocessor.CreateProgramFromStream(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(DefaultShaderSource)));
+
+    public void Update(ShaderProgram shader)
+    {
+        shader.SetParameterInt("uTexture", 0);
+        TextureLoader.DefaultTexture.GetValue().Bind(0);
     }
 }
