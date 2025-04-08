@@ -81,6 +81,8 @@ namespace CrossEngine.Ecs
 
         public IReadOnlyList<Component> GetArray(Type type)
         {
+            if (!_simpleArray.ContainsKey(type))
+                return null;
             return _simpleArray[type];
         }
 

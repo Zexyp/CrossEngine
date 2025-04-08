@@ -232,7 +232,7 @@ namespace CrossEngine.Assets
 
         public Asset GetDependency(Type type, Guid id)
         {
-            throw new NotImplementedException();
+            return Get(type, id);
         }
         #endregion
 

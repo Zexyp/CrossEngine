@@ -58,5 +58,13 @@ namespace CrossEngine.Core
         {
             
         }
+
+        public void Trim()
+        {
+            Time.Elapsed = 0;
+            Time.UnscaledElapsed = 0;
+            Time.FixedElapsed = 0;
+            Time.FixedUnscaledElapsed = 0;
+        }
     }
 }

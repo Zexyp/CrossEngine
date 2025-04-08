@@ -71,7 +71,7 @@ namespace CrossEngineEditor.Panels
 
             //if (node == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
 
-            string label = string.IsNullOrEmpty(node.Name) ? $"Entity (Id: {node.Id})" : node.Name;
+            string label = node.ToString();
             //string label = node.TryGetComponent<TagComponent>(out var tagComponent) ? tagComponent.Tag : $"Entity (Id: {node.Id})";
             label ??= "";
 

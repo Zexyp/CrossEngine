@@ -195,4 +195,25 @@ namespace CrossEngine.Components
             }
         }
     }
+
+    class Pipeline
+    {
+        List<Pass> _passes = new List<Pass>();
+
+        public void PushBack(Pass pass)
+        {
+            _passes.Add(pass);
+        }
+
+        public void PushFront(Pass pass)
+        {
+            _passes.Insert(0, pass);
+        }
+    }
+
+    class Pass
+    {
+        // cull
+        // depth
+    }
 }

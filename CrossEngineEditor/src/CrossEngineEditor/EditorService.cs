@@ -277,7 +277,7 @@ namespace CrossEngineEditor
                 }
                 
                 // todo: move to dropdown
-                if (ImGui.BeginMenu("Scene"))
+                if (ImGui.BeginMenu("Scene", Context.Assets != null))
                 {
                     if (ImGui.MenuItem("New"))
                     {

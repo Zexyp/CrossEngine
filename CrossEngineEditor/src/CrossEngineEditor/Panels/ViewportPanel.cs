@@ -42,6 +42,7 @@ namespace CrossEngineEditor.Panels
             AddOverlay(new TransformsOverlay());
             AddOverlay(new SelectedOverlay());
             AddOverlay(new CameraOverlay());
+            AddOverlay(new NameOverlay());
         }
 
         protected override void DrawWindowContent()

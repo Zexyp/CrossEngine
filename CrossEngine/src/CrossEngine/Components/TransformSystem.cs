@@ -82,6 +82,9 @@ namespace CrossEngine.Components
         public void RenderDebugLines()
         {
             var arr = World.Storage.GetArray(typeof(TransformComponent));
+            if (arr == null)
+                return;
+            
             for (int i = 0; i < arr.Count; i++)
             {
                 Rendering.LineRenderer.DrawAxies(((TransformComponent)arr[i]).GetWorldTransformMatrix());

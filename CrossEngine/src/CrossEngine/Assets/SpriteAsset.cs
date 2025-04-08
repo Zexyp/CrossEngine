@@ -33,7 +33,7 @@ namespace CrossEngine.Assets
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            
+            texture = null;
         }
 
         public override void GetObjectData(SerializationInfo info)

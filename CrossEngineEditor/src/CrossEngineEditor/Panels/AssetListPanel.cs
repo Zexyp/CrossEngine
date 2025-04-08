@@ -18,6 +18,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using CrossEngine.Scenes;
 
 namespace CrossEngineEditor.Panels
 {
