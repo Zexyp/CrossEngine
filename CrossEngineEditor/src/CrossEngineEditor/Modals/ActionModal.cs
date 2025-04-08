@@ -81,6 +81,21 @@ public class ActionModal : EditorModal
                 ImGui.SameLine();
             }
         }
+
+        if (!ImGui.IsWindowFocused())
+            return;
+
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+        {
+            ImGui.CloseCurrentPopup();
+            Default();
+        }
+
+        //if (ImGui.IsKeyPressed(ImGuiKey.Enter))
+        //{
+        //    ImGui.CloseCurrentPopup();
+        //    SendEvents(ButtonFlags.Yes);
+        //}
     }
 
     protected override void Default()

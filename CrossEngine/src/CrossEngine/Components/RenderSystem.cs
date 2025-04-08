@@ -48,7 +48,11 @@ namespace CrossEngine.Components
         private ICamera _overrideCamera;
         private Vector2 _lastSize = Vector2.One;
         private ISurface _surface;
-        private readonly Dictionary<Type, IRenderable> _renderables = new Dictionary<Type, IRenderable>(new InterfaceTypeComparer<IObjectRenderData>());
+        private readonly Dictionary<Type, IRenderable> _renderables = new Dictionary<Type, IRenderable>(new InterfaceTypeComparer<IObjectRenderData>())
+        {
+            {typeof(ISpriteRenderData), new SpriteRenderable()},
+            {typeof(IMeshRenderData), new MeshRenderable()},
+        };
 
         public ISurface SetSurface(ISurface surface)
         {
@@ -94,7 +98,7 @@ namespace CrossEngine.Components
             {
                 rend.Begin(camera);
             }
-            foreach (IObjectRenderData rd in World.Storage.IterateIndex(new[] { typeof(RendererComponent) }).Select(v => v[0]))
+            foreach (IObjectRenderData rd in World.Storage.GetIndex(typeof(RendererComponent)))
             {
                 _renderables[rd.GetType()].Submit(rd);
             }
@@ -106,18 +110,14 @@ namespace CrossEngine.Components
 
         protected internal override void OnInit()
         {
-            World.Storage.MakeIndex(new[] { typeof(RendererComponent) });
+            World.Storage.MakeIndex(typeof(RendererComponent));
             World.Storage.AddNotifyRegister(typeof(CameraComponent), RegisterCamera, true);
             World.Storage.AddNotifyUnregister(typeof(CameraComponent), UnregisterCamera, true);
-
-            Debug.Assert(_renderables.Count == 0);
-            _renderables.Add(typeof(ISpriteRenderData), new SpriteRenderable());
-            _renderables.Add(typeof(IMeshRenderData), new MeshRenderable());
         }
 
         protected internal override void OnShutdown()
         {
-            World.Storage.DropIndex(new[] { typeof(RendererComponent) });
+            World.Storage.DropIndex(typeof(RendererComponent));
             World.Storage.RemoveNotifyRegister(typeof(CameraComponent), RegisterCamera);
             World.Storage.RemoveNotifyUnregister(typeof(CameraComponent), UnregisterCamera);
         }
@@ -183,7 +183,7 @@ namespace CrossEngine.Components
 
                 Type baseInterface = null;
                 var ints = obj.GetInterfaces();
-                for (int i = 0; i < ints.Length; i++)
+                for (int i = ints.Length - 1; i >= 0; i--)
                 {
                     if (!typeof(T).IsAssignableFrom(ints[i]))
                         continue;

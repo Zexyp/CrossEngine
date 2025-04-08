@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
@@ -16,8 +17,9 @@ namespace CrossEngine.Ecs
     // TODO: multiple occurrences
     public class ComponentStorage
     {
-        Dictionary<Type[], Dictionary<Entity, Component[]>> indexes = new(new TypeArrayEqualityComparer());
+        internal readonly ICollection<Type> Indexes;
         Dictionary<Type, List<Component>> _simpleArray = new();
+        Dictionary<Type, List<Component>> _indexes = new();
 
         // callbacks
         Dictionary<Type, Action<Component>> _registerCallbacks = new();
@@ -25,23 +27,19 @@ namespace CrossEngine.Ecs
         Dictionary<Type, Action<Component>> _unregisterCallbacks = new();
         Dictionary<Type, Action<Component>> _unregisterCallbacksInherit = new();
 
+        public ComponentStorage()
+        {
+            Indexes = _indexes.Keys;
+        }
+        
         public void AddComponent(Component component)
         {
             var type = component.GetType();
-            foreach (var index in indexes)
+
+            foreach (var pair in _indexes)
             {
-                int subclassIdx = GetSubclassIndex(index.Key, type);
-                if (subclassIdx == -1) // skip if not needed
-                    continue;
-                
-                bool contianed = index.Value.ContainsKey(component.Entity);
-                var array = contianed ? index.Value[component.Entity] : new Component[index.Key.Length];
-                
-                Debug.Assert(array[subclassIdx] == null, "peak laziness");
-                
-                array[subclassIdx] = component;
-                if (!contianed)
-                    index.Value.Add(component.Entity, array);
+                if (pair.Key.IsAssignableFrom(type))
+                    pair.Value.Add(component);
             }
 
             if (!_simpleArray.ContainsKey(type))
@@ -54,19 +52,10 @@ namespace CrossEngine.Ecs
         public void RemoveComponent(Component component)
         {
             var type = component.GetType();
-            foreach (var index in indexes)
+            foreach (var pair in _indexes)
             {
-                int subclassIdx = GetSubclassIndex(index.Key, type);
-                if (subclassIdx == -1) // skip if not needed
-                    continue;
-                
-                if (!index.Value.ContainsKey(component.Entity)) // continue if not found
-                    continue;
-                
-                index.Value[component.Entity][subclassIdx] = null;
-
-                if (index.Value[component.Entity].All(c => c == null))
-                    index.Value.Remove(component.Entity);
+                if (pair.Key.IsAssignableFrom(type))
+                    pair.Value.Remove(component);
             }
 
             Debug.Assert(_simpleArray.ContainsKey(type));
@@ -75,22 +64,19 @@ namespace CrossEngine.Ecs
             NotifyUnregister(component);
         }
 
-        public void MakeIndex(Type[] types)
+        public void MakeIndex(Type type)
         {
-            indexes.Add(types, new());
+            _indexes.Add(type, new());
         }
 
-        public void DropIndex(Type[] types)
+        public void DropIndex(Type type)
         {
-            indexes.Remove(types);
+            _indexes.Remove(type);
         }
 
-        public IEnumerable<Component[]> IterateIndex(Type[] types)
+        public IReadOnlyList<Component> GetIndex(Type type)
         {
-            foreach (var item in indexes[types])
-            {
-                yield return item.Value;
-            }
+            return _indexes[type];
         }
 
         public IReadOnlyList<Component> GetArray(Type type)
@@ -302,7 +288,7 @@ namespace CrossEngine.Ecs
                 _systems[i].OnShutdown();
             }
             
-            Debug.Assert(Storage.Indexes.Length == 0);
+            Debug.Assert(Storage.Indexes.Count == 0);
         }
 
         public void Start()

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CrossEngineEditor.Utils.UI
 {
-    internal abstract class Popup
+    public abstract class Popup
     {
         public void Open()
         {

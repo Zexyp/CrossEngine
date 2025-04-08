@@ -19,14 +19,6 @@ namespace CrossEngineEditor
 
     class EditorContext : IEditorContext
     {
-        public enum Playmode
-        {
-            None,
-            Stopped,
-            Playing,
-            Paused,
-        }
-
         public Scene Scene
         {
             get => _scene;
@@ -63,22 +55,10 @@ namespace CrossEngineEditor
                 AssetsChanged?.Invoke(old);
             }
         }
-        public Playmode Mode
-        {
-            get => _mode;
-            set
-            {
-                if (value == _mode) return;
-                _mode = value;
-
-                ModeChanged?.Invoke();
-            }
-        }
 
         private Entity _activeEntity = null;
         private Scene _scene = null;
         private AssetList _assets = null;
-        private Playmode _mode = Playmode.None;
         // private GraphicsContext Graphics;
 
         // will we ever get here??
@@ -88,7 +68,6 @@ namespace CrossEngineEditor
         public event Action<Entity> ActiveEntityChanged;
         public event Action<Scene> SceneChanged;
         public event Action<AssetList> AssetsChanged;
-        public event Action ModeChanged;
 
         public void Clear()
         {

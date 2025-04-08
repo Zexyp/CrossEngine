@@ -9,7 +9,7 @@ using CrossEngine.Utils;
 using System.Linq;
 using CrossEngine.Components;
 
-// TODO: inherit not implemented
+// TODO: inherit not fully implemented
 
 namespace CrossEngine.Ecs
 {
@@ -118,16 +118,16 @@ namespace CrossEngine.Ecs
         #endregion
 
         #region Get
-        public T GetComponent<T>() where T : Component
+        public T GetComponent<T>(bool inherit = true) where T : Component
         {
-            return (T)GetComponent(typeof(T));
+            return (T)GetComponent(typeof(T), inherit);
         }
 
-        public Component GetComponent(Type type)
+        public Component GetComponent(Type type, bool inherit = true)
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                if (_components[i].GetType() == type)
+                if (inherit ? type.IsAssignableFrom(_components[i].GetType()) : _components[i].GetType() == type)
                 {
                     return _components[i];
                 }
@@ -135,18 +135,18 @@ namespace CrossEngine.Ecs
             return null;
         }
 
-        public bool TryGetComponent<T>(out T component) where T : Component
+        public bool TryGetComponent<T>(out T component, bool inherit = true) where T : Component
         {
-            var result = TryGetComponent(typeof(T), out var foundComp);
+            var result = TryGetComponent(typeof(T), out var foundComp, inherit);
             component = (T)foundComp;
             return result;
         }
 
-        public bool TryGetComponent(Type type, out Component component)
+        public bool TryGetComponent(Type type, out Component component, bool inherit = true)
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                if (_components[i].GetType() == type)
+                if (inherit ? type.IsAssignableFrom(_components[i].GetType()) : _components[i].GetType() == type)
                 {
                     component = _components[i];
                     return true;

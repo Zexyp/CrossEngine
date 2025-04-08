@@ -165,7 +165,7 @@ namespace CrossEngineEditor
             var rs = Manager.GetService<RenderService>();
             Panels.RegisterPanel(new InspectorPanel());
             Panels.RegisterPanel(new HierarchyPanel());
-            Panels.RegisterPanel(new SceneViewPanel(rs));
+            //Panels.RegisterPanel(new SceneViewPanel(rs));
             Panels.RegisterPanel(new ViewportPanel(rs));
             Panels.RegisterPanel(new GamePanel(rs));
             Panels.RegisterPanel(new AssetListPanel());
@@ -253,7 +253,30 @@ namespace CrossEngineEditor
                     
                     ImGui.EndMenu();
                 }
+                
+                if (ImGui.BeginMenu("Window"))
+                {
+                    if (ImGui.BeginMenu("Panels"))
+                    {
+                        for (int i = 0; i < Panels.Registered.Count; i++)
+                        {
+                            var p = Panels.Registered[i];
+                            if (ImGui.MenuItem(p.WindowName, null, p.Open ?? false))
+                                p.Open = !p.Open;
+                        }
 
+                        ImGui.EndMenu();
+                    }
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Fullscreen", null, window.Fullscreen))
+                        window.SetFullscreen(!window.Fullscreen);
+
+                    // TODO: Workspace saving
+
+                    ImGui.EndMenu();
+                }
+                
+                // todo: move to dropdown
                 if (ImGui.BeginMenu("Scene"))
                 {
                     if (ImGui.MenuItem("New"))
@@ -299,43 +322,6 @@ namespace CrossEngineEditor
                     ImGui.EndMenu();
                 }
 
-                if (ImGui.BeginMenu("Window"))
-                {
-                    if (ImGui.BeginMenu("Panels"))
-                    {
-                        for (int i = 0; i < Panels.Registered.Count; i++)
-                        {
-                            var p = Panels.Registered[i];
-                            if (ImGui.MenuItem(p.WindowName, null, p.Open ?? false))
-                                p.Open = !p.Open;
-                        }
-
-                        ImGui.EndMenu();
-                    }
-                    ImGui.Separator();
-                    if (ImGui.MenuItem("Fullscreen", null, window.Fullscreen))
-                        window.SetFullscreen(!window.Fullscreen);
-
-                    // TODO: Workspace saving
-
-                    ImGui.EndMenu();
-                }
-
-                var dis = Context.Scene == null;
-                if (dis) ImGui.BeginDisabled();
-                ImGui.SetCursorPosX(ImGui.GetColumnWidth() / 2);
-                var on = Context.Mode == EditorContext.Playmode.Playing || Context.Mode == EditorContext.Playmode.Paused;
-                if (on) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered]);
-                if (ImGui.ArrowButton("##play", on ? ImGuiDir.Down : ImGuiDir.Right))
-                {
-                    if (on)
-                        StopScene();
-                    else
-                        StartScene();
-                }
-                if (on) ImGui.PopStyleColor();
-                if (dis) ImGui.EndDisabled();
-
                 ImGui.EndMainMenuBar();
             }
         }
@@ -371,27 +357,6 @@ namespace CrossEngineEditor
                 });
             else
                 action.Invoke();
-        }
-
-        Scene prevScene;
-        private void StartScene()
-        {
-            Debug.Assert(prevScene == null);
-            prevScene = Context.Scene;
-            Context.Scene = (Scene)Context.Scene.Clone();
-            
-            SceneManager.Start(Context.Scene);
-            Context.Mode = EditorContext.Playmode.Playing;
-        }
-
-        private void StopScene()
-        {
-            Context.Mode = EditorContext.Playmode.Stopped;
-            SceneManager.Stop(Context.Scene);
-
-            Debug.Assert(prevScene != null);
-            Context.Scene = prevScene;
-            prevScene = null;
         }
     }
 }

@@ -56,7 +56,7 @@ namespace CrossEngine.Components
             }
         }
 
-        private float _far = 1000;
+        private float _far = 100;
         private float _near = .1f;
         private float _fov = 90;
         private float _aspect = 1;
@@ -73,7 +73,7 @@ namespace CrossEngine.Components
         {
             // rip depth
             // TODO: fix
-            _projection = Matrix4x4.CreatePerspectiveFieldOfView(MathExtension.ToRadConstF * _fov, _aspect, _near, _far);
+            _projection = Matrix4x4Extension.CreatePerspectiveFieldOfView(MathExtension.ToRadConstF * _fov, _aspect, _near, _far);
             _projectionDirty = false;
         }
 

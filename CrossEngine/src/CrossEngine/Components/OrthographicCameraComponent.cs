@@ -73,7 +73,7 @@ namespace CrossEngine.Components
         {
             // rip depth
             // TODO: fix
-            _projection = Matrix4x4.CreateOrthographic(_aspect * _size, _size, _near, _far);
+            _projection = Matrix4x4Extension.CreateOrthographic(_aspect * _size, _size, -_near, -_far);
             _projectionDirty = false;
         }
 

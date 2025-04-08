@@ -25,7 +25,7 @@ namespace CrossEngine.Rendering.Cameras
         }
 
         public Matrix4x4 GetViewMatrix() => ViewMatrix;
-        Matrix4x4 ITransform.GetMatrix() => Matrix4x4Extension.Invert(ViewMatrix);
+        Matrix4x4 ITransform.GetMatrix() => Matrix4x4Extension.SafeInvert(ViewMatrix);
 
         //public virtual void GetObjectData(SerializationInfo info)
         //{

@@ -41,11 +41,14 @@ namespace CrossEngineEditor.Viewport
             var model = Context.ActiveEntity?.Transform?.WorldPosition;
             if (model == null)
                 return;
-            Vector3 positon = Vector3.Transform(model.Value, EditorCamera.GetViewProjectionMatrix());
-            positon.Y *= -1;
-            positon = (positon + Vector3.One) / 2;
-            positon *= new Vector3(Size, 0);
-            Renderer2D.DrawQuad(Matrix4x4.CreateScale(8) * Matrix4x4.CreateTranslation(positon), new Vector4(0.96468f, 0.658388f, 0.001517f, 1));
+            
+            Vector4 clipSpace = Vector4.Transform(new Vector4(model.Value, 1), EditorCamera.GetViewProjectionMatrix());
+            //if (clipSpace.W == 0)
+            //    return; // avoid divide by zero 😬
+            Vector3 ndc = new Vector3(clipSpace.X, clipSpace.Y, clipSpace.Z) / clipSpace.W;
+            ndc.Y *= -1;
+            Vector3 screenPos = (ndc + Vector3.One) / 2 * new Vector3(Size, 0);
+            Renderer2D.DrawQuad(Matrix4x4.CreateScale(8) * Matrix4x4.CreateTranslation(screenPos), new Vector4(1f, .75f, 0,1));
         }
     }
 
@@ -57,12 +60,13 @@ namespace CrossEngineEditor.Viewport
         public void Draw()
         {
             var cam = Context.Scene?.World.GetSystem<RenderSystem>().PrimaryCamera;
+            cam ??= Context.ActiveEntity?.GetComponent<CameraComponent>();
             if (cam == null)
                 return;
             var camTrans = cam.Entity?.Transform?.GetWorldTransformMatrix() ?? Matrix4x4.Identity;
             LineRenderer.BeginScene(EditorCamera.GetViewProjectionMatrix());
             LineRenderer.DrawAxies(camTrans);
-            LineRenderer.DrawBox(Matrix4x4Extension.Invert(cam.ProjectionMatrix) * camTrans, VecColor.Green);
+            LineRenderer.DrawBox(Matrix4x4.CreateScale(2) * Matrix4x4Extension.SafeInvert(cam.ProjectionMatrix) * camTrans, VecColor.Black);
             LineRenderer.EndScene();
         }
 

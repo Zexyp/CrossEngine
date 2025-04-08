@@ -239,7 +239,9 @@ void main()
 
             for (int i = 0; i < points.Length; i++)
             {
-                points[i] = Vector3.Transform(boxVertices[i], matrix);
+                // upsík dupsík, this was broken too much, now it should work
+                var p = Vector4.Transform(new Vector4(boxVertices[i], 1), matrix);
+                points[i] = new Vector3(p.X, p.Y, p.Z) / p.W;
             }
 
             DrawLine(points[0], points[1], color);

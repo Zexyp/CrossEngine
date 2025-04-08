@@ -24,7 +24,7 @@ namespace CrossEngineEditor.Panels
         private Vector3 _cameraPosition = Vector3.Zero;
         private Quaternion _cameraRotation = Quaternion.Identity;
         private float _near = .1f;
-        private float _far = 100f;
+        private float _far = 1000f;
         private float _fov = 90f;
         private float _zoom = 10;
         private bool _perspective = false;
@@ -50,12 +50,20 @@ namespace CrossEngineEditor.Panels
             {
                 if (ImGui.BeginMenu("View"))
                 {
-                    if (ImGui.MenuItem("Perspective", null, _perspective))
+                    if (ImGui.MenuItem("Frame Selected", Context.ActiveEntity?.Transform != null))
+                    {
+                        _cameraPosition = Context.ActiveEntity.Transform.Position;
+                        _viewDirty = true;
+                    }
+                    
+                    if (ImGui.MenuItem("Orthographic/Perspective"))
                     {
                         _perspective = !_perspective;
                         _projectionDirty = true;
                         _viewDirty = true;
                     }
+                    
+                    ImGui.Separator();
 
                     if (ImGui.BeginMenu("Camera"))
                     {
@@ -82,14 +90,14 @@ namespace CrossEngineEditor.Panels
 
                         ImGui.Separator();
 
-                        if (ImGui.MenuItem("Top", null, false))
+                        if (ImGui.MenuItem("Top", null, _cameraRotation == Quaternion.CreateFromAxisAngle(Vector3.UnitX, -MathF.PI / 2)))
                         {
-                            throw new NotImplementedException();
+                            _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitX, -MathF.PI / 2);
                             _viewDirty = true;
                         }
-                        if (ImGui.MenuItem("Bottom", null, false))
+                        if (ImGui.MenuItem("Bottom", null, _cameraRotation == Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2)))
                         {
-                            throw new NotImplementedException();
+                            _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2);
                             _viewDirty = true;
                         }
                         ImGui.Separator();
@@ -104,14 +112,14 @@ namespace CrossEngineEditor.Panels
                             _viewDirty = true;
                         }
                         ImGui.Separator();
-                        if (ImGui.MenuItem("Right", null, false))
+                        if (ImGui.MenuItem("Right", null, _cameraRotation == Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2)))
                         {
-                            throw new NotImplementedException();
+                            _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2);
                             _viewDirty = true;
                         }
-                        if (ImGui.MenuItem("Left", null, false))
+                        if (ImGui.MenuItem("Left", null, _cameraRotation == Quaternion.CreateFromAxisAngle(Vector3.UnitY, -MathF.PI / 2)))
                         {
-                            throw new NotImplementedException();
+                            _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -MathF.PI / 2);
                             _viewDirty = true;
                         }
 
@@ -153,6 +161,7 @@ namespace CrossEngineEditor.Panels
 
             else
             {
+                // todo: keypad nav
                 if (!_perspective)
                 {
                     OrthoControl(io);
@@ -235,6 +244,8 @@ namespace CrossEngineEditor.Panels
 
                 _viewDirty = true;
             }
+
+            // todo: fly navigation
         }
 
         private void PerspectiveTouchpadControl(in ImGuiIOPtr io)
@@ -245,9 +256,9 @@ namespace CrossEngineEditor.Panels
                 if (!io.KeyShift && !io.KeyCtrl && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
                     if (io.KeyAlt)
-                        _lookRot += new Vector2(-io.MouseWheel, -io.MouseWheelH) / 4;
+                        _lookRot += new Vector2(-io.MouseWheel, -io.MouseWheelH) / 8;
                     else
-                        _lookRot += new Vector2(-io.MouseWheelH, -io.MouseWheel) / 4;
+                        _lookRot += new Vector2(-io.MouseWheelH, -io.MouseWheel) / 8;
 
                     _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _lookRot.X) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, _lookRot.Y);
 
