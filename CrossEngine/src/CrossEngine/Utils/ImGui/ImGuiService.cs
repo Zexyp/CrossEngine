@@ -74,7 +74,7 @@ namespace CrossEngine.Utils.ImGui
         private unsafe void OnAfterDraw(ISurface surface)
         {
             var w = Manager.GetService<WindowService>().MainWindow;
-            w.Context.Api.SetViewport(0, 0, w.Width, w.Height); // not sure about this
+            w.Graphics.Api.SetViewport(0, 0, w.Width, w.Height); // not sure about this
             controller.Render();
         }
 

@@ -1,4 +1,5 @@
 ﻿#define SHOW_SOURCES
+#define SET_LINE
 
 using CrossEngine.Logging;
 using CrossEngine.Platform;
@@ -19,7 +20,7 @@ namespace CrossEngine.Rendering.Shaders
     public static class ShaderPreprocessor
     {
         [ThreadStatic]
-        internal static Action<Action> ServiceRequest;
+        internal static Func<Action, Task> ServiceRequest;
 
 #if !OPENGL_ES
         private const string ShaderProfile = "core";
@@ -154,7 +155,11 @@ void main() {{
                     currentBuilder.AppendLine(line);
 
                     if (appendLineNumber)
+                    {
+#if SET_LINE
                         currentBuilder.AppendLine($"#line {lineNumber}");
+#endif
+                    }
                 }
                 
                 if (reader.EndOfStream)

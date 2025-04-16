@@ -28,7 +28,7 @@ namespace CrossEngine.Platform.OpenGL
             loader = glfw.GetProcAddress;
 
             _gl = GL.GetApi(loader);
-            
+
             MakeCurrent();
             
             GLExtensions.Load();

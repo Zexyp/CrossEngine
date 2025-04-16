@@ -91,8 +91,6 @@ namespace CrossEngine.Display
 
             MainWindow.Event += OnWindowEvent;
 
-            MainWindow.Init();
-            
             MainWindow.Create();
 
             _scheduler.RunOnCurrentThread();

@@ -30,9 +30,9 @@ namespace CrossEngine.Services
         GraphicsApi _api;
         ScreenSurface _surface = new ScreenSurface();
 
-        public RenderService()
+        public RenderService(GraphicsApi? api = null)
         {
-            _api = PlatformHelper.GetGraphicsApi();
+            _api = api ?? PlatformHelper.GetGraphicsApi();
         }
 
         public override void OnAttach()
@@ -60,42 +60,52 @@ namespace CrossEngine.Services
             ws.WindowEvent += OnWindowEvent;
             ws.WindowUpdate += OnWindowUpdate;
             
-            _context = ws.MainWindow.Context;
-            _context.Api = RendererApi.Create(_api);
+            _context = ws.MainWindow.InitGraphics(_api);
             _context.Init();
+            _context.MakeCurrent();
 
+            GraphicsContext.SetupCurrent(_context);
+
+            _context.Api = RendererApi.Create(_api);
             _context.Api.Init();
-            _context.Api.SetClearColor(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+
+            _context.Api.SetClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             _context.Api.SetViewport(0, 0, ws.MainWindow.Width, ws.MainWindow.Height);
             
             _surface.Context = _context;
             _surface.DoResize(ws.MainWindow.Width, ws.MainWindow.Height);
 
             Prepare();
+
+            GraphicsContext.SetupCurrent(null);
         }
 
         private void Destroy()
         {
+            GraphicsContext.SetupCurrent(_context);
+
             Shutdown();
 
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent -= OnWindowEvent;
             ws.WindowUpdate -= OnWindowUpdate;
             
-            ws.MainWindow.Context.Dispose();
+            ws.MainWindow.Graphics.Dispose();
 
             _context.Api.Dispose();
             _context.Api = null;
-            
+
+            GraphicsContext.SetupCurrent(null);
+
             _context.Dispose();
             _context = null;
         }
 
         private void CallingThreadSetup()
         {
-            ShaderPreprocessor.ServiceRequest = action => Execute(action);
-            TextureLoader.ServiceRequest = action => Execute(action);
-            MeshLoader.ServiceRequest = action => Execute(action);
+            ShaderPreprocessor.ServiceRequest = Execute;
+            TextureLoader.ServiceRequest = Execute;
+            MeshLoader.ServiceRequest = Execute;
         }
 
         private void CallingThreadDestroy()
@@ -107,17 +117,17 @@ namespace CrossEngine.Services
 
         private void OnWindowEvent(Window w, Event e)
         {
-            GraphicsContext.SetupCurrent(w.Context);
+            GraphicsContext.SetupCurrent(w.Graphics);
 
             // this is supposed to fix state when resizing window
             // it's unfortunate that when just holding the window nothing happens
             // also used when window dictates it's own redrawing
             if (!IgnoreRefresh && (e is WindowRefreshEvent))
-                DrawPresent(w.Context);
+                DrawPresent(w.Graphics);
 
             if (e is WindowResizeEvent wre)
             {
-                w.Context.Api.SetViewport(0, 0, wre.Width, wre.Height);
+                w.Graphics.Api.SetViewport(0, 0, wre.Width, wre.Height);
                 _surface.DoResize(wre.Width, wre.Height);
             }
             
@@ -126,9 +136,9 @@ namespace CrossEngine.Services
 
         private void OnWindowUpdate(Window w)
         {
-            GraphicsContext.SetupCurrent(w.Context);
+            GraphicsContext.SetupCurrent(w.Graphics);
             
-            DrawPresent(w.Context);
+            DrawPresent(w.Graphics);
             
             GraphicsContext.SetupCurrent(null);
         }
@@ -136,9 +146,6 @@ namespace CrossEngine.Services
         private void DrawPresent(GraphicsContext context)
         {
             Profiler.BeginScope("Render");
-            
-            // setup current makes this automatic
-            //context.MakeCurrent();
 
             _scheduler.RunOnCurrentThread();
 
@@ -155,7 +162,11 @@ namespace CrossEngine.Services
 
         private void Prepare()
         {
-            void OnServiceRequest(Action action) => action.Invoke();
+            Task OnServiceRequest(Action action)
+            {
+                action.Invoke();
+                return Task.CompletedTask;
+            }
 
             ShaderPreprocessor.ServiceRequest = OnServiceRequest;
             ShaderPreprocessor.Init();

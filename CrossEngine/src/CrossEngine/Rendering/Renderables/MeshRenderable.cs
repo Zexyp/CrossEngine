@@ -23,7 +23,12 @@ namespace CrossEngine.Rendering.Renderables
     class MeshRenderable : Renderable<IMeshRenderData>
     {
         ICamera _camera;
-        IMaterial defaultMaterial = new DefaultMaterial();
+        private IMaterial defaultMaterial;
+
+        public override void Init()
+        {
+            defaultMaterial = new DefaultMaterial();
+        }
 
         public override void Begin(ICamera camera)
         {

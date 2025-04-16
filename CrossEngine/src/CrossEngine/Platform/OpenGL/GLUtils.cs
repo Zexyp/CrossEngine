@@ -110,6 +110,18 @@ namespace CrossEngine.Platform.OpenGL
             Debug.Assert(false, $"Unknown {nameof(DepthFunc)} value");
             return 0;
         }
+        
+        public static GLEnum ToGLCullFace(CullFace face)
+        {
+            switch (face)
+            {
+                case CullFace.Front: return GLEnum.Front;
+                case CullFace.Back: return GLEnum.Back;
+            }
+
+            Debug.Assert(false, $"Unknown {nameof(DepthFunc)} value");
+            return 0;
+        }
 
         public static GLEnum ToGLFilterParameter(FilterParameter filter)
         {

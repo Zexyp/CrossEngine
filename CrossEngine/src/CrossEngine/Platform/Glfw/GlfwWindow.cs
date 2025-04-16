@@ -8,16 +8,16 @@ using System.Threading.Tasks;
 using CrossEngine.Events;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
-using CrossEngine.Platform.OpenGL;
 using CrossEngine.Inputs;
 using System.Numerics;
 using GlfwClass = Silk.NET.GLFW.Glfw;
+using System.Diagnostics;
 
 namespace CrossEngine.Platform.Glfw
 {
     unsafe class GlfwWindow : CrossEngine.Display.Window
     {
-        internal static GlfwClass glfw = Silk.NET.GLFW.Glfw.GetApi();
+        internal static GlfwClass glfw;
 
         public override double Time => glfw.GetTime();
         public override bool ShouldClose
@@ -40,21 +40,6 @@ namespace CrossEngine.Platform.Glfw
             Title = title;
         }
 
-        public override void Init()
-        {
-            glfw.Init();
-
-            glfw.SetErrorCallback(GlfwErrorCallback);
-
-            glfw.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGL);
-            glfw.WindowHint(WindowHintInt.ContextVersionMajor, 3);
-            glfw.WindowHint(WindowHintInt.ContextVersionMinor, 3);
-            glfw.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Core);
-            //Glfw.WindowHint(Hint.Doublebuffer, true);
-            //Glfw.WindowHint(Hint.Decorated, true);
-            //Glfw.WindowHint(Hint.OpenglForwardCompatible, true);
-        }
-
         public override void Create()
         {
             _nativeHandle = glfw.CreateWindow(
@@ -72,9 +57,6 @@ namespace CrossEngine.Platform.Glfw
 
             // oh funny that was ez
             glfw.RequestWindowAttention(_nativeHandle);
-
-            Context = new GLContext(_nativeHandle);
-            Context.Init();
         }
 
         public override void Destroy()
@@ -124,16 +106,12 @@ namespace CrossEngine.Platform.Glfw
             return ((uint)width, (uint)height);
         }
 
-        private void GlfwErrorCallback(ErrorCode code, string message)
-        {
-            Log.Error(((int)code) + " (" + code.ToString() + "): " + message);
-        }
-
         public override void Dispose()
         {
-            glfw.Terminate();
+            
         }
 
+        // try static lamdas?
         private Silk.NET.GLFW.GlfwCallbacks.WindowSizeCallback _windowSizeCallbackHolder;
         private Silk.NET.GLFW.GlfwCallbacks.WindowCloseCallback _closeCallbackHolder;
         private Silk.NET.GLFW.GlfwCallbacks.KeyCallback _keyCallbackHolder;
@@ -150,6 +128,7 @@ namespace CrossEngine.Platform.Glfw
             // window
             glfw.SetWindowSizeCallback(_nativeHandle, _windowSizeCallbackHolder = (WindowHandle* window, int width, int height) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 Data.Width = (uint)width;
                 Data.Height = (uint)height;
 
@@ -158,26 +137,31 @@ namespace CrossEngine.Platform.Glfw
 
             glfw.SetWindowPosCallback(_nativeHandle, _positionCallbackHolder = (WindowHandle* window, int x, int y) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 Event?.Invoke(new WindowMovedEvent((float)x, (float)y));
             });
 
             glfw.SetWindowRefreshCallback(_nativeHandle, _refreshCallbackHolder = (WindowHandle* window) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 Event?.Invoke(new WindowRefreshEvent());
             });
 
             glfw.SetWindowCloseCallback(_nativeHandle, _closeCallbackHolder = (WindowHandle* window) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 Event?.Invoke(new WindowCloseEvent());
             });
 
             glfw.SetWindowFocusCallback(_nativeHandle, _focusCallbackHolder = (WindowHandle* window, bool focused) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 Event?.Invoke(new WindowFucusEvent(focused));
             });
 
             glfw.SetKeyCallback(_nativeHandle, _keyCallbackHolder = (WindowHandle* window, Keys key, int scanCode, InputAction state, KeyModifiers mods) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 switch (state)
                 {
                     case InputAction.Press:
@@ -203,11 +187,13 @@ namespace CrossEngine.Platform.Glfw
 
             glfw.SetCharCallback(_nativeHandle, _charCallbackHolder = (WindowHandle* window, uint codePoint) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 Event?.Invoke(new KeyCharEvent((char)codePoint));
             });
 
             glfw.SetMouseButtonCallback(_nativeHandle, _mouseButtonCallbackHolder = (WindowHandle* window, MouseButton button, InputAction state, KeyModifiers modifiers) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 switch (state)
                 {
                     case InputAction.Press:
@@ -227,15 +213,29 @@ namespace CrossEngine.Platform.Glfw
 
             glfw.SetScrollCallback(_nativeHandle, _scrollCallbackHolder = (WindowHandle* window, double x, double y) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 Mouse.Scroll(new((float)x, (float)y));
                 Event?.Invoke(new MouseScrolledEvent((float)x, (float)y));
             });
 
             glfw.SetCursorPosCallback(_nativeHandle, _cursorPositionCallbackHolder = (WindowHandle* window, double x, double y) =>
             {
+                Debug.Assert(_nativeHandle == window);
                 Mouse.Position(new((float)x, (float)y));
                 Event?.Invoke(new MouseMovedEvent((float)x, (float)y));
             });
+        }
+
+        public override GraphicsContext InitGraphics(GraphicsApi api)
+        {
+            Debug.Assert(Graphics == null);
+
+            switch (api)
+            {
+                case GraphicsApi.OpenGL: return Graphics = new OpenGL.GLContext(_nativeHandle);
+                case GraphicsApi.GDI: return Graphics = new Windows.GdiContext(Process.GetCurrentProcess().MainWindowHandle);
+                default: throw new PlatformNotSupportedException();
+            }
         }
     }
 }

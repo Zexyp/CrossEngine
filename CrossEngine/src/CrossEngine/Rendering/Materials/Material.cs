@@ -91,17 +91,16 @@ layout(location = 0) out vec4 oColor;
 layout(location = 1) out int oEntityIDColor;
 in vec2 vTexCoord;
 uniform int uEntityID;
-uniform sampler2D uTexture;
 void main() {
-    oColor = texture(uTexture, vTexCoord);
+    oColor = vec4(1, 0, 1, 1);
     oEntityIDColor = uEntityID;
 }";
 
-    public WeakReference<ShaderProgram> Shader { get; } = ShaderPreprocessor.CreateProgramFromStream(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(DefaultShaderSource)));
+    static WeakReference<ShaderProgram> _shader = ShaderPreprocessor.CreateProgramFromStream(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(DefaultShaderSource)));
+
+    public WeakReference<ShaderProgram> Shader { get => _shader; }
 
     public void Update(ShaderProgram shader)
     {
-        shader.SetParameterInt("uTexture", 0);
-        TextureLoader.DefaultTexture.GetValue().Bind(0);
     }
 }

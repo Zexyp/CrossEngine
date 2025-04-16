@@ -3,6 +3,7 @@ using CrossEngine.Platform;
 using CrossEngine.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,7 +15,9 @@ namespace CrossEngine.Assets
     public static class AssetManager
     {
         public static AssetList Current { get => _current; }
-        
+
+        internal static Func<Action, Task> ServiceRequest;
+
         private static AssetList _current;
         private static JsonSerializerOptions _jso;
 
@@ -71,6 +74,17 @@ namespace CrossEngine.Assets
         public static void Write(AssetList pool, Stream stream)
         {
             JsonSerializer.Serialize(stream, pool, _jso);
+        }
+
+        public static Task Load(AssetList list)
+        {
+            Debug.Assert(list != null);
+            return ServiceRequest.Invoke(async () => await list.LoadAll());
+        }
+        public static Task Unload(AssetList list)
+        {
+            Debug.Assert(list != null);
+            return ServiceRequest.Invoke(async () => await list.UnloadAll());
         }
     }
 }

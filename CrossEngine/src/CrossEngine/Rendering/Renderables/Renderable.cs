@@ -11,6 +11,9 @@ namespace CrossEngine.Rendering.Renderables
 {
     public interface IRenderable
     {
+        virtual void Init() { }
+        virtual void Destroy() { }
+        
         virtual void Begin(ICamera camera) { }
         virtual void End() { }
 
@@ -19,6 +22,9 @@ namespace CrossEngine.Rendering.Renderables
 
     public abstract class Renderable<T> : IRenderable where T : IObjectRenderData
     {
+        public virtual void Init() { }
+        public virtual void Destroy() { }
+        
         public virtual void Begin(ICamera camera) { }
         public virtual void End() { }
 

@@ -30,7 +30,7 @@ namespace CrossEngine.Loaders
         //}
 
         [ThreadStatic]
-        internal static Action<Action> ServiceRequest;
+        internal static Func<Action, Task> ServiceRequest;
 
         internal static unsafe void Init()
         {

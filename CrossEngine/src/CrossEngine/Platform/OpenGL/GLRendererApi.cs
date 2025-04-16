@@ -48,7 +48,7 @@ namespace CrossEngine.Platform.OpenGL
 
         public override void SetViewport(uint x, uint y, uint width, uint height) => gl.Viewport((int)x, (int)y, width, height);
 
-        public override void SetClearColor(Vector4 color) => gl.ClearColor(color.X, color.Y, color.Z, color.W);
+        public override void SetClearColor(float r, float g, float b, float a) => gl.ClearColor(r, g, b, a);
 
         public override void SetPolygonMode(PolygonMode mode) =>
 #if !OPENGL_ES
@@ -79,6 +79,18 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.Enable(GLEnum.Blend);
             gl.BlendFunc(GLEnum.SrcAlpha, GLUtils.ToGLBlendFunc(func));
+        }
+        
+        public override void SetCullFace(CullFace face)
+        {
+            if (face == CullFace.None)
+            {
+                gl.Disable(GLEnum.CullFace);
+                return;
+            }
+
+            gl.Enable(GLEnum.CullFace);
+            gl.CullFace(GLUtils.ToGLCullFace(face));
         }
 
         public override void SetLineWidth(float width) => gl.LineWidth(width);

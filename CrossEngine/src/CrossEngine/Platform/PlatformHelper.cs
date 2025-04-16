@@ -2,6 +2,7 @@
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Services;
+using Silk.NET.GLFW;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,6 +20,37 @@ namespace CrossEngine.Platform
 #if WASM
         private static HttpClient httpClient = new HttpClient();
 #endif
+
+        internal static void Init()
+        {
+#if WINDOWS || LINUX
+            static void GlfwErrorCallback(ErrorCode code, string message)
+            {
+                Log.Error(((int)code) + " (" + code.ToString() + "): " + message);
+            }
+
+            Glfw.GlfwWindow.glfw = Silk.NET.GLFW.Glfw.GetApi();
+
+            Glfw.GlfwWindow.glfw.Init();
+
+            Glfw.GlfwWindow.glfw.SetErrorCallback(GlfwErrorCallback);
+
+            Glfw.GlfwWindow.glfw.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGL);
+            Glfw.GlfwWindow.glfw.WindowHint(WindowHintInt.ContextVersionMajor, 3);
+            Glfw.GlfwWindow.glfw.WindowHint(WindowHintInt.ContextVersionMinor, 3);
+            Glfw.GlfwWindow.glfw.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Core);
+            //Glfw.GlfwWindow.glfw.WindowHint(WindowHintBool.DoubleBuffer, true);
+            //glfw.WindowHint(WindowHintBool.Decorated, true);
+            //glfw.WindowHint(WindowHintBool.OpenGLForwardCompat, true);
+#endif
+        }
+
+        internal static void Terminate()
+        {
+#if WINDOWS || LINUX
+            CrossEngine.Platform.Glfw.GlfwWindow.glfw.Terminate();
+#endif
+        }
 
         internal static Window CreateWindow()
         {

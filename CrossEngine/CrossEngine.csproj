@@ -59,21 +59,18 @@
 
   <ItemGroup>
     <PackageReference Include="StbImageSharp" Version="2.27.13" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
   </ItemGroup>
 
   <!-- exclude platform -->
   <ItemGroup>
     <Compile Remove="src\CrossEngine\Platform\*\**" />
-    <EmbeddedResource Remove="src\CrossEngine\Platform\*\**" />
-    <None Remove="src\CrossEngine\Platform\*\**" />
     <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
-    <EmbeddedResource Remove="src\CrossEngine\Utils\ImGui\**" />
-    <None Remove="src\CrossEngine\Utils\ImGui\**" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="src\CrossEngine\Scenes\SceneRenderData.cs" />
-    <Compile Remove="src\CrossEngine\Scenes\SceneRenderer.cs" />
   </ItemGroup>
 
   <!--
@@ -96,16 +93,9 @@
       <!-- include platform -->
       <ItemGroup>
         <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
-        <EmbeddedResource Include="src\CrossEngine\Platform\OpenGL\**" />
-        <None Include="src\CrossEngine\Platform\OpenGL\**" />
-
         <Compile Include="src\CrossEngine\Platform\Glfw\**" />
-        <EmbeddedResource Include="src\CrossEngine\Platform\Glfw\**" />
-        <None Include="src\CrossEngine\Platform\Glfw\**" />
-
         <Compile Include="src\CrossEngine\Utils\ImGui\**" />
-        <EmbeddedResource Include="src\CrossEngine\Utils\ImGui\**" />
-        <None Include="src\CrossEngine\Utils\ImGui\**" />
+        <Compile Include="src\CrossEngine\Platform\Windows\**" />
       </ItemGroup>
 
       <!-- packages -->
@@ -114,6 +104,7 @@
         <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
         <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
         <PackageReference Include="Silk.NET.GLFW" Version="2.22.0" />
+        <PackageReference Include="System.Drawing.Common" Version="9.0.4" />
       </ItemGroup>
 
     </When>
@@ -124,16 +115,8 @@
       <!-- include platform -->
       <ItemGroup>
         <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
-        <EmbeddedResource Include="src\CrossEngine\Platform\OpenGL\**" />
-        <None Include="src\CrossEngine\Platform\OpenGL\**" />
-
         <Compile Include="src\CrossEngine\Platform\Glfw\**" />
-        <EmbeddedResource Include="src\CrossEngine\Platform\Glfw\**" />
-        <None Include="src\CrossEngine\Platform\Glfw\**" />
-
         <Compile Include="src\CrossEngine\Utils\ImGui\**" />
-        <EmbeddedResource Include="src\CrossEngine\Utils\ImGui\**" />
-        <None Include="src\CrossEngine\Utils\ImGui\**" />
       </ItemGroup>
 
       <!-- packages -->
@@ -152,16 +135,8 @@
       <!-- include platform -->
       <ItemGroup>
         <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
-        <EmbeddedResource Include="src\CrossEngine\Platform\OpenGL\**" />
-        <None Include="src\CrossEngine\Platform\OpenGL\**" />
-
         <Compile Remove="src\CrossEngine\Platform\OpenGL\GLContext.cs" />
-        <EmbeddedResource Remove="src\CrossEngine\Platform\OpenGL\GLContext.cs" />
-        <None Remove="src\CrossEngine\Platform\OpenGL\GLContext.cs" />
-
         <Compile Include="src\CrossEngine\Platform\Wasm\**" />
-        <EmbeddedResource Include="src\CrossEngine\Platform\Wasm\**" />
-        <None Include="src\CrossEngine\Platform\Wasm\**" />
       </ItemGroup>
 
       <!-- packages -->

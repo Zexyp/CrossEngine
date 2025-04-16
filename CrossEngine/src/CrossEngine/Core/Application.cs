@@ -10,6 +10,7 @@ using CrossEngine.Profiling;
 using System.Threading;
 using CrossEngine.Events;
 using CrossEngine.Logging;
+using CrossEngine.Platform;
 
 namespace CrossEngine.Core
 {
@@ -29,20 +30,12 @@ namespace CrossEngine.Core
 
         public virtual void OnInit()
         {
-            Manager.InitServices();
-
-            Manager.AttachServices();
             
-            Manager.Event += OnEvent;
         }
 
         public virtual void OnDestroy()
         {
-            Manager.Event -= OnEvent;
-
-            Manager.DetachServices();
-
-            Manager.ShutdownServices();
+            
         }
 
         public virtual void OnUpdate()
@@ -73,7 +66,7 @@ namespace CrossEngine.Core
         // what the
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
+            GC.Collect(); // xd
         }
 
         internal static void ThreadWrapper(Action action)
@@ -95,6 +88,32 @@ namespace CrossEngine.Core
             }
         }
 
+        private void InternalInit()
+        {
+            PlatformHelper.Init();
+
+            Manager.InitServices();
+
+            Manager.AttachServices();
+
+            Manager.Event += OnEvent;
+
+            OnInit();
+        }
+
+        private void InternalDestroy()
+        {
+            OnDestroy();
+
+            Manager.Event -= OnEvent;
+
+            Manager.DetachServices();
+
+            Manager.ShutdownServices();
+
+            PlatformHelper.Terminate();
+        }
+
         private void InternalRun()
         {
             wait.Reset();
@@ -106,7 +125,7 @@ namespace CrossEngine.Core
 #endif
             Log.Trace("intializing");
 
-            OnInit();
+            InternalInit();
 
             Log.Trace("intialized");
 
@@ -121,7 +140,7 @@ namespace CrossEngine.Core
 
             Log.Trace("destroying (may hang due to scheduled task(s))");
 
-            OnDestroy();
+            InternalDestroy();
 
             Log.Trace("destroyed");
 

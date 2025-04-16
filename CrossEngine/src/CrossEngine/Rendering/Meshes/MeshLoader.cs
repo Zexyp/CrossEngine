@@ -15,7 +15,7 @@ namespace CrossEngine.Loaders
     public static class MeshLoader
     {
         [ThreadStatic]
-        internal static Action<Action> ServiceRequest;
+        internal static Func<Action, Task> ServiceRequest;
         
         public struct WavefrontVertex
         {

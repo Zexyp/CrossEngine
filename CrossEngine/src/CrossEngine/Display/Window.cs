@@ -38,7 +38,7 @@ namespace CrossEngine.Display
 
         protected WindowData Data;
 
-        public GraphicsContext Context { get; protected set; }
+        public GraphicsContext Graphics { get; protected set; }
 
         public uint Width { get => Data.Width; set { Data.Width = value; if (Handle != IntPtr.Zero) UpdateSize(); } }
         public uint Height { get => Data.Height; set { Data.Height = value; if (Handle != IntPtr.Zero) UpdateSize(); } }
@@ -67,7 +67,8 @@ namespace CrossEngine.Display
             GC.SuppressFinalize(this);
         }
 
-        public abstract void Init();
+        public abstract GraphicsContext InitGraphics(GraphicsApi api);
+
         public abstract void Create();
         public abstract void Destroy();
         public abstract void PollEvents();
