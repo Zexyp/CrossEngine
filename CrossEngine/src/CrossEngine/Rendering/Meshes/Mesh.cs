@@ -9,12 +9,14 @@ namespace CrossEngine.Rendering.Meshes;
 public interface IMesh : IDisposable
 {
     WeakReference<VertexArray> VA { get; }
-    IList Vertices { get; }
+    Array Vertices { get; }
+    void SetupGpuResources();
+    void FreeGpuResources();
 }
 
 public interface IIndexedMesh : IMesh
 {
-    IList Indices { get; }
+    Array Indices { get; }
 }
 
 public class Mesh<T> : IMesh where T : struct
@@ -22,17 +24,32 @@ public class Mesh<T> : IMesh where T : struct
     public WeakReference<VertexArray> VA { get; private set; }
     public T[] Vertices;
 
-    IList IMesh.Vertices => Vertices;
+    Array IMesh.Vertices => Vertices;
     WeakReference<VertexBuffer> vb;
-    
     
     public Mesh(T[] vertices)
     {
         this.Vertices = vertices;
     }
 
-    public virtual unsafe void Setup()
+    public virtual unsafe void SetupGpuResources()
     {
+        /*
+        var elementType = Mesh.Vertices.GetType().GetElementType();
+        int elementSize = Marshal.SizeOf(elementType);
+        
+        va = VertexArray.Create();
+        
+        void* verteciesp = Unsafe.AsPointer(ref MemoryMarshal.GetArrayDataReference(Mesh.Vertices));
+        vb = VertexBuffer.Create(verteciesp, (uint)(elementSize * Mesh.Vertices.Length));
+        
+        // this is really nice
+        BufferLayout layout = BufferLayout.FromStructType(elementType);
+
+        vb.GetValue().SetLayout(layout);
+        va.GetValue().AddVertexBuffer(vb);
+        */
+        
         VA = VertexArray.Create();
         fixed (T* verteciesp = &Vertices[0])
             vb = VertexBuffer.Create(verteciesp, (uint)(sizeof(T) * Vertices.Length));
@@ -42,6 +59,11 @@ public class Mesh<T> : IMesh where T : struct
 
         vb.GetValue().SetLayout(layout);
         VA.GetValue().AddVertexBuffer(vb);
+    }
+
+    public virtual void FreeGpuResources()
+    {
+        Dispose();
     }
 
     public virtual void Dispose()
@@ -58,7 +80,7 @@ public class IndexedMesh<T> : Mesh<T>, IIndexedMesh where T : struct
 {
     public uint[] Indices;
 
-    IList IIndexedMesh.Indices => Indices;
+    Array IIndexedMesh.Indices => Indices;
     WeakReference<IndexBuffer> ib;
 
     public IndexedMesh(T[] vertices, uint[] indices) : base(vertices)
@@ -66,10 +88,17 @@ public class IndexedMesh<T> : Mesh<T>, IIndexedMesh where T : struct
         this.Indices = indices;
     }
 
-    public override unsafe void Setup()
+    public override unsafe void SetupGpuResources()
     {
-        base.Setup();
+        base.SetupGpuResources();
 
+        /*
+        void* indicesp = Unsafe.AsPointer(ref MemoryMarshal.GetArrayDataReference(indexed.Indices));
+        ib = IndexBuffer.Create(indicesp, (uint)indexed.Indices.Length, IndexDataType.UInt);
+            
+        va.GetValue().SetIndexBuffer(ib);
+        */
+        
         fixed (uint* indicesp = &Indices[0])
             ib = IndexBuffer.Create(indicesp, (uint)Indices.Length, IndexDataType.UInt);
 

@@ -76,7 +76,8 @@ public class ActionModal : EditorModal
                 if (ImGui.Button(flag.ToString(), new Vector2(60, 0)))
                 {
                     SendEvents(flag);
-                    ImGui.CloseCurrentPopup();
+                    End();
+                    return;
                 }
                 ImGui.SameLine();
             }
@@ -87,8 +88,9 @@ public class ActionModal : EditorModal
 
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
-            ImGui.CloseCurrentPopup();
+            End();
             Default();
+            return;
         }
 
         //if (ImGui.IsKeyPressed(ImGuiKey.Enter))

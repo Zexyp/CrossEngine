@@ -34,15 +34,16 @@ namespace CrossEngine.Loaders
 
         internal static unsafe void Init()
         {
+            var gapi = RendererApi.GetApi();
+            if (gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES)
+                StbImage.stbi_set_flip_vertically_on_load(1);
+
             //DefaultTexture = Texture.Create(1, 1, ColorFormat.RGBA);
             //uint col = 0xffff00ff;
             //DefaultTexture.GetValue().SetData(&col, sizeof(uint));
+
             DefaultTexture = LoadTextureFromBytes(Properties.Resources.DefaultTexture);
         
-            var gapi = RendererApi.GetApi();
-
-            Debug.Assert(gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES, "only OpenGL supported");
-            StbImage.stbi_set_flip_vertically_on_load(1);
         }
 
         internal static void Shutdown()
@@ -93,7 +94,12 @@ namespace CrossEngine.Loaders
             {
                 Texture.Create(texture, (uint)result.Width, (uint)result.Height, format);
                 fixed (void* p = result.Data)
-                    ((GLTexture)texture.GetValue()).SetData(p, (uint)result.Width, (uint)result.Height, format, desired);
+                {
+                    if (RendererApi.GetApi() == GraphicsApi.OpenGL)
+                        ((GLTexture)texture.GetValue()).SetData(p, (uint)result.Width, (uint)result.Height, format, desired);
+                    else
+                        texture.GetValue().SetData(p, (uint)(result.Width * result.Height * GetPixelSize(result.Comp)));
+                }
             });
 
             return texture;
@@ -114,6 +120,19 @@ namespace CrossEngine.Loaders
                 default:
                     Debug.Assert(false, "unknow type");
                     return ColorFormat.None;
+            }
+        }
+
+        private static uint GetPixelSize(ColorComponents comp)
+        {
+            switch (comp)
+            {
+                case ColorComponents.RedGreenBlue:
+                    return 3;
+                case ColorComponents.RedGreenBlueAlpha:
+                    return 4;
+                default:
+                    throw new NotSupportedException();
             }
         }
     }

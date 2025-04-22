@@ -115,10 +115,12 @@ namespace CrossEngineEditor
                 }
                 catch (NotImplementedException nie)
                 {
+                    // check if exception is coming from within assembly
                     var trace = new StackTrace(nie);
                     var frame = trace.GetFrame(0);
                     if (frame.GetMethod().DeclaringType.Assembly != Assembly.GetExecutingAssembly())
                         throw;
+                    
                     Log.Error($"action at {frame.GetMethod().DeclaringType}.{frame.GetMethod().Name} in {frame.GetFileName()}:{frame.GetFileLineNumber()} not implemented ({nie.Message})");
                 }
             }
@@ -326,25 +328,41 @@ namespace CrossEngineEditor
             }
         }
         #endregion
-        
-        private void OnContextSceneChanged(Scene old)
+
+        #region Context Changes
+        private async void OnContextSceneChanged(Scene old)
         {
             Context.ActiveEntity = null;
 
-            if (old != null) SceneManager.Remove(old);
+            if (old != null) await SceneManager.Remove(old);
 
-            if (Context.Scene != null) SceneManager.PushBackground(Context.Scene);
+            if (Context.Scene != null) await SceneManager.PushBackground(Context.Scene);
         }
 
-        private void OnContextAssetsChanged(AssetList old)
+        private async void OnContextAssetsChanged(AssetList old)
         {
             Context.Scene = null;
 
-            if (old != null) AssetManager.Current.UnloadAll();
+            if (old != null) await AssetManager.Unload(old);
 
             AssetManager.Bind(Context.Assets);
 
-            if (Context.Assets != null) AssetManager.Current.LoadAll();
+            if (Context.Assets != null) await AssetManager.Load(Context.Assets);
+        }
+        #endregion
+
+        internal Task<string> DialogFileOpen()
+        {
+            var modal = new BlockModal("File Dialog") { Text = "Open file dialog is open." };
+            Panels.PushModal(modal);
+            return Task.Run(() => { var result = EditorPlatformHelper.FileOpenDialog(); modal.Open = false; return result; });
+        }
+
+        internal Task<string> DialogFileSave()
+        {
+            var modal = new BlockModal("File Dialog") { Text = "Save file dialog is open." };
+            Panels.PushModal(modal);
+            return Task.Run(() => { var result = EditorPlatformHelper.FileSaveDialog(); modal.Open = false; return result; });
         }
 
         internal void DestructiveDialog(Action action, bool destructiveIf = true)

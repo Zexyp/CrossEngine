@@ -16,13 +16,13 @@ public interface IMaterial
     void Update(ShaderProgram shader);
 }
 
-public class Material : IMaterial
+public class DynamicMaterial : IMaterial
 {
     public WeakReference<ShaderProgram> Shader { get; set; }
     public Dictionary<string, object> Parameters = new Dictionary<string, object>();
     public Dictionary<string, WeakReference<Texture>> Samplers = new Dictionary<string, WeakReference<Texture>>();
 
-    public Material(WeakReference<ShaderProgram> shader = null)
+    public DynamicMaterial(WeakReference<ShaderProgram> shader = null)
     {
         Shader = shader;
     }

@@ -19,6 +19,7 @@ using CrossEngine.Utils;
 using System.Numerics;
 using CrossEngine.Display;
 using CrossEngine.Scenes;
+using CrossEngine.Assets;
 
 namespace CrossEngineEditor
 {
@@ -45,7 +46,7 @@ namespace CrossEngineEditor
             // is not nice but
             Manager.Register(new ImGuiService("res/fonts/JetBrainsMono[wght].ttf"));
             Manager.Register(new SceneService());
-            //Manager.Register(new AssetService());
+            Manager.Register(new AssetService());
             Manager.Register(new OverlayService(mo = new MetricsOverlay()));
 
             // yippee

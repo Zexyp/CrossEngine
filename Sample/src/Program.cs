@@ -85,7 +85,7 @@ namespace Sample
 #endif
         }
 
-        class HelloOverlay : Overlay
+        class HelloOverlay : IOverlay
         {
             protected override void Content()
             {
@@ -129,7 +129,7 @@ namespace Sample
             }
         }
 
-        class DebugOverlay : Overlay
+        class DebugOverlay : IOverlay
         {
             float scale = .75f;
             protected override void Content()

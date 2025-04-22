@@ -25,6 +25,6 @@ class PreferencesModal : EditorModal
             IniFile.Dump(EditorApplication.Service.Preferences, File.Create(EditorService.PreferencesPath));
         ImGui.SameLine();
         if (ImGui.Button("Close"))
-            ImGui.CloseCurrentPopup();
+            End();
     }
 }

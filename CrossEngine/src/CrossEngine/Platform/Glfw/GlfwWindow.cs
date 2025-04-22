@@ -233,7 +233,9 @@ namespace CrossEngine.Platform.Glfw
             switch (api)
             {
                 case GraphicsApi.OpenGL: return Graphics = new OpenGL.GLContext(_nativeHandle);
+#if WINDOWS
                 case GraphicsApi.GDI: return Graphics = new Windows.GdiContext(Process.GetCurrentProcess().MainWindowHandle);
+#endif
                 default: throw new PlatformNotSupportedException();
             }
         }

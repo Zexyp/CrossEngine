@@ -14,7 +14,7 @@ namespace CrossEngine.Rendering
     public class LineRenderer
     {
         #region Shader Sources
-#if !GDI
+#if OPENGL
         const string VertexShaderSource =
 #if !OPENGL_ES
 "#version 330 core" +
@@ -57,20 +57,21 @@ void main()
 {
    oColor = vColor;
 }";
-#else
+#elif GDI
         const string VertexShaderSource =
-@"// vertex
+@"
 Matrix4x4 uViewProjection = (Matrix4x4)Uniforms[""uViewProjection""];
-Vector3 aPosition = (Vector3)Attributes[0];
-Vector4 aColor = (Vector4)Attributes[1];
+Vector3 aPosition = (Vector3)AttributesIn[0];
+Vector4 aColor = (Vector4)AttributesIn[1];
+
 Out[""vColor""] = aColor;
 
-Position = Vector4.Transform(new Vector4(aPosition, 1), uViewProjection);
+gdi_Position = Vector4.Transform(new Vector4(aPosition, 1), uViewProjection);
 ";
 
         const string FragmentShaderSource =
-@"// fragment
-Color = (Vector4)In[""vColor""];
+@"
+gdi_Color = (Vector4)In[""vColor""];
 ";
 #endif
         #endregion

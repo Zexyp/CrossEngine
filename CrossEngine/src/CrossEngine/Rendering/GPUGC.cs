@@ -21,12 +21,14 @@ namespace CrossEngine.Debugging
 
         internal static void Register(IDisposable obj)
         {
+            Log.Trace($"registering '{obj.GetType().Name}'");
             lock (_objs)
                 _objs.Add(obj, new() { Time = DateTime.Now, Trace = new StackTrace() });
         }
 
         internal static void Unregister(IDisposable obj)
         {
+            Log.Trace($"unregistering '{obj.GetType().Name}'");
             lock (_objs)
                 _objs.Remove(obj);
         }

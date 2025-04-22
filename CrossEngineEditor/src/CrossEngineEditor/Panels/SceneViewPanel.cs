@@ -61,7 +61,10 @@ namespace CrossEngineEditor.Panels
             }
 
             if (Scene?.Initialized != true || Framebuffer == null)
+            {
+                ImGui.Text("No scene");
                 return;
+            }
 
             // needs to be set back so SceneManager can render only from given scene data
             // as of latest rewrite this is not valid

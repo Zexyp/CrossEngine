@@ -51,7 +51,7 @@ namespace CrossEngine.Rendering.Renderables
             if (data.Mesh is IIndexedMesh)
                 GraphicsContext.Current.Api.DrawIndexed(data.Mesh.VA);
             else
-                GraphicsContext.Current.Api.DrawArray(data.Mesh.VA, (uint)data.Mesh.Vertices.Count);
+                GraphicsContext.Current.Api.DrawArray(data.Mesh.VA, (uint)data.Mesh.Vertices.Length);
         }
     }
 }

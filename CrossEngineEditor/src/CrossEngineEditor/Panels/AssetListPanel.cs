@@ -51,21 +51,27 @@ namespace CrossEngineEditor.Panels
                     {
                         void LoadAssets()
                         {
-                            var filepath = EditorPlatformHelper.FileOpenDialog();
-                            if (filepath != null)
+                            EditorApplication.Service.DialogFileOpen().ContinueWith(t =>
                             {
-                                var task = AssetManager.ReadFile(filepath);
-                                Context.Assets = task.Result;
-                            }
+                                var filepath = t.Result;
+                                if (filepath != null)
+                                {
+                                    var task = AssetManager.ReadFile(filepath);
+                                    Context.Assets = task.Result;
+                                }
+                            });
                         }
                         EditorApplication.Service.DestructiveDialog(LoadAssets, Context.Assets != null);
                     }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Save As...", Context.Assets != null))
                     {
-                        var filepath = EditorPlatformHelper.FileSaveDialog();
-                        if (filepath != null)
-                            AssetManager.WriteFile(Context.Assets, filepath);
+                        EditorApplication.Service.DialogFileSave().ContinueWith(t =>
+                        {
+                            var filepath = t.Result;
+                            if (filepath != null)
+                                AssetManager.WriteFile(Context.Assets, filepath);
+                        });
                     }
                     if (ImGui.MenuItem("Dump", Context.Assets != null))
                     {

@@ -35,8 +35,9 @@ namespace CrossEngine.Rendering
 
     public class Renderer2D
 	{
-        #region Shader Sources
-        static readonly string VertexShaderSource =
+		#region Shader Sources
+#if OPENGL
+		static readonly string VertexShaderSource =
 #if !OPENGL_ES
 			"#version 330 core\n" +
 #else
@@ -147,9 +148,47 @@ namespace CrossEngine.Rendering
             "    oColor = texColor;\n" +
             "    oEntityIDColor = vEntityID;\n" +
 			"}\n";
-#endregion
+#elif GDI
+		static readonly string VertexShaderSource =
+@"
+var aPosition = (Vector3)AttributesIn[0];
+var aColor = (Vector4)AttributesIn[1];
+var aTexCoord = (Vector2)AttributesIn[2];
+var aTexIndex = (float)AttributesIn[3];
+var aEntityID = (int)AttributesIn[4];
 
-		public struct PrimitiveVertex
+var uViewProjection = (Matrix4x4)Uniforms[""uViewProjection""];
+
+Out[""vColor""] = aColor;
+Out[""vTexCoord""] = aTexCoord;
+Out[""vTexIndex""] = aTexIndex;
+Out[""vEntityID""] = aEntityID;
+
+gdi_Position = Vector4.Transform(new Vector4(aPosition, 1), uViewProjection);
+";
+		static readonly string FragmentShaderSource =
+@"
+var vColor = (Vector4)In[""vColor""];
+var vTexCoord = (Vector2)In[""vTexCoord""];
+var vTexIndex = (float)In[""vTexIndex""];
+var vEntityID = (int)In[""vEntityID""];
+
+var uTextures = (int[])Uniforms[""uTextures""];
+
+Vector4 texColor = vColor;
+
+texColor *= Sample(uTextures[(int)vTexIndex], vTexCoord);
+
+AttributesOut[0] = texColor;
+AttributesOut[1] = vEntityID;
+";
+		static readonly string DiscardingFragmentShaderSource = "";
+#else
+#error
+#endif
+        #endregion
+
+        public struct PrimitiveVertex
 		{
 			public Vector3 position;
 			public Vector4 color;

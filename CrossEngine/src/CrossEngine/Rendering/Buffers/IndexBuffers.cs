@@ -7,6 +7,9 @@ using CrossEngine.Utils;
 using CrossEngine.Rendering.Shaders;
 
 using CrossEngine.Platform.OpenGL;
+#if WINDOWS
+using CrossEngine.Platform.Windows;
+#endif
 
 namespace CrossEngine.Rendering.Buffers
 {
@@ -58,7 +61,7 @@ namespace CrossEngine.Rendering.Buffers
         public abstract void Bind();
         public abstract void Unbind();
 
-        public abstract unsafe void SetData(void* data, uint size, uint offset = 0);
+        public abstract unsafe void SetData(void* data, uint count, uint offset = 0);
 
         public static unsafe WeakReference<IndexBuffer> Create(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
@@ -72,6 +75,9 @@ namespace CrossEngine.Rendering.Buffers
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: wr.SetTarget(new GLIndexBuffer(indices, count, dataType, bufferUsage)); return wr;
+#if WINDOWS
+                case GraphicsApi.GDI: wr.SetTarget(new GdiIndexBuffer(indices, count, dataType)); return wr;
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

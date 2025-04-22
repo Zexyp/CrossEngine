@@ -10,7 +10,9 @@ using CrossEngine.Logging;
 using CrossEngine.Profiling;
 
 using CrossEngine.Platform.OpenGL;
+#if WINDOWS
 using CrossEngine.Platform.Windows;
+#endif
 
 namespace CrossEngine.Rendering.Shaders
 {
@@ -96,7 +98,9 @@ namespace CrossEngine.Rendering.Shaders
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: wr.SetTarget(new GLShader(source, type)); return wr;
+#if WINDOWS
                 case GraphicsApi.GDI: wr.SetTarget(new GdiShader(source, type)); return wr;
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

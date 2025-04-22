@@ -61,8 +61,12 @@
       
       <!-- packages -->
       <ItemGroup>
+        <!--
         <Compile Include="vendor\ShellFileDialogs\ShellFileDialogs\**" />
         <Compile Remove="vendor\ShellFileDialogs\ShellFileDialogs\ShellFileDialogs.csproj" />
+        -->
+        
+        <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
       </ItemGroup>
 
     </When>

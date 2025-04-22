@@ -65,10 +65,12 @@ namespace CrossEngine.Platform
 
         internal static GraphicsApi GetGraphicsApi()
         {
-#if WINDOWS || LINUX
-            return GraphicsApi.OpenGL;
-#elif WASM
+#if OPENGL_ES
             return GraphicsApi.OpenGLES;
+#elif OPENGL
+            return GraphicsApi.OpenGL;
+#elif GDI
+            return GraphicsApi.GDI;
 #else
 #error
 #endif

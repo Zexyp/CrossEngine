@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
 using CrossEngine.Logging;
 using CrossEngineEditor.Modals;
+using CrossEngineEditor.Utils.UI;
 using ImGuiNET;
 
 namespace CrossEngineEditor.Panels;
@@ -13,14 +16,14 @@ public class PanelManager
     
     readonly List<EditorPanel> _panels = new List<EditorPanel>();
     readonly List<EditorPanel> _registeredPanels = new List<EditorPanel>();
-    readonly List<EditorModal> _modals = new List<EditorModal>();
-    readonly Logger _log = new Logger("panels");
+    readonly LinkedList<EditorModal> _modals = new LinkedList<EditorModal>();
+    //readonly List<Popup> _popups = new List<Popup>();
+    readonly Logger _log = new Logger("panel-manager");
     private IEditorContext _context;
     private bool _initialized = false;
 
     public PanelManager()
     {
-        Registered = _panels.AsReadOnly();
         Registered = _panels.AsReadOnly();
     }
 
@@ -47,6 +50,8 @@ public class PanelManager
 
     public void RegisterPanel(EditorPanel panel)
     {
+        Debug.Assert(!_registeredPanels.Contains(panel));
+
         if (_registeredPanels.Contains(panel)) throw new InvalidOperationException();
 
         _registeredPanels.Add(panel);
@@ -58,6 +63,8 @@ public class PanelManager
 
     public void UnregisterPanel(EditorPanel panel)
     {
+        Debug.Assert(_registeredPanels.Contains(panel));
+
         if (!_registeredPanels.Contains(panel)) throw new InvalidOperationException();
 
         _registeredPanels.Remove(panel);
@@ -69,6 +76,8 @@ public class PanelManager
 
     public void PushPanel(EditorPanel panel)
     {
+        Debug.Assert(!_panels.Contains(panel));
+
         _panels.Add(panel);
         panel.Context = _context;
 
@@ -80,6 +89,8 @@ public class PanelManager
 
     public void RemovePanel(EditorPanel panel)
     {
+        Debug.Assert(_panels.Contains(panel));
+
         if (_initialized)
             DetachPanel(panel);
         
@@ -93,11 +104,21 @@ public class PanelManager
     {
         if (!_initialized)
             throw new InvalidOperationException("pls init");
-        
-        _modals.Add(modal);
+
+        _modals.AddLast(modal);
         
         _log.Trace($"pushed modal '{modal.GetType().FullName}'");
     }
+    
+    //public void PushPopup(Popup popup)
+    //{
+    //    if (!_initialized)
+    //        throw new InvalidOperationException("pls init");
+    //    
+    //    _popups.Add(popup);
+    //    
+    //    _log.Trace($"pushed popup '{popup.GetType().FullName}'");
+    //}
 
     //public T GetPanel<T>() where T : EditorPanel
     //{
@@ -118,6 +139,7 @@ public class PanelManager
     {
         DrawPanels();
         DrawModals();
+        //DrawPopups();
     }
     
     private void DrawPanels()
@@ -129,6 +151,11 @@ public class PanelManager
             try
             {
                 p.Draw();
+                if (p.Open == false && !_registeredPanels.Contains(p))
+                {
+                    RemovePanel(p);
+                    i--;
+                }
             }
             catch (Exception e)
             {
@@ -140,17 +167,18 @@ public class PanelManager
     
     private void DrawModals()
     {
-        for (int i = 0; i < _modals.Count; i++)
+        void DrawModal(LinkedListNode<EditorModal> lln)
         {
-            var m = _modals[i];
+            if (lln == null) return;
 
+            var m = lln.Value;
             try
             {
-                if (!m.Draw())
+                m.Draw(() => DrawModal(lln.Next));
+                if (m.Open == false)
                 {
                     _log.Trace($"modal closed '{m.GetType().FullName}'");
                     _modals.Remove(m);
-                    i--;
                 }
             }
             catch (Exception e)
@@ -159,6 +187,8 @@ public class PanelManager
                 throw;
             }
         }
+
+        DrawModal(_modals.First);
     }
 
     private void AttachPanel(EditorPanel panel)

@@ -1,4 +1,5 @@
-﻿using CrossEngine.Rendering.Buffers;
+﻿using CrossEngine.Debugging;
+using CrossEngine.Rendering.Buffers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,12 @@ namespace CrossEngine.Platform.Windows
     {
         internal List<WeakReference<VertexBuffer>> vertexBuffers = new List<WeakReference<VertexBuffer>>();
         internal WeakReference<IndexBuffer> indexBuffer;
+
+        public GdiVertexArray()
+        {
+            GC.KeepAlive(this);
+            GPUGC.Register(this);
+        }
 
         public override void AddVertexBuffer(WeakReference<VertexBuffer> vertexBuffer)
         {

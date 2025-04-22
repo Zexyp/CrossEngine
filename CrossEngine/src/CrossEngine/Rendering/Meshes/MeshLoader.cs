@@ -9,6 +9,9 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Rendering.Materials;
+using CrossEngine.Rendering.Shaders;
+using CrossEngine.Rendering.Textures;
 
 namespace CrossEngine.Loaders
 {
@@ -30,6 +33,11 @@ namespace CrossEngine.Loaders
                 Normal = normal;
             }
         }
+
+        //class WavefrontMaterial : IMaterial
+        //{
+        //    
+        //}
 
         static readonly NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = "." };
 
@@ -101,16 +109,16 @@ namespace CrossEngine.Loaders
             }
 
             Mesh<WavefrontVertex> mesh = new(vertices.ToArray());
-            ServiceRequest.Invoke(mesh.Setup);
+            ServiceRequest.Invoke(mesh.SetupGpuResources);
             return mesh;
-        }
-
-        public static void Free(IMesh mesh)
-        {
-            ServiceRequest.Invoke(mesh.Dispose);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float FloatParse(in string s) => float.Parse(s, nfi);
+
+        public static void Free(IMesh mesh)
+        {
+            ServiceRequest.Invoke(mesh.FreeGpuResources);
+        }
     }
 }

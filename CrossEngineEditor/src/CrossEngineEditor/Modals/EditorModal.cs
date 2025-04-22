@@ -30,10 +30,8 @@ namespace CrossEngineEditor.Modals
             this.ModalName = default;
         }
 
-        public bool Draw()
+        public void Draw(Action innerDraw)
         {
-            ImGui.PushID(this.GetHashCode());
-            
             ImGui.OpenPopup(ModalName);
 
             PrepareModal();
@@ -46,6 +44,8 @@ namespace CrossEngineEditor.Modals
             {
                 DrawModalContent();
 
+                innerDraw?.Invoke();
+
                 ImGui.EndPopup();
             }
 
@@ -54,11 +54,9 @@ namespace CrossEngineEditor.Modals
                 Default();
             }
 
-            bool resultOpen = ImGui.IsPopupOpen(ModalName);
-
-            ImGui.PopID();
-
-            return resultOpen;
+            //bool resultOpen = ImGui.IsPopupOpen(ModalName);
+            //
+            //return resultOpen;
         }
 
         protected virtual void Default() { }
@@ -66,5 +64,11 @@ namespace CrossEngineEditor.Modals
         protected virtual void EndPrepareModal() { }
 
         abstract protected void DrawModalContent();
+        
+        protected void End()
+        {
+            ImGui.CloseCurrentPopup();
+            Open = false;
+        }
     }
 }

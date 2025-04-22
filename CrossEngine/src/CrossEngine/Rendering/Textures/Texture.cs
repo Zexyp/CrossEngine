@@ -5,6 +5,9 @@ using System.Diagnostics;
 using CrossEngine.Utils;
 
 using CrossEngine.Platform.OpenGL;
+#if WINDOWS
+using CrossEngine.Platform.Windows;
+#endif
 
 namespace CrossEngine.Rendering.Textures
 {
@@ -66,6 +69,9 @@ namespace CrossEngine.Rendering.Textures
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: wr.SetTarget(new GLTexture(width, height, internalFormat)); return wr;
+#if WINDOWS
+                case GraphicsApi.GDI: wr.SetTarget(new GdiTexture(width, height, internalFormat)); return wr;
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

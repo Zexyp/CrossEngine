@@ -6,7 +6,9 @@ using CrossEngine.Utils;
 using CrossEngine.Logging;
 
 using CrossEngine.Platform.OpenGL;
+#if WINDOWS
 using CrossEngine.Platform.Windows;
+#endif
 
 // todo: manual dispose object inheritance
 namespace CrossEngine.Rendering
@@ -60,7 +62,9 @@ namespace CrossEngine.Rendering
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: return new GLRendererApi();
+#if WINDOWS
                 case GraphicsApi.GDI: return new GdiRendererApi();
+#endif
             }
 
             Debug.Assert(false, $"Unknown {nameof(GraphicsApi)} value");

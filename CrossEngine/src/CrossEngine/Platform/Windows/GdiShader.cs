@@ -1,4 +1,5 @@
 ﻿using CrossEngine.Assemblies;
+using CrossEngine.Debugging;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Shaders;
 using Microsoft.CodeAnalysis.CSharp;
@@ -20,28 +21,37 @@ namespace CrossEngine.Platform.Windows
     class GdiShader : Shader
     {
         internal Script script;
-        internal ShaderType type;
 
         public GdiShader(string source, ShaderType type) : base(type)
         {
-            this.type = type;
+            GC.KeepAlive(this);
+            GPUGC.Register(this);
 
+            if (CheckDiagnose(source))
+                return;
+            
+            // crazy 💀
+            var options = ScriptOptions.Default.WithReferences(typeof(Color).Assembly, typeof(Matrix4x4).Assembly).WithImports("System.Drawing", "System.Numerics");
+            script = CSharpScript.Create(source, options, typeof(ShaderVariables));
+        }
+
+        private bool CheckDiagnose(string source)
+        {
             var tree = CSharpSyntaxTree.ParseText(source);
             var diagnostics = tree.GetDiagnostics();
             if (diagnostics.Any())
             {
-                var log = $"shader syntax diagnostic ({type}):";
+                var log = $"shader syntax diagnostic ({Type}):";
                 foreach (var item in diagnostics)
                 {
                     log += "\n" + item.ToString();
                 }
                 GdiRendererApi.Log.Warn(log);
-                return;
+                
+                return true;
             }
 
-            // crazy 💀
-            var options = ScriptOptions.Default.WithReferences(typeof(Color).Assembly, typeof(Matrix4x4).Assembly).WithImports("System.Drawing", "System.Numerics");
-            script = CSharpScript.Create(source, options, typeof(GdiShaderProgram.ShaderVariables));
+            return false;
         }
     }
 }

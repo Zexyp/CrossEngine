@@ -29,31 +29,31 @@
 
   <!-- defines and optimization -->
   <PropertyGroup Condition="'$(Configuration)'=='Windows Debug'">
-    <DefineConstants>DEBUG;WINDOWS</DefineConstants>
+    <DefineConstants>DEBUG;WINDOWS;OPENGL</DefineConstants>
     <Optimize>False</Optimize>
     <OSPlatform>Windows</OSPlatform>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Windows Profiling'">
-    <DefineConstants>DEBUG;WINDOWS;PROFILING</DefineConstants>
+    <DefineConstants>DEBUG;WINDOWS;PROFILING;OPENGL</DefineConstants>
     <Optimize>False</Optimize>
     <OSPlatform>Windows</OSPlatform>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Linux Debug'">
-    <DefineConstants>DEBUG;LINUX</DefineConstants>
+    <DefineConstants>DEBUG;LINUX;OPENGL</DefineConstants>
     <Optimize>False</Optimize>
     <OSPlatform>Linux</OSPlatform>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Linux Profiling'">
-    <DefineConstants>DEBUG;LINUX;PROFILING</DefineConstants>
+    <DefineConstants>DEBUG;LINUX;PROFILING;OPENGL</DefineConstants>
     <Optimize>False</Optimize>
     <OSPlatform>Linux</OSPlatform>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Web'">
-    <DefineConstants>DEBUG;WASM;OPENGL_ES</DefineConstants>
+    <DefineConstants>DEBUG;WASM;OPENGL;OPENGL_ES</DefineConstants>
     <OSPlatform>Web</OSPlatform>
   </PropertyGroup>
 
