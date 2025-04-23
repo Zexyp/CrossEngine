@@ -74,12 +74,12 @@ namespace CrossEngine.Ecs
             _indexes.Remove(type);
         }
 
-        public IReadOnlyList<Component> GetIndex(Type type)
+        public IList<Component> GetIndex(Type type)
         {
             return _indexes[type];
         }
 
-        public IReadOnlyList<Component> GetArray(Type type)
+        public IList<Component> GetArray(Type type)
         {
             if (!_simpleArray.ContainsKey(type))
                 return null;

@@ -213,6 +213,7 @@ namespace CrossEngine.Platform.OpenGL
                 case GLEnum.Bool: return ShaderDataType.Bool;
 
                 case GLEnum.Sampler2D: return ShaderDataType.Sampler2D;
+                case GLEnum.SamplerCube: return ShaderDataType.SamplerCube;
             }
 
             Debug.Assert(false, $"Invalid type or unknown {nameof(ShaderDataType)} value");

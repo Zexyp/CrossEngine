@@ -152,6 +152,9 @@ void main() {{
                             break;
                     }
 
+                    if (currentBuilder == null && string.IsNullOrWhiteSpace(line)) // if file starts with whitespace
+                        continue;
+                    
                     currentBuilder.AppendLine(line);
 
                     if (appendLineNumber)

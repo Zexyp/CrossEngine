@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-
+using System.Linq;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
@@ -74,6 +74,31 @@ namespace CrossEngine.Loaders
             ImageResult result = ImageResult.FromStream(filedata);
             Profiler.EndScope();
             return InternalLoad(result, desiredFormat);
+        }
+
+        // px, nx, py, ny, pz, nz
+        public static unsafe WeakReference<Texture> LoadCubemap(Stream[] filedata, ColorFormat? desiredFormat = null)
+        {
+            Debug.Assert(filedata.Length == 6);
+            var px = ImageResult.FromStream(filedata[0]);
+            var nx = ImageResult.FromStream(filedata[1]);
+            var py = ImageResult.FromStream(filedata[2]);
+            var ny = ImageResult.FromStream(filedata[3]);
+            var pz = ImageResult.FromStream(filedata[4]);
+            var nz = ImageResult.FromStream(filedata[5]);
+            var refe = new WeakReference<Texture>(null);
+            var firstWidth = px.Width;
+            var firstHeigh = px.Height;
+            var arrAll = new[] { px, nx, py, ny, pz, nz };
+            Debug.Assert(arrAll.All(el => el.Width == firstWidth && el.Height == firstHeigh));
+            
+            ServiceRequest.Invoke(() =>
+            {
+                fixed (void* pxp = px.Data, nxp = nx.Data, pyp = py.Data, nyp = ny.Data, pzp = pz.Data, nzp = nz.Data)
+                    refe.SetTarget(GLTexture.CreateCubemap((uint)firstWidth, (uint)firstHeigh, new[] { pxp, nxp, pyp, nyp, pzp, nzp }));
+            });
+
+            return refe;
         }
 
         public static void Free(WeakReference<Texture> texture)

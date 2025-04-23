@@ -24,16 +24,5 @@ namespace CrossEngineEditor.Panels
         {
             WindowName = "Game";
         }
-
-        protected override void AugmentSceneRender()
-        {
-            if (Scene?.World.GetSystem<RenderSystem>().PrimaryCamera != null)
-                return;
-            
-            LineRenderer.BeginScene(Matrix4x4.Identity);
-            LineRenderer.DrawLine(new Vector3(-1, -1, 0), new Vector3(1, 1, 0), VecColor.Red);
-            LineRenderer.DrawLine(new Vector3(-1, 1, 0), new Vector3(1, -1, 0), VecColor.Red);
-            LineRenderer.EndScene();
-        }
     }
 }

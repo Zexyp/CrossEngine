@@ -14,12 +14,6 @@ using static CrossEngine.Display.WindowService;
 
 namespace CrossEngine.Rendering.Renderables
 {
-    interface IMeshRenderData : IObjectRenderData
-    {
-        IMesh Mesh { get; }
-        IMaterial Material { get; }
-    }
-
     class MeshRenderable : Renderable<IMeshRenderData>
     {
         ICamera _camera;

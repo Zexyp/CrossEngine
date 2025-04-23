@@ -20,11 +20,10 @@ namespace CrossEngine.Components
         [Serialize]
         [EditorAsset]
         public MaterialAsset Material;
-        [EditorNullable]
-        [Serialize]
-        [EditorAsset]
-        public MeshAsset Mesh;
 
+        [EditorNullable] [Serialize] [EditorAsset]
+        public MeshAsset Mesh;
+        
         IMesh IMeshRenderData.Mesh => Mesh?.Mesh;
         IMaterial IMeshRenderData.Material => Material?.Material;
     }

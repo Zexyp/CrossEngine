@@ -28,6 +28,7 @@ using CrossEngineEditor.Modals;
 using CrossEngineEditor.Platform;
 using System.IO;
 using CrossEngine.Events;
+using System.Diagnostics.Contracts;
 
 namespace CrossEngineEditor
 {
@@ -39,7 +40,7 @@ namespace CrossEngineEditor
         internal const string PreferencesPath = "preferences.ini";
         internal Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
         
-        readonly EditorContext Context = new EditorContext();
+        public readonly EditorContext Context = new EditorContext();
         private Window window = null;
         
         public override void OnStart()

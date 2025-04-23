@@ -11,7 +11,7 @@ namespace CrossEngine.Rendering.Culling
     [Obsolete("not implemented")]
     public interface IVolume
     {
-        public virtual Halfspace IsInFrustum(ref Frustum frustum) => throw new NotImplementedException();
+        public Halfspace IsInFrustum(ref Frustum frustum);
     }
 
     public enum Halfspace
@@ -59,6 +59,8 @@ namespace CrossEngine.Rendering.Culling
                 res.Z += z;
             return res;
         }
+
+        public Halfspace IsInFrustum(ref Frustum frustum) => frustum.IsAABoxIn(this);
     }
 
     public struct Sphere : IVolume
@@ -71,6 +73,8 @@ namespace CrossEngine.Rendering.Culling
             this.center = center;
             this.radius = radius;
         }
+        
+        public Halfspace IsInFrustum(ref Frustum frustum) => frustum.IsSphereIn(center, radius);
     }
 
     // should be called Frustrum becase it's frustrating

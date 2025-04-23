@@ -14,5 +14,7 @@ namespace CrossEngineEditor.Viewport
     {
         protected internal IEditorContext Context { get; internal set; }
         protected internal ICamera EditorCamera { get; internal set; }
+        //protected internal virtual void Init() { }
+        //protected internal virtual void Destroy() { }
     }
 }

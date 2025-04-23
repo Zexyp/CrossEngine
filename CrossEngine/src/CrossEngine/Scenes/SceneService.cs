@@ -20,6 +20,7 @@ namespace CrossEngine.Scenes
     public class SceneService : Service, IUpdatedService, IScheduledService
     {
         readonly List<Scene> _scenes = new();
+        readonly List<Scene> _drawScenes = new();
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
 
@@ -36,10 +37,12 @@ namespace CrossEngine.Scenes
         public override void OnAttach()
         {
             Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
+            Manager.GetService<RenderService>().MainSurface.Update += OnRender;
         }
 
         public override void OnDetach()
         {
+            Manager.GetService<RenderService>().MainSurface.Update -= OnRender;
             Manager.GetService<TimeService>().FixedUpdate -= OnFixedUpdate;
         }
 
@@ -71,11 +74,15 @@ namespace CrossEngine.Scenes
             _scenes.Add(scene);
             scene.Init();
 
+            PrepareRendering(scene);
+            
             Log.Info("scene pushed");
         }
 
         public void Remove(Scene scene)
         {
+            FinishRendering(scene);
+            
             DetachRendering(scene);
 
             scene.Deinit();
@@ -129,22 +136,53 @@ namespace CrossEngine.Scenes
         public Task Execute(Action action) => _scheduler.Schedule(action);
         public TaskScheduler GetScheduler() => _scheduler;
 
+        public void OnRender(ISurface surface)
+        {
+            for (int i = 0; i < _drawScenes.Count; i++)
+            {
+                SceneRenderer.Render(_drawScenes[i], surface);
+            }
+        }
+        
         private void AttachRendering(Scene scene)
         {
             Manager.GetService<RenderService>().Execute(() =>
             {
                 var rs = scene.World.GetSystem<RenderSystem>();
-                var sur = Manager.GetService<RenderService>().MainSurface;
-                rs.SetSurface(sur);
-            });
+                var sur = (ISurface)Manager.GetService<RenderService>().MainSurface;
+                
+                sur.Resize += rs.OnSurfaceResize;
+                rs.OnSurfaceResize(sur, sur.Width, sur.Height);
+            }).ContinueWith(t => _drawScenes.Add(scene));
         }
 
         private void DetachRendering(Scene scene)
         {
+            _drawScenes.Remove(scene);
             Manager.GetService<RenderService>().Execute(() =>
             {
                 var rs = scene.World.GetSystem<RenderSystem>();
-                rs.SetSurface(null);
+                var sur = Manager.GetService<RenderService>().MainSurface;
+                
+                sur.Resize -= rs.OnSurfaceResize;
+            });
+        }
+
+        private void PrepareRendering(Scene scene)
+        {
+            Manager.GetService<RenderService>().Execute(() =>
+            {
+                var rs = scene.World.GetSystem<RenderSystem>();
+                rs.GraphicsInit();
+            });
+        }
+        
+        private void FinishRendering(Scene scene)
+        {
+            Manager.GetService<RenderService>().Execute(() =>
+            {
+                var rs = scene.World.GetSystem<RenderSystem>();
+                rs.GraphicsDestroy();
             });
         }
     }

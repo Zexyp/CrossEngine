@@ -7,19 +7,68 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Utils
 {
-    internal class CastWrapCollection<T> : ICollection<T>
+    internal class CastWrapCollection<T> : ICollection<T>, IList<T>
     {
         private ICollection _underlyingCollection;
+        private IEnumerable _underlyingEnumerable;
+        private IList _underlyingList;
 
+        public CastWrapCollection(IEnumerable enumerable)
+        {
+            _underlyingEnumerable = enumerable;
+        }
+        
         public CastWrapCollection(ICollection collection)
         {
             _underlyingCollection = collection;
+            _underlyingEnumerable = _underlyingCollection;
+        }
+        
+        public CastWrapCollection(IList list)
+        {
+            _underlyingList = list;
+            _underlyingCollection = _underlyingList;
+            _underlyingEnumerable = _underlyingCollection;
         }
 
-        public int Count => _underlyingCollection.Count;
+        public int Count
+        {
+            get
+            {
+                if (_underlyingCollection == null) throw new InvalidOperationException();
+                
+                return _underlyingCollection.Count;
+            }
+        }
 
         public bool IsReadOnly => true;
+        
+        public T this[int index]
+        {
+            get
+            {
+                if (_underlyingList == null) throw new InvalidOperationException();
 
+                return (T)_underlyingList[index];
+            }
+            set
+            {
+                if (_underlyingList == null) throw new InvalidOperationException();
+
+                _underlyingList[index] = value;
+            }
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            foreach (var item in _underlyingEnumerable)
+            {
+                yield return (T)item;
+            }
+        }
+        
+        IEnumerator IEnumerable.GetEnumerator() => _underlyingEnumerable.GetEnumerator();
+        
         public void Add(T item)
         {
             throw new NotImplementedException();
@@ -40,19 +89,24 @@ namespace CrossEngine.Utils
             throw new NotImplementedException();
         }
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            foreach (var item in _underlyingCollection)
-            {
-                yield return (T)item;
-            }
-        }
-
         public bool Remove(T item)
         {
             throw new NotImplementedException();
         }
+        
+        public int IndexOf(T item)
+        {
+            throw new NotImplementedException();
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => _underlyingCollection.GetEnumerator();
+        public void Insert(int index, T item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemoveAt(int index)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

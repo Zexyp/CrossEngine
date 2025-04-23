@@ -36,6 +36,7 @@ namespace CrossEngine.Rendering.Shaders
         Bool,
 
         Sampler2D,
+        SamplerCube,
     }
 
     public enum ShaderType

@@ -17,6 +17,7 @@ using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL
 {
+    // fixme: profiling
     class GLRendererApi : RendererApi
     {
         public override unsafe void Init()

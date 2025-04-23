@@ -103,4 +103,19 @@ namespace CrossEngineEditor.Viewport
         {
         }
     }
+
+    class IconOverlay : IViewportOverlay
+    {
+        public IEditorContext Context { get; set; }
+        public ICamera EditorCamera { get; set; }
+
+        public void Resize(float width, float height)
+        {
+        }
+
+        public void Draw()
+        {
+            
+        }
+    } 
 }

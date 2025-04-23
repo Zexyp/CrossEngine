@@ -12,6 +12,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Rendering;
 
 namespace CrossEngineEditor.Panels
 {
@@ -33,6 +34,7 @@ namespace CrossEngineEditor.Panels
         private readonly List<(IViewportOverlay Overlay, bool Draw)> _overlays = new();
         private Vector2 _lookRot = Vector2.Zero;
         private bool IsTouchpad => EditorApplication.Service.Preferences["navigation"].ReadBoolean("touchpad");
+        private ViewportPass _viewportPass;
 
         public ViewportPanel(RenderService rs) : base(rs)
         {
@@ -43,13 +45,19 @@ namespace CrossEngineEditor.Panels
             AddOverlay(new CameraOverlay());
             AddOverlay(new SelectedOverlay());
             AddOverlay(new NameOverlay());
+            
+            _viewportPass = new ViewportPass() { Overlays = _overlays };
         }
 
         protected override void DrawWindowContent()
         {
             DrawMenuBar();
 
+            if (Scene?.Initialized == true) AttachPass(Scene);
+            
             base.DrawWindowContent();
+
+            if (Scene?.Initialized == true) DetachPass(Scene);
 
             if (Scene?.Initialized != true || Framebuffer == null)
                 return;
@@ -93,7 +101,8 @@ namespace CrossEngineEditor.Panels
                     PerspectiveTouchpadControl(io);
             }
         }
-        
+
+        #region Controls
         private void OrthoControl(in ImGuiIOPtr io)
         {
             if (ImGui.IsItemHovered() && Focused)
@@ -196,6 +205,8 @@ namespace CrossEngineEditor.Panels
                 }
             }
         }
+        #endregion
+
 
         private void UpdateView()
         {
@@ -236,15 +247,9 @@ namespace CrossEngineEditor.Panels
                 _overlays[i].Overlay.Context = Context;
             }
         }
-
-        protected override void AugmentSceneRender()
-        {
-            for (int i = 0; i < _overlays.Count; i++)
-            {
-                if (_overlays[i].Draw)
-                    _overlays[i].Overlay.Draw();
-            }
-        }
+        
+        private void AttachPass(Scene scene) => scene?.World.GetSystem<RenderSystem>().Pipeline.PushBack(_viewportPass);
+        private void DetachPass(Scene scene) => scene?.World.GetSystem<RenderSystem>().Pipeline.Remove(_viewportPass);
 
         private void DrawMenuBar()
         {
@@ -360,6 +365,20 @@ namespace CrossEngineEditor.Panels
             _overlays.RemoveAll(tup => tup.Overlay == overlay);
             overlay.EditorCamera = null;
             overlay.Context = null;
+        }
+
+        private class ViewportPass : Pass
+        {
+            public List<(IViewportOverlay Overlay, bool Draw)> Overlays;
+            
+            public override void Draw()
+            {
+                for (int i = 0; i < Overlays.Count; i++)
+                {
+                    if (Overlays[i].Draw)
+                        Overlays[i].Overlay.Draw();
+                }
+            }
         }
     }
 }

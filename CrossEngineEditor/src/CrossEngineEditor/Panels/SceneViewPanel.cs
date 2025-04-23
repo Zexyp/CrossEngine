@@ -70,19 +70,18 @@ namespace CrossEngineEditor.Panels
             // as of latest rewrite this is not valid
             // wtf is this comment
             var renderSys = Scene.World.GetSystem<RenderSystem>();
-            var lastSceneOutput = renderSys.SetSurface(Surface);
             renderSys.OverrideCamera = DrawCamera;
 
             Framebuffer.GetValue().Bind();
             ((GLFramebuffer)Framebuffer.GetValue()).EnableAllColorAttachments(true);
+            
             Surface.Context.Api.Clear();
             Surface.DoUpdate();
+            
             ((GLFramebuffer)Framebuffer.GetValue()).EnableColorAttachment(1, false);
-            AugmentSceneRender();
             Framebuffer.GetValue().Unbind();
 
             renderSys.OverrideCamera = null;
-            Scene.World.GetSystem<RenderSystem>().SetSurface(lastSceneOutput);
 
             // draw the framebuffer as image
             ImGui.Image(new IntPtr(Framebuffer.GetValue()?.GetColorAttachmentRendererID(0) ?? 0),
@@ -110,6 +109,7 @@ namespace CrossEngineEditor.Panels
             {
                 Framebuffer = CrossEngine.Rendering.Buffers.Framebuffer.Create(ref spec);
                 Surface = new FramebufferSurface(Framebuffer) { Context = rs.MainSurface.Context };
+                Surface.Update += OnSurfaceUpdate;
                 OnCameraResize();
             });
         }
@@ -128,6 +128,9 @@ namespace CrossEngineEditor.Panels
             Surface.DoResize(ViewportSize.X, ViewportSize.Y);
         }
 
-        protected virtual void AugmentSceneRender() { }
+        private void OnSurfaceUpdate(ISurface surface)
+        {
+            SceneRenderer.Render(Scene, surface);
+        }
     }
 }

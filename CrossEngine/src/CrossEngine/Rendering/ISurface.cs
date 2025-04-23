@@ -13,6 +13,8 @@ namespace CrossEngine.Rendering
     {
         public WeakReference<Framebuffer> Buffer { get; }
         public Vector2 Size { get; }
+        public virtual float Width => Size.X;
+        public virtual float Height => Size.Y;
         public GraphicsContext Context { get; }
 
         public event Action<ISurface, float, float> Resize;

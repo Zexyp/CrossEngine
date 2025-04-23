@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-
+using System.Numerics;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 using CrossEngine.Logging;
@@ -74,6 +74,7 @@ namespace CrossEngine.Rendering
         public abstract void Init();
 
         public abstract void SetViewport(uint x, uint y, uint width, uint height);
+        public void SetClearColor(Vector4 col) => SetClearColor(col.X, col.Y, col.Z, col.W);
         public abstract void SetClearColor(float r, float g, float b, float a);
         public abstract void SetPolygonMode(PolygonMode mode);
         public abstract void SetDepthFunc(DepthFunc func);
