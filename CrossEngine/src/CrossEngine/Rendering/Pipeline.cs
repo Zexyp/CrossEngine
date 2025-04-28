@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
+using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering;
@@ -11,6 +13,7 @@ public class Pipeline
 {
     Vector4? _clearColor = VecColor.Gray;
     List<Pass> _passes = new List<Pass>();
+    WeakReference<Framebuffer> Buffer;
 
     public void PushBack(Pass pass) => _passes.Add(pass);
     public void PushFront(Pass pass) => _passes.Insert(0, pass);
@@ -25,23 +28,20 @@ public class Pipeline
             context.Api.Clear();
         }
         
-        Pass last = null;
         for (int i = 0; i < _passes.Count; i++)
         {
             Pass pass = _passes[i];
             
-            Profiler.BeginScope($"processing {pass.GetType().Name}");
+            Profiler.BeginScope($"processing pass {pass.GetType().Name}");
                 
-            if (last?.Depth != pass.Depth) context.Api.SetDepthFunc(pass.Depth);
-            if (last?.Blend != pass.Blend) context.Api.SetBlendFunc(pass.Blend);
-            if (last?.PolyMode != pass.PolyMode) context.Api.SetPolygonMode(pass.PolyMode);
-            if (last?.Cull != pass.Cull) context.Api.SetCullFace(pass.Cull);
+            context.Api.SetDepthFunc(pass.Depth);
+            context.Api.SetBlendFunc(pass.Blend);
+            context.Api.SetPolygonMode(pass.PolyMode);
+            context.Api.SetCullFace(pass.Cull);
 
             pass.Draw();
 
             Profiler.EndScope();
-                
-            last = pass;
         }
     }
 

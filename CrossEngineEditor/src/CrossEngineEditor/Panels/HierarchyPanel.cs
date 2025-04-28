@@ -45,7 +45,7 @@ namespace CrossEngineEditor.Panels
 
             if (Context.Scene == null)
             {
-                ImGui.Text("No scene selected");
+                ImGui.TextDisabled("No scene selected");
                 return;
             }
             

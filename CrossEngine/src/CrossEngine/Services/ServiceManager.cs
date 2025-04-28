@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -95,6 +96,10 @@ namespace CrossEngine.Services
             }
         }
 
-        public void SendEvent(Event e) => Event?.Invoke(e);
+        public void SendEvent(Event e)
+        {
+            Debug.Assert(e != null);
+            Event?.Invoke(e);
+        }
     }
 }

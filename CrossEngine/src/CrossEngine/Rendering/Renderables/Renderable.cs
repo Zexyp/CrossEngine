@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Rendering.Culling;
 using CrossEngine.Rendering.Materials;
 using CrossEngine.Rendering.Meshes;
 using CrossEngine.Rendering.Textures;
@@ -52,8 +53,9 @@ namespace CrossEngine.Rendering.Renderables
     public interface IObjectRenderData
     {
         Matrix4x4 Transform { get; }
-        virtual bool Visible { get => true; }
         virtual int Id { get => throw new NotImplementedException(); }
+        bool IsVisible { get; set; }
+        IVolume GetVolume();
     }
     
     interface IMeshRenderData : IObjectRenderData

@@ -15,7 +15,7 @@ using System.Diagnostics;
 
 namespace CrossEngine.Platform.Glfw
 {
-    unsafe class GlfwWindow : CrossEngine.Display.Window
+    unsafe public class GlfwWindow : CrossEngine.Display.Window
     {
         internal static GlfwClass glfw;
 
@@ -54,9 +54,6 @@ namespace CrossEngine.Platform.Glfw
 
             // vsync
             glfw.SwapInterval(Data.VSync ? 1 : 0);
-
-            // oh funny that was ez
-            glfw.RequestWindowAttention(_nativeHandle);
         }
 
         public override void Destroy()
@@ -74,6 +71,12 @@ namespace CrossEngine.Platform.Glfw
         {
             Image iconImage = new Image() { Width = (int)width, Height = (int)height, Pixels = (byte*)data };
             glfw.SetWindowIcon(_nativeHandle, 1, &iconImage);
+        }
+
+        public void RequestWindowAttention()
+        {
+            // oh funny that was ez
+            glfw.RequestWindowAttention(_nativeHandle);
         }
 
         protected override void UpdateSize()

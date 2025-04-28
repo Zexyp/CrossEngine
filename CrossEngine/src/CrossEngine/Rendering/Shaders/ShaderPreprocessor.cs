@@ -14,8 +14,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CrossEngine.Rendering.Shaders;
 
-namespace CrossEngine.Rendering.Shaders
+namespace CrossEngine.Loaders
 {
     public static class ShaderPreprocessor
     {
@@ -152,7 +153,8 @@ void main() {{
                             break;
                     }
 
-                    if (currentBuilder == null && string.IsNullOrWhiteSpace(line)) // if file starts with whitespace
+                    // if file starts with whitespace
+                    if (currentBuilder == null && string.IsNullOrWhiteSpace(line))
                         continue;
                     
                     currentBuilder.AppendLine(line);

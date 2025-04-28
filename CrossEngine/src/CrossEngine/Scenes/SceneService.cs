@@ -53,7 +53,7 @@ namespace CrossEngine.Scenes
             while (_scenes.Count > 0)
             {
                 var scn = _scenes[0];
-                if (scn.Started)
+                if (scn.IsStarted)
                     Stop(scn);
                 Remove(scn);
             }
@@ -62,42 +62,13 @@ namespace CrossEngine.Scenes
             SceneManager.service = null;
         }
 
-        public void Push(Scene scene)
-        {
-            PushBackground(scene);
-
-            AttachRendering(scene);
-        }
-
-        public void PushBackground(Scene scene)
-        {
-            _scenes.Add(scene);
-            scene.Init();
-
-            PrepareRendering(scene);
-            
-            Log.Info("scene pushed");
-        }
-
-        public void Remove(Scene scene)
-        {
-            FinishRendering(scene);
-            
-            DetachRendering(scene);
-
-            scene.Deinit();
-            _scenes.Remove(scene);
-            
-            Log.Info("scene removed");
-        }
-
         public void OnUpdate()
         {
             _scheduler.RunOnCurrentThread();
 
             for (int i = 0; i < _scenes.Count; i++)
             {
-                if (!_scenes[i].Started)
+                if (!_scenes[i].IsStarted)
                     continue;
 
                 SceneManager.Current = _scenes[i];
@@ -110,12 +81,47 @@ namespace CrossEngine.Scenes
         {
             for (int i = 0; i < _scenes.Count; i++)
             {
-                if (!_scenes[i].Started)
+                if (!_scenes[i].IsStarted)
                     continue;
 
                 SceneManager.Current = _scenes[i];
                 SceneManager.Current.FixedUpdate();
                 SceneManager.Current = null;
+            }
+        }
+        
+        public void Push(Scene scene)
+        {
+            PushBackground(scene);
+
+            AttachRendering(scene);
+        }
+
+        public void PushBackground(Scene scene)
+        {
+            lock (scene)
+            {
+                _scenes.Add(scene);
+                scene.Init();
+
+                PrepareRendering(scene);
+                
+                Log.Info("scene pushed");
+            }
+        }
+
+        public void Remove(Scene scene)
+        {
+            lock (scene)
+            {
+                FinishRendering(scene);
+            
+                DetachRendering(scene);
+
+                scene.Deinit();
+                _scenes.Remove(scene);
+            
+                Log.Info("scene removed");
             }
         }
 

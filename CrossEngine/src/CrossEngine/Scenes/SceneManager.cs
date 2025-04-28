@@ -15,9 +15,21 @@ namespace CrossEngine.Scenes
         [ThreadStatic]
         private static Scene _current;
 
-        public static Task Push(Scene scene) => service.Execute(() => service.Push(scene));
-        public static Task PushBackground(Scene scene) => service.Execute(() => service.PushBackground(scene));
-        public static Task Remove(Scene scene) => service.Execute(() => service.Remove(scene));
+        public static Task Push(Scene scene)
+        {
+            return service.Execute(() => service.Push(scene));
+        }
+
+        public static Task PushBackground(Scene scene)
+        {
+            return service.Execute(() => service.PushBackground(scene));
+        }
+
+        public static Task Remove(Scene scene)
+        {
+            return service.Execute(() => service.Remove(scene));
+        }
+        
         public static Task Start(Scene scene) => service.Execute(() => service.Start(scene));
         public static Task Stop(Scene scene) => service.Execute(() => service.Stop(scene));
     }

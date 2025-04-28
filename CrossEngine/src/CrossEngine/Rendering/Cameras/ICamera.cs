@@ -15,7 +15,7 @@ namespace CrossEngine.Rendering.Cameras
         virtual Matrix4x4 GetViewProjectionMatrix() => GetViewMatrix() * ProjectionMatrix;
         virtual Matrix4x4 GetViewMatrix() => Matrix4x4Extension.SafeInvert(GetMatrix());
 
-        virtual Frustum Frustum { get => throw new NotImplementedException(); }
+        virtual Frustum GetFrustum() => Frustum.Create(ProjectionMatrix, GetViewMatrix());
     }
 
     public interface IResizableCamera : ICamera

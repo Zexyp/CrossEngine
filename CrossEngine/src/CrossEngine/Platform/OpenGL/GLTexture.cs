@@ -60,6 +60,9 @@ namespace CrossEngine.Platform.OpenGL
             {
                 gl.TexImage2D((GLEnum)(GLEnum.TextureCubeMapPositiveX + i), 0, (int)GLEnum.Rgb, width, height, 0, GLEnum.Rgb, GLEnum.UnsignedByte, images[i]);
             }
+            
+            tex.SetFilterParameter(FilterParameter.Default);
+            tex.SetWrapParameter(WrapParameter.Default);
 
             return tex;
         }

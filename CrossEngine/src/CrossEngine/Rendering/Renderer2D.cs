@@ -393,8 +393,8 @@ AttributesOut[1] = vEntityID;
 
 		public static void Flush()
 		{
-			FlushQuads();
-			FlushTris();
+			NextQuadsBatch();
+			NextTrisBatch();
 		}
 
 		public static void EndScene()

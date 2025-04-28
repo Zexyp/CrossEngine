@@ -60,13 +60,15 @@ namespace CrossEngineEditor
             public override void Draw()
             {
                 Renderer2D.SetBlending(BlendMode.Blend);
+                GraphicsContext.Current.Api.SetDepthFunc(DepthFunc.None);
                 base.Draw();
             }
 
             protected override void Content()
             {
                 var t = $"{1d / Time.UnscaledDelta:000.00} fps\n{Time.UnscaledDelta * 1000:00.000} ms\n";
-                TextRendererUtil.DrawText(Matrix4x4.Identity, t, ColorHelper.U32ToVec4(0x7fff006d));
+                var offset = new Vector3(0, Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 2, 0);
+                TextRendererUtil.DrawText(Matrix4x4.CreateTranslation(offset), t, ColorHelper.U32ToVec4(0x7fff006d));
             }
         }
 

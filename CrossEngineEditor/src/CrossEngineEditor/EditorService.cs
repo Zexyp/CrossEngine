@@ -28,7 +28,7 @@ using CrossEngineEditor.Modals;
 using CrossEngineEditor.Platform;
 using System.IO;
 using CrossEngine.Events;
-using System.Diagnostics.Contracts;
+using CrossEngine.Platform.Glfw;
 
 namespace CrossEngineEditor
 {
@@ -42,7 +42,8 @@ namespace CrossEngineEditor
         
         public readonly EditorContext Context = new EditorContext();
         private Window window = null;
-        
+        private ExitModal _exitModal = new ExitModal() { Exit = EditorApplication.Instance.Close };
+
         public override void OnStart()
         {
             if (!File.Exists(PreferencesPath))
@@ -138,7 +139,12 @@ namespace CrossEngineEditor
         {
             if (e is WindowCloseEvent wce)
             {
-                DestructiveDialog(EditorApplication.Instance.Close);
+                ((GlfwWindow)window).RequestWindowAttention();
+                if (Panels.GetModal<ExitModal>() == null)
+                {
+                    _exitModal.Open = true;
+                    Panels.PushModal(_exitModal);
+                }
                 wce.Handled = true;
             }
         }
@@ -152,9 +158,7 @@ namespace CrossEngineEditor
             var io = ImGui.GetIO();
 
             ImGui.ShowDemoWindow();
-            Profiler.BeginScope($"{nameof(PanelManager)}.{nameof(PanelManager.Draw)}");
             Panels.Draw();
-            Profiler.EndScope();
 
             EndDockspace();
         }
@@ -173,6 +177,10 @@ namespace CrossEngineEditor
             Panels.RegisterPanel(new GamePanel(rs));
             Panels.RegisterPanel(new AssetListPanel());
             Panels.RegisterPanel(new SimpleThemeGeneratorPanel());
+            
+#if DEBUG
+            Panels.PushPanel(new TestWidgetPanel());
+#endif
         }
 
         private void Deinit()
@@ -233,24 +241,98 @@ namespace CrossEngineEditor
 
         private void DrawMainMenuBar()
         {
+            void DrawSceneDropdown()
+            {
+                var disable = Context.Assets == null;
+                if (disable) ImGui.BeginDisabled();
+                var name = (Context.Scene != null && Context.Assets?.HasCollection<SceneAsset>() == true) ? Context.Assets.GetCollection<SceneAsset>().FirstOrDefault(a => a.Scene == Context.Scene)?.GetName() : null;
+                name ??= Context.Scene == null ? "<null>" : "<unknown>";
+                ImGui.SetNextItemWidth(120);
+                if (ImGui.BeginCombo("Scene", name))
+                {
+                    if (ImGui.MenuItem("New"))
+                    {
+                        void CreateScene() => Context.Scene = new Scene();
+
+                        DialogDestructive(CreateScene, Context.Scene != null);
+                    }
+                    
+                    ImGui.Separator();
+                    
+                    if (ImGui.MenuItem("Save As...", Context.Scene != null))
+                    {
+                        DialogFileSave().ContinueWith(t =>
+                        {
+                            var filepath = t.Result;
+                            if (filepath != null)
+                                using (Stream stream = File.Create(filepath))
+                                    SceneSerializer.SerializeJson(stream, Context.Scene);
+                        });
+                    }
+                    if (ImGui.MenuItem("Dump", Context.Scene != null))
+                        using (var stream = Console.OpenStandardOutput())
+                            SceneSerializer.SerializeJson(stream, Context.Scene);
+                    
+                    ImGui.Separator();
+
+                    if (Context.Assets?.HasCollection<SceneAsset>() == true)
+                    {
+                        foreach (var item in Context.Assets.GetCollection<SceneAsset>())
+                        {
+                            if (!item.Loaded) ImGui.BeginDisabled();
+                            var isSelected = item.Scene != null && item.Scene == Context.Scene;
+                            if (ImGui.Selectable(item.GetName(), isSelected))
+                            {
+                                void LoadScene()
+                                {
+                                    Context.Scene = item.Scene;
+                                }
+                                DialogDestructive(LoadScene, Context.Scene != null);
+                            }
+                            if (isSelected) ImGui.SetItemDefaultFocus();
+                            if (!item.Loaded) ImGui.EndDisabled();
+                        }
+                    }
+
+                    ImGui.EndCombo();
+                }
+                
+                if (disable) ImGui.EndDisabled();
+            }
+            
             if (ImGui.BeginMainMenuBar())
             {
                 if (ImGui.BeginMenu("File"))
                 {
                     if (ImGui.MenuItem("New...")) Panels.PushModal(new CreateProjectModal());
                     if (ImGui.MenuItem("Open...")) throw new NotImplementedException();
+                    if (ImGui.BeginMenu("Open Recent"))
+                    {
+                        ImGui.Selectable("yeet");
+
+                        ImGui.Separator();
+                        
+                        if (ImGui.MenuItem("Clear")) throw new NotImplementedException();
+                        
+                        ImGui.EndMenu();
+                    }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Save...")) throw new NotImplementedException();
                     if (ImGui.MenuItem("Save As...")) throw new NotImplementedException();
                     ImGui.Separator();
                     if (ImGui.MenuItem("Quit"))
-                        DestructiveDialog(EditorApplication.Instance.Close);
+                        DialogDestructive(EditorApplication.Instance.Close);
 
                     ImGui.EndMenu();
                 }
 
                 if (ImGui.BeginMenu("Edit"))
                 {
+                    if (ImGui.MenuItem("Undo")) throw new NotImplementedException();
+                    if (ImGui.MenuItem("Redo")) throw new NotImplementedException();
+                    
+                    ImGui.Separator();
+                    
                     if (ImGui.MenuItem("Preferences..."))
                         Panels.PushModal(new PreferencesModal());
                     
@@ -279,51 +361,12 @@ namespace CrossEngineEditor
                     ImGui.EndMenu();
                 }
                 
-                // todo: move to dropdown
-                if (ImGui.BeginMenu("Scene", Context.Assets != null))
-                {
-                    if (ImGui.MenuItem("New"))
-                    {
-                        void CreateScene() => Context.Scene = new Scene();
+                ImGui.SameLine();
+                DrawSceneDropdown();
 
-                        DestructiveDialog(CreateScene, Context.Scene != null);
-                    }
-                    if (ImGui.BeginMenu("Load", Context.Assets != null))
-                    {
-                        if (Context.Assets?.HasCollection<SceneAsset>() == true)
-                        {
-                            foreach (var item in Context.Assets.GetCollection<SceneAsset>())
-                            {
-                                if (!item.Loaded) ImGui.BeginDisabled();
-                                if (ImGui.Selectable(item.GetName(), item.Scene != null && item.Scene == Context.Scene))
-                                {
-                                    void LoadScene()
-                                    {
-                                        Context.Scene = null;
-                                        Context.Scene = item.Scene;
-                                    }
-                                    DestructiveDialog(LoadScene, Context.Scene != null);
-                                }
-                                if (!item.Loaded) ImGui.EndDisabled();
-                            }
-                        }
-
-                        ImGui.EndMenu();
-                    }
-                    ImGui.Separator();
-                    if (ImGui.MenuItem("Save As...", Context.Scene != null))
-                    {
-                        var filepath = EditorPlatformHelper.FileSaveDialog();
-                        if (filepath != null)
-                            using (Stream stream = File.Create(filepath))
-                                SceneSerializer.SerializeJson(stream, Context.Scene);
-                    }
-                    if (ImGui.MenuItem("Dump", Context.Scene != null))
-                        using (var stream = Console.OpenStandardOutput())
-                            SceneSerializer.SerializeJson(stream, Context.Scene);
-
-                    ImGui.EndMenu();
-                }
+                var projectText = "yeeeeeeeeeeeeeeeeetus";
+                ImGui.SameLine(ImGui.GetWindowWidth() - ImGui.CalcTextSize(projectText).X - ImGui.GetStyle().ItemSpacing.X * 2);
+                ImGui.TextDisabled(projectText);
 
                 ImGui.EndMainMenuBar();
             }
@@ -331,42 +374,54 @@ namespace CrossEngineEditor
         #endregion
 
         #region Context Changes
-        private async void OnContextSceneChanged(Scene old)
+        private void OnContextSceneChanged(Scene old)
         {
             Context.ActiveEntity = null;
 
-            if (old != null) await SceneManager.Remove(old);
+            var task = Task.CompletedTask;
+            
+            if (old != null) task = task.ContinueWith(t => SceneManager.Remove(old));
 
-            if (Context.Scene != null) await SceneManager.PushBackground(Context.Scene);
+            if (Context.Scene != null) task = task.ContinueWith(t => SceneManager.PushBackground(Context.Scene));
         }
 
-        private async void OnContextAssetsChanged(AssetList old)
+        private void OnContextAssetsChanged(AssetList old)
         {
             Context.Scene = null;
 
-            if (old != null) await AssetManager.Unload(old);
+            var task = Task.CompletedTask;
 
-            AssetManager.Bind(Context.Assets);
+            if (old != null) task = task.ContinueWith(t => AssetManager.Unload(old));
 
-            if (Context.Assets != null) await AssetManager.Load(Context.Assets);
+            if (Context.Assets != null) task = task.ContinueWith(t => AssetManager.Load(Context.Assets));
+            
+            task = task.ContinueWith(t => AssetManager.Bind(Context.Assets));
         }
         #endregion
 
+        #region Dialogs
         internal Task<string> DialogFileOpen()
         {
-            var modal = new BlockModal("File Dialog") { Text = "Open file dialog is open." };
+            var modal = new BlockModal("File Dialog") { Text = "File open dialog is open." };
             Panels.PushModal(modal);
             return Task.Run(() => { var result = EditorPlatformHelper.FileOpenDialog(); modal.Open = false; return result; });
         }
 
         internal Task<string> DialogFileSave()
         {
-            var modal = new BlockModal("File Dialog") { Text = "Save file dialog is open." };
+            var modal = new BlockModal("File Dialog") { Text = "File save dialog is open." };
             Panels.PushModal(modal);
             return Task.Run(() => { var result = EditorPlatformHelper.FileSaveDialog(); modal.Open = false; return result; });
         }
 
-        internal void DestructiveDialog(Action action, bool destructiveIf = true)
+        internal Task<string> DialogPickDirectory()
+        {
+            var modal = new BlockModal("File Dialog") { Text = "Pick directory dialog is open." };
+            Panels.PushModal(modal);
+            return Task.Run(() => { var result = EditorPlatformHelper.DirectoryPickDialog(); modal.Open = false; return result; });
+        }
+
+        internal void DialogDestructive(Action action, bool destructiveIf = true)
         {
             if (destructiveIf)
                 Panels.PushModal(new ActionModal("Are you sure?", "Destructive", ActionModal.ButtonFlags.YesNo)
@@ -377,5 +432,11 @@ namespace CrossEngineEditor
             else
                 action.Invoke();
         }
+
+        internal void DialogGenericError()
+        {
+            Panels.PushModal(new ActionModal("Whoops...\nThat's an error.", "Error") { Color = ActionModal.TextColor.Error });
+        }
+        #endregion
     }
 }

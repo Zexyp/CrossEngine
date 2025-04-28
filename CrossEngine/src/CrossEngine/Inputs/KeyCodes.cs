@@ -24,6 +24,7 @@ namespace CrossEngine.Inputs
         Semicolon = 59,
         Equal = 61,
 
+        // letters
         A = 65,
         B = 66,
         C = 67,
@@ -80,6 +81,7 @@ namespace CrossEngine.Inputs
         PrintScreen = 283,
         Pause = 284,
 
+        // fs
         F1 = 290,
         F2 = 291,
         F3 = 292,
@@ -106,6 +108,7 @@ namespace CrossEngine.Inputs
         F24 = 313,
         F25 = 314,
 
+        // numpad
         Numpad0 = 320,
         Numpad1 = 321,
         Numpad2 = 322,
@@ -125,6 +128,7 @@ namespace CrossEngine.Inputs
         NumpadEnter = 335,
         NumpadEqual = 336,
 
+        // modifiers
         LeftShift = 340,
         LeftControl = 341,
         LeftAlt = 342,

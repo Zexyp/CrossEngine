@@ -19,6 +19,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CrossEngine.Scenes;
+using CrossEngineEditor.Modals;
 
 namespace CrossEngineEditor.Panels
 {
@@ -45,7 +46,7 @@ namespace CrossEngineEditor.Panels
                     {
                         void CreateAssets() => Context.Assets = new AssetList();
 
-                        EditorApplication.Service.DestructiveDialog(CreateAssets, Context.Assets != null);
+                        EditorApplication.Service.DialogDestructive(CreateAssets, Context.Assets != null);
                     }
                     if (ImGui.MenuItem("Load..."))
                     {
@@ -56,12 +57,20 @@ namespace CrossEngineEditor.Panels
                                 var filepath = t.Result;
                                 if (filepath != null)
                                 {
-                                    var task = AssetManager.ReadFile(filepath);
-                                    Context.Assets = task.Result;
+                                    try
+                                    {
+                                        var task = AssetManager.ReadFile(filepath);
+                                        Context.Assets = task.Result;
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Log.Default.Error($"asset file reading failed: {e}");
+                                        EditorApplication.Service.DialogGenericError();
+                                    }
                                 }
                             });
                         }
-                        EditorApplication.Service.DestructiveDialog(LoadAssets, Context.Assets != null);
+                        EditorApplication.Service.DialogDestructive(LoadAssets, Context.Assets != null);
                     }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Save As...", Context.Assets != null))
@@ -97,7 +106,7 @@ namespace CrossEngineEditor.Panels
                             Context.Assets = null;
                             Context.Assets = last;
                         }
-                        EditorApplication.Service.DestructiveDialog(ReloadAssets);
+                        EditorApplication.Service.DialogDestructive(ReloadAssets);
                     }
 
                     ImGui.EndMenu();
@@ -124,9 +133,13 @@ namespace CrossEngineEditor.Panels
 
                 foreach ((Type Type, IEnumerable<Asset> EnumerateMore) item in Context.Assets.Enumerate())
                 {
+                    var sectionBroken = item.EnumerateMore.Any(a => !a.Loaded);
+                    
                     ImGui.TableNextRow();
                     ImGui.TableNextColumn();
+                    if (sectionBroken) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
                     var treeOpen = ImGui.TreeNodeEx($"{item.Type.FullName}[]");
+                    if (sectionBroken) ImGui.PopStyleColor();
                     ImGui.TableNextColumn();
                     ImGui.TextDisabled("-");
 

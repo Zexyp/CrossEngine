@@ -63,16 +63,18 @@ public class Mesh<T> : IMesh where T : struct
 
     public virtual void FreeGpuResources()
     {
-        Dispose();
-    }
-
-    public virtual void Dispose()
-    {
         VA.Dispose();
         vb.Dispose();
         
         vb = null;
         VA = null;
+    }
+
+    public virtual void Dispose()
+    {
+        FreeGpuResources();
+
+        Vertices = null;
     }
 }
 
@@ -105,12 +107,19 @@ public class IndexedMesh<T> : Mesh<T>, IIndexedMesh where T : struct
         VA.GetValue().SetIndexBuffer(ib);
     }
 
+    public override void FreeGpuResources()
+    {
+        base.FreeGpuResources();
+        
+        ib.Dispose();
+
+        ib = null;
+    }
+
     public override void Dispose()
     {
         base.Dispose();
 
-        ib.Dispose();
-
-        ib = null;
+        Indices = null;
     }
 }

@@ -23,6 +23,13 @@ namespace CrossEngineEditor.Panels
         public GamePanel(RenderService rs) : base(rs)
         {
             WindowName = "Game";
+            Surface.Resize += OnSurfaceResize;
+        }
+
+        private void OnSurfaceResize(ISurface surface, float width, float height)
+        {
+            if (Scene?.IsInitialized == true)
+                Scene.World.GetSystem<RenderSystem>().OnSurfaceResize(surface, width, height);
         }
     }
 }

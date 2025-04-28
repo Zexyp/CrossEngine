@@ -13,6 +13,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Rendering;
+using CrossEngine.Core;
 
 namespace CrossEngineEditor.Panels
 {
@@ -24,6 +25,7 @@ namespace CrossEngineEditor.Panels
         private Camera _editorCamera = new Camera();
         private Vector3 _cameraPosition = Vector3.Zero;
         private Quaternion _cameraRotation = Quaternion.Identity;
+        private float _cameraSpeed = 10;
         private float _near = .1f;
         private float _far = 1000f;
         private float _fov = 90f;
@@ -35,6 +37,8 @@ namespace CrossEngineEditor.Panels
         private Vector2 _lookRot = Vector2.Zero;
         private bool IsTouchpad => EditorApplication.Service.Preferences["navigation"].ReadBoolean("touchpad");
         private ViewportPass _viewportPass;
+        private float _sensitivityPan = .25f;
+        private float _sensitivityRotate = 8;
 
         public ViewportPanel(RenderService rs) : base(rs)
         {
@@ -53,13 +57,13 @@ namespace CrossEngineEditor.Panels
         {
             DrawMenuBar();
 
-            if (Scene?.Initialized == true) AttachPass(Scene);
+            if (Scene?.IsInitialized == true) AttachPass(Scene);
             
             base.DrawWindowContent();
 
-            if (Scene?.Initialized == true) DetachPass(Scene);
+            if (Scene?.IsInitialized == true) DetachPass(Scene);
 
-            if (Scene?.Initialized != true || Framebuffer == null)
+            if (Scene?.IsInitialized != true || Framebuffer == null)
                 return;
 
             var io = ImGui.GetIO();
@@ -86,9 +90,9 @@ namespace CrossEngineEditor.Panels
 
         private void Navigate(in ImGuiIOPtr io)
         {
-            // todo: keypad nav
             // todo: fly navigation
 
+            KeyboardNav(io);
             if (!_perspective)
             {
                 OrthoControl(io);
@@ -103,6 +107,40 @@ namespace CrossEngineEditor.Panels
         }
 
         #region Controls
+        private void KeyboardNav(in ImGuiIOPtr io)
+        {
+            if (!(ImGui.IsItemHovered() && Focused))
+                return;
+
+            var offset = Vector3.Zero;
+            if (ImGui.IsKeyDown(ImGuiKey.Keypad8)) offset.Y += 1;
+            if (ImGui.IsKeyDown(ImGuiKey.Keypad2)) offset.Y -= 1;
+            if (ImGui.IsKeyDown(ImGuiKey.Keypad6)) offset.X += 1;
+            if (ImGui.IsKeyDown(ImGuiKey.Keypad4)) offset.X -= 1;
+            if (io.KeyShift) offset *= 2;
+            offset *= Time.DeltaF;
+            if (offset != Vector3.Zero)
+            {
+                if (io.KeyCtrl)
+                {
+                    offset = Vector3.Transform(offset, _cameraRotation);
+                    _cameraPosition += offset * _cameraSpeed;
+                }
+                else
+                {
+                    _lookRot += new Vector2(offset.X, -offset.Y);
+                    _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _lookRot.X) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, _lookRot.Y);
+                }
+                _viewDirty = true;
+            }
+
+            if (ImGui.IsKeyPressed(ImGuiKey.Keypad5))
+            {
+                _perspective = !_perspective;
+                _projectionDirty = true;
+            }
+        }
+
         private void OrthoControl(in ImGuiIOPtr io)
         {
             if (ImGui.IsItemHovered() && Focused)
@@ -120,9 +158,9 @@ namespace CrossEngineEditor.Panels
                 if (io.KeyShift && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
                     if (io.KeyAlt)
-                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * .25f, io.MouseWheelH * _zoom * .25f, 0), _cameraRotation);
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * _sensitivityPan, io.MouseWheelH * _zoom * _sensitivityPan, 0), _cameraRotation);
                     else
-                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * .25f, io.MouseWheel * _zoom * .25f, 0), _cameraRotation);
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * _sensitivityPan, io.MouseWheel * _zoom * _sensitivityPan, 0), _cameraRotation);
 
                     _viewDirty = true;
                 }
@@ -165,6 +203,13 @@ namespace CrossEngineEditor.Panels
 
                 _viewDirty = true;
             }
+
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Left) && Focused)
+            {
+
+
+                _viewDirty = true;
+            }
         }
 
         private void PerspectiveTouchpadControl(in ImGuiIOPtr io)
@@ -175,9 +220,9 @@ namespace CrossEngineEditor.Panels
                 if (!io.KeyShift && !io.KeyCtrl && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
                     if (io.KeyAlt)
-                        _lookRot += new Vector2(-io.MouseWheel, -io.MouseWheelH) / 8;
+                        _lookRot += new Vector2(-io.MouseWheel, -io.MouseWheelH) / _sensitivityRotate;
                     else
-                        _lookRot += new Vector2(-io.MouseWheelH, -io.MouseWheel) / 8;
+                        _lookRot += new Vector2(-io.MouseWheelH, -io.MouseWheel) / _sensitivityRotate;
 
                     _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _lookRot.X) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, _lookRot.Y);
 
@@ -197,9 +242,9 @@ namespace CrossEngineEditor.Panels
                 if (io.KeyShift && !io.KeyCtrl && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
                     if (io.KeyAlt)
-                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * .25f, io.MouseWheelH * _zoom * .25f, 0), _cameraRotation);
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * _sensitivityPan, io.MouseWheelH * _zoom * _sensitivityPan, 0), _cameraRotation);
                     else
-                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * .25f, io.MouseWheel * _zoom * .25f, 0), _cameraRotation);
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * _sensitivityPan, io.MouseWheel * _zoom * _sensitivityPan, 0), _cameraRotation);
 
                     _viewDirty = true;
                 }
@@ -269,6 +314,14 @@ namespace CrossEngineEditor.Panels
                         _projectionDirty = true;
                         _viewDirty = true;
                     }
+
+                    if (ImGui.MenuItem("Reset"))
+                    {
+                        _cameraPosition = Vector3.Zero;
+                        _cameraRotation = Quaternion.Identity;
+                        _lookRot = Vector2.Zero;
+                        _viewDirty = true;
+                    }
                     
                     ImGui.Separator();
 
@@ -290,7 +343,7 @@ namespace CrossEngineEditor.Panels
 
                     if (ImGui.BeginMenu("Viewpoint"))
                     {
-                        var cam = Context.Scene?.Initialized == true ? Context.Scene?.World.GetSystem<RenderSystem>().PrimaryCamera : null;
+                        var cam = Context.Scene?.IsInitialized == true ? Context.Scene?.World.GetSystem<RenderSystem>().PrimaryCamera : null;
                         if (ImGui.MenuItem("Camera", null, _editorCamera.ViewMatrix == cam?.ViewMatrix, cam != null)) {
                             _editorCamera.ViewMatrix = cam.ViewMatrix;
                         }

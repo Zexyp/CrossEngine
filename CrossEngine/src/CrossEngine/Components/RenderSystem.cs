@@ -12,9 +12,12 @@ using CrossEngine.Rendering;
 using CrossEngine.Display;
 using CrossEngine.Ecs;
 using CrossEngine.Events;
+using CrossEngine.Loaders;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
+using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Rendering.Culling;
 using CrossEngine.Rendering.Meshes;
 using CrossEngine.Rendering.Renderables;
 using CrossEngine.Rendering.Shaders;
@@ -22,7 +25,6 @@ using CrossEngine.Utils;
 
 namespace CrossEngine.Components
 {
-    // TODO: move stuff to scene renderer
     public class RenderSystem : Ecs.System
     {
         public Pipeline Pipeline => _pipeline;
@@ -56,7 +58,6 @@ namespace CrossEngine.Components
         private CameraComponent? _primaryCamera = null;
         private ICamera _overrideCamera;
         private Vector2 _lastSize = Vector2.One;
-        private ISurface _surface;
         private Pipeline _pipeline;
         
         private SkyboxPass _passSkybox;
@@ -89,14 +90,16 @@ namespace CrossEngine.Components
         public RenderSystem()
         {
             _pipeline = new Pipeline();
-            _pipeline.PushBack(_passSkybox = new SkyboxPass());
             _pipeline.PushBack(_passScene = new ScenePass());
+            _pipeline.PushBack(_passSkybox = new SkyboxPass());
             //_pipeline.PushBack(new LightingPass());
+            //_pipeline.PushBack(new TransparentPass());
         }
 
         protected internal override void OnInit()
         {
             World.Storage.MakeIndex(typeof(RendererComponent));
+            
             World.Storage.AddNotifyRegister(typeof(CameraComponent), RegisterCamera, true);
             World.Storage.AddNotifyUnregister(typeof(CameraComponent), UnregisterCamera, true);
             World.Storage.AddNotifyRegister(typeof(SkyboxRendererComponent), RegisterSkybox);
@@ -104,38 +107,42 @@ namespace CrossEngine.Components
 
             _passScene.objects = new CastWrapCollection<IObjectRenderData>(World.Storage.GetIndex(typeof(RendererComponent)));
             _passScene.CameraGetter = () => OverrideCamera ?? PrimaryCamera;
+            _passSkybox.CameraGetter = () => OverrideCamera ?? PrimaryCamera;
         }
 
         protected internal override void OnShutdown()
         {
             World.Storage.DropIndex(typeof(RendererComponent));
+            
             World.Storage.RemoveNotifyRegister(typeof(CameraComponent), RegisterCamera);
             World.Storage.RemoveNotifyUnregister(typeof(CameraComponent), UnregisterCamera);
+            World.Storage.RemoveNotifyRegister(typeof(SkyboxRendererComponent), RegisterSkybox);
+            World.Storage.RemoveNotifyUnregister(typeof(SkyboxRendererComponent), UnregisterSkybox);
         }
 
         private void RegisterCamera(Component c)
         {
             CameraComponent component = (CameraComponent)c;
 
+            component.PrimaryChanged += OnCameraPrimaryChanged;
+            
             if (component.Primary)
             {
                 Deprioritize(PrimaryCamera);
                 PrimaryCamera = component;
             }
-
-            component.PrimaryChanged += OnCameraPrimaryChanged;
         }
 
         private void UnregisterCamera(Component c)
         {
             CameraComponent component = (CameraComponent)c;
 
-            component.PrimaryChanged -= OnCameraPrimaryChanged;
-
             if (component == PrimaryCamera)
             {
                 PrimaryCamera = null;
             }
+
+            component.PrimaryChanged -= OnCameraPrimaryChanged;
         }
 
         private void RegisterSkybox(Component c)
@@ -245,8 +252,8 @@ layout (location = 0) in vec3 aPos;
 
 out vec3 TexCoords;
 
-uniform mat4 projection = mat4(1);
-uniform mat4 view = mat4(1);
+uniform mat4 projection;
+uniform mat4 view;
 
 void main()
 {
@@ -269,8 +276,15 @@ void main()
 ";
     
     public ISkyboxRenderData Skybox;
+    public Func<ICamera> CameraGetter;
+
     private IMesh _skyboxMesh;
     private WeakReference<ShaderProgram> _skyboxShader;
+
+    public SkyboxPass()
+    {
+        Depth = DepthFunc.LessEqual;
+    }
 
     public override void Init()
     {
@@ -288,16 +302,25 @@ void main()
 
     public override void Destroy()
     {
-        _skyboxMesh.FreeGpuResources();
+        _skyboxMesh.Dispose();
         _skyboxShader.Dispose();
+        _skyboxMesh = null;
+        _skyboxShader = null;
     }
 
     public override void Draw()
     {
-        if (Skybox?.Texture == null)
-            return;
+        var camera = CameraGetter.Invoke();
 
-        _skyboxShader.GetValue().Use();
+        if (Skybox?.Texture == null || camera == null)
+            return;
+        
+        var shader = _skyboxShader.GetValue();
+        shader.Use();
+        var view = camera.GetViewMatrix();
+        view.Translation = Vector3.Zero;
+        shader.SetParameterMat4("view", view);
+        shader.SetParameterMat4("projection", camera.ProjectionMatrix);
         Skybox.Texture.GetValue().Bind();
         GraphicsContext.Current.Api.DrawArray(_skyboxMesh.VA, (uint)_skyboxMesh.Vertices.Length, DrawMode.Traingles);
     }
@@ -307,6 +330,13 @@ class ScenePass : Pass
 {
     public IList<IObjectRenderData> objects;
     public Func<ICamera> CameraGetter;
+
+    private WeakReference<Framebuffer> framebuffer;
+
+    public ScenePass()
+    {
+        Depth = DepthFunc.Default;
+    }
     
     public override void Init()
     {
@@ -314,6 +344,15 @@ class ScenePass : Pass
         {
             rend.Init();
         }
+
+        var spec = new FramebufferSpecification();
+        spec.Attachments = new FramebufferAttachmentSpecification(
+            // using floating point colors
+            new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F),
+            new FramebufferTextureSpecification(TextureFormat.ColorR32I),
+            new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
+        );
+        framebuffer = Framebuffer.Create(spec);
     }
 
     public override void Destroy()
@@ -332,38 +371,63 @@ class ScenePass : Pass
     
     public override void Draw()
     {
-        CullVisibility();
-        
         var camera = CameraGetter.Invoke();
         if (camera == null)
             return;
+        
+        //CullVisibility(camera);
         
         foreach (var rend in _renderables.Values)
         {
             rend.Begin(camera);
         }
-        foreach (IObjectRenderData rd in objects)
+
+        //framebuffer.GetValue().Bind();
+        for (int i = 0; i < objects.Count; i++)
         {
-            if (!rd.Visible)
+            var rd = objects[i];
+            
+            if (!rd.IsVisible)
                 continue;
 
             var type = rd.GetType();
             if (!_renderables.TryGetValue(type, out var rndrbl))
             {
-                Log.Default.Warn($"no usable renderable for '{type.FullName}'");
+                // fixme
+                //Log.Default.Warn($"no usable renderable for '{type.FullName}'");
                 continue;
             }
             rndrbl.Submit(rd);
         }
+        //framebuffer.GetValue().Unbind();
+        
         foreach (var rend in _renderables.Values)
         {
             rend.End();
         }
     }
 
-    private void CullVisibility()
+    private void CullVisibility(ICamera camera)
     {
-        // todo
+        var frustum = camera.GetFrustum();
+        for (int i = 0; i < objects.Count; i++)
+        {
+            var obj = objects[i];
+            var volume = obj.GetVolume();
+            
+            if (volume == null)
+                continue;
+            var result = volume.IsInFrustum(frustum);
+            obj.IsVisible = result != Halfspace.Outside;
+            
+            if (obj is SpriteRendererComponent sprite)
+                switch (result)
+                {
+                    case Halfspace.Outside: sprite.Color = VecColor.Red; break;
+                    case Halfspace.Intersect: sprite.Color = VecColor.Blue; break;
+                    case Halfspace.Inside: sprite.Color = VecColor.White; break;
+                }
+        }
     }
     
     // pot of boiling shit

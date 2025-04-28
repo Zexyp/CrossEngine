@@ -43,5 +43,17 @@ namespace CrossEngineEditor.Platform
             return ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
 #endif
         }
+
+        public static string DirectoryPickDialog()
+        {
+            _log.Trace("opening directory pick dialog");
+#if NATIVEFILEDIALOGSHARP
+            var result = Dialog.FolderPicker();
+            Debug.Assert(!result.IsError);
+            return result.Path;
+#else
+            return ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
+#endif
+        }
     }
 }

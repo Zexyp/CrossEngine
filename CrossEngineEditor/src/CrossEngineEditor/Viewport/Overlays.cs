@@ -20,7 +20,7 @@ namespace CrossEngineEditor.Viewport
 
         void IOverlay.Draw()
         {
-            if (Context.Scene?.Initialized != true)
+            if (Context.Scene?.IsInitialized != true)
                 return;
             LineRenderer.BeginScene(EditorCamera.GetViewProjectionMatrix());
             Context.Scene.World.GetSystem<TransformSystem>().RenderDebugLines();
@@ -37,6 +37,7 @@ namespace CrossEngineEditor.Viewport
         public IEditorContext Context { get; set; }
         public ICamera EditorCamera { get; set; }
 
+        [Obsolete("opengl specific")]
         protected override void Content()
         {
             var model = Context.ActiveEntity?.Transform?.WorldPosition;
@@ -46,6 +47,8 @@ namespace CrossEngineEditor.Viewport
             Vector4 clipSpace = Vector4.Transform(new Vector4(model.Value, 1), EditorCamera.GetViewProjectionMatrix());
             //if (clipSpace.W == 0)
             //    return; // avoid divide by zero 😬
+            if (clipSpace.Z < -1)
+                return; // behind camera
             Vector3 ndc = new Vector3(clipSpace.X, clipSpace.Y, clipSpace.Z) / clipSpace.W;
             ndc.Y *= -1;
             Vector3 screenPos = (ndc + Vector3.One) / 2 * new Vector3(Size, 0);
@@ -58,6 +61,7 @@ namespace CrossEngineEditor.Viewport
         public IEditorContext Context { get; set; }
         public ICamera EditorCamera { get; set; }
 
+        [Obsolete("opengl specific")]
         protected override void Content()
         {
             var ents = Context.Scene?.Entities;
@@ -73,6 +77,8 @@ namespace CrossEngineEditor.Viewport
                 Vector4 clipSpace = Vector4.Transform(new Vector4(model.Value, 1), EditorCamera.GetViewProjectionMatrix());
                 //if (clipSpace.W == 0)
                 //    return; // avoid divide by zero 😬
+                if (clipSpace.Z < -1)
+                    return; // behind camera
                 Vector3 ndc = new Vector3(clipSpace.X, clipSpace.Y, clipSpace.Z) / clipSpace.W;
                 ndc.Y *= -1;
                 Vector3 screenPos = (ndc + Vector3.One) / 2 * new Vector3(Size, 0);
@@ -94,7 +100,6 @@ namespace CrossEngineEditor.Viewport
                 return;
             var camTrans = cam.Entity?.Transform?.GetWorldTransformMatrix() ?? Matrix4x4.Identity;
             LineRenderer.BeginScene(EditorCamera.GetViewProjectionMatrix());
-            LineRenderer.DrawAxies(camTrans);
             LineRenderer.DrawBox(Matrix4x4.CreateScale(2) * Matrix4x4Extension.SafeInvert(cam.ProjectionMatrix) * camTrans, VecColor.Black);
             LineRenderer.EndScene();
         }

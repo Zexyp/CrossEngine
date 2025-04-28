@@ -9,6 +9,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Rendering.Culling;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Serialization;
 
@@ -34,6 +35,15 @@ namespace CrossEngine.Components
         WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Texture?.Texture;
         BlendMode ISpriteRenderData.Blend => Blend;
         Vector4 ISpriteRenderData.DrawOffsets => DrawOffsets;
+
+        protected override IVolume GetVolume()
+        {
+            var transform = Entity?.Transform;
+            if (transform == null)
+                return null;
+            
+            return new Sphere(transform.WorldPosition, transform.Scale.Length() / 2);
+        }
 
         public override object Clone()
         {

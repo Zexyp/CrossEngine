@@ -23,8 +23,8 @@ namespace CrossEngine.Scenes
     {
         public readonly World World = new World();
         public readonly ReadOnlyCollection<Entity> Entities;
-        public bool Started { get; private set; } = false;
-        public bool Initialized { get; private set; } = false;
+        public bool IsStarted { get; private set; } = false;
+        public bool IsInitialized { get; private set; } = false;
 
         readonly List<Entity> _roots = new();
         readonly List<Entity> _entities = new List<Entity>();
@@ -60,7 +60,7 @@ namespace CrossEngine.Scenes
             if (entity.Parent == null)
                 _roots.Add(entity);
 
-            if (Initialized)
+            if (IsInitialized)
                 World.AddEntity(entity);
 
             Debug.Assert(entity.Children.Count == 0);
@@ -87,7 +87,7 @@ namespace CrossEngine.Scenes
             // remove parenting
             entity.Parent = null;
 
-            if (Initialized)
+            if (IsInitialized)
                 World.RemoveEntity(entity);
 
             _entities.Remove(entity);
@@ -139,7 +139,9 @@ namespace CrossEngine.Scenes
 
         public void Init()
         {
-            Initialized = true;
+            Debug.Assert(!IsInitialized);
+            
+            IsInitialized = true;
             World.Init();
             for (int i = 0; i < _entities.Count; i++)
             {
@@ -149,23 +151,25 @@ namespace CrossEngine.Scenes
 
         public void Deinit()
         {
+            Debug.Assert(IsInitialized);
+
             for (int i = 0; i < _entities.Count; i++)
             {
                 World.RemoveEntity(_entities[i]);
             }
             World.Deinit();
-            Initialized = false;
+            IsInitialized = false;
         }
 
         public void Start()
         {
             World.Start();
-            Started = true;
+            IsStarted = true;
         }
 
         public void Stop()
         {
-            Started = false;
+            IsStarted = false;
             World.Stop();
         }
 

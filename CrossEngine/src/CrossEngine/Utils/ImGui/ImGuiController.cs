@@ -333,6 +333,7 @@ namespace CrossEngine.Utils.ImGui
         private static void SetKeyMappings()
         {
             var io = ImGuiNET.ImGui.GetIO();
+            /* minimal
             io.KeyMap[(int)ImGuiKey.Tab] = (int)Key.Tab;
             io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Key.ArrowLeft;
             io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Key.ArrowRight;
@@ -352,6 +353,69 @@ namespace CrossEngine.Utils.ImGui
             io.KeyMap[(int)ImGuiKey.X] = (int)Key.X;
             io.KeyMap[(int)ImGuiKey.Y] = (int)Key.Y;
             io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;
+            */
+
+            io.KeyMap[(int)ImGuiKey.Tab] = (int)Key.Tab;
+            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Key.ArrowLeft;
+            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Key.ArrowRight;
+            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)Key.ArrowUp;
+            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)Key.ArrowDown;
+            io.KeyMap[(int)ImGuiKey.PageUp] = (int)Key.PageUp;
+            io.KeyMap[(int)ImGuiKey.PageDown] = (int)Key.PageDown;
+            io.KeyMap[(int)ImGuiKey.Home] = (int)Key.Home;
+            io.KeyMap[(int)ImGuiKey.End] = (int)Key.End;
+            io.KeyMap[(int)ImGuiKey.Delete] = (int)Key.Delete;
+            io.KeyMap[(int)ImGuiKey.Backspace] = (int)Key.Backspace;
+            io.KeyMap[(int)ImGuiKey.Enter] = (int)Key.Enter;
+            io.KeyMap[(int)ImGuiKey.Escape] = (int)Key.Escape;
+
+            // letters
+            io.KeyMap[(int)ImGuiKey.A] = (int)Key.A;
+            io.KeyMap[(int)ImGuiKey.B] = (int)Key.B;
+            io.KeyMap[(int)ImGuiKey.C] = (int)Key.C;
+            io.KeyMap[(int)ImGuiKey.D] = (int)Key.D;
+            io.KeyMap[(int)ImGuiKey.E] = (int)Key.E;
+            io.KeyMap[(int)ImGuiKey.F] = (int)Key.F;
+            io.KeyMap[(int)ImGuiKey.G] = (int)Key.G;
+            io.KeyMap[(int)ImGuiKey.H] = (int)Key.H;
+            io.KeyMap[(int)ImGuiKey.I] = (int)Key.I;
+            io.KeyMap[(int)ImGuiKey.J] = (int)Key.J;
+            io.KeyMap[(int)ImGuiKey.K] = (int)Key.K;
+            io.KeyMap[(int)ImGuiKey.L] = (int)Key.L;
+            io.KeyMap[(int)ImGuiKey.M] = (int)Key.M;
+            io.KeyMap[(int)ImGuiKey.N] = (int)Key.N;
+            io.KeyMap[(int)ImGuiKey.O] = (int)Key.O;
+            io.KeyMap[(int)ImGuiKey.P] = (int)Key.P;
+            io.KeyMap[(int)ImGuiKey.Q] = (int)Key.Q;
+            io.KeyMap[(int)ImGuiKey.R] = (int)Key.R;
+            io.KeyMap[(int)ImGuiKey.S] = (int)Key.S;
+            io.KeyMap[(int)ImGuiKey.T] = (int)Key.T;
+            io.KeyMap[(int)ImGuiKey.U] = (int)Key.U;
+            io.KeyMap[(int)ImGuiKey.V] = (int)Key.V;
+            io.KeyMap[(int)ImGuiKey.W] = (int)Key.W;
+            io.KeyMap[(int)ImGuiKey.X] = (int)Key.X;
+            io.KeyMap[(int)ImGuiKey.Y] = (int)Key.Y;
+            io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;
+
+            // numpad
+            io.KeyMap[(int)ImGuiKey.Keypad0] = (int)Key.Numpad0;
+            io.KeyMap[(int)ImGuiKey.Keypad1] = (int)Key.Numpad1;
+            io.KeyMap[(int)ImGuiKey.Keypad2] = (int)Key.Numpad2;
+            io.KeyMap[(int)ImGuiKey.Keypad3] = (int)Key.Numpad3;
+            io.KeyMap[(int)ImGuiKey.Keypad4] = (int)Key.Numpad4;
+            io.KeyMap[(int)ImGuiKey.Keypad5] = (int)Key.Numpad5;
+            io.KeyMap[(int)ImGuiKey.Keypad6] = (int)Key.Numpad6;
+            io.KeyMap[(int)ImGuiKey.Keypad7] = (int)Key.Numpad7;
+            io.KeyMap[(int)ImGuiKey.Keypad8] = (int)Key.Numpad8;
+            io.KeyMap[(int)ImGuiKey.Keypad9] = (int)Key.Numpad9;
+
+            io.KeyMap[(int)ImGuiKey.KeypadDecimal] = (int)Key.NumpadDecimal;
+            io.KeyMap[(int)ImGuiKey.KeypadDivide] = (int)Key.NumpadDivide;
+            io.KeyMap[(int)ImGuiKey.KeypadMultiply] = (int)Key.NumpadMultiply;
+            io.KeyMap[(int)ImGuiKey.KeypadSubtract] = (int)Key.NumpadSubtract;
+            io.KeyMap[(int)ImGuiKey.KeypadAdd] = (int)Key.NumpadAdd;
+            io.KeyMap[(int)ImGuiKey.KeypadEnter] = (int)Key.NumpadEnter;
+            io.KeyMap[(int)ImGuiKey.KeypadEqual] = (int)Key.NumpadEqual;
         }
 
         private unsafe void SetupRenderState(ImDrawDataPtr drawDataPtr, int framebufferWidth, int framebufferHeight)

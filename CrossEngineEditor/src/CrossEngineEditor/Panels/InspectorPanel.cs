@@ -33,7 +33,7 @@ namespace CrossEngineEditor.Panels
 
             if (entity == null)
             {
-                ImGui.Text("No entity selected");
+                ImGui.TextDisabled("No entity selected");
                 return;
             }
 

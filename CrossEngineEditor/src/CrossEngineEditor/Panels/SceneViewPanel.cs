@@ -24,11 +24,12 @@ namespace CrossEngineEditor.Panels
         protected WeakReference<Framebuffer> Framebuffer { get; private set; }
         protected bool ViewportResized;
         private RenderService rs;
-        protected ISurface Surface;
+        protected FramebufferSurface Surface;
 
         public SceneViewPanel(RenderService rs) : base("Scene View")
         {
             this.rs = rs;
+            Surface = new FramebufferSurface();
         }
 
         protected override void PrepareWindow()
@@ -60,9 +61,9 @@ namespace CrossEngineEditor.Panels
                 }
             }
 
-            if (Scene?.Initialized != true || Framebuffer == null)
+            if (Scene?.IsInitialized != true || Framebuffer == null)
             {
-                ImGui.Text("No scene");
+                ImGui.TextDisabled("No scene");
                 return;
             }
 
@@ -76,7 +77,10 @@ namespace CrossEngineEditor.Panels
             ((GLFramebuffer)Framebuffer.GetValue()).EnableAllColorAttachments(true);
             
             Surface.Context.Api.Clear();
-            Surface.DoUpdate();
+            lock (Scene)
+            {
+                Surface.DoUpdate();
+            }
             
             ((GLFramebuffer)Framebuffer.GetValue()).EnableColorAttachment(1, false);
             Framebuffer.GetValue().Unbind();
@@ -96,7 +100,7 @@ namespace CrossEngineEditor.Panels
             var spec = new FramebufferSpecification();
             spec.Attachments = new FramebufferAttachmentSpecification(
                 // using floating point colors
-                new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F),
+                new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F),
                 new FramebufferTextureSpecification(TextureFormat.ColorR32I),
                 new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
                 );
@@ -107,8 +111,9 @@ namespace CrossEngineEditor.Panels
 
             rs.Execute(() =>
             {
-                Framebuffer = CrossEngine.Rendering.Buffers.Framebuffer.Create(ref spec);
-                Surface = new FramebufferSurface(Framebuffer) { Context = rs.MainSurface.Context };
+                Framebuffer = CrossEngine.Rendering.Buffers.Framebuffer.Create(in spec);
+                Surface.Context = rs.MainSurface.Context;
+                Surface.Buffer = Framebuffer;
                 Surface.Update += OnSurfaceUpdate;
                 OnCameraResize();
             });

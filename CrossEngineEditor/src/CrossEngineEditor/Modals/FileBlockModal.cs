@@ -20,7 +20,7 @@ namespace CrossEngineEditor.Modals
         protected override void DrawModalContent()
         {
             ImGui.Text(Text);
-            //ImGui.Text("Please close the file dialog to continue.");
+            //ImGui.Text("You have been blocked...");
             
             //if (ImGui.Button("I don't care"))
             //    EditorApplication.Service.DestructiveDialog(() => this.Open = false);

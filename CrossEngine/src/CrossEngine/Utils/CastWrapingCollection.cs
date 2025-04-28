@@ -16,21 +16,12 @@ namespace CrossEngine.Utils
         public CastWrapCollection(IEnumerable enumerable)
         {
             _underlyingEnumerable = enumerable;
+            if (enumerable is ICollection collection)
+                _underlyingCollection = collection;
+            if (enumerable is IList list)
+                _underlyingList = list;
         }
         
-        public CastWrapCollection(ICollection collection)
-        {
-            _underlyingCollection = collection;
-            _underlyingEnumerable = _underlyingCollection;
-        }
-        
-        public CastWrapCollection(IList list)
-        {
-            _underlyingList = list;
-            _underlyingCollection = _underlyingList;
-            _underlyingEnumerable = _underlyingCollection;
-        }
-
         public int Count
         {
             get

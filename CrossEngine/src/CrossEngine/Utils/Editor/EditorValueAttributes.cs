@@ -189,12 +189,18 @@ namespace CrossEngine.Utils.Editor
     {
         public override EditorAttributeType Kind => EditorAttributeType.AdditionalEdit;
     }
-
+    
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorPathAttribute : EditorValueAttribute
+    public class EditorListAttribute : EditorValueAttribute
     {
         public override EditorAttributeType Kind => EditorAttributeType.AdditionalEdit;
     }
+
+    //[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+    //public class EditorPathAttribute : EditorValueAttribute
+    //{
+    //    public override EditorAttributeType Kind => EditorAttributeType.AdditionalEdit;
+    //}
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorSectionAttribute : EditorValueAttribute
@@ -327,12 +333,12 @@ namespace CrossEngine.Utils.Editor
         }
     }
 
-    //[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    //public class EditorInnerDrawAttribute : EditorValueAttribute
-    //{
-    //    public EditorInnerDrawAttribute() { }
-    //    public EditorInnerDrawAttribute(string name) : base(name) { }
-    //}
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorInnerDrawAttribute : EditorValueAttribute
+    {
+        public EditorInnerDrawAttribute() { }
+        public EditorInnerDrawAttribute(string name) : base(name) { }
+    }
 
     //[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     //public class EditorGradientAttribute : EditorValueAttribute

@@ -43,10 +43,23 @@ namespace CrossEngine.Loaders
 
         public static Mesh<WavefrontVertex> LoadObj(Stream stream)
         {
+            var mesh = ParseObj(stream);
+            ServiceRequest.Invoke(mesh.SetupGpuResources);
+            return mesh;
+        }
+
+        public static void ParseMtl(Stream stream)
+        {
+            
+        }
+
+        public static Mesh<WavefrontVertex> ParseObj(Stream stream)
+        {
             List<WavefrontVertex> vertices = new();
             List<Vector3> position = new();
             List<Vector3> normal = new();
             List<Vector2> texture = new();
+            
             using (StreamReader reader = new StreamReader(stream))
             {
                 string line;
@@ -109,7 +122,6 @@ namespace CrossEngine.Loaders
             }
 
             Mesh<WavefrontVertex> mesh = new(vertices.ToArray());
-            ServiceRequest.Invoke(mesh.SetupGpuResources);
             return mesh;
         }
 

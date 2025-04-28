@@ -34,10 +34,6 @@ namespace CrossEngine.Loaders
 
         internal static unsafe void Init()
         {
-            var gapi = RendererApi.GetApi();
-            if (gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES)
-                StbImage.stbi_set_flip_vertically_on_load(1);
-
             //DefaultTexture = Texture.Create(1, 1, ColorFormat.RGBA);
             //uint col = 0xffff00ff;
             //DefaultTexture.GetValue().SetData(&col, sizeof(uint));
@@ -62,6 +58,9 @@ namespace CrossEngine.Loaders
 
         public static WeakReference<Texture> LoadTextureFromBytes(byte[] filedata, ColorFormat? desiredFormat = null)
         {
+            var gapi = RendererApi.GetApi();
+            StbImage.stbi_set_flip_vertically_on_load((gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES) ? 1 : 0);
+            
             Profiler.BeginScope("texture parsing");
             ImageResult result = ImageResult.FromMemory(filedata);
             Profiler.EndScope();
@@ -70,6 +69,9 @@ namespace CrossEngine.Loaders
 
         public static WeakReference<Texture> LoadTextureFromStream(Stream filedata, ColorFormat? desiredFormat = null)
         {
+            var gapi = RendererApi.GetApi();
+            StbImage.stbi_set_flip_vertically_on_load((gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES) ? 1 : 0);
+            
             Profiler.BeginScope("texture parsing");
             ImageResult result = ImageResult.FromStream(filedata);
             Profiler.EndScope();
@@ -79,7 +81,11 @@ namespace CrossEngine.Loaders
         // px, nx, py, ny, pz, nz
         public static unsafe WeakReference<Texture> LoadCubemap(Stream[] filedata, ColorFormat? desiredFormat = null)
         {
-            Debug.Assert(filedata.Length == 6);
+            if (filedata.Length != 6) throw new InvalidOperationException();
+
+            var gapi = RendererApi.GetApi();
+            StbImage.stbi_set_flip_vertically_on_load((gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES) ? 0 : 1);
+            
             var px = ImageResult.FromStream(filedata[0]);
             var nx = ImageResult.FromStream(filedata[1]);
             var py = ImageResult.FromStream(filedata[2]);

@@ -4,9 +4,11 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using CrossEngine.Logging;
+using CrossEngine.Profiling;
 using CrossEngineEditor.Modals;
 using CrossEngineEditor.Utils.UI;
 using ImGuiNET;
+using Silk.NET.Input;
 
 namespace CrossEngineEditor.Panels;
 
@@ -105,6 +107,8 @@ public class PanelManager
         if (!_initialized)
             throw new InvalidOperationException("pls init");
 
+        Debug.Assert(modal.Open == true || modal.Open == null);
+
         _modals.AddLast(modal);
         
         _log.Trace($"pushed modal '{modal.GetType().FullName}'");
@@ -120,34 +124,56 @@ public class PanelManager
     //    _log.Trace($"pushed popup '{popup.GetType().FullName}'");
     //}
 
-    //public T GetPanel<T>() where T : EditorPanel
-    //{
-    //    return (T)GetPanel(typeof(T));
-    //}
-    //
-    //public EditorPanel GetPanel(Type typeOfPanel)
-    //{
-    //    for (int i = 0; i < _panels.Count; i++)
-    //    {
-    //        if (_panels[i].GetType() == typeOfPanel)
-    //            return _panels[i];
-    //    }
-    //    return null;
-    //}
+    public T GetPanel<T>() where T : EditorPanel
+    {
+        return (T)GetPanel(typeof(T));
+    }
+    
+    public EditorPanel GetPanel(Type typeOfPanel)
+    {
+        for (int i = 0; i < _panels.Count; i++)
+        {
+            if (_panels[i].GetType() == typeOfPanel)
+                return _panels[i];
+        }
+        return null;
+    }
+
+    public T GetModal<T>() where T : EditorModal
+    {
+        return (T)GetModal(typeof(T));
+    }
+
+    public EditorModal GetModal(Type typeOfModal)
+    {
+        for (var node = _modals.First; node != null; node = node.Next)
+        {
+            if (node.Value.GetType() == typeOfModal)
+                return node.Value;
+        }
+        return null;
+    }
 
     public void Draw()
     {
+        Profiler.BeginScope();
+        
         DrawPanels();
         DrawModals();
         //DrawPopups();
+        
+        Profiler.EndScope();
     }
     
     private void DrawPanels()
     {
+        Profiler.BeginScope();
+
         for (int i = 0; i < _panels.Count; i++)
         {
             var p = _panels[i];
 
+            Profiler.BeginScope($"{p.GetType().Name}.{nameof(EditorPanel.Draw)}");
             try
             {
                 p.Draw();
@@ -159,14 +185,23 @@ public class PanelManager
             }
             catch (Exception e)
             {
-                _log.Error($"incident while drawing a panel '{p.WindowName}' ({p.GetType().FullName}): {e.GetType().FullName}: {e.Message}");
+                _log.Error(
+                    $"incident while drawing a panel '{p.WindowName}' ({p.GetType().FullName}): {e.GetType().FullName}: {e.Message}");
                 throw;
             }
+            finally
+            {
+                Profiler.EndScope();
+            }
         }
+        
+        Profiler.EndScope();
     }
     
     private void DrawModals()
     {
+        Profiler.BeginScope();
+
         void DrawModal(LinkedListNode<EditorModal> lln)
         {
             if (lln == null) return;
@@ -189,6 +224,8 @@ public class PanelManager
         }
 
         DrawModal(_modals.First);
+        
+        Profiler.EndScope();
     }
 
     private void AttachPanel(EditorPanel panel)
