@@ -2,6 +2,9 @@
 using System.Diagnostics;
 
 using CrossEngine.Platform.OpenGL;
+#if WINDOWS
+using CrossEngine.Platform.Windows;
+#endif
 
 namespace CrossEngine.Rendering.Buffers
 {
@@ -55,6 +58,9 @@ namespace CrossEngine.Rendering.Buffers
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: wr.SetTarget(new GLVertexBuffer(vertices, size, bufferUsage)); return wr;
+#if WINDOWS
+                case GraphicsApi.GDI: wr.SetTarget(new GdiVertexBuffer(vertices, size)); return wr;
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

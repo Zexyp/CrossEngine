@@ -110,6 +110,18 @@ namespace CrossEngine.Platform.OpenGL
             Debug.Assert(false, $"Unknown {nameof(DepthFunc)} value");
             return 0;
         }
+        
+        public static GLEnum ToGLCullFace(CullFace face)
+        {
+            switch (face)
+            {
+                case CullFace.Front: return GLEnum.Front;
+                case CullFace.Back: return GLEnum.Back;
+            }
+
+            Debug.Assert(false, $"Unknown {nameof(DepthFunc)} value");
+            return 0;
+        }
 
         public static GLEnum ToGLFilterParameter(FilterParameter filter)
         {
@@ -201,6 +213,7 @@ namespace CrossEngine.Platform.OpenGL
                 case GLEnum.Bool: return ShaderDataType.Bool;
 
                 case GLEnum.Sampler2D: return ShaderDataType.Sampler2D;
+                case GLEnum.SamplerCube: return ShaderDataType.SamplerCube;
             }
 
             Debug.Assert(false, $"Invalid type or unknown {nameof(ShaderDataType)} value");
@@ -234,6 +247,7 @@ namespace CrossEngine.Platform.OpenGL
             {
                 case TextureFormat.ColorRGBA8: return GLEnum.Rgb8;
                 case TextureFormat.ColorR32I: return GLEnum.R32i;
+                case TextureFormat.ColorRGBA16F: return GLEnum.Rgba16f;
                 case TextureFormat.ColorRGBA32F: return GLEnum.Rgba32f;
                 case TextureFormat.Depth24Stencil8: return GLEnum.Depth24Stencil8;
             }

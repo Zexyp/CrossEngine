@@ -29,8 +29,4 @@ namespace CrossEngine.Services
         Task Execute(Action action);
         TaskScheduler GetScheduler();
     }
-
-    public interface IEventedService {
-        void OnEvent(Event e);
-    }
 }

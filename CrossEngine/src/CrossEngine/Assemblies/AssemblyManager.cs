@@ -16,7 +16,7 @@ namespace CrossEngine.Assemblies
 {
     public static class AssemblyManager
     {
-        readonly static Logger Log = new Logger("assemblies") { Color = 0xff65df12 };
+        readonly static Logger Log = new Logger("assemblies") { Color = 0xff328f09 };
         readonly static List<Assembly> _loaded = new() { Assembly.GetExecutingAssembly() };
         readonly static Dictionary<AssemblyLoadContext, Assembly> _contexts = new() { { AssemblyLoadContext.Default, Assembly.GetExecutingAssembly() } };
 
@@ -26,8 +26,8 @@ namespace CrossEngine.Assemblies
         {
             Loaded = _loaded.AsReadOnly();
 
-            Log.Trace("default load context:\n" + string.Join("\n", AssemblyLoadContext.Default.Assemblies.Select(a => GetPrintName(a))));
-            Log.Debug("initial assemblies:\n" + string.Join("\n", _loaded.Select(a => GetPrintName(a))));
+            Log.Trace("default load context:\n  " + string.Join("\n  ", AssemblyLoadContext.Default.Assemblies.Select(a => GetPrintName(a))));
+            Log.Debug("initial assemblies:\n  " + string.Join("\n  ", _loaded.Select(a => GetPrintName(a))));
         }
 
         public static IEnumerable<Type> GetSubclasses(Type type)
@@ -123,7 +123,7 @@ namespace CrossEngine.Assemblies
 
                 if (name.Name.StartsWith("System."))
                 {
-                    Log.Trace($"skip loading system like '{GetPrintName(name)}'");
+                    Log.Trace($"skip loading system-like '{GetPrintName(name)}'");
                     continue;
                 }
 

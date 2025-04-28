@@ -12,16 +12,16 @@ namespace CrossEngine.Inputs
 {
     public static class Input
     {
-        internal static Logger Log = new Logger("inputs");
+        private static Logger _log = new Logger("input");
 
-        // TODO: rewrite, use devices
-
+        //[ThreadStatic]
         static internal Mouse mouse;
+        //[ThreadStatic]
         static internal Keyboard keyboard;
 
         static public void ForceReset()
         {
-            Log.Warn("reset is not fully implemented");
+            _log.Warn("reset is not fully implemented");
             throw new NotImplementedException();
 
             //mouseDelta = Vector2.Zero;

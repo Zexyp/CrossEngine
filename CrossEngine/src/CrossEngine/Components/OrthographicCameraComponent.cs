@@ -58,7 +58,7 @@ namespace CrossEngine.Components
 
         private float _far = 1;
         private float _near = -1;
-        private float _size = 1;
+        private float _size = 10;
         private float _aspect = 1;
         private bool _projectionDirty = true;
         private Matrix4x4 _projection = Matrix4x4.Identity;
@@ -73,7 +73,7 @@ namespace CrossEngine.Components
         {
             // rip depth
             // TODO: fix
-            _projection = Matrix4x4.CreateOrthographic(_aspect * _size, _size, _near, _far);
+            _projection = Matrix4x4Extension.CreateOrthographic(_aspect * _size, _size, -_near, -_far);
             _projectionDirty = false;
         }
 

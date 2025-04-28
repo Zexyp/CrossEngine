@@ -20,6 +20,7 @@ namespace CrossEngine.Rendering.Buffers
         // color
         ColorRGBA8,
         ColorR32I,
+        ColorRGBA16F,
         ColorRGBA32F,
 
         // depth and stencil
@@ -107,20 +108,21 @@ namespace CrossEngine.Rendering.Buffers
         public abstract void ClearAttachment(int attachmentIndex, int value);
         public abstract int ReadPixel(int attachmentIndex, uint x, uint y);
         public abstract uint GetColorAttachmentRendererID(int index = 0);
+        public abstract void BlitTo(WeakReference<Framebuffer>? target);
         //public abstract ref FramebufferSpecification GetSpecification();
 
-        public static unsafe WeakReference<Framebuffer> Create(ref FramebufferSpecification specification)
+        public static unsafe WeakReference<Framebuffer> Create(in FramebufferSpecification specification)
         {
-            return Create(new WeakReference<Framebuffer>(null), ref specification);
+            return Create(new WeakReference<Framebuffer>(null), in specification);
         }
 
-        public static unsafe WeakReference<Framebuffer> Create(WeakReference<Framebuffer> wr, ref FramebufferSpecification specification)
+        public static unsafe WeakReference<Framebuffer> Create(WeakReference<Framebuffer> wr, in FramebufferSpecification specification)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: wr.SetTarget(new GLFramebuffer(ref specification)); return wr;
+                case GraphicsApi.OpenGL: wr.SetTarget(new GLFramebuffer(in specification)); return wr;
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

@@ -6,11 +6,18 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Rendering.Culling;
+using CrossEngine.Rendering.Materials;
+using CrossEngine.Rendering.Meshes;
+using CrossEngine.Rendering.Textures;
 
 namespace CrossEngine.Rendering.Renderables
 {
     public interface IRenderable
     {
+        virtual void Init() { }
+        virtual void Destroy() { }
+        
         virtual void Begin(ICamera camera) { }
         virtual void End() { }
 
@@ -19,6 +26,9 @@ namespace CrossEngine.Rendering.Renderables
 
     public abstract class Renderable<T> : IRenderable where T : IObjectRenderData
     {
+        public virtual void Init() { }
+        public virtual void Destroy() { }
+        
         public virtual void Begin(ICamera camera) { }
         public virtual void End() { }
 
@@ -43,6 +53,29 @@ namespace CrossEngine.Rendering.Renderables
     public interface IObjectRenderData
     {
         Matrix4x4 Transform { get; }
+        virtual int Id { get => throw new NotImplementedException(); }
+        bool IsVisible { get; set; }
+        IVolume GetVolume();
+    }
+    
+    interface IMeshRenderData : IObjectRenderData
+    {
+        IMesh Mesh { get; }
+        IMaterial Material { get; }
+    }
+    
+    interface ISpriteRenderData : IObjectRenderData
+    {
+        Vector4 Color { get; }
+        virtual Vector4 TextureOffsets => new Vector4(0, 0, 1, 1);
+        virtual WeakReference<Texture> Texture => null;
+        virtual BlendMode Blend => BlendMode.Opaque;
+        virtual Vector4 DrawOffsets => new Vector4(0, 0, 1, 1);
+    }
+
+    interface ISkyboxRenderData : IObjectRenderData
+    {
+        WeakReference<Texture> Texture { get; }
     }
 
     //interface IDrawable<T, D> where T : Renderable<D> where D : IObjectRenderData

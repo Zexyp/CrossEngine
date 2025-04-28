@@ -11,6 +11,7 @@ namespace CrossEngineEditor.Utils
     // however i don't care so rip weird windows versions
     internal class Theming
     {
+#if WINDOWS
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
@@ -21,5 +22,9 @@ namespace CrossEngineEditor.Utils
             int useImmersiveDarkMode = enabled ? 1 : 0;
             return DwmSetWindowAttribute(handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useImmersiveDarkMode, sizeof(int)) == 0;
         }
+#endif
+
+#if LINUX
+#endif
     }
 }

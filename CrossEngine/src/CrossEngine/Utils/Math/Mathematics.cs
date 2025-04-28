@@ -179,14 +179,17 @@ namespace CrossEngine.Utils
         [Obsolete("opengl specific")]
         public static Matrix4x4 CreateOrthographic(float width, float height, float zNearPlane, float zFarPlane)
         {
+            // diary time [8.4.2025]: today i learned that this was crazily broken...
+            // https://en.wikipedia.org/wiki/Orthographic_projection
+            // also i'm not donating shit
             Matrix4x4 result = Matrix4x4.Identity;
 
             result.M11 = 2.0f / width;
             result.M22 = 2.0f / height;
             // this is one of the magical bugs of the classical stndard System.Numerics.Matrix4x4 struct that makes it non-viable for opengl
             // the fix is 2.0f instead of 1.0f
-            result.M33 = 1.0f / (zNearPlane - zFarPlane);
-            result.M43 = zNearPlane / (zNearPlane - zFarPlane);
+            result.M33 = 2.0f / (zNearPlane - zFarPlane);
+            result.M43 = (zFarPlane + zNearPlane) / (zFarPlane - zNearPlane);
 
             return result;
         }
@@ -206,6 +209,45 @@ namespace CrossEngine.Utils
             result.M41 = (left + right) / (left - right);
             result.M42 = (top + bottom) / (bottom - top);
             result.M43 = zNearPlane / (zNearPlane - zFarPlane);
+
+            return result;
+        }
+
+        // does not throw
+        public static Matrix4x4 CreatePerspectiveFieldOfView(float fieldOfView, float aspectRatio, float nearPlaneDistance, float farPlaneDistance)
+        {
+            /*
+            if (fieldOfView <= 0.0f || fieldOfView >= MathF.PI)
+                throw new ArgumentOutOfRangeException(nameof(fieldOfView));
+
+            if (nearPlaneDistance <= 0.0f)
+                throw new ArgumentOutOfRangeException(nameof(nearPlaneDistance));
+
+            if (farPlaneDistance <= 0.0f)
+                throw new ArgumentOutOfRangeException(nameof(farPlaneDistance));
+
+            if (nearPlaneDistance >= farPlaneDistance)
+                throw new ArgumentOutOfRangeException(nameof(nearPlaneDistance));
+            */
+
+            float yScale = 1.0f / MathF.Tan(fieldOfView * 0.5f);
+            float xScale = yScale / aspectRatio;
+
+            Matrix4x4 result;
+
+            result.M11 = xScale;
+            result.M12 = result.M13 = result.M14 = 0.0f;
+
+            result.M22 = yScale;
+            result.M21 = result.M23 = result.M24 = 0.0f;
+
+            result.M31 = result.M32 = 0.0f;
+            float negFarRange = float.IsPositiveInfinity(farPlaneDistance) ? -1.0f : farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
+            result.M33 = negFarRange;
+            result.M34 = -1.0f;
+
+            result.M41 = result.M42 = result.M44 = 0.0f;
+            result.M43 = nearPlaneDistance * negFarRange;
 
             return result;
         }
@@ -253,12 +295,13 @@ namespace CrossEngine.Utils
         }
         */
 
-        static public Matrix4x4 Invert(Matrix4x4 matrix)
+        static public Matrix4x4 SafeInvert(in Matrix4x4 matrix)
         {
             if (Matrix4x4.Invert(matrix, out Matrix4x4 result))
                 return result;
-            else
-                throw new InvalidOperationException("The matrix is not invertible.");
+            
+            Log.Default.Warn("matrix is not invertible");
+            return Matrix4x4.Identity;
         }
 
         static public void EulerDecompose(out Vector3 translation, out Vector3 rotation, out Vector3 scale, Matrix4x4 matrix)
@@ -648,6 +691,7 @@ namespace CrossEngine.Utils
         }
     }
 
+    // todo: merge with VecColor
     public static class ColorHelper
     {
         //public static Vector3 RGBFromUInt(uint color)

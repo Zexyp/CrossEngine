@@ -1,145 +1,184 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    
-    <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+
+  <PropertyGroup>
+    <TargetFrameworks>net7.0</TargetFrameworks>
+    <!-- i don't get this -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Windows Debug;Windows Profiling;Linux Debug;Linux Profiling;Web</Configurations>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputType>Library</OutputType>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <!-- we need this since output type is library -->
+  </PropertyGroup>
+
+  <!-- resources -->
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- defines and optimization -->
+  <PropertyGroup Condition="'$(Configuration)'=='Windows Debug'">
+    <DefineConstants>DEBUG;WINDOWS;OPENGL</DefineConstants>
+    <Optimize>False</Optimize>
+    <OSPlatform>Windows</OSPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Windows Profiling'">
+    <DefineConstants>DEBUG;WINDOWS;PROFILING;OPENGL</DefineConstants>
+    <Optimize>False</Optimize>
+    <OSPlatform>Windows</OSPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Linux Debug'">
+    <DefineConstants>DEBUG;LINUX;OPENGL</DefineConstants>
+    <Optimize>False</Optimize>
+    <OSPlatform>Linux</OSPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Linux Profiling'">
+    <DefineConstants>DEBUG;LINUX;PROFILING;OPENGL</DefineConstants>
+    <Optimize>False</Optimize>
+    <OSPlatform>Linux</OSPlatform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Web'">
+    <DefineConstants>DEBUG;WASM;OPENGL;OPENGL_ES</DefineConstants>
+    <OSPlatform>Web</OSPlatform>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StbImageSharp" Version="2.27.13" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
+  </ItemGroup>
+
+  <!-- exclude platform -->
+  <ItemGroup>
+    <Compile Remove="src\CrossEngine\Platform\*\**" />
+    <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="src\CrossEngine\Scenes\SceneRenderData.cs" />
+  </ItemGroup>
+
+  <!--
+  <ItemGroup>
+    <Folder Include="src\CrossEngine\Platform\Silk\" />
+  </ItemGroup>
+  -->
+
+  <!-- ##### platform branching stuff ##### -->
+  <Target Name="BeforeBuild">
+    <Message Importance="High" Text="This is pain..." />
+    <Message Importance="High" Text="Platform is '$(OSPlatform)'" />
+  </Target>
+
+  <Choose>
+
+    <!-- windows -->
+    <When Condition="'$(OSPlatform)'=='Windows'">
+
+      <!-- include platform -->
+      <ItemGroup>
+        <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
+        <Compile Include="src\CrossEngine\Platform\Glfw\**" />
+        <Compile Include="src\CrossEngine\Utils\ImGui\**" />
+        <Compile Include="src\CrossEngine\Platform\Windows\**" />
+      </ItemGroup>
+
+      <!-- packages -->
+      <ItemGroup>
+        <PackageReference Include="Pastel" Version="6.0.1" />
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
+        <PackageReference Include="Silk.NET.GLFW" Version="2.22.0" />
+        <PackageReference Include="System.Drawing.Common" Version="9.0.4" />
+      </ItemGroup>
+
+    </When>
+
+    <!-- linux -->
+    <When Condition="'$(OSPlatform)'=='Linux'">
+
+      <!-- include platform -->
+      <ItemGroup>
+        <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
+        <Compile Include="src\CrossEngine\Platform\Glfw\**" />
+        <Compile Include="src\CrossEngine\Utils\ImGui\**" />
+      </ItemGroup>
+
+      <!-- packages -->
+      <ItemGroup>
+        <PackageReference Include="Pastel" Version="4.2.0" />
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
+        <PackageReference Include="Silk.NET.Windowing.Glfw" Version="2.22.0" />
+        <PackageReference Include="Silk.NET.GLFW" Version="2.22.0" />
+      </ItemGroup>
+
+    </When>
+
+    <When Condition="'$(OSPlatform)'=='Web'">
+
+      <!-- include platform -->
+      <ItemGroup>
+        <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
+        <Compile Remove="src\CrossEngine\Platform\OpenGL\GLContext.cs" />
+        <Compile Include="src\CrossEngine\Platform\Wasm\**" />
+      </ItemGroup>
+
+      <!-- packages -->
+      <ItemGroup>
+        <PackageReference Include="Silk.NET.OpenGLES" Version="2.19.0" />
+      </ItemGroup>
+
+      <!-- fuckery -->
+      <PropertyGroup>
+        <OutputType>Exe</OutputType>
+
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Configurations>Debug;Profiling;Wasm</Configurations>
-        <PlatformTarget>AnyCPU</PlatformTarget>
-    </PropertyGroup>
-  
-    <ItemGroup>
-        <Compile Update="Properties\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-    </ItemGroup>
-    
-    <ItemGroup>
-        <EmbeddedResource Update="Properties\Resources.resx">
-            <Generator>PublicResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-    </ItemGroup>
-    
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-        <DefineConstants>DEBUG;WINDOWS</DefineConstants>
-        <Optimize>False</Optimize>
-    </PropertyGroup>
-    
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiling|AnyCPU'">
-        <DefineConstants>DEBUG;WINDOWS;PROFILING</DefineConstants>
-        <Optimize>False</Optimize>
-    </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Wasm|AnyCPU'">
-      <DefineConstants>DEBUG;OPENGL_ES</DefineConstants>
-      <Optimize>False</Optimize>
-    </PropertyGroup>
+        <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <WasmMainJSPath>res/wasm/main.js</WasmMainJSPath>
+
+        <EmccFlags>-s FULL_ES3=1 -lopenal -lGL -s</EmccFlags>
+
+        <!--<PublishTrimmed>true</PublishTrimmed>-->
+        <WasmBuildNative>true</WasmBuildNative>
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <!-- Disable SIMD support as it's prerelease only on Safari -->
+        <!--<WasmEnableSIMD>false</WasmEnableSIMD>-->
+        <!-- Normal,JustInterp,Full,FullInterp,Hybrid,LLVMOnly,LLVMOnlyInterp -->
+        <!--<AOTMode>LLVMOnly</AOTMode>-->
+      </PropertyGroup>
+
+      <!-- other files include -->
+      <ItemGroup>
+        <NativeFileReference Include="res/wasm/native/libEGL.c" ScanForPInvokes="true" />
+        <NativeFileReference Include="res/wasm/native/openal32.c" ScanForPInvokes="true" />
+        <NativeFileReference Include="res/wasm/native/emscripten.c" ScanForPInvokes="true" />
+
+        <WasmExtraFilesToDeploy Include="res/wasm/index.html" />
+        <WasmExtraFilesToDeploy Include="res/wasm/main.js" />
+        <WasmExtraFilesToDeploy Include="res/icon.ico" />
+        <!-- asset deploy mechanism <WasmExtraFilesToDeploy Include="$(MSBuildThisFileDirectory)Assets\**" TargetPath="Assets/%(RecursiveDir)%(Filename)%(Extension)" />-->
+      </ItemGroup>
+
+    </When>
     
-    <ItemGroup>
-        <PackageReference Include="StbImageSharp" Version="2.27.13" />
-    </ItemGroup>
+  </Choose>
 
-    <!-- ##### platform stuff ##### -->
-  
-    <ItemGroup>
-        <Compile Remove="src\CrossEngine\Platform\*\**" />
-        <EmbeddedResource Remove="src\CrossEngine\Platform\*\**" />
-        <None Remove="src\CrossEngine\Platform\*\**" />
-    </ItemGroup>
-  
-    <ItemGroup>
-        <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
-        <EmbeddedResource Remove="src\CrossEngine\Utils\ImGui\**" />
-        <None Remove="src\CrossEngine\Utils\ImGui\**" />
-    </ItemGroup>
-  
-    <Choose>
-        <When Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Profiling'">
-        
-            <ItemGroup>
-                <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
-                <EmbeddedResource Include="src\CrossEngine\Platform\OpenGL\**" />
-                <None Include="src\CrossEngine\Platform\OpenGL\**" />
-                
-                <Compile Include="src\CrossEngine\Platform\Windows\**" />
-                <EmbeddedResource Include="src\CrossEngine\Platform\Windows\**" />
-                <None Include="src\CrossEngine\Platform\Windows\**" />
-              
-                <Compile Include="src\CrossEngine\Utils\ImGui\**" />
-                <EmbeddedResource Include="src\CrossEngine\Utils\ImGui\**" />
-                <None Include="src\CrossEngine\Utils\ImGui\**" />
-            </ItemGroup>
-          
-            <ItemGroup>
-                <PackageReference Include="Pastel" Version="4.2.0" />
-                <PackageReference Include="glfw-net" Version="3.3.1" />
-                <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
-                <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
-            </ItemGroup>
-          
-            <PropertyGroup>
-                <OutputType>Library</OutputType>
-            </PropertyGroup>
-
-            <ItemGroup>
-                <ContentWithTargetPath Include="deps\glfw\win64\glfw3.dll">
-                    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-                    <TargetPath>glfw.dll</TargetPath>
-                </ContentWithTargetPath>
-            </ItemGroup>
-        
-        </When>
-        
-        <When Condition="'$(Configuration)'=='Wasm'">
-        
-            <ItemGroup>
-                <Compile Include="src\CrossEngine\Platform\OpenGL\**" />
-                <EmbeddedResource Include="src\CrossEngine\Platform\OpenGL\**" />
-                <None Include="src\CrossEngine\Platform\OpenGL\**" />
-                
-                <Compile Include="src\CrossEngine\Platform\Wasm\**" />
-                <EmbeddedResource Include="src\CrossEngine\Platform\Wasm\**" />
-                <None Include="src\CrossEngine\Platform\Wasm\**" />
-            </ItemGroup>
-          
-            <ItemGroup>
-                <PackageReference Include="Silk.NET.OpenGLES" Version="2.19.0" />
-            </ItemGroup>
-            
-            <PropertyGroup>
-                <OutputType>Exe</OutputType>
-              
-                <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-              
-                <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
-                <InvariantGlobalization>true</InvariantGlobalization>
-                <WasmMainJSPath>res/wasm/main.js</WasmMainJSPath>
-              
-                <EmccFlags>-s FULL_ES3=1 -lopenal -lGL -s</EmccFlags>
-                
-                <!--<PublishTrimmed>true</PublishTrimmed>-->
-                <WasmBuildNative>true</WasmBuildNative>
-                <RunAOTCompilation>true</RunAOTCompilation>
-                <!-- Disable SIMD support as it's prerelease only on Safari -->
-                <!--<WasmEnableSIMD>false</WasmEnableSIMD>-->
-                <!-- Normal,JustInterp,Full,FullInterp,Hybrid,LLVMOnly,LLVMOnlyInterp -->
-                <!--<AOTMode>LLVMOnly</AOTMode>-->
-            </PropertyGroup>
-            
-            <ItemGroup>
-                <NativeFileReference Include="res/wasm/native/libEGL.c" ScanForPInvokes="true" />
-                <NativeFileReference Include="res/wasm/native/openal32.c" ScanForPInvokes="true" />
-                <NativeFileReference Include="res/wasm/native/emscripten.c" ScanForPInvokes="true" />
-              
-                <WasmExtraFilesToDeploy Include="res/wasm/index.html" />
-                <WasmExtraFilesToDeploy Include="res/wasm/main.js" />
-                <WasmExtraFilesToDeploy Include="res/icon.ico" />
-                <!--<WasmExtraFilesToDeploy Include="$(MSBuildThisFileDirectory)Assets\**" TargetPath="Assets/%(RecursiveDir)%(Filename)%(Extension)" />-->
-            </ItemGroup>
-        
-        </When>
-    </Choose>
-  
 </Project>

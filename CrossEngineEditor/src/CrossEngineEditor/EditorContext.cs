@@ -10,16 +10,15 @@ using CrossEngine.Assets;
 
 namespace CrossEngineEditor
 {
-    public class EditorContext
+    public interface IEditorContext
     {
-        public enum Playmode
-        {
-            None,
-            Stopped,
-            Playing,
-            Paused,
-        }
+        Scene? Scene { get; }
+        Entity? ActiveEntity { get; set; }
+        AssetList? Assets { get; set; }
+    }
 
+    class EditorContext : IEditorContext
+    {
         public Scene Scene
         {
             get => _scene;
@@ -28,8 +27,6 @@ namespace CrossEngineEditor
                 if (value == _scene) return;
                 var old = _scene;
                 _scene = value;
-
-                ActiveEntity = null;
 
                 SceneChanged?.Invoke(old);
             }
@@ -46,7 +43,7 @@ namespace CrossEngineEditor
                 ActiveEntityChanged?.Invoke(old);
             }
         }
-        public AssetPool Assets
+        public AssetList Assets
         {
             get => _assets;
             set
@@ -55,27 +52,14 @@ namespace CrossEngineEditor
                 var old = _assets;
                 _assets = value;
 
-                Scene = null;
-
                 AssetsChanged?.Invoke(old);
-            }
-        }
-        public Playmode Mode
-        {
-            get => _mode;
-            set
-            {
-                if (value == _mode) return;
-                _mode = value;
-
-                ModeChanged?.Invoke();
             }
         }
 
         private Entity _activeEntity = null;
         private Scene _scene = null;
-        private AssetPool _assets = null;
-        private Playmode _mode = Playmode.None;
+        private AssetList _assets = null;
+        // private GraphicsContext Graphics;
 
         // will we ever get here??
         //public readonly List<Entity> SelectedEntities = new List<Entity>();
@@ -83,8 +67,7 @@ namespace CrossEngineEditor
         // no sender parameter since editor context is read-only and only one
         public event Action<Entity> ActiveEntityChanged;
         public event Action<Scene> SceneChanged;
-        public event Action<AssetPool> AssetsChanged;
-        public event Action ModeChanged;
+        public event Action<AssetList> AssetsChanged;
 
         public void Clear()
         {

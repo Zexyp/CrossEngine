@@ -20,7 +20,7 @@ using CrossEngine.Assets;
 
 namespace CrossEngineEditor.Utils
 {
-    public static class InspectDrawer
+    public static unsafe class InspectDrawer
     {
         [Flags]
         public enum EditResult
@@ -43,6 +43,7 @@ namespace CrossEngineEditor.Utils
             
             Debug.Assert(memberInfo.MemberType == MemberTypes.Field || memberInfo.MemberType == MemberTypes.Property, "Member must be field or property."); // why would anybody do this
             Debug.Assert(attribs.Count(a => a.Kind == EditorAttributeType.Edit) <= 1);
+            Debug.Assert(memberInfo.MemberType == MemberTypes.Property ? (((PropertyInfo)memberInfo).CanRead && ((PropertyInfo)memberInfo).CanRead) : true, "Property must be read write.");
 
             var result = EditResult.None;
             try
@@ -70,7 +71,9 @@ namespace CrossEngineEditor.Utils
             }
             catch (Exception ex)
             {
-                PrintInvalidUI($"{memberInfo.GetUnderlyingType().FullName}.{memberInfo.Name}");
+                var under = memberInfo.GetUnderlyingType();
+                
+                PrintInvalidUI($"{under.Namespace}.{under.Name} {memberInfo.DeclaringType.Namespace}.{memberInfo.DeclaringType.Name}.{memberInfo.Name}");
 
                 Log.Default.Warn($"while drawing ui a wild exception appears:\n{ex}");
 
@@ -88,12 +91,19 @@ namespace CrossEngineEditor.Utils
             var membs = type.GetMembers();
             for (int mi = 0; mi < membs.Length; mi++)
             {
+
                 var memb = membs[mi];
+                
+                var idPushed = !type.IsValueType; // hash code changes based on struct contents
+                if (idPushed) ImGui.PushID(HashCode.Combine(target, memb));
+                
                 if (Attribute.IsDefined(memb, typeof(EditorValueAttribute), true))
                 {
                     var result = InspectDrawer.DrawMember(memb, target);
                     editResultHandler?.Invoke(memb, target, result);
                 }
+                
+                if (idPushed) ImGui.PopID();
             }
         }
 
@@ -353,7 +363,7 @@ namespace CrossEngineEditor.Utils
             } },
         };
 
-        static readonly Dictionary<Type, EditorValueRepresentationFunction> AttributeHandlers = new Dictionary<Type, EditorValueRepresentationFunction>()
+        private static readonly Dictionary<Type, EditorValueRepresentationFunction> AttributeHandlers = new Dictionary<Type, EditorValueRepresentationFunction>()
         {
             { typeof(EditorHintAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
                 throw new NotImplementedException();
@@ -388,10 +398,10 @@ namespace CrossEngineEditor.Utils
             } },
 
             { typeof(EditorStringAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
+                // todo: fix
+                
                 var cattrib = (EditorStringAttribute)attribute;
-                var style = ImGui.GetStyle();
                 var v = (string)value;
-                float square = ImGui.GetTextLineHeight() + style.FramePadding.Y * 2;
                 
                 bool pushedColor = v == null;
                 if (pushedColor) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
@@ -477,9 +487,7 @@ namespace CrossEngineEditor.Utils
 
                 if (ImGui.BeginCombo(name, v?.GetName() ?? ""))
                 {
-                    var coll = AssetManager.Current?.GetCollection(type);
-
-                    if (coll != null)
+                    if (AssetManager.Current?.TryGetCollection(type, out var coll) == true)
                         foreach (Asset item in coll)
                         {
                             bool isSelected = item == v;
@@ -501,15 +509,176 @@ namespace CrossEngineEditor.Utils
 
             { typeof(EditorNullableAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
                 ImGui.SameLine();
-
-                if (ImGui.Button("×") && value != null)
+                if (ImGuiUtils.SquareButton("×") && value != null)
                 {
                     value = null;
                     return EditResult.Full;
                 }
+                
+                //ImGui.SetItemTooltip("Fuc icons");
 
                 return EditResult.None;
             } },
+            
+            // fixme: history non fuctional
+            { typeof(EditorListAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) =>
+            {
+                static void ResizeList(IList list, int newSize)
+                {
+                    static object GetDefaultValue(Type type)
+                    {
+                        return type.IsValueType ? Activator.CreateInstance(type) : null;
+                    }
+                    
+                    while (list.Count < newSize)
+                    {
+                        list.Add(GetDefaultValue(list.GetType().GetGenericArguments()[0]));
+                    }
+                    
+                    while (list.Count > newSize)
+                    {
+                        list.RemoveAt(list.Count - 1);
+                    }
+                }
+
+                static void ResizeArray(ref Array array, int newSize)
+                {
+                    var elementType = array.GetType().GetElementType();
+                    var vars = new object[] {array, newSize};
+                    typeof(Array).GetMethod(nameof(Array.Resize)).MakeGenericMethod(elementType).Invoke(null, vars);
+                    array = (Array)vars[0];
+                }
+                
+                var v = (IList)value;
+                EditResult result = EditResult.None;
+                
+                Debug.Assert(value != null);
+                
+                Type vType = v.GetType();
+
+                if (ImGui.TreeNode(name))
+                {
+                    int* valptr = ImGui.GetStateStorage().GetIntRef((uint)"Size".GetHashCode());
+                    int length = valptr != null ? *valptr : v.Count;
+                    length = length == -1 ? v.Count : length;
+                    
+                    ImGui.InputInt("Size", ref length);
+                    if (ImGui.IsItemActivated())
+                        ImGui.GetStateStorage().SetInt((uint)"Size".GetHashCode(), v.Count);
+                    if (ImGui.IsItemDeactivatedAfterEdit())
+                    {
+                        // clamp
+                        length = Math.Max(length, 0);
+                        
+                        if (v is Array array)
+                        {
+                            Log.Default.Trace($"resizing array to {length}");
+                            ResizeArray(ref array, length);
+                            v = array;
+                            result |= EditResult.Changed;
+                        }
+                        else if (vType.IsGenericType && (vType.GetGenericTypeDefinition() == typeof(List<>)))
+                        {
+                            Log.Default.Trace($"resizing list to {length}");
+                            ResizeList(v, length);
+                        }
+                        ImGui.GetStateStorage().SetInt((uint)"Size".GetHashCode(), -1);
+                    }
+                    
+                    if (ImGui.BeginTable(name, 2, ImGuiTableFlags.BordersH | ImGuiTableFlags.SizingStretchProp)) {
+                        for (int i = 0; i < v.Count; i++)
+                        {
+                            ImGui.PushID(i);
+
+                            ImGui.TableNextRow();
+                            
+                            ImGui.TableNextColumn();
+                            ImGui.Text(i.ToString());
+                            ImGui.SameLine();
+                            if (ImGui.ArrowButton("##down", ImGuiDir.Down) && i < v.Count - 1)
+                            {
+                                (v[i + 1], v[i]) = (v[i], v[i + 1]);
+                                result |= EditResult.Changed;
+                            }
+                            ImGui.SameLine();
+                            if (ImGui.ArrowButton("##up", ImGuiDir.Up) && i > 0)
+                            {
+                                (v[i - 1], v[i]) = (v[i], v[i - 1]);
+                                result |= EditResult.Changed;
+                            }
+
+                            ImGui.TableNextColumn();
+                            
+                            var elementType = v[i].GetType();
+                            if (SimpleValueHandlers.ContainsKey(elementType))
+                            {
+                                var variable = v[i];
+                                if (SimpleValueHandlers[elementType](null, "", ref variable))
+                                    v[i] = variable;
+                            }
+                            else if (elementType.IsValueType)
+                            {
+                                InspectDrawer.Inspect(v[i], null, (memb, targ, er) =>
+                                {
+                                    if ((er & EditResult.Changed) != 0)
+                                        v[i] = targ;
+                                });
+                            }
+                            else
+                                InspectDrawer.Inspect(v[i]);
+                            
+                            ImGui.PopID();
+                        }
+                    
+                        ImGui.EndTable();
+                    }
+                    ImGui.TreePop();
+                }
+                else
+                {
+                    ImGui.SameLine();
+                    ImGui.Text($"[{v.Count}]");
+                }
+                
+                // set output
+                value = v;
+
+                return result;
+            } },
+            
+            // fixme: history non fuctional
+            { typeof(EditorInnerDrawAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) =>
+            {
+                var result = EditResult.None;
+                
+                if (ImGui.TreeNode(name))
+                {
+                    if (type.IsValueType)
+                    {
+                        var vrb = value;
+                        InspectDrawer.Inspect(value, null, (memb, targ, er) =>
+                        {
+                            if ((er & EditResult.Changed) != 0)
+                            {
+                                vrb = targ;
+                                result |= EditResult.Changed;
+                            }
+                        });
+                    }
+                    else
+                        InspectDrawer.Inspect(value);
+                    
+                    ImGui.TreePop();
+                }
+                else
+                {
+                    ImGui.SameLine();
+                    ImGui.Text($"...");
+                }
+                
+                return result;
+            } },
+            
             //{ typeof(EditorPathAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
             //    ImGui.SameLine();
             //

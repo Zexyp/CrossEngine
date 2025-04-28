@@ -3,6 +3,7 @@ using CrossEngine.Platform;
 using CrossEngine.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,17 +14,17 @@ namespace CrossEngine.Assets
 {
     public static class AssetManager
     {
-        public static AssetPool Current { get => _current; }
-        
-        internal static AssetService service;
-        
-        private static AssetPool _current;
+        public static AssetList Current { get => _current; }
+
+        internal static Func<Action, Task> ServiceRequest;
+
+        private static AssetList _current;
         private static JsonSerializerOptions _jso;
 
         static AssetManager()
         {
             _jso = new JsonSerializerOptions();
-            foreach (var item in CrossEngine.Serialization.SceneSerializer.BaseConverters)
+            foreach (var item in Serialization.Serializer.BaseJsonConverters)
             {
                 _jso.Converters.Add(item);
             }
@@ -39,52 +40,51 @@ namespace CrossEngine.Assets
         public static T GetNamed<T>(string name) where T : Asset => _current.GetNamed<T>(name);
         public static Asset GetNamed(Type typeOfAsset, string name) => _current.GetNamed(typeOfAsset, name);
 
-        public static void Bind(AssetPool pool)
+        public static void Bind(AssetList pool)
         {
-            _current?.BindLoaders(null);
             _current = pool;
-            _current?.BindLoaders(service.Loaders.ToArray());
         }
 
-        public static async Task<AssetPool> ReadFile(string filepath)
+        public static async Task<AssetList> ReadFile(string filepath)
         {
             using (Stream stream = await PlatformHelper.FileRead(filepath))
             {
-                var pool = JsonSerializer.Deserialize<AssetPool>(stream, _jso);
+                var pool = Read(stream);
                 pool.Directory = Path.Join(Path.GetDirectoryName(filepath), pool.Directory);
                 return pool;
             }
         }
 
-        public static void WriteFile(AssetPool pool, string filepath)
+        public static AssetList Read(Stream stream)
         {
-            using (Stream stream = PlatformHelper.FileWrite(filepath))
+            return JsonSerializer.Deserialize<AssetList>(stream, _jso);
+        }
+
+        public static void WriteFile(AssetList pool, string filepath)
+        {
+            using (Stream stream = PlatformHelper.FileCreate(filepath))
             {
                 string prevdir = pool.Directory;
                 pool.Directory = Path.GetRelativePath(Path.GetDirectoryName(filepath), pool.Directory);
-                JsonSerializer.Serialize(stream, pool, _jso);
+                Write(pool, stream);
                 pool.Directory = prevdir;
             }
         }
 
-        public static void Load()
+        public static void Write(AssetList pool, Stream stream)
         {
-            service.LoadAsync(_current).Wait();
+            JsonSerializer.Serialize(stream, pool, _jso);
         }
 
-        public static void Unload()
+        public static Task Load(AssetList list)
         {
-            service.UnloadAsync(_current).Wait();
+            Debug.Assert(list != null);
+            return ServiceRequest.Invoke(async () => await list.LoadAll());
         }
-
-        public static Task LoadAsync()
+        public static Task Unload(AssetList list)
         {
-            return service.LoadAsync(_current);
-        }
-
-        public static Task UnloadAsync()
-        {
-            return service.UnloadAsync(_current);
+            Debug.Assert(list != null);
+            return ServiceRequest.Invoke(async () => await list.UnloadAll());
         }
     }
 }

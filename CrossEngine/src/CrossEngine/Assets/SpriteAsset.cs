@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    [DependantAsset]
     public class SpriteAsset : Asset
     {
         public override bool Loaded => Texture?.Loaded == true;
@@ -29,12 +28,12 @@ namespace CrossEngine.Assets
 
         public override async Task Load(IAssetLoadContext context)
         {
-            await context.LoadChild<TextureAsset>(idTexture, a => texture = a);
+            texture = context.GetDependency<TextureAsset>(idTexture);
         }
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            await context.FreeChild(Texture);
+            texture = null;
         }
 
         public override void GetObjectData(SerializationInfo info)

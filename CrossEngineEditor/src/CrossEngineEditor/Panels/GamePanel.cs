@@ -5,10 +5,13 @@ using CrossEngine.Utils;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Components;
+using CrossEngine.Rendering;
 
 namespace CrossEngineEditor.Panels
 {
@@ -20,26 +23,13 @@ namespace CrossEngineEditor.Panels
         public GamePanel(RenderService rs) : base(rs)
         {
             WindowName = "Game";
+            Surface.Resize += OnSurfaceResize;
         }
 
-        protected override void DrawWindowContent()
+        private void OnSurfaceResize(ISurface surface, float width, float height)
         {
-            base.DrawWindowContent();
-        }
-
-        public override void OnAttach()
-        {
-            Context.SceneChanged += OnContextSceneChanged;
-        }
-
-        public override void OnDetach()
-        {
-            Context.SceneChanged -= OnContextSceneChanged;
-        }
-
-        private void OnContextSceneChanged(Scene obj)
-        {
-            OnCameraResize();
+            if (Scene?.IsInitialized == true)
+                Scene.World.GetSystem<RenderSystem>().OnSurfaceResize(surface, width, height);
         }
     }
 }

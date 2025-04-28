@@ -10,14 +10,11 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    [DependantAsset]
-    public class SceneAsset : Asset
+    public class SceneAsset : FileAsset
     {
         public override bool Loaded => Scene != null;
 
         public Scene Scene { get; internal set; }
-        [EditorString]
-        public string RelativePath;
 
         public override async Task Load(IAssetLoadContext context)
         {

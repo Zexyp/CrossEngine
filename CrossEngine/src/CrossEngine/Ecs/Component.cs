@@ -12,22 +12,9 @@ namespace CrossEngine.Ecs
     public abstract class Component : ICloneable, ISerializable
     {
         public Entity Entity { get; internal set; }
-        public event Action<Component> EnabledChanged;
 
-        public bool Enabled
-        {
-            get => _enabled;
-            set
-            {
-                if (value == _enabled) return;
-                
-                _enabled = value;
-
-                EnabledChanged?.Invoke(this);
-            }
-        }
-
-        private bool _enabled = true;
+        [Obsolete("not implemented")]
+        public bool Enabled;
 
         public Component()
         {
@@ -40,31 +27,25 @@ namespace CrossEngine.Ecs
             Log.Default.Trace("using default ctor for cloning of component");
 
             var comp = (Component)Activator.CreateInstance(this.GetType());
-            comp.Enabled = this.Enabled;
+            //comp.Enabled = this.Enabled;
             
             return comp;
         }
 
         void ISerializable.GetObjectData(SerializationInfo info)
         {
-            info.AddValue("Enabled", Enabled);
+            //info.AddValue("Enabled", Enabled);
             OnSerialize(info);
         }
 
         void ISerializable.SetObjectData(SerializationInfo info)
         {
-            Enabled = info.GetValue<bool>("Enabled");
+            //Enabled = info.GetValue<bool>("Enabled");
             OnDeserialize(info);
         }
 
-        //protected internal virtual void OnEnable() { }
-        //protected internal virtual void OnDisable() { }
-        //
-        //protected internal virtual void OnAttach() { }
-        //protected internal virtual void OnDetach() { }
-
-        protected internal virtual void OnSerialize(SerializationInfo info) { }
-        protected internal virtual void OnDeserialize(SerializationInfo info) { }
+        protected internal virtual void OnSerialize(SerializationInfo info) => Serializer.UseAttributesWrite(this, info);
+        protected internal virtual void OnDeserialize(SerializationInfo info) => Serializer.UseAttributesRead(this, info);
     }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]

@@ -44,7 +44,27 @@ namespace CrossEngine.Platform.OpenGL
 
         public unsafe GLTexture(uint width, uint height, ColorFormat internalFormat) : this()
         {
+            Target = TextureTarget.Texture2D;
             SetData(null, width, height, internalFormat, internalFormat);
+        }
+
+        public static unsafe GLTexture CreateCubemap(uint width, uint height, void*[] images)
+        {
+            Debug.Assert(images.Length == 6);
+            var tex = new GLTexture();
+            tex.Target = TextureTarget.TextureCubeMap;
+            GLEnum gltarg = GLUtils.ToGLTextureTarget(tex.Target);
+            gl.BindTexture(gltarg, tex._rendererId);
+            
+            for(int i = 0; i < 6; i++)
+            {
+                gl.TexImage2D((GLEnum)(GLEnum.TextureCubeMapPositiveX + i), 0, (int)GLEnum.Rgb, width, height, 0, GLEnum.Rgb, GLEnum.UnsignedByte, images[i]);
+            }
+            
+            tex.SetFilterParameter(FilterParameter.Default);
+            tex.SetWrapParameter(WrapParameter.Default);
+
+            return tex;
         }
 
         protected override unsafe void Dispose(bool disposing)

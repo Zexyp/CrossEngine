@@ -8,6 +8,12 @@ using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Culling
 {
+    [Obsolete("not implemented")]
+    public interface IVolume
+    {
+        public Halfspace IsInFrustum(in Frustum frustum);
+    }
+
     public enum Halfspace
     {
         Outside = 0,
@@ -15,7 +21,7 @@ namespace CrossEngine.Rendering.Culling
         Inside
     }
 
-    public struct AABox
+    public struct AABox : IVolume
     {
         public Vector3 corner;
         public float x, y, z;
@@ -53,9 +59,11 @@ namespace CrossEngine.Rendering.Culling
                 res.Z += z;
             return res;
         }
+
+        public Halfspace IsInFrustum(in Frustum frustum) => frustum.IsAABoxIn(this);
     }
 
-    public struct Sphere
+    public struct Sphere : IVolume
     {
         public Vector3 center;
         public float radius;
@@ -65,6 +73,8 @@ namespace CrossEngine.Rendering.Culling
             this.center = center;
             this.radius = radius;
         }
+        
+        public Halfspace IsInFrustum(in Frustum frustum) => frustum.IsSphereIn(center, radius);
     }
 
     // should be called Frustrum becase it's frustrating
@@ -142,7 +152,7 @@ namespace CrossEngine.Rendering.Culling
         }
         #endregion
 
-        public static Frustum Create(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
+        public static Frustum Create(in Matrix4x4 projectionMatrix, in Matrix4x4 viewMatrix)
         {
             Frustum frustum = new Frustum();
             frustum.Update(projectionMatrix, viewMatrix);
@@ -153,7 +163,7 @@ namespace CrossEngine.Rendering.Culling
         Vector3 centrus;
 #endif
 
-        public unsafe void Update(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
+        public unsafe void Update(in Matrix4x4 projectionMatrix, in Matrix4x4 viewMatrix)
         {
             var result = Matrix4x4.Invert(viewMatrix, out var inv);
             Debug.Assert(result);

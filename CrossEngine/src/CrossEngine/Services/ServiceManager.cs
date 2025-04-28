@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,22 +11,18 @@ namespace CrossEngine.Services
 {
     public class ServiceManager
     {
-        public event Action<ServiceManager> ServicesDestroyed;
-
         readonly List<Service> _services = new List<Service>();
         readonly Dictionary<Type, Service> _servicesDict = new Dictionary<Type, Service>();
         readonly List<IUpdatedService> _updatedServices = new List<IUpdatedService>();
-        readonly List<IEventedService> _eventedServices = new List<IEventedService>();
+        public event OnEventFunction Event;
 
-        public void Register<T>(T service) where T : Service
+        public void Register(Service service)
         {
             _services.Add(service);
             _servicesDict.Add(service.GetType(), service);
             
             if (service is IUpdatedService us)
                 _updatedServices.Add(us);
-            if (service is IEventedService es)
-                _eventedServices.Add(es);
 
             service.Manager = this;
         }
@@ -41,8 +38,6 @@ namespace CrossEngine.Services
                     
                     if (service is IUpdatedService us)
                         _updatedServices.Remove(us);
-                    if (service is IEventedService es)
-                        _eventedServices.Remove(es);
 
                     service.Manager = null;
                 }
@@ -83,7 +78,6 @@ namespace CrossEngine.Services
             {
                 _services[i].OnDestroy();
             }
-            ServicesDestroyed?.Invoke(this);
         }
 
         public void DetachServices()
@@ -102,12 +96,10 @@ namespace CrossEngine.Services
             }
         }
 
-        public void Event(Event e)
+        public void SendEvent(Event e)
         {
-            for (int i = 0; i < _eventedServices.Count; i++)
-            {
-                _eventedServices[i].OnEvent(e);
-            }
+            Debug.Assert(e != null);
+            Event?.Invoke(e);
         }
     }
 }

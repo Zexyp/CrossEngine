@@ -41,7 +41,7 @@ namespace CrossEngine.Events
         public EventDispatcher Dispatch(OnEventFunction<Event> func, Type eventType)
         {
             if (!Event.Handled &&
-                Exact ? TypeOfEvent == eventType : eventType.IsSubclassOf(TypeOfEvent))
+                Exact ? TypeOfEvent == eventType : TypeOfEvent.IsAssignableFrom(eventType))
             {
                 func?.Invoke(Event);
             }

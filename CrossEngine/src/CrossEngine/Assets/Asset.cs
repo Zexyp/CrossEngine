@@ -13,18 +13,10 @@ namespace CrossEngine.Assets
         string GetFullPath(string realtivePath);
         Task<Stream> OpenStream(string path);
 
-        Task LoadChild(Type type, Guid id, Action<Asset> returnCallback);
-        Task FreeChild(Asset asset);
-
-        Loader GetLoader(Type type);
+        Asset GetDependency(Type type, Guid id);
+        virtual T GetDependency<T>(Guid id) where T : Asset => (T)GetDependency(typeof(T), id);
 
         virtual Task<Stream> OpenRelativeStream(string realtivePath) => OpenStream(GetFullPath(realtivePath));
-
-        virtual T GetLoader<T>() where T : Loader => (T)GetLoader(typeof(T));
-        virtual async Task LoadChild<T>(Guid id, Action<T> returnCallback) where T : Asset
-        {
-            await LoadChild(typeof(T), id, a => returnCallback?.Invoke((T)a));
-        }
     }
 
     public abstract class Asset : ISerializable
@@ -33,6 +25,7 @@ namespace CrossEngine.Assets
         public abstract bool Loaded { get; }
         [EditorString]
         public string Name;
+        public virtual IReadOnlyList<Guid> Dependencies { get => new Guid[0]; }
 
         public abstract Task Load(IAssetLoadContext context);
         public abstract Task Unload(IAssetLoadContext context);
@@ -58,8 +51,23 @@ namespace CrossEngine.Assets
         public string GetName() => Name != null ? Name : Id.ToString();
     }
 
-    public class DependantAssetAttribute : Attribute
+    public abstract class FileAsset : Asset
     {
+        [EditorString]
+        public string RelativePath;
 
+        public override void GetObjectData(SerializationInfo info)
+        {
+            base.GetObjectData(info);
+
+            info.AddValue(nameof(RelativePath), RelativePath);
+        }
+
+        public override void SetObjectData(SerializationInfo info)
+        {
+            base.SetObjectData(info);
+
+            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
+        }
     }
 }

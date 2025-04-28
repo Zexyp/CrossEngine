@@ -1,6 +1,13 @@
-﻿using System.Diagnostics;
-
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Reflection;
+using System.Diagnostics;
+using System.Numerics;
+using System.Runtime.InteropServices;
+using CrossEngine.Logging;
 using CrossEngine.Rendering.Shaders;
+using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Buffers
 {
@@ -75,29 +82,105 @@ namespace CrossEngine.Rendering.Buffers
 
     public class BufferLayout
     {
-        private BufferElement[] elements;
-        private uint stride = 0;
+        public ReadOnlyCollection<BufferElement> Elements { get => _elements.AsReadOnly(); }
+        public uint Stride { get; private set; }
 
+        private BufferElement[] _elements;
+
+        private readonly static IReadOnlyDictionary<Type, ShaderDataType> ShaderTypeSwitch = new Dictionary<Type, ShaderDataType>()
+        {
+            { typeof(float), ShaderDataType.Float },
+            { typeof(Vector2), ShaderDataType.Float2 },
+            { typeof(Vector3), ShaderDataType.Float3 },
+            { typeof(Vector4), ShaderDataType.Float4 },
+
+            { typeof(int), ShaderDataType.Int },
+            { typeof(IntVec2), ShaderDataType.Int2 },
+            { typeof(IntVec3), ShaderDataType.Int3 },
+            { typeof(IntVec4), ShaderDataType.Int4 },
+
+            { typeof(bool), ShaderDataType.Bool },
+        }.AsReadOnly();
+
+        private BufferLayout()
+        {
+            
+        }
+        
         public BufferLayout(params BufferElement[] elements)
         {
-            this.elements = elements;
-
+            this._elements = elements;
+            
             CalculateOffsetsAndStride();
+        }
+
+        public static BufferLayout Manual(BufferElement[] elements, uint stride)
+        {
+            var layout = new BufferLayout();
+            layout._elements = elements;
+            layout.Stride = stride;
+            return layout;
+        }
+        
+        public static BufferLayout FromStructType<T>() where T : struct
+        {
+            return FromStructType(typeof(T));
+        }
+        
+        public static BufferLayout FromStructType(Type structure)
+        {
+            BufferLayout layout = new BufferLayout();
+            
+            // check if type makes sense
+            if (!structure.IsValueType)
+                throw new InvalidOperationException("invalid type given to vertex buffer layout!");
+
+            if (ShaderTypeSwitch.ContainsKey(structure)) // check for elements (because vectors have floats)
+            {
+                Log.Default.Warn("no name buffer element will be assigned");
+
+                layout._elements = new[] {new BufferElement(ShaderTypeSwitch[structure], null)};
+                layout.Stride = (uint)Marshal.SizeOf(structure);
+                
+                return layout;
+            }
+
+            List<BufferElement> elements = new List<BufferElement>();
+            
+            FieldInfo[] fields = structure.GetFields();
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (!fields[i].FieldType.IsValueType) // checks the field (ik it's already at the begining)
+                    throw new InvalidOperationException("type given to vertex buffer layout is containing non value type!");
+
+                if (ShaderTypeSwitch.ContainsKey(fields[i].FieldType)) // check if it can be added
+                {
+                    var element = new BufferElement(ShaderTypeSwitch[fields[i].FieldType], fields[i].Name);
+                    element.Offset = (uint)Marshal.OffsetOf(structure, fields[i].Name);
+                    elements.Add(element);
+                }
+                else // otherwise error
+                {
+                    throw new InvalidOperationException("unknown shader data type!");
+                }
+            }
+            
+            layout._elements = elements.ToArray();
+            layout.Stride = (uint)Marshal.SizeOf(structure);
+            
+            return layout;
         }
 
         private void CalculateOffsetsAndStride()
         {
             uint offset = 0;
-            stride = 0;
-            for (int i = 0; i < elements.Length; i++)
+            Stride = 0;
+            for (int i = 0; i < _elements.Length; i++)
             {
-                elements[i].Offset = offset;
-                offset += elements[i].Size;
-                stride += elements[i].Size;
+                _elements[i].Offset = offset;
+                offset += _elements[i].Size;
+                Stride += _elements[i].Size;
             }
         }
-
-        public uint GetStride() => stride;
-        public BufferElement[] GetElements() => elements;
     }
 }

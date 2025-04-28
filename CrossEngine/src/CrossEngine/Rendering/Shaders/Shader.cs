@@ -10,6 +10,9 @@ using CrossEngine.Logging;
 using CrossEngine.Profiling;
 
 using CrossEngine.Platform.OpenGL;
+#if WINDOWS
+using CrossEngine.Platform.Windows;
+#endif
 
 namespace CrossEngine.Rendering.Shaders
 {
@@ -33,6 +36,7 @@ namespace CrossEngine.Rendering.Shaders
         Bool,
 
         Sampler2D,
+        SamplerCube,
     }
 
     public enum ShaderType
@@ -85,11 +89,19 @@ namespace CrossEngine.Rendering.Shaders
 
         public static WeakReference<Shader> Create(string source, ShaderType type)
         {
+            return Create(new WeakReference<Shader>(null), source, type);
+        }
+        
+        public static WeakReference<Shader> Create(WeakReference<Shader> wr, string source, ShaderType type)
+        {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<Shader>(new GLShader(source, type));
+                case GraphicsApi.OpenGL: wr.SetTarget(new GLShader(source, type)); return wr;
+#if WINDOWS
+                case GraphicsApi.GDI: wr.SetTarget(new GdiShader(source, type)); return wr;
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

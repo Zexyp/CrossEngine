@@ -10,6 +10,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Debugging;
+using CrossEngine.Utils;
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -45,6 +46,7 @@ namespace CrossEngine.Platform.OpenGL
                 switch (format)
                 {
                     case TextureFormat.ColorRGBA8: return GLEnum.Rgba;
+                    case TextureFormat.ColorRGBA16F: return GLEnum.Rgba;
                     case TextureFormat.ColorRGBA32F: return GLEnum.Rgba;
                     case TextureFormat.ColorR32I: return GLEnum.RedInteger;
                     case TextureFormat.Depth24Stencil8: return GLEnum.DepthStencil;
@@ -83,7 +85,7 @@ namespace CrossEngine.Platform.OpenGL
         public uint DepthAttachment { get => _depthAttachment; }
         //uint colorAttachment;
 
-        public unsafe GLFramebuffer(ref FramebufferSpecification spec)
+        public unsafe GLFramebuffer(in FramebufferSpecification spec)
         {
             ColorAttachments = _colorAttachments.AsReadOnly();
 
@@ -133,7 +135,116 @@ namespace CrossEngine.Platform.OpenGL
 
             Disposed = true;
         }
+        
+        public override void Bind()
+        {
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
+            gl.Viewport(0, 0, specification.Width, specification.Height);
+        }
 
+        public override void Unbind()
+        {
+            gl.BindFramebuffer(GLEnum.Framebuffer, 0);
+        }
+
+        public override void Resize(uint width, uint height)
+        {
+            if (width == 0 || height == 0 || width > MaxFramebufferSize || height > MaxFramebufferSize)
+            {
+                RendererApi.Log.Warn($"attempted to rezize framebuffer to {width}, {height}");
+                return;
+            }
+            specification.Width = width;
+            specification.Height = height;
+
+            Invalidate();
+        }
+
+        // don't forget it's flipped y ...
+        public override unsafe int ReadPixel(int attachmentIndex, uint x, uint y)
+        {
+            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
+
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
+            
+            gl.ReadBuffer(GLEnum.ColorAttachment0 + attachmentIndex);
+            int pixelData;
+            gl.ReadPixels((int)x, (int)y, 1, 1, Utils.GetColorFormat(colorAttachmentSpecifications[attachmentIndex].Format), GLEnum.Int, &pixelData);
+            return pixelData;
+        }
+
+        public override unsafe void ClearAttachment(int attachmentIndex, int value)
+        {
+            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
+
+            //var spec = colorAttachmentSpecifications[attachmentIndex];
+
+            //(int)_colorAttachments[(int)attachmentIndex]
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
+
+            gl.ClearBuffer(GLEnum.Color, (int)_rendererId, &value);
+        }
+
+        public void EnableColorAttachment(int attachmentIndex, bool enable)
+        {
+            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
+
+            FramebufferTextureSpecification s = colorAttachmentSpecifications[attachmentIndex];
+            s.dontDraw = !enable;
+            colorAttachmentSpecifications[attachmentIndex] = s;
+
+            SetDrawBuffers();
+        }
+
+        public void EnableAllColorAttachments(bool enable)
+        {
+            for (int i = 0; i < colorAttachmentSpecifications.Count; i++)
+            {
+                FramebufferTextureSpecification s = colorAttachmentSpecifications[i];
+                s.dontDraw = !enable;
+                colorAttachmentSpecifications[i] = s;
+            }
+
+            SetDrawBuffers();
+        }
+
+        public override uint GetColorAttachmentRendererID(int attachmentIndex = 0)
+        {
+            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
+            return _colorAttachments[attachmentIndex];
+        }
+
+        public void CopyToScreen()
+        {
+            gl.BindFramebuffer(GLEnum.ReadFramebuffer, _rendererId);
+            gl.BindFramebuffer(GLEnum.DrawFramebuffer, 0);
+            gl.BlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height,
+                              (int)GLEnum.ColorBufferBit, GLEnum.Nearest);
+        }
+
+        private unsafe void SetDrawBuffers()
+        {
+            if (_colorAttachments.Count > 1)
+            {
+                int[] buffers = new int[_colorAttachments.Count];
+                for (int i = 0; i < buffers.Length; i++)
+                {
+                    buffers[i] = (int)(colorAttachmentSpecifications[i].dontDraw ? GLEnum.None : GLEnum.ColorAttachment0 + i);
+                }
+                fixed (void* p = & buffers[0])
+                    gl.DrawBuffers((uint)buffers.Length, (GLEnum*)p);
+            }
+            else if (_colorAttachments.Count == 0)
+            {
+                // Only depth-pass
+#if !OPENGL_ES
+                gl.DrawBuffer(GLEnum.None);
+#else
+                gl.DrawBuffers(0, (GLEnum*)null);
+#endif
+            }
+        }
+        
         unsafe private void Invalidate()
         {
             Profiler.BeginScope($"{nameof(GLFramebuffer)}.{nameof(GLFramebuffer.Invalidate)}");
@@ -256,114 +367,14 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.FramebufferTexture2D(GLEnum.Framebuffer, Utils.GetAttachmentType(spec.Format), GLEnum.Texture2D, texid, 0);
         }
-        
-        public override void Bind()
-        {
-            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
-            gl.Viewport(0, 0, specification.Width, specification.Height);
-        }
 
-        public override void Unbind()
+        public override void BlitTo(WeakReference<Framebuffer> target)
         {
+            throw new NotImplementedException();
+            gl.BindFramebuffer(GLEnum.ReadFramebuffer, this._rendererId);
+            gl.BindFramebuffer(GLEnum.DrawFramebuffer, target == null ? 0 : ((GLFramebuffer)target.GetValue())._rendererId);
+            gl.BlitFramebuffer(0, 0, (int)Width, (int)Height, 0, 0, (int)Width, (int)Height, (uint)GLEnum.DepthBufferBit, GLEnum.Nearest);
             gl.BindFramebuffer(GLEnum.Framebuffer, 0);
-        }
-
-        public override void Resize(uint width, uint height)
-        {
-            if (width == 0 || height == 0 || width > MaxFramebufferSize || height > MaxFramebufferSize)
-            {
-                RendererApi.Log.Warn($"attempted to rezize framebuffer to {width}, {height}");
-                return;
-            }
-            specification.Width = width;
-            specification.Height = height;
-
-            Invalidate();
-        }
-
-        // don't forget it's flipped y ...
-        public override unsafe int ReadPixel(int attachmentIndex, uint x, uint y)
-        {
-            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
-
-            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
-            
-            gl.ReadBuffer(GLEnum.ColorAttachment0 + attachmentIndex);
-            int pixelData;
-            gl.ReadPixels((int)x, (int)y, 1, 1, Utils.GetColorFormat(colorAttachmentSpecifications[attachmentIndex].Format), GLEnum.Int, &pixelData);
-            return pixelData;
-        }
-
-        public override unsafe void ClearAttachment(int attachmentIndex, int value)
-        {
-            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
-
-            //var spec = colorAttachmentSpecifications[attachmentIndex];
-
-            //(int)_colorAttachments[(int)attachmentIndex]
-            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
-
-            gl.ClearBuffer(GLEnum.Color, (int)_rendererId, &value);
-        }
-
-        public void EnableColorAttachment(int attachmentIndex, bool enable)
-        {
-            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
-
-            FramebufferTextureSpecification s = colorAttachmentSpecifications[attachmentIndex];
-            s.dontDraw = !enable;
-            colorAttachmentSpecifications[attachmentIndex] = s;
-
-            SetDrawBuffers();
-        }
-
-        public void EnableAllColorAttachments(bool enable)
-        {
-            for (int i = 0; i < colorAttachmentSpecifications.Count; i++)
-            {
-                FramebufferTextureSpecification s = colorAttachmentSpecifications[i];
-                s.dontDraw = !enable;
-                colorAttachmentSpecifications[i] = s;
-            }
-
-            SetDrawBuffers();
-        }
-
-        public override uint GetColorAttachmentRendererID(int attachmentIndex = 0)
-        {
-            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
-            return _colorAttachments[attachmentIndex];
-        }
-
-        public void CopyToScreen()
-        {
-            gl.BindFramebuffer(GLEnum.ReadFramebuffer, _rendererId);
-            gl.BindFramebuffer(GLEnum.DrawFramebuffer, 0);
-            gl.BlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height,
-                              (int)GLEnum.ColorBufferBit, GLEnum.Nearest);
-        }
-
-        private unsafe void SetDrawBuffers()
-        {
-            if (_colorAttachments.Count > 1)
-            {
-                int[] buffers = new int[_colorAttachments.Count];
-                for (int i = 0; i < buffers.Length; i++)
-                {
-                    buffers[i] = (int)(colorAttachmentSpecifications[i].dontDraw ? GLEnum.None : GLEnum.ColorAttachment0 + i);
-                }
-                fixed (void* p = & buffers[0])
-                    gl.DrawBuffers((uint)buffers.Length, (GLEnum*)p);
-            }
-            else if (_colorAttachments.Count == 0)
-            {
-                // Only depth-pass
-#if !OPENGL_ES
-                gl.DrawBuffer(GLEnum.None);
-#else
-                gl.DrawBuffers(0, (GLEnum*)null);
-#endif
-            }
         }
 
         //---

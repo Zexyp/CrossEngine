@@ -4,6 +4,8 @@ using System.Numerics;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
+using System.Runtime.InteropServices;
+
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -15,21 +17,22 @@ using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL
 {
+    // fixme: profiling
     class GLRendererApi : RendererApi
     {
         public override unsafe void Init()
         {
             Log.Debug("opengl info:\nversion: {0}\nrenderer: {1}\nvendor: {2}",
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Version)),
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Renderer)),
-                GLHelper.PtrToStringUtf8((IntPtr)gl.GetString(GLEnum.Vendor)));
+                Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Version)),
+                Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Renderer)),
+                Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Vendor)));
         }
 
         public override unsafe void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)
         {
-            var vb = vertexArray.GetValue();
-            var ib = vb.GetIndexBuffer().GetValue();
-            vb.Bind();
+            var va = vertexArray.GetValue();
+            var ib = va.GetIndexBuffer().GetValue();
+            va.Bind();
             uint count = (indexCount != 0) ? indexCount : ib.Count;
             gl.DrawElements(GLEnum.Triangles, count, GLUtils.ToGLIndexDataType(ib.DataType), null);
             // TODO: consider unbinding to keep the vertex array state safe
@@ -46,7 +49,7 @@ namespace CrossEngine.Platform.OpenGL
 
         public override void SetViewport(uint x, uint y, uint width, uint height) => gl.Viewport((int)x, (int)y, width, height);
 
-        public override void SetClearColor(Vector4 color) => gl.ClearColor(color.X, color.Y, color.Z, color.W);
+        public override void SetClearColor(float r, float g, float b, float a) => gl.ClearColor(r, g, b, a);
 
         public override void SetPolygonMode(PolygonMode mode) =>
 #if !OPENGL_ES
@@ -77,6 +80,18 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.Enable(GLEnum.Blend);
             gl.BlendFunc(GLEnum.SrcAlpha, GLUtils.ToGLBlendFunc(func));
+        }
+        
+        public override void SetCullFace(CullFace face)
+        {
+            if (face == CullFace.None)
+            {
+                gl.Disable(GLEnum.CullFace);
+                return;
+            }
+
+            gl.Enable(GLEnum.CullFace);
+            gl.CullFace(GLUtils.ToGLCullFace(face));
         }
 
         public override void SetLineWidth(float width) => gl.LineWidth(width);

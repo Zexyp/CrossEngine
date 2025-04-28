@@ -14,6 +14,9 @@ using System.Diagnostics.Contracts;
 using System.Diagnostics;
 using CrossEngine.Display;
 using CrossEngine.Events;
+using Silk.NET.GLFW;
+using CrossEngine.Platform.Glfw;
+
 #if GLES
 using Silk.NET.OpenGLES;
 #elif GL
@@ -21,6 +24,7 @@ using Silk.NET.OpenGL;
 #elif LEGACY
 using Silk.NET.OpenGL.Legacy;
 #endif
+using static CrossEngine.Platform.Glfw.GlfwWindow;
 
 
 namespace CrossEngine.Utils.ImGui
@@ -47,7 +51,7 @@ namespace CrossEngine.Utils.ImGui
     }
 
     // no communism
-    class MyImGuiController : IDisposable
+    unsafe class MyImGuiController : IDisposable
     {
         // TODO: cursors
 
@@ -76,7 +80,7 @@ namespace CrossEngine.Utils.ImGui
         private float _scrollY;
         private float _scrollX;
 
-        private GLFW.Cursor[] _mouseCursors = new GLFW.Cursor[(int)ImGuiMouseCursor.COUNT];
+        private Cursor*[] _mouseCursors = new Cursor*[(int)ImGuiMouseCursor.COUNT];
 
         /// <summary>
         /// Constructs a new ImGuiController with font configuration and onConfigure Action.
@@ -123,38 +127,38 @@ namespace CrossEngine.Utils.ImGui
             var io = ImGui.GetIO();
 
             
-            _mouseCursors[(int)ImGuiMouseCursor.Arrow] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
-            _mouseCursors[(int)ImGuiMouseCursor.TextInput] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Beam);
-            _mouseCursors[(int)ImGuiMouseCursor.ResizeNS] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.ResizeVertical);
-            _mouseCursors[(int)ImGuiMouseCursor.ResizeEW] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.ResizeHorizontal);
-            _mouseCursors[(int)ImGuiMouseCursor.Hand] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Hand);
-            _mouseCursors[(int)ImGuiMouseCursor.ResizeAll] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
-            _mouseCursors[(int)ImGuiMouseCursor.ResizeNESW] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
-            _mouseCursors[(int)ImGuiMouseCursor.ResizeNWSE] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
-            _mouseCursors[(int)ImGuiMouseCursor.NotAllowed] = GLFW.Glfw.CreateStandardCursor(GLFW.CursorType.Arrow);
+            _mouseCursors[(int)ImGuiMouseCursor.Arrow] = glfw.CreateStandardCursor(CursorShape.Arrow);
+            _mouseCursors[(int)ImGuiMouseCursor.TextInput] = glfw.CreateStandardCursor(CursorShape.IBeam);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeNS] = glfw.CreateStandardCursor(CursorShape.VResize);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeEW] = glfw.CreateStandardCursor(CursorShape.HResize);
+            _mouseCursors[(int)ImGuiMouseCursor.Hand] = glfw.CreateStandardCursor(CursorShape.Hand);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeAll] = glfw.CreateStandardCursor(CursorShape.AllResize);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeNESW] = glfw.CreateStandardCursor(CursorShape.NeswResize);
+            _mouseCursors[(int)ImGuiMouseCursor.ResizeNWSE] = glfw.CreateStandardCursor(CursorShape.NwseResize);
+            _mouseCursors[(int)ImGuiMouseCursor.NotAllowed] = glfw.CreateStandardCursor(CursorShape.NotAllowed);
         }
 
         private void UpdateMouseCursor()
         {
             ImGuiIOPtr io = ImGui.GetIO();
-            if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) != 0 || (GLFW.CursorMode)GLFW.Glfw.GetInputMode(((CrossEngine.Platform.Windows.GlfwWindow)_window).NativeHandle, GLFW.InputMode.Cursor) == GLFW.CursorMode.Disabled)
+            if ((io.ConfigFlags & ImGuiConfigFlags.NoMouseCursorChange) != 0 || (CursorModeValue)glfw.GetInputMode(((CrossEngine.Platform.Glfw.GlfwWindow)_window).NativeHandle, CursorStateAttribute.Cursor) == CursorModeValue.CursorDisabled)
                 return;
 
             ImGuiMouseCursor imgui_cursor = ImGui.GetMouseCursor();
             // (those braces are here to reduce diff with multi-viewports support in 'docking' branch)
             {
-                GLFW.Window window = ((CrossEngine.Platform.Windows.GlfwWindow)_window).NativeHandle;
+                WindowHandle* window = ((CrossEngine.Platform.Glfw.GlfwWindow)_window).NativeHandle;
                 if (imgui_cursor == ImGuiMouseCursor.None || io.MouseDrawCursor)
                 {
                     // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
-                    GLFW.Glfw.SetInputMode(window, GLFW.InputMode.Cursor, (int)GLFW.CursorMode.Hidden);
+                    glfw.SetInputMode(window, CursorStateAttribute.Cursor, CursorModeValue.CursorHidden);
                 }
                 else
                 {
                     // Show OS mouse cursor
                     // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
-                    GLFW.Glfw.SetCursor(window, _mouseCursors[(int)imgui_cursor] != GLFW.Cursor.None ? _mouseCursors[(int)imgui_cursor] : _mouseCursors[(int)ImGuiMouseCursor.Arrow]);
-                    GLFW.Glfw.SetInputMode(window, GLFW.InputMode.Cursor, (int)GLFW.CursorMode.Normal);
+                    glfw.SetCursor(window, _mouseCursors[(int)imgui_cursor] != null ? _mouseCursors[(int)imgui_cursor] : _mouseCursors[(int)ImGuiMouseCursor.Arrow]);
+                    glfw.SetInputMode(window, CursorStateAttribute.Cursor, CursorModeValue.CursorNormal);
                 }
             }
         }
@@ -329,6 +333,7 @@ namespace CrossEngine.Utils.ImGui
         private static void SetKeyMappings()
         {
             var io = ImGuiNET.ImGui.GetIO();
+            /* minimal
             io.KeyMap[(int)ImGuiKey.Tab] = (int)Key.Tab;
             io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Key.ArrowLeft;
             io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Key.ArrowRight;
@@ -348,6 +353,69 @@ namespace CrossEngine.Utils.ImGui
             io.KeyMap[(int)ImGuiKey.X] = (int)Key.X;
             io.KeyMap[(int)ImGuiKey.Y] = (int)Key.Y;
             io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;
+            */
+
+            io.KeyMap[(int)ImGuiKey.Tab] = (int)Key.Tab;
+            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Key.ArrowLeft;
+            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Key.ArrowRight;
+            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)Key.ArrowUp;
+            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)Key.ArrowDown;
+            io.KeyMap[(int)ImGuiKey.PageUp] = (int)Key.PageUp;
+            io.KeyMap[(int)ImGuiKey.PageDown] = (int)Key.PageDown;
+            io.KeyMap[(int)ImGuiKey.Home] = (int)Key.Home;
+            io.KeyMap[(int)ImGuiKey.End] = (int)Key.End;
+            io.KeyMap[(int)ImGuiKey.Delete] = (int)Key.Delete;
+            io.KeyMap[(int)ImGuiKey.Backspace] = (int)Key.Backspace;
+            io.KeyMap[(int)ImGuiKey.Enter] = (int)Key.Enter;
+            io.KeyMap[(int)ImGuiKey.Escape] = (int)Key.Escape;
+
+            // letters
+            io.KeyMap[(int)ImGuiKey.A] = (int)Key.A;
+            io.KeyMap[(int)ImGuiKey.B] = (int)Key.B;
+            io.KeyMap[(int)ImGuiKey.C] = (int)Key.C;
+            io.KeyMap[(int)ImGuiKey.D] = (int)Key.D;
+            io.KeyMap[(int)ImGuiKey.E] = (int)Key.E;
+            io.KeyMap[(int)ImGuiKey.F] = (int)Key.F;
+            io.KeyMap[(int)ImGuiKey.G] = (int)Key.G;
+            io.KeyMap[(int)ImGuiKey.H] = (int)Key.H;
+            io.KeyMap[(int)ImGuiKey.I] = (int)Key.I;
+            io.KeyMap[(int)ImGuiKey.J] = (int)Key.J;
+            io.KeyMap[(int)ImGuiKey.K] = (int)Key.K;
+            io.KeyMap[(int)ImGuiKey.L] = (int)Key.L;
+            io.KeyMap[(int)ImGuiKey.M] = (int)Key.M;
+            io.KeyMap[(int)ImGuiKey.N] = (int)Key.N;
+            io.KeyMap[(int)ImGuiKey.O] = (int)Key.O;
+            io.KeyMap[(int)ImGuiKey.P] = (int)Key.P;
+            io.KeyMap[(int)ImGuiKey.Q] = (int)Key.Q;
+            io.KeyMap[(int)ImGuiKey.R] = (int)Key.R;
+            io.KeyMap[(int)ImGuiKey.S] = (int)Key.S;
+            io.KeyMap[(int)ImGuiKey.T] = (int)Key.T;
+            io.KeyMap[(int)ImGuiKey.U] = (int)Key.U;
+            io.KeyMap[(int)ImGuiKey.V] = (int)Key.V;
+            io.KeyMap[(int)ImGuiKey.W] = (int)Key.W;
+            io.KeyMap[(int)ImGuiKey.X] = (int)Key.X;
+            io.KeyMap[(int)ImGuiKey.Y] = (int)Key.Y;
+            io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;
+
+            // numpad
+            io.KeyMap[(int)ImGuiKey.Keypad0] = (int)Key.Numpad0;
+            io.KeyMap[(int)ImGuiKey.Keypad1] = (int)Key.Numpad1;
+            io.KeyMap[(int)ImGuiKey.Keypad2] = (int)Key.Numpad2;
+            io.KeyMap[(int)ImGuiKey.Keypad3] = (int)Key.Numpad3;
+            io.KeyMap[(int)ImGuiKey.Keypad4] = (int)Key.Numpad4;
+            io.KeyMap[(int)ImGuiKey.Keypad5] = (int)Key.Numpad5;
+            io.KeyMap[(int)ImGuiKey.Keypad6] = (int)Key.Numpad6;
+            io.KeyMap[(int)ImGuiKey.Keypad7] = (int)Key.Numpad7;
+            io.KeyMap[(int)ImGuiKey.Keypad8] = (int)Key.Numpad8;
+            io.KeyMap[(int)ImGuiKey.Keypad9] = (int)Key.Numpad9;
+
+            io.KeyMap[(int)ImGuiKey.KeypadDecimal] = (int)Key.NumpadDecimal;
+            io.KeyMap[(int)ImGuiKey.KeypadDivide] = (int)Key.NumpadDivide;
+            io.KeyMap[(int)ImGuiKey.KeypadMultiply] = (int)Key.NumpadMultiply;
+            io.KeyMap[(int)ImGuiKey.KeypadSubtract] = (int)Key.NumpadSubtract;
+            io.KeyMap[(int)ImGuiKey.KeypadAdd] = (int)Key.NumpadAdd;
+            io.KeyMap[(int)ImGuiKey.KeypadEnter] = (int)Key.NumpadEnter;
+            io.KeyMap[(int)ImGuiKey.KeypadEqual] = (int)Key.NumpadEqual;
         }
 
         private unsafe void SetupRenderState(ImDrawDataPtr drawDataPtr, int framebufferWidth, int framebufferHeight)

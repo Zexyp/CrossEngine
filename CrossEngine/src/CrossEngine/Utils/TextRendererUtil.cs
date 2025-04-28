@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,31 +11,53 @@ using System.Numerics;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Debugging;
-using CrossEngine.Assets.Loaders;
+using CrossEngine.Loaders;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Utils
 {
     public static class TextRendererUtil
     {
-        const int SymbolsCount = 95;
-        public const float SymbolWidth = 12;
-        public const float SymbolHeight = 16;
+        public enum DrawMode
+        {
+            None = default, YUp, YDown
+        }
+        
+        public struct TextRendererUtilData
+        {
+            public const char SymbolStart = ' ';
+            public const int SymbolsCount = 95;
+            public const float SymbolWidth = 12;
+            public const float SymbolHeight = 16;
+            public static readonly Vector4 SymbolMargin = new Vector4(0, 0, 4, 0);
 
-        static WeakReference<Texture> textTexture;
-        static TextureAtlas textAtlas;
+            public WeakReference<Texture> AtlasTexture;
+            public Vector4[] AtlasOffsets;
+            public DrawMode Mode;
+        }
 
+        // atlas options
+        public static TextRendererUtilData data = new TextRendererUtilData()
+        {
+            Mode = DrawMode.YUp
+        };
+        
         public static void Init()
         {
-            textTexture = TextureLoader.LoadTexture(Properties.Resources.DebugFontAtlas);
-            var tex = textTexture.GetValue();
+            Log.Default.Debug($"initializing {nameof(TextRendererUtil)}");
+
+            data.AtlasTexture = TextureLoader.LoadTextureFromBytes(Properties.Resources.DebugFontAtlas);
+            var tex = data.AtlasTexture.GetValue();
             tex.SetFilterParameter(FilterParameter.Nearest);
-            textAtlas = new TextureAtlas(tex.Size, new Vector2(12, 16), SymbolsCount, margin: new Vector4(0, 0, 4, 0));
+            data.AtlasOffsets = TextureAtlas.CreateOffsets(tex.Size, new Vector2(TextRendererUtilData.SymbolWidth, TextRendererUtilData.SymbolHeight), TextRendererUtilData.SymbolsCount, margin: TextRendererUtilData.SymbolMargin);
         }
 
         public static void Shutdown()
         {
-            textTexture.Dispose();
-            textTexture = null;
+			Log.Default.Debug($"shutting down {nameof(TextRendererUtil)}");
+            
+            data.AtlasTexture.Dispose();
+            data.AtlasTexture = null;
         }
 
         public static void DrawText(Matrix4x4 transform, string text, Vector4 color, int entID = 0)
@@ -44,7 +67,21 @@ namespace CrossEngine.Utils
 
             int line = 0;
             // i hate matrices
-            transform = Matrix4x4.CreateScale(new Vector3(SymbolWidth, SymbolHeight, 1)) * Matrix4x4.CreateTranslation(new Vector3(SymbolWidth / 2, -SymbolHeight / 2, 0)) * transform;
+            float scaleY = TextRendererUtilData.SymbolHeight, offsetY = TextRendererUtilData.SymbolHeight;
+            switch (data.Mode)
+            {
+                case DrawMode.YUp:
+                    scaleY = TextRendererUtilData.SymbolHeight;
+                    offsetY = TextRendererUtilData.SymbolHeight;
+                    break;
+                case DrawMode.YDown:
+                    scaleY = -TextRendererUtilData.SymbolHeight;
+                    offsetY = -TextRendererUtilData.SymbolHeight;
+                    break;
+                default: Debug.Assert(false, "Invalid DrawMode"); break;
+            };
+
+            transform = Matrix4x4.CreateScale(new Vector3(TextRendererUtilData.SymbolWidth, scaleY, 1)) * Matrix4x4.CreateTranslation(new Vector3(TextRendererUtilData.SymbolWidth / 2, -offsetY / 2, 0)) * transform;
             int column = 0;
             for (int i = 0; i < text.Length; i++)
             {
@@ -69,15 +106,24 @@ namespace CrossEngine.Utils
                 column++;
 
                 int chord = text[i] - ' ';
+
                 // clamp
-                if (chord < 0 || chord >= SymbolsCount) chord = '?' - ' ';
+                if (chord < 0 || chord >= TextRendererUtilData.SymbolsCount)
+                    chord = '?' - TextRendererUtilData.SymbolStart;
 
                 Renderer2D.DrawTexturedQuad(matrix,
-                                            textTexture,
+                                            data.AtlasTexture,
                                             color,
-                                            textAtlas.GetTextureOffsets(chord),
+                                            data.AtlasOffsets[chord],
                                             entID);
             }
+        }
+
+        public static DrawMode SetMode(DrawMode mode)
+        {
+            var last = data.Mode;
+            data.Mode = mode;
+            return last;
         }
     }
 }

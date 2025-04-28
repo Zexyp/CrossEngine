@@ -13,36 +13,40 @@ using CrossEngine.Services;
 using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Platform;
-using CrossEngine.Assets.Loaders;
+using CrossEngine.Loaders;
+using CrossEngine.Rendering.Shaders;
+using CrossEngine.Rendering.Buffers;
+using System.Numerics;
 
 namespace CrossEngine.Services
 {
     public class RenderService : Service, IScheduledService
     {
-        public RendererApi RendererApi { get; private set; }
-        public event Action<RenderService> Frame;
-        public event Action<RenderService> BeforeFrame;
-        public event Action<RenderService> AfterFrame;
         public bool IgnoreRefresh { get; set; } = false;
+        public ScreenSurface MainSurface => _surface;
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
-        bool _running = false;
-        GraphicsContext Context;
+        GraphicsContext _context;
         GraphicsApi _api;
+        ScreenSurface _surface = new ScreenSurface();
 
-        public RenderService()
+        public RenderService(GraphicsApi? api = null)
         {
-            _api = PlatformHelper.GetGraphicsApi();
+            _api = api ?? PlatformHelper.GetGraphicsApi();
         }
 
         public override void OnAttach()
         {
             var ws = Manager.GetService<WindowService>();
             ws.Execute(Setup);
+
+            CallingThreadSetup();
         }
 
         public override void OnDetach()
         {
+            CallingThreadDestroy();
+
             var ws = Manager.GetService<WindowService>();
             ws.Execute(Destroy);
         }
@@ -55,69 +59,123 @@ namespace CrossEngine.Services
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent += OnWindowEvent;
             ws.WindowUpdate += OnWindowUpdate;
-            Context = ws.Window.Context;
+            
+            _context = ws.MainWindow.InitGraphics(_api);
+            _context.Init();
+            _context.MakeCurrent();
 
-            RendererApi.Init();
-            RendererApi.SetClearColor(new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1.0f));
-            RendererApi.SetViewport(0, 0, ws.Window.Width, ws.Window.Height);
+            GraphicsContext.SetupCurrent(_context);
+
+            _context.Api = RendererApi.Create(_api);
+            _context.Api.Init();
+
+            _context.Api.SetClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+            _context.Api.SetViewport(0, 0, ws.MainWindow.Width, ws.MainWindow.Height);
+            
+            _surface.Context = _context;
+            _surface.DoResize(ws.MainWindow.Width, ws.MainWindow.Height);
 
             Prepare();
+
+            GraphicsContext.SetupCurrent(null);
         }
 
         private void Destroy()
         {
+            GraphicsContext.SetupCurrent(_context);
+
             Shutdown();
 
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent -= OnWindowEvent;
             ws.WindowUpdate -= OnWindowUpdate;
+            
+            ws.MainWindow.Graphics.Dispose();
 
-            RendererApi.Dispose();
-            RendererApi = null;
-            Context.Dispose();
-            Context = null;
+            _context.Api.Dispose();
+            _context.Api = null;
+
+            GraphicsContext.SetupCurrent(null);
+
+            _context.Dispose();
+            _context = null;
         }
 
-        private void OnWindowEvent(WindowService ws, Event e)
+        private void CallingThreadSetup()
         {
+            ShaderPreprocessor.ServiceRequest = Execute;
+            TextureLoader.ServiceRequest = Execute;
+            MeshLoader.ServiceRequest = Execute;
+        }
+
+        private void CallingThreadDestroy()
+        {
+            MeshLoader.ServiceRequest = null;
+            TextureLoader.ServiceRequest = null;
+            ShaderPreprocessor.ServiceRequest = null;
+        }
+
+        private void OnWindowEvent(Window w, Event e)
+        {
+            GraphicsContext.SetupCurrent(w.Graphics);
+
             // this is supposed to fix state when resizing window
             // it's unfortunate that when just holding the window nothing happens
             // also used when window dictates it's own redrawing
             if (!IgnoreRefresh && (e is WindowRefreshEvent))
-                DrawPresent();
+                DrawPresent(w.Graphics);
+
             if (e is WindowResizeEvent wre)
-                RendererApi.SetViewport(0, 0, wre.Width, wre.Height);
+            {
+                w.Graphics.Api.SetViewport(0, 0, wre.Width, wre.Height);
+                _surface.DoResize(wre.Width, wre.Height);
+            }
+            
+            GraphicsContext.SetupCurrent(null);
         }
 
-        private void OnWindowUpdate(WindowService obj)
+        private void OnWindowUpdate(Window w)
         {
-            DrawPresent();
+            GraphicsContext.SetupCurrent(w.Graphics);
+            
+            DrawPresent(w.Graphics);
+            
+            GraphicsContext.SetupCurrent(null);
         }
 
-        private void DrawPresent()
+        private void DrawPresent(GraphicsContext context)
         {
             Profiler.BeginScope("Render");
 
             _scheduler.RunOnCurrentThread();
 
-            BeforeFrame?.Invoke(this);
-            Frame?.Invoke(this);
-            AfterFrame?.Invoke(this);
+            _surface.DoUpdate();
 
             Profiler.EndScope();
 
             Profiler.BeginScope("Swap");
 
-            Context.SwapBuffers();
+            context.SwapBuffers();
 
             Profiler.EndScope();
         }
 
         private void Prepare()
         {
-            Renderer2D.Init(RendererApi);
-            LineRenderer.Init(RendererApi);
-            
+            Task OnServiceRequest(Action action)
+            {
+                action.Invoke();
+                return Task.CompletedTask;
+            }
+
+            ShaderPreprocessor.ServiceRequest = OnServiceRequest;
+            ShaderPreprocessor.Init();
+            TextureLoader.ServiceRequest = OnServiceRequest;
+            TextureLoader.Init();
+            MeshLoader.ServiceRequest = OnServiceRequest;
+
+            Renderer2D.Init(_context.Api);
+            LineRenderer.Init(_context.Api);
             TextRendererUtil.Init();
 
             _scheduler.RunOnCurrentThread();
@@ -127,21 +185,52 @@ namespace CrossEngine.Services
         {
             _scheduler.RunOnCurrentThread();
 
-            Renderer2D.Shutdown();
-            LineRenderer.Shutdown();
-            
             TextRendererUtil.Shutdown();
+            LineRenderer.Shutdown();
+            Renderer2D.Shutdown();
+
+            MeshLoader.ServiceRequest = null;
+            TextureLoader.Shutdown();
+            TextureLoader.ServiceRequest = null;
+            ShaderPreprocessor.Shutdown();
+            ShaderPreprocessor.ServiceRequest = null;
         }
+
+        private void OnInternalServiceReqest(Action action) => Execute(action);
 
         public override void OnStart()
         {
-            RendererApi = RendererApi.Create(_api);
-            TextureLoader.InternalInit();
+            
         }
 
         public override void OnDestroy()
         {
-            
+
+        }
+
+        public class ScreenSurface : ISurface
+        {
+            public WeakReference<Framebuffer> Buffer => null;
+            public Vector2 Size { get; private set; }
+            public GraphicsContext Context { get; set; }
+
+            public event Action<ISurface, float, float> Resize;
+            public event Action<ISurface> BeforeUpdate;
+            public event Action<ISurface> Update;
+            public event Action<ISurface> AfterUpdate;
+
+            public void DoResize(float width, float height)
+            {
+                Size = new(width, height);
+                Resize?.Invoke(this, width, height);
+            }
+
+            public void DoUpdate()
+            {
+                BeforeUpdate?.Invoke(this);
+                Update?.Invoke(this);
+                AfterUpdate?.Invoke(this);
+            }
         }
     }
 }

@@ -9,6 +9,7 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Textures;
 using System.Linq;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Rendering
 {
@@ -24,16 +25,18 @@ namespace CrossEngine.Rendering
 		}
 	}
 
-	public enum BlendMode
-	{
-		Opaque = default,
-		Blend,
-		Clip,
-	}
+    public enum BlendMode
+    {
+        Opaque = default,
+        Blend,
+        Clip,
+		Add,
+    }
 
-	public class Renderer2D
+    public class Renderer2D
 	{
 		#region Shader Sources
+#if OPENGL
 		static readonly string VertexShaderSource =
 #if !OPENGL_ES
 			"#version 330 core\n" +
@@ -90,7 +93,7 @@ namespace CrossEngine.Rendering
 			"void main()\n" +
 			"{\n" +
             "    vec4 texColor = vColor;\n" +
-#if !OPENGL_ES
+#if false
 			"    texColor *= texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
 #else
             "    switch (int(vTexIndex))\n" +
@@ -129,7 +132,7 @@ namespace CrossEngine.Rendering
 			"\n" +
 			"void main()\n" +
 			"{\n" +
-#if !OPENGL_ES
+#if false
 			"    vec4 texColor = texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
 #else
             "    vec4 texColor;\n" +
@@ -145,9 +148,47 @@ namespace CrossEngine.Rendering
             "    oColor = texColor;\n" +
             "    oEntityIDColor = vEntityID;\n" +
 			"}\n";
-#endregion
+#elif GDI
+		static readonly string VertexShaderSource =
+@"
+var aPosition = (Vector3)AttributesIn[0];
+var aColor = (Vector4)AttributesIn[1];
+var aTexCoord = (Vector2)AttributesIn[2];
+var aTexIndex = (float)AttributesIn[3];
+var aEntityID = (int)AttributesIn[4];
 
-		public struct PrimitiveVertex
+var uViewProjection = (Matrix4x4)Uniforms[""uViewProjection""];
+
+Out[""vColor""] = aColor;
+Out[""vTexCoord""] = aTexCoord;
+Out[""vTexIndex""] = aTexIndex;
+Out[""vEntityID""] = aEntityID;
+
+gdi_Position = Vector4.Transform(new Vector4(aPosition, 1), uViewProjection);
+";
+		static readonly string FragmentShaderSource =
+@"
+var vColor = (Vector4)In[""vColor""];
+var vTexCoord = (Vector2)In[""vTexCoord""];
+var vTexIndex = (float)In[""vTexIndex""];
+var vEntityID = (int)In[""vEntityID""];
+
+var uTextures = (int[])Uniforms[""uTextures""];
+
+Vector4 texColor = vColor;
+
+texColor *= Sample(uTextures[(int)vTexIndex], vTexCoord);
+
+AttributesOut[0] = texColor;
+AttributesOut[1] = vEntityID;
+";
+		static readonly string DiscardingFragmentShaderSource = "";
+#else
+#error
+#endif
+        #endregion
+
+        public struct PrimitiveVertex
 		{
 			public Vector3 position;
 			public Vector4 color;
@@ -235,6 +276,8 @@ namespace CrossEngine.Rendering
 
 		public static unsafe void Init(RendererApi rapi)
 		{
+			Log.Default.Debug($"initializing {nameof(Renderer2D)}");
+			
 			_rapi = rapi;
 
 			var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex).GetValue();
@@ -255,10 +298,10 @@ namespace CrossEngine.Rendering
 				samplers[i] = (int)i;
 			var shader = data.regularShader.GetValue();
 			shader.Use();
-			shader.SetParameter1("uTextures", samplers);
+			shader.SetParameterIntVec("uTextures", samplers);
 			shader = data.discardingShader.GetValue();
 			shader.Use();
-			shader.SetParameter1("uTextures", samplers);
+			shader.SetParameterIntVec("uTextures", samplers);
 
 			//data.cameraUniformBuffer = new UniformBuffer(null, sizeof(Renderer2DData.CameraData), BufferUsage.DynamicDraw);
 			//data.cameraUniformBuffer.BindTo(0);
@@ -321,6 +364,8 @@ namespace CrossEngine.Rendering
 
 		public static void Shutdown()
 		{
+			Log.Default.Debug($"shutting down {nameof(Renderer2D)}");
+			
 			data.discardingShader.Dispose();
 			data.regularShader.Dispose();
 			data.whiteTexture.Dispose();
@@ -348,8 +393,8 @@ namespace CrossEngine.Rendering
 
 		public static void Flush()
 		{
-			FlushQuads();
-			FlushTris();
+			NextQuadsBatch();
+			NextTrisBatch();
 		}
 
 		public static void EndScene()
@@ -444,6 +489,11 @@ namespace CrossEngine.Rendering
 					_rapi.SetBlendFunc(BlendFunc.None);
 					shader = data.discardingShader.GetValue();
 					break;
+                case BlendMode.Add:
+                    _rapi.SetBlendFunc(BlendFunc.One);
+                    shader = data.regularShader.GetValue();
+                    break;
+                default: Debug.Assert(false); break;
 			}
 
 			Debug.Assert(shader != null);
@@ -458,9 +508,11 @@ namespace CrossEngine.Rendering
         }
 		#endregion
 
-		public static void SetBlending(BlendMode mode)
+		public static BlendMode SetBlending(BlendMode mode)
 		{
-			data.blending = mode;
+			var last = data.blending;
+            data.blending = mode;
+			return last;
 		}
 
 		#region Quads
@@ -677,7 +729,6 @@ namespace CrossEngine.Rendering
 			data.tris.Stats.ItemCount++;
 		}
 		#endregion
-
 
 		//// simple
 		//public static void DrawQuad(Vector2 position, Vector2 size, Vector4 color) => DrawQuad(new Vector3(position, 0.0f), size, color);

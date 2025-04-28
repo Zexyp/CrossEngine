@@ -73,6 +73,16 @@ namespace CrossEngine.Properties {
         /// <summary>
         ///   Vyhledává lokalizovaný prostředek typu System.Byte[].
         /// </summary>
+        public static byte[] DefaultTexture {
+            get {
+                object obj = ResourceManager.GetObject("DefaultTexture", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Vyhledává lokalizovaný prostředek typu System.Byte[].
+        /// </summary>
         public static byte[] Logo {
             get {
                 object obj = ResourceManager.GetObject("Logo", resourceCulture);

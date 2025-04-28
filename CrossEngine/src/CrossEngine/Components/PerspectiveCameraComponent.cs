@@ -44,8 +44,8 @@ namespace CrossEngine.Components
                 _projectionDirty = true;
             }
         }
-        [EditorDrag]
-        public float FOV
+        [EditorDrag(Min = 0.1f, Max = 179f)]
+        public float Fov
         {
             get => _fov;
             set
@@ -56,7 +56,7 @@ namespace CrossEngine.Components
             }
         }
 
-        private float _far = 1000;
+        private float _far = 100;
         private float _near = .1f;
         private float _fov = 90;
         private float _aspect = 1;
@@ -73,7 +73,7 @@ namespace CrossEngine.Components
         {
             // rip depth
             // TODO: fix
-            _projection = Matrix4x4.CreatePerspectiveFieldOfView(MathExtension.ToRadConstF * _fov, _aspect, _near, _far);
+            _projection = Matrix4x4Extension.CreatePerspectiveFieldOfView(MathExtension.ToRadConstF * _fov, _aspect, _near, _far);
             _projectionDirty = false;
         }
 
@@ -83,7 +83,7 @@ namespace CrossEngine.Components
             comp.Primary = this.Primary;
             comp.Near = this.Near;
             comp.Far = this.Far;
-            comp.FOV = this.FOV;
+            comp.Fov = this.Fov;
             return comp;
         }
 
@@ -92,7 +92,7 @@ namespace CrossEngine.Components
             info.AddValue(nameof(Primary), Primary);
             info.AddValue(nameof(Near), Near);
             info.AddValue(nameof(Far), Far);
-            info.AddValue(nameof(FOV), FOV);
+            info.AddValue(nameof(Fov), Fov);
         }
 
         protected internal override void OnDeserialize(SerializationInfo info)
@@ -100,7 +100,7 @@ namespace CrossEngine.Components
             Primary = info.GetValue(nameof(Primary), Primary);
             Near = info.GetValue(nameof(Near), Near);
             Far = info.GetValue(nameof(Far), Far);
-            FOV = info.GetValue(nameof(FOV), FOV);
+            Fov = info.GetValue(nameof(Fov), Fov);
         }
     }
 }

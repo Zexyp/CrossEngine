@@ -1,4 +1,5 @@
-﻿using CrossEngine.Events;
+﻿using CrossEngine.Display;
+using CrossEngine.Events;
 using CrossEngine.Rendering;
 using CrossEngine.Services;
 using System;
@@ -12,33 +13,39 @@ namespace CrossEngine.Debugging
 {
     public class OverlayService : Service
     {
-        readonly List<Overlay> _overlays = new List<Overlay>();
+        readonly List<IOverlay> _overlays = new List<IOverlay>();
         private float _lastWidth, _lastHeight;
+
+        public OverlayService()
+        {
+            
+        }
+
+        public OverlayService(params IOverlay[] overlays)
+        {
+            for (int i = 0; i < overlays.Length; i++)
+            {
+                AddOverlay(overlays[i]);
+            }
+        }
 
         public override void OnAttach()
         {
             var rs = Manager.GetService<RenderService>();
-            var ws = Manager.GetService<WindowService>();
-            rs.Frame += OnRender;
-            ws.WindowEvent += OnEvent;
-            ws.Execute(() => OnResize(ws.Window.Width, ws.Window.Height));
+            rs.MainSurface.AfterUpdate += OnRender;
+            rs.MainSurface.Resize += OnResize;
+            rs.Execute(() => OnResize(rs.MainSurface, rs.MainSurface.Size.X, rs.MainSurface.Size.Y));
         }
 
         public override void OnDetach()
         {
             var rs = Manager.GetService<RenderService>();
-            var ws = Manager.GetService<WindowService>();
-            rs.Frame -= OnRender;
-            ws.WindowEvent -= OnEvent;
+            rs.MainSurface.AfterUpdate -= OnRender;
+            rs.MainSurface.Resize -= OnResize;
+
         }
 
-        private void OnEvent(WindowService ws, Event e)
-        {
-            if (e is WindowResizeEvent wre)
-                OnResize(wre.Width, wre.Height);
-        }
-
-        private void OnResize(float width, float height)
+        private void OnResize(ISurface surface, float width, float height)
         {
             _lastWidth = width;
             _lastHeight = height;
@@ -48,20 +55,21 @@ namespace CrossEngine.Debugging
             }
         }
 
-        void OnRender(RenderService rs)
+        void OnRender(ISurface surface)
         {
+            surface.Context.Api.SetViewport(0, 0, (uint)_lastWidth, (uint)_lastHeight);
             for (int i = 0; i < _overlays.Count; i++)
             {
                 _overlays[i].Draw();
             }
         }
 
-        public void AddOverlay(Overlay overlay)
+        public void AddOverlay(IOverlay overlay)
         {
             _overlays.Add(overlay);
             overlay.Resize(_lastWidth, _lastHeight);
         }
-        public void RemoveOverlay(Overlay overlay) => _overlays.Remove(overlay);
+        public void RemoveOverlay(IOverlay overlay) => _overlays.Remove(overlay);
 
         public override void OnStart()
         {

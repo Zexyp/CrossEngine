@@ -1,5 +1,5 @@
 ﻿using CrossEngine.Assets;
-using CrossEngine.Assets.Loaders;
+using CrossEngine.Loaders;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Serialization;
 using CrossEngine.Utils;
@@ -14,51 +14,54 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    public class TextureAsset : Asset
+    public class TextureAsset : FileAsset
     {
-        public override bool Loaded { get => _loaded; }
-
         public WeakReference<Texture> Texture = null;
 
-        [EditorString]
-        public string RelativePath;
+        public override bool Loaded => Texture != null;
 
         //[EditorEnum]
         //[EditorNullable]
         //public ColorFormat? Format = null;
 
-        private bool _loaded = false;
-
         public override async Task Load(IAssetLoadContext context)
         {
             using (Stream stream = await context.OpenRelativeStream(RelativePath))
             {
-                Texture = context.GetLoader<TextureLoader>().ScheduleTextureLoad(stream);
+                Texture = TextureLoader.LoadTextureFromStream(stream);
             }
-            
-            _loaded = true;
         }
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            _loaded = false;
-
-            context.GetLoader<TextureLoader>().ScheduleTextureUnload(Texture);
+            TextureLoader.Free(Texture);            
             Texture = null;
         }
+    }
 
-        public override void GetObjectData(SerializationInfo info)
+    public class SkyboxAsset : TextureAsset
+    {
+        public WeakReference<Texture> Texture = null;
+        
+        public override bool Loaded => Texture != null;
+
+        //[EditorEnum]
+        //[EditorNullable]
+        //public ColorFormat? Format = null;
+
+        private static string[] fixes = new[] { "px", "nx", "py", "ny", "pz", "nz" };
+
+        public override async Task Load(IAssetLoadContext context)
         {
-            base.GetObjectData(info);
-
-            info.AddValue(nameof(RelativePath), RelativePath);
+            var streams = fixes.Select(fix => context.OpenRelativeStream(Path.Join(Path.GetDirectoryName(RelativePath), Path.GetFileNameWithoutExtension(RelativePath) + $".{fix}" + Path.GetExtension(RelativePath))).Result).ToArray();
+            Texture = TextureLoader.LoadCubemap(streams);
+            streams.ToList().ForEach(s => s.Dispose());
         }
 
-        public override void SetObjectData(SerializationInfo info)
+        public override async Task Unload(IAssetLoadContext context)
         {
-            base.SetObjectData(info);
-
-            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
+            TextureLoader.Free(Texture);            
+            Texture = null;
         }
     }
 }
