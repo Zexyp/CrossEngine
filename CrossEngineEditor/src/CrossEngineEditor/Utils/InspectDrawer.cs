@@ -509,7 +509,7 @@ namespace CrossEngineEditor.Utils
 
             { typeof(EditorNullableAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
                 ImGui.SameLine();
-                if (ImGuiUtils.SquareButton("×") && value != null)
+                if (ImGuiUtil.SquareButton("×") && value != null)
                 {
                     value = null;
                     return EditResult.Full;

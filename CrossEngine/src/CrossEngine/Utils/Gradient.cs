@@ -18,7 +18,7 @@ namespace CrossEngine.Utils
     //    void AddPoint(Vector4 value);
     //}
     
-    public interface IGradient : ISerializable
+    public interface IGradient : ISerializable/*, ICloneable*/
     {
         int ElementCount { get; }
         Type Type { get; }

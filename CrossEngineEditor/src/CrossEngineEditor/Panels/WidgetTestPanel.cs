@@ -10,7 +10,7 @@ using ImGuiNET;
 
 namespace CrossEngineEditor.Panels;
 
-internal class TestWidgetPanel : EditorPanel
+internal class WidgetTestPanel : EditorPanel
 {
     public struct TestStruct
     {
@@ -32,9 +32,19 @@ internal class TestWidgetPanel : EditorPanel
     [EditorList] public TestStruct[] ArrayListitko = new TestStruct[1] { new() { Position = 1, Color = ColorHelper.U32ToVec4(0x7C05A300)} };
     private Gradient<Vector4> gradient = new Gradient<Vector4>();
 
-    protected override void DrawWindowContent()
+    protected override unsafe void DrawWindowContent()
     {
         InspectDrawer.Inspect(this);
         ImGradient.Manipulate(gradient);
+
+        ImGuiUtil.BeginPaddedGroup();
+        ImGuiUtil.BeginPaddedGroup();
+        ImGuiUtil.BeginPaddedGroup();
+        ImGui.Text("woah");
+        ImGuiUtil.EndPaddedGroup();
+        ImGuiUtil.EndPaddedGroup();
+        ImGuiUtil.EndPaddedGroup();
+        
+        //ImGradient.Manipulate(gradient);
     }
 }

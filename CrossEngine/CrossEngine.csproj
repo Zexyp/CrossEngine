@@ -2,13 +2,14 @@
 
   <PropertyGroup>
     <TargetFrameworks>net7.0</TargetFrameworks>
+    <LangVersion>12.0</LangVersion>
     <!-- i don't get this -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Windows Debug;Windows Profiling;Linux Debug;Linux Profiling;Web</Configurations>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputType>Library</OutputType>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <!-- we need this since output type is library -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <!-- resources -->
@@ -122,7 +123,7 @@
       <!-- packages -->
       <ItemGroup>
         <PackageReference Include="Pastel" Version="4.2.0" />
-        <PackageReference Include="Silk.NET.OpenGL" Version="2.19.0" />
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
         <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
         <PackageReference Include="Silk.NET.Windowing.Glfw" Version="2.22.0" />
         <PackageReference Include="Silk.NET.GLFW" Version="2.22.0" />

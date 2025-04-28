@@ -179,7 +179,7 @@ namespace CrossEngineEditor
             Panels.RegisterPanel(new SimpleThemeGeneratorPanel());
             
 #if DEBUG
-            Panels.PushPanel(new TestWidgetPanel());
+            Panels.PushPanel(new WidgetTestPanel());
 #endif
         }
 

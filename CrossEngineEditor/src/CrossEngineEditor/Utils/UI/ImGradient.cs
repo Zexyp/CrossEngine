@@ -50,25 +50,25 @@ namespace CrossEngineEditor.Utils.Gui
             if (gradient is Gradient<Vector4>)
             {
                 var markerCol = ((Gradient<Vector4>)gradient).Elements[index].value;
-                if (ImGui.ColorEdit4("value", ref markerCol))
+                if (ImGui.ColorEdit4("Value", ref markerCol))
                     gradient.SetElementValue(index, markerCol);
             }
             if (gradient is Gradient<Vector3>)
             {
                 var markerCol = ((Gradient<Vector3>)gradient).Elements[index].value;
-                if (ImGui.ColorEdit3("value", ref markerCol))
+                if (ImGui.ColorEdit3("Value", ref markerCol))
                     gradient.SetElementValue(index, markerCol);
             }
             if (gradient is Gradient<Vector2>)
             {
                 var markerCol = ((Gradient<Vector2>)gradient).Elements[index].value;
-                if (ImGui.DragFloat2("value", ref markerCol, 0.01f))
+                if (ImGui.DragFloat2("Value", ref markerCol, 0.01f))
                     gradient.SetElementValue(index, markerCol);
             }
             if (gradient is Gradient<float>)
             {
                 var markerCol = ((Gradient<float>)gradient).Elements[index].value;
-                if (ImGui.DragFloat("value", ref markerCol, 0.01f))
+                if (ImGui.DragFloat("Value", ref markerCol, 0.01f))
                     gradient.SetElementValue(index, markerCol);
             }
         }
@@ -80,7 +80,7 @@ namespace CrossEngineEditor.Utils.Gui
             var h = pmax.Y - pmin.Y;
             var sign = Math.Sign(h);
 
-            var margin = 2;
+            var margin = 2; // outline
             var marginh = margin * sign;
             var selectedCol = *ImGui.GetStyleColorVec4(ImGuiCol.TextSelectedBg);
             selectedCol = Vector4.One - selectedCol; // visibility fix
@@ -131,23 +131,23 @@ namespace CrossEngineEditor.Utils.Gui
 	        for (int i = 0; i < markerArray.Elements.Count ; i++)
 	        {
 		        var x = (int)(markerArray.Elements[i].position * width);
-		        ImGui.SetCursorScreenPos(new(originPos.X + x - 5, originPos.Y));
+		        ImGui.SetCursorScreenPos(new(originPos.X + x - markerWidth / 2, originPos.Y));
 
                 var markerCol = GetVector4(markerArray.Elements[i].value);
                 markerCol.W = 1;
                 if (markerDir == MarkerDirection.ToLower)
                 {
                     DrawMarker(
-                        new(originPos.X + x - 5, originPos.Y + markerHeight),
-                        new(originPos.X + x + 5, originPos.Y + 0),
+                        new(originPos.X + x - markerWidth / 2, originPos.Y + markerHeight),
+                        new(originPos.X + x + markerWidth / 2, originPos.Y + 0),
                         ImGui.ColorConvertFloat4ToU32(markerCol),
                         selectedIndex == i);
                 }
                 else if (markerDir == MarkerDirection.ToUpper)
                 {
                     DrawMarker(
-                        new(originPos.X + x - 5, originPos.Y + 0),
-                        new(originPos.X + x + 5, originPos.Y + markerHeight),
+                        new(originPos.X + x - markerWidth / 2, originPos.Y + 0),
+                        new(originPos.X + x + markerWidth / 2, originPos.Y + markerHeight),
                         ImGui.ColorConvertFloat4ToU32(markerCol),
                         selectedIndex == i);
                 }
@@ -187,22 +187,24 @@ namespace CrossEngineEditor.Utils.Gui
 
         public static bool Manipulate<T>(Gradient<T> state) where T : struct
         {
+            var style = ImGui.GetStyle();
+
             bool changed = false;
 
             ImGui.PushID(state.GetHashCode());
 
-            ImGuiUtils.BeginGroupFrame();
+            ImGuiUtil.BeginPaddedGroup();
 
             var originPos = ImGui.GetCursorScreenPos();
 
             var drawList = ImGui.GetWindowDrawList();
 
-            var margin = 5;
+            var margin = style.ItemSpacing.X;
 
-            var width = ImGui.GetContentRegionAvail().X - margin * 2;
+            var width = ImGui.GetContentRegionAvail().X - margin;
             var barHeight = 20;
-            var markerWidth = 10;
-            var markerHeight = 15;
+            var markerWidth = 16;
+            var markerHeight = 20;
 
             //changed |= UpdateMarker(state, "a", originPos, width, markerWidth, markerHeight, MarkerDirection.ToLower);
             //
@@ -321,11 +323,10 @@ namespace CrossEngineEditor.Utils.Gui
 
             originPos = ImGui.GetCursorPos();
 
-            var style = ImGui.GetStyle();
             var font = ImGui.GetFont();
             ImGui.SetCursorPosX(availWidth - (style.FramePadding.X * 2 + font.FontSize * font.Scale));
             ImGui.SameLine();
-            if (ImGuiUtils.SquareButton("+"))
+            if (ImGuiUtil.SquareButton("+"))
             {
                 // addition behaviour
                 if (state.ElementCount == 0)
@@ -334,7 +335,7 @@ namespace CrossEngineEditor.Utils.Gui
                 }
                 else if (state.ElementCount == 1)
                 {
-                    selectedIndex = state.AddElement(0.5f, state.Elements[0].value);
+                    selectedIndex = state.AddElement(state.Elements[0].position > 0.5f ? 0 : 1, state.Elements[0].value);
                 }
                 else if (selectedIndex == 0)
                 {
@@ -350,7 +351,7 @@ namespace CrossEngineEditor.Utils.Gui
                 }
             }
             ImGui.SameLine();
-            if (ImGuiUtils.SquareButton("-") && state.ElementCount > 1)
+            if (ImGuiUtil.SquareButton("-") && state.ElementCount > 1)
             {
                 state.RemoveElement(selectedIndex);
                 if (state.ElementCount > 0)
@@ -363,7 +364,7 @@ namespace CrossEngineEditor.Utils.Gui
             {
                 float pos = state.Elements[selectedIndex].position;
                 EditColor(state, selectedIndex);
-                if (ImGui.DragFloat("pos", ref pos, 0.01f, 0, 1))
+                if (ImGui.DragFloat("Position", ref pos, 0.01f, 0, 1))
                     selectedIndex = state.SetElementPosition(selectedIndex, pos);
             }
 
@@ -371,7 +372,7 @@ namespace CrossEngineEditor.Utils.Gui
             stateStorage.SetInt(ImGui.GetID("gradientState.selectedIndex"), Math.Clamp(selectedIndex, 0, Math.Max(state.ElementCount - 1, 0)));
             stateStorage.SetInt(ImGui.GetID("gradientState.draggingIndex"), Math.Clamp(draggingIndex, -1, state.ElementCount - 1));
 
-            ImGuiUtils.EndGroupFrame();
+            ImGuiUtil.EndPaddedGroup();
 
             ImGui.PopID();
 
