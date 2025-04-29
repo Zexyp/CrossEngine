@@ -17,6 +17,11 @@ namespace CrossEngine.Debugging
         public abstract void Draw();
     }
 
+    public interface ISceneOverlay : IOverlay
+    {
+        public ICamera Camera { get; set; }
+    }
+
     public abstract class HudOverlay : IOverlay
     {
         protected readonly Camera Camera = new Camera();

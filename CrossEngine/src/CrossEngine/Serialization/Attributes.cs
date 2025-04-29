@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 namespace CrossEngine.Serialization
 {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    class SerializeAttribute : Attribute { }
+    class SerializeIncludeAttribute : Attribute { }
 }

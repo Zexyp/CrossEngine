@@ -77,7 +77,7 @@ namespace CrossEngine.Serialization
             for (int i = 0; i < props.Length; i++)
             {
                 var prop = props[i];
-                if (!Attribute.IsDefined(prop, typeof(SerializeAttribute)))
+                if (!Attribute.IsDefined(prop, typeof(SerializeIncludeAttribute)))
                     continue;
                 info.AddValue(prop.Name, prop.GetValue(target));
             }
@@ -85,7 +85,7 @@ namespace CrossEngine.Serialization
             for (int i = 0; i < fields.Length; i++)
             {
                 var field = fields[i];
-                if (!Attribute.IsDefined(field, typeof(SerializeAttribute)))
+                if (!Attribute.IsDefined(field, typeof(SerializeIncludeAttribute)))
                     continue;
                 info.AddValue(field.Name, field.GetValue(target));
             }
@@ -98,7 +98,7 @@ namespace CrossEngine.Serialization
             for (int i = 0; i < props.Length; i++)
             {
                 var prop = props[i];
-                if (!Attribute.IsDefined(prop, typeof(SerializeAttribute)))
+                if (!Attribute.IsDefined(prop, typeof(SerializeIncludeAttribute)))
                     continue;
                 prop.SetValue(target, info.GetValue(prop.Name, prop.PropertyType));
             }
@@ -106,7 +106,7 @@ namespace CrossEngine.Serialization
             for (int i = 0; i < fields.Length; i++)
             {
                 var field = fields[i];
-                if (!Attribute.IsDefined(field, typeof(SerializeAttribute)))
+                if (!Attribute.IsDefined(field, typeof(SerializeIncludeAttribute)))
                     continue;
                 field.SetValue(target, info.GetValue(field.Name, field.FieldType));
             }

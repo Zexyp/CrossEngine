@@ -130,6 +130,7 @@ namespace CrossEngine.Scenes
             SceneManager.Current = scene;
             SceneManager.Current.Start();
             SceneManager.Current = null;
+            Log.Info("scene started");
         }
 
         public void Stop(Scene scene)
@@ -137,6 +138,7 @@ namespace CrossEngine.Scenes
             SceneManager.Current = scene;
             SceneManager.Current.Stop();
             SceneManager.Current = null;
+            Log.Info("scene stopped");
         }
 
         public Task Execute(Action action) => _scheduler.Schedule(action);

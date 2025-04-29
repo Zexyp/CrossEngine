@@ -70,10 +70,6 @@
     <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="src\CrossEngine\Scenes\SceneRenderData.cs" />
-  </ItemGroup>
-
   <!--
   <ItemGroup>
     <Folder Include="src\CrossEngine\Platform\Silk\" />
@@ -81,9 +77,9 @@
   -->
 
   <!-- ##### platform branching stuff ##### -->
-  <Target Name="BeforeBuild">
-    <Message Importance="High" Text="This is pain..." />
-    <Message Importance="High" Text="Platform is '$(OSPlatform)'" />
+  <Target Name="LogOSPlatform" BeforeTargets="Build">
+    <Message Text="This is pain..." Importance="High"/>
+    <Message Text="Platform is '$(OSPlatform)'" Importance="High"/>
   </Target>
 
   <Choose>

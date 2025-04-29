@@ -11,6 +11,10 @@ public interface ITransform
 public interface ITransformCache : ITransform
 {
     event Action<ITransformCache> Invalidated;
+    
+    Vector3 WorldPosition { get; }
+    Quaternion WorldRotation { get; }
+    Vector3 WorldScale { get; }
 }
 
 public class Transform : ITransformCache
@@ -53,24 +57,13 @@ public class Transform : ITransformCache
     }
     public Quaternion WorldRotation
     {
-        get => throw new NotImplementedException();
+        get => _worldTransformProvider == null ? _rotation : _rotation * _worldTransformProvider.WorldRotation;
         set => throw new NotImplementedException();
     }
     public Vector3 WorldScale
     {
-        get => throw new NotImplementedException();
+        get => _worldTransformProvider == null ? _scale : _scale * _worldTransformProvider.WorldScale;
         set => throw new NotImplementedException();
-    }
-
-    public Vector3 Euler
-    {
-        get => QuaternionExtension.ToEuler(_rotation);
-        set
-        {
-            _rotation = QuaternionExtension.RotateXYZ(value);
-            _dirty = true;
-            Invalidated?.Invoke(this);
-        }
     }
 
     public ITransformCache WorldTransformProvider

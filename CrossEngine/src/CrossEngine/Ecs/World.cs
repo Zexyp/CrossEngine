@@ -235,8 +235,11 @@ namespace CrossEngine.Ecs
 
         private static Logger Log = new Logger("ecs");
 
+        private bool _initialized = false;
+
         public void RegisterSystem(System system)
         {
+            Debug.Assert(!_initialized);
             Debug.Assert(!_systems.Contains(system));
 
             _systems.Add(system);
@@ -252,6 +255,7 @@ namespace CrossEngine.Ecs
 
         public void UnregisterSystem(System system)
         {
+            Debug.Assert(!_initialized);
             Debug.Assert(_systems.Contains(system));
 
             _systems.Remove(system);
@@ -276,10 +280,14 @@ namespace CrossEngine.Ecs
             {
                 _systems[i].OnAttach();
             }
+
+            _initialized = true;
         }
 
         public void Deinit()
         {
+            _initialized = false;
+
             for (int i = 0; i < _systems.Count; i++)
             {
                 _systems[i].OnDetach();

@@ -278,7 +278,7 @@ namespace CrossEngine.Utils.Editor
     // can be used for any simple type
     #region Generic
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-    public class EditorRangeAttribute<T> : EditorValueAttribute where T : struct, IComparable<T>, IComparable, IEquatable<T>
+    public class EditorRangeAttribute<T> : EditorValueAttribute, IRangeValue<T> where T : struct, IComparable<T>, IComparable, IEquatable<T>
     {
         public T Min { get; set; } = Helper.GetMinValue<T>();
         public T Max { get; set; } = Helper.GetMaxValue<T>();
@@ -336,16 +336,14 @@ namespace CrossEngine.Utils.Editor
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class EditorInnerDrawAttribute : EditorValueAttribute
     {
-        public EditorInnerDrawAttribute() { }
-        public EditorInnerDrawAttribute(string name) : base(name) { }
+        
     }
 
-    //[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    //public class EditorGradientAttribute : EditorValueAttribute
-    //{
-    //    public EditorGradientAttribute() { }
-    //    public EditorGradientAttribute(string name) : base(name) { }
-    //}
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    public class EditorGradientAttribute : EditorValueAttribute
+    {
+        
+    }
 
     //[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     //public class EditorAssetAttribute<TAsset> : EditorValueAttribute where TAsset : Asset
@@ -361,13 +359,9 @@ namespace CrossEngine.Utils.Editor
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class EditorStringAttribute : EditorValueAttribute
     {
+        // TODO: fix dynamic length
+        
         public EditorStringAttribute() { }
-        public EditorStringAttribute(string name) : base(name) { }
-
-        public EditorStringAttribute(string name, uint maxLength) : base(name)
-        {
-            MaxLength = maxLength;
-        }
 
         public EditorStringAttribute(uint maxLength)
         {

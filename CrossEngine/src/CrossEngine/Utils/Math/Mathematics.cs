@@ -114,7 +114,7 @@ namespace CrossEngine.Utils
         }
     }
 
-    static class Vector4Extension
+    public static class Vector4Extension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 XYZ(this Vector4 v) => new Vector3(v.X, v.Y, v.Z);

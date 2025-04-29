@@ -21,7 +21,7 @@ namespace CrossEngine.Ecs
 
     public abstract class System
     {
-        internal protected World World { get; internal set; }
+        protected internal World World { get; internal set; }
 
         protected internal virtual void OnInit() { }
         protected internal virtual void OnShutdown() { }

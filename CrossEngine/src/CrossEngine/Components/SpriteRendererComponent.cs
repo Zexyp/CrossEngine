@@ -17,17 +17,17 @@ namespace CrossEngine.Components
 {
     public class SpriteRendererComponent : RendererComponent, ISpriteRenderData
     {
-        [Serialize]
+        [SerializeInclude]
         [EditorDrag]
         public Vector4 DrawOffsets { get; set; } = new Vector4(0, 0, 1, 1);
-        [Serialize]
+        [SerializeInclude]
         [EditorColor]
         public Vector4 Color { get; set; } = Vector4.One;
-        [Serialize]
+        [SerializeInclude]
         [EditorEnum]
         public BlendMode Blend { get; set; } = BlendMode.Blend;
         [EditorNullable]
-        [Serialize]
+        [SerializeInclude]
         [EditorAsset]
         public SpriteAsset Sprite;
 
@@ -35,14 +35,17 @@ namespace CrossEngine.Components
         WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Texture?.Texture;
         BlendMode ISpriteRenderData.Blend => Blend;
         Vector4 ISpriteRenderData.DrawOffsets => DrawOffsets;
-
+        
         protected override IVolume GetVolume()
         {
             var transform = Entity?.Transform;
             if (transform == null)
                 return null;
             
-            return new Sphere(transform.WorldPosition, transform.Scale.Length() / 2);
+            var matrix = Matrix4x4.CreateScale(new Vector3(DrawOffsets.Z, DrawOffsets.W, 1)) *
+                         Matrix4x4.CreateTranslation(new Vector3(DrawOffsets.X, DrawOffsets.Y, 0)) * 
+                         transform.GetWorldTransformMatrix();
+            return new Sphere(matrix.Translation, transform.WorldScale.Length() * new Vector2(this.DrawOffsets.Z, this.DrawOffsets.W).Length() / 2);
         }
 
         public override object Clone()

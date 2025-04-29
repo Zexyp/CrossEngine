@@ -12,7 +12,7 @@ namespace CrossEngine.Components;
 public class SkyboxRendererComponent : RendererComponent, ISkyboxRenderData
 {
     [EditorNullable]
-    [Serialize]
+    [SerializeInclude]
     [EditorAsset]
     public SkyboxAsset Skybox;
 

@@ -18,11 +18,11 @@ namespace CrossEngine.Components
     public class MeshRendererComponent : RendererComponent, IMeshRenderData
     {
         [EditorNullable]
-        [Serialize]
+        [SerializeInclude]
         [EditorAsset]
         public MaterialAsset Material;
 
-        [EditorNullable] [Serialize] [EditorAsset]
+        [EditorNullable] [SerializeInclude] [EditorAsset]
         public MeshAsset Mesh;
 
         IMesh IMeshRenderData.Mesh => Mesh?.Mesh;

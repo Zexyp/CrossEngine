@@ -329,7 +329,9 @@ gdi_Color = (Vector4)In[""vColor""];
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(0, 0, len), matrix), new Vector4(0, 0, 1, 1));
         }
 
-        static public void DrawSphere(Matrix4x4 matrix, Vector4 color, float radius = 1.0f, int segments = 16)
+        public static void DrawSphere(Vector3 position, Vector4 color, float radius = 1.0f, int segments = 16) =>
+            DrawSphere(Matrix4x4.CreateTranslation(position), color, radius, segments);
+        public static void DrawSphere(Matrix4x4 matrix, Vector4 color, float radius = 1.0f, int segments = 16)
         {
             DrawCircle(Matrix4x4.CreateRotationX(MathF.PI / 2) * matrix, color, radius, segments);
             DrawCircle(Matrix4x4.CreateRotationY(MathF.PI / 2) * matrix, color, radius, segments);

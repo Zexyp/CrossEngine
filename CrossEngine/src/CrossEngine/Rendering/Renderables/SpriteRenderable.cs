@@ -2,12 +2,15 @@
 using CrossEngine.Rendering.Textures;
 using System;
 using System.Numerics;
+using CrossEngine.Rendering.Culling;
+using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Renderables
 {
     class SpriteRenderable : Renderable<ISpriteRenderData>
     {
         private BlendMode? _lastBlend = null;
+        private Frustum _frustum;
 
         public override void Begin(ICamera camera)
         {
@@ -22,6 +25,9 @@ namespace CrossEngine.Rendering.Renderables
 
         public override void Submit(ISpriteRenderData data)
         {
+            var volume = data.GetVolume();
+            CullChecker.Append(volume);
+            
             if (_lastBlend != data.Blend)
             {
                 _lastBlend = data.Blend;
@@ -29,11 +35,13 @@ namespace CrossEngine.Rendering.Renderables
                 Renderer2D.SetBlending(data.Blend);
             }
 
-            var matrix = Matrix4x4.CreateScale(new Vector3(data.DrawOffsets.Z, data.DrawOffsets.W, 1)) * Matrix4x4.CreateTranslation(new Vector3(data.DrawOffsets.X, data.DrawOffsets.Y, 0)) * data.Transform;
+            var offsets = data.DrawOffsets;
+            var transform = Matrix4x4.CreateScale(new Vector3(offsets.Z, offsets.W, 1)) *
+                            Matrix4x4.CreateTranslation(new Vector3(offsets.X, offsets.Y, 0)) * data.Transform;
             if (data.Texture == null)
-                Renderer2D.DrawQuad(matrix, data.Color, data.Id);
+                Renderer2D.DrawQuad(transform, data.Color, data.Id);
             else
-                Renderer2D.DrawTexturedQuad(matrix, data.Texture, data.Color, data.TextureOffsets, data.Id);
+                Renderer2D.DrawTexturedQuad(transform, data.Texture, data.Color, data.TextureOffsets, data.Id);
         }
     }
 }

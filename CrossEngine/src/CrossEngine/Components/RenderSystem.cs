@@ -194,6 +194,21 @@ namespace CrossEngine.Components
         {
             _pipeline.Destroy();
         }
+
+        [Obsolete("no init")]
+        public void CommitRenderable(IRenderable renderable, Type key)
+        {
+            ScenePass._renderables.Add(key, renderable);
+        }
+
+        [Obsolete("no init")]
+        public void WithdrawRenderable(IRenderable renderable)
+        {
+            foreach(var item in ScenePass._renderables.Where(kvp => kvp.Value == renderable).ToList())
+            {
+                ScenePass._renderables.Remove(item.Key);
+            }
+        }
     }
 }
 
@@ -331,8 +346,6 @@ class ScenePass : Pass
     public IList<IObjectRenderData> objects;
     public Func<ICamera> CameraGetter;
 
-    private WeakReference<Framebuffer> framebuffer;
-
     public ScenePass()
     {
         Depth = DepthFunc.Default;
@@ -344,15 +357,6 @@ class ScenePass : Pass
         {
             rend.Init();
         }
-
-        var spec = new FramebufferSpecification();
-        spec.Attachments = new FramebufferAttachmentSpecification(
-            // using floating point colors
-            new FramebufferTextureSpecification(TextureFormat.ColorRGBA32F),
-            new FramebufferTextureSpecification(TextureFormat.ColorR32I),
-            new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
-        );
-        framebuffer = Framebuffer.Create(spec);
     }
 
     public override void Destroy()
@@ -363,7 +367,7 @@ class ScenePass : Pass
         }
     }
 
-    private static readonly Dictionary<Type, IRenderable> _renderables = new Dictionary<Type, IRenderable>(new InterfaceTypeComparer<IObjectRenderData>())
+    internal static readonly Dictionary<Type, IRenderable> _renderables = new Dictionary<Type, IRenderable>(new InterfaceTypeComparer<IObjectRenderData>())
     {
         {typeof(ISpriteRenderData), new SpriteRenderable()},
         {typeof(IMeshRenderData), new MeshRenderable()},

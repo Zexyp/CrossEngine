@@ -8,7 +8,6 @@ using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Culling
 {
-    [Obsolete("not implemented")]
     public interface IVolume
     {
         public Halfspace IsInFrustum(in Frustum frustum);
