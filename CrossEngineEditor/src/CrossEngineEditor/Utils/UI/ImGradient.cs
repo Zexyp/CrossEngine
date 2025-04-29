@@ -195,16 +195,25 @@ namespace CrossEngineEditor.Utils.Gui
 
             ImGuiUtil.BeginPaddedGroup();
 
+            var barHeight = 16;
+            var markerWidth = 16;
+            var markerHeight = 20;
+            int gridSize = 8;
+
+            var margin = style.ItemSpacing.X;
+            
+            // fill group box
+            ImGui.Dummy(new Vector2(ImGui.GetContentRegionAvail().X - margin, 0));
+            
+            // exclude marker
+            var width = ImGui.GetContentRegionAvail().X - margin - markerWidth;
+            width = Math.Max(width, 0); // prevent undersizing
+            var indent = markerWidth / 2f;
+            ImGui.Indent(indent);
+
             var originPos = ImGui.GetCursorScreenPos();
 
             var drawList = ImGui.GetWindowDrawList();
-
-            var margin = style.ItemSpacing.X;
-
-            var width = ImGui.GetContentRegionAvail().X - margin;
-            var barHeight = 20;
-            var markerWidth = 16;
-            var markerHeight = 20;
 
             //changed |= UpdateMarker(state, "a", originPos, width, markerWidth, markerHeight, MarkerDirection.ToLower);
             //
@@ -222,13 +231,12 @@ namespace CrossEngineEditor.Utils.Gui
             originPos = ImGui.GetCursorScreenPos();
 
             ImGui.InvisibleButton("BarArea", new(width, barHeight));
-
-            int gridSize = 10;
-
+            
             drawList.AddRectFilled(new Vector2(originPos.X - 2, originPos.Y - 2),
                                    new Vector2(originPos.X + width + 2, originPos.Y + barHeight + 2),
                                    0xff646464);
 
+            // draw grid
             for (int y = 0; y * gridSize < barHeight; y += 1)
             {
                 for (int x = 0; x * gridSize < width; x += 1)
@@ -299,6 +307,7 @@ namespace CrossEngineEditor.Utils.Gui
 
             ImGui.SetCursorScreenPos(originPos);
 
+            // element adder
             ImGui.InvisibleButton("ColorArea", new(width, markerHeight));
 
             if (!markerInteracted && ImGui.IsItemHovered() && ImGui.IsMouseClicked(0))
@@ -308,6 +317,9 @@ namespace CrossEngineEditor.Utils.Gui
                 /*changed |= */state.AddElement(x, c);
             }
 
+            ImGui.Unindent(indent);
+
+            // controls
             var availWidth = ImGui.GetContentRegionAvail().X;
             ImGui.SetNextItemWidth(availWidth / 6);
             ImGui.DragInt("##selected_index", ref selectedIndex, 0.1f, 0, state.ElementCount - 1);

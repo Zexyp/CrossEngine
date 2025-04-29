@@ -49,6 +49,7 @@ namespace CrossEngineEditor.Panels
             AddOverlay(new CameraOverlay());
             AddOverlay(new SelectedOverlay());
             AddOverlay(new NameOverlay());
+            AddOverlay(new ViewportCullCkecker());
             
             _viewportPass = new ViewportPass() { Overlays = _overlays };
         }
@@ -292,9 +293,22 @@ namespace CrossEngineEditor.Panels
                 _overlays[i].Overlay.Context = Context;
             }
         }
-        
-        private void AttachPass(Scene scene) => scene?.World.GetSystem<RenderSystem>().Pipeline.PushBack(_viewportPass);
-        private void DetachPass(Scene scene) => scene?.World.GetSystem<RenderSystem>().Pipeline.Remove(_viewportPass);
+
+        private void AttachPass(Scene scene)
+        {
+            scene?.World.GetSystem<RenderSystem>().Pipeline.PushBack(_viewportPass);
+            for (int i = 0; i < _overlays.Count; i++) 
+                if (_overlays[i].Draw)
+                    _overlays[i].Overlay.Prepare();
+        }
+
+        private void DetachPass(Scene scene)
+        {
+            for (int i = 0; i < _overlays.Count; i++)
+                if (_overlays[i].Draw)
+                    _overlays[i].Overlay.Finish();
+            scene?.World.GetSystem<RenderSystem>().Pipeline.Remove(_viewportPass);
+        }
 
         private void DrawMenuBar()
         {
@@ -408,7 +422,7 @@ namespace CrossEngineEditor.Panels
 
         private void AddOverlay(IViewportOverlay overlay, bool draw = true)
         {
-            overlay.EditorCamera = _editorCamera;
+            overlay.Camera = _editorCamera;
             overlay.Context = Context;
             _overlays.Add((overlay, draw));
         }
@@ -416,7 +430,7 @@ namespace CrossEngineEditor.Panels
         private void RemoveOverlay(IViewportOverlay overlay)
         {
             _overlays.RemoveAll(tup => tup.Overlay == overlay);
-            overlay.EditorCamera = null;
+            overlay.Camera = null;
             overlay.Context = null;
         }
 

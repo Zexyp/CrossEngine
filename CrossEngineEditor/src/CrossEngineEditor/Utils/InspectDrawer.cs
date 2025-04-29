@@ -17,6 +17,7 @@ using CrossEngineEditor.Utils.Reflection;
 using System.Xml.Linq;
 using Silk.NET.Core.Native;
 using CrossEngine.Assets;
+using CrossEngineEditor.Utils.Gui;
 
 namespace CrossEngineEditor.Utils
 {
@@ -35,6 +36,14 @@ namespace CrossEngineEditor.Utils
 
         public delegate void EditResultHandler(MemberInfo member, object target, EditResult result);
 
+        static InspectDrawer()
+        {
+            // hooks
+            AttributeHandlers.Add(typeof(EditorRangeAttribute<>), AttributeHandlers[typeof(EditorRangeAttribute)]); 
+            AttributeHandlers.Add(typeof(EditorSliderAttribute<>), AttributeHandlers[typeof(EditorSliderAttribute)]); 
+            AttributeHandlers.Add(typeof(EditorDragAttribute<>), AttributeHandlers[typeof(EditorDragAttribute)]);
+        }
+        
         public static EditResult DrawMember(MemberInfo memberInfo, object target, Action<Exception> errorCallback = null)
         {
             ArgumentNullException.ThrowIfNull(memberInfo);
@@ -57,9 +66,10 @@ namespace CrossEngineEditor.Utils
                         attribType = attribType.GetGenericTypeDefinition();
 
                     if (!AttributeHandlers.ContainsKey(attribType))
-                        throw new NotImplementedException();
+                        throw new NotImplementedException($"Missing attribute handler for type '{attribType.FullName}'.");
 
-                    result = AttributeHandlers[attribType].Invoke(attrib, type, memberInfo.Name, ref value);
+                    var name = attrib.Name ?? memberInfo.Name;
+                    result = AttributeHandlers[attribType].Invoke(attrib, type, name, ref value);
 
                     if ((result & EditResult.Changed) != 0)
                         memberInfo.SetFieldOrPropertyValue(target, value);
@@ -73,7 +83,7 @@ namespace CrossEngineEditor.Utils
             {
                 var under = memberInfo.GetUnderlyingType();
                 
-                PrintInvalidUI($"{under.Namespace}.{under.Name} {memberInfo.DeclaringType.Namespace}.{memberInfo.DeclaringType.Name}.{memberInfo.Name}");
+                PrintInvalidUI($"{under.FullName} {memberInfo.DeclaringType.FullName}.{memberInfo.Name}");
 
                 Log.Default.Warn($"while drawing ui a wild exception appears:\n{ex}");
 
@@ -127,9 +137,9 @@ namespace CrossEngineEditor.Utils
         }
 
         delegate bool EditorValueFunction(EditorValueAttribute attrib, string name, ref object value);
-        delegate bool EditorRangeFunction(EditorRangeAttribute range, string name, ref object value);
-        delegate bool EditorDragFunction(EditorDragAttribute range, string name, ref object value);
-        delegate bool EditorSliderFunction(EditorSliderAttribute range, string name, ref object value);
+        delegate bool EditorRangeFunction(IRangeValue range, string name, ref object value);
+        delegate bool EditorDragFunction(ISteppedRangeValue range, string name, ref object value);
+        delegate bool EditorSliderFunction(IRangeValue range, string name, ref object value);
         delegate bool EditorColorFunction(EditorColorAttribute attrib, string name, ref object value);
         private delegate EditResult EditorValueRepresentationFunction(EditorValueAttribute attribute, Type type, string name, ref object value);
 
@@ -212,7 +222,7 @@ namespace CrossEngineEditor.Utils
         };
         private static readonly Dictionary<Type, EditorRangeFunction> RangeValueHandlers = new Dictionary<Type, EditorRangeFunction>()
         {
-            { typeof(int), (EditorRangeAttribute range, string name, ref object value) => {
+            { typeof(int), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<int>)range;
                 int v = (int)value;
                 bool success;
@@ -220,7 +230,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Math.Clamp(v, trange.Min, trange.Max);
                 return success;
             } },
-            { typeof(float), (EditorRangeAttribute range, string name, ref object value) => {
+            { typeof(float), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<float>)range;
                 float v = (float)value;
                 bool success;
@@ -228,7 +238,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Math.Clamp(v, trange.Min, trange.Max);
                 return success;
             } },
-            { typeof(Vector2), (EditorRangeAttribute range, string name, ref object value) => {
+            { typeof(Vector2), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<float>)range;
                 Vector2 v = (Vector2)value;
                 bool success;
@@ -236,7 +246,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Vector2.Clamp(v, new Vector2(trange.Min), new Vector2(trange.Max));
                 return success;
             } },
-            { typeof(Vector3), (EditorRangeAttribute range, string name, ref object value) => {
+            { typeof(Vector3), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<float>)range;
                 Vector3 v = (Vector3)value;
                 bool success;
@@ -244,7 +254,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Vector3.Clamp(v, new Vector3(trange.Min), new Vector3(trange.Max));
                 return success;
             } },
-            { typeof(Vector4), (EditorRangeAttribute range, string name, ref object value) => {
+            { typeof(Vector4), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<float>)range;
                 Vector4 v = (Vector4)value;
                 bool success;
@@ -255,7 +265,7 @@ namespace CrossEngineEditor.Utils
         };
         private static readonly Dictionary<Type, EditorSliderFunction> SliderValueHandlers = new Dictionary<Type, EditorSliderFunction>()
         {
-            { typeof(int), (EditorSliderAttribute range, string name, ref object value) => {
+            { typeof(int), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<int>)range;
                 int v = (int)value;
                 bool success;
@@ -263,7 +273,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Math.Clamp(v, (int)trange.Min, (int)trange.Max);
                 return success;
             } },
-            { typeof(float), (EditorSliderAttribute range, string name, ref object value) => {
+            { typeof(float), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<float>)range;
                 float v = (float)value;
                 bool success;
@@ -271,7 +281,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Math.Clamp(v, trange.Min, trange.Max);
                 return success;
             } },
-            { typeof(Vector2), (EditorSliderAttribute range, string name, ref object value) => {
+            { typeof(Vector2), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<float>)range;
                 Vector2 v = (Vector2)value;
                 bool success;
@@ -279,7 +289,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Vector2.Clamp(v, new Vector2(trange.Min), new Vector2(trange.Max));
                 return success;
             } },
-            { typeof(Vector3), (EditorSliderAttribute range, string name, ref object value) => {
+            { typeof(Vector3), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<float>)range;
                 Vector3 v = (Vector3)value;
                 bool success;
@@ -287,7 +297,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Vector3.Clamp(v, new Vector3(trange.Min), new Vector3(trange.Max));
                 return success;
             } },
-            { typeof(Vector4), (EditorSliderAttribute range, string name, ref object value) => {
+            { typeof(Vector4), (IRangeValue range, string name, ref object value) => {
                 var trange = (IRangeValue<float>)range;
                 Vector4 v = (Vector4)value;
                 bool success;
@@ -298,7 +308,7 @@ namespace CrossEngineEditor.Utils
         };
         private static readonly Dictionary<Type, EditorDragFunction> DragValueHandlers = new Dictionary<Type, EditorDragFunction>()
         {
-            { typeof(uint), (EditorDragAttribute range, string name, ref object value) => {
+            { typeof(uint), (ISteppedRangeValue range, string name, ref object value) => {
                 var trange = (ISteppedRangeValue<uint>)range;
                 int v = (int)(uint)value;
                 bool success;
@@ -306,7 +316,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = (uint)Math.Clamp(v, trange.Min, trange.Max);
                 return success;
             } },
-            { typeof(int), (EditorDragAttribute range, string name, ref object value) => {
+            { typeof(int), (ISteppedRangeValue range, string name, ref object value) => {
                 var trange = (ISteppedRangeValue<int>)range;
                 int v = (int)value;
                 bool success;
@@ -314,7 +324,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Math.Clamp(v, trange.Min, trange.Max);
                 return success;
             } },
-            { typeof(float), (EditorDragAttribute range, string name, ref object value) => {
+            { typeof(float), (ISteppedRangeValue range, string name, ref object value) => {
                 var trange = (ISteppedRangeValue<float>)range;
                 float v = (float)value;
                 bool success;
@@ -322,7 +332,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Math.Clamp(v, trange.Min, trange.Max);
                 return success;
             } },
-            { typeof(Vector2), (EditorDragAttribute range, string name, ref object value) => {
+            { typeof(Vector2), (ISteppedRangeValue range, string name, ref object value) => {
                 var trange = (ISteppedRangeValue<float>)range;
                 Vector2 v = (Vector2)value;
                 bool success;
@@ -330,7 +340,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Vector2.Clamp(v, new Vector2(trange.Min), new Vector2(trange.Max));
                 return success;
             } },
-            { typeof(Vector3), (EditorDragAttribute range, string name, ref object value) => {
+            { typeof(Vector3), (ISteppedRangeValue range, string name, ref object value) => {
                 var trange = (ISteppedRangeValue<float>)range;
                 Vector3 v = (Vector3)value;
                 bool success;
@@ -338,7 +348,7 @@ namespace CrossEngineEditor.Utils
                 if (success) value = Vector3.Clamp(v, new Vector3(trange.Min), new Vector3(trange.Max));
                 return success;
             } },
-            { typeof(Vector4), (EditorDragAttribute range, string name, ref object value) => {
+            { typeof(Vector4), (ISteppedRangeValue range, string name, ref object value) => {
                 var trange = (ISteppedRangeValue<float>)range;
                 Vector4 v = (Vector4)value;
                 bool success;
@@ -521,8 +531,7 @@ namespace CrossEngineEditor.Utils
             } },
             
             // fixme: history non fuctional
-            { typeof(EditorListAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) =>
-            {
+            { typeof(EditorListAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
                 static void ResizeList(IList list, int newSize)
                 {
                     static object GetDefaultValue(Type type)
@@ -647,8 +656,7 @@ namespace CrossEngineEditor.Utils
             } },
             
             // fixme: history non fuctional
-            { typeof(EditorInnerDrawAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) =>
-            {
+            { typeof(EditorInnerDrawAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
                 var result = EditResult.None;
                 
                 if (ImGui.TreeNode(name))
@@ -679,6 +687,13 @@ namespace CrossEngineEditor.Utils
                 return result;
             } },
             
+            { typeof(EditorGradientAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) =>
+            {
+                typeof(ImGradient).GetMethod(nameof(ImGradient.Manipulate)).MakeGenericMethod(value.GetType().GetGenericArguments()[0]).Invoke(null, new object[] { value });
+                
+                return EditResult.None;
+            } },
+            
             //{ typeof(EditorPathAttribute), (EditorValueAttribute attribute, Type type, string name, ref object value) => {
             //    ImGui.SameLine();
             //
@@ -699,7 +714,7 @@ namespace CrossEngineEditor.Utils
         private static EditResult ExecuteFromDict(IDictionary dict, EditorValueAttribute attrib, Type type, string name, ref object value)
         {
             if (!dict.Contains(type))
-                throw new NotImplementedException();
+                throw new NotImplementedException("Missing function.");
 
             object[] prms = new[] { attrib, name, value };
             var result = (bool)((Delegate)dict[type]).DynamicInvoke(prms);

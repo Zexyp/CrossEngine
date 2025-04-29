@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using CrossEngine.Assemblies;
 using CrossEngine.Rendering;
+using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using CrossEngineEditor.Utils;
@@ -40,7 +42,10 @@ internal class WidgetTestPanel : EditorPanel
         ImGuiUtil.BeginPaddedGroup();
         ImGuiUtil.BeginPaddedGroup();
         ImGuiUtil.BeginPaddedGroup();
-        ImGui.Text("woah");
+        if (ImGui.Button("start"))
+        {
+            SceneManager.Start(Context.Scene);
+        }
         ImGuiUtil.EndPaddedGroup();
         ImGuiUtil.EndPaddedGroup();
         ImGuiUtil.EndPaddedGroup();
