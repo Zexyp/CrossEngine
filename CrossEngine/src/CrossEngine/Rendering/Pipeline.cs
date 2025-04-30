@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Numerics;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
@@ -15,9 +16,23 @@ public class Pipeline
     List<Pass> _passes = new List<Pass>();
     WeakReference<Framebuffer> Buffer;
 
-    public void PushBack(Pass pass) => _passes.Add(pass);
-    public void PushFront(Pass pass) => _passes.Insert(0, pass);
-    public void Remove(Pass pass) => _passes.Remove(pass);
+    public void PushBack(Pass pass)
+    {
+        _passes.Add(pass);
+        AttachPass(pass);
+    }
+
+    public void PushFront(Pass pass)
+    {
+        _passes.Insert(0, pass);
+        AttachPass(pass);
+    }
+
+    public void Remove(Pass pass)
+    {
+        _passes.Remove(pass);
+        DetachPass(pass);
+    }
 
     public void Process(GraphicsContext context)
     {
@@ -60,10 +75,27 @@ public class Pipeline
             _passes[i].Destroy();
         }
     }
+
+    public T GetPass<T>() where T : Pass => (T)GetPass(typeof(T));
+    public Pass GetPass(Type type) => _passes.Find(p => p.GetType() == type);
+
+    private void AttachPass(Pass pass)
+    {
+        Debug.Assert(pass.Pipeline == null);
+        pass.Pipeline = this;
+    }
+    
+    private void DetachPass(Pass pass)
+    {
+        Debug.Assert(pass.Pipeline == this);
+        pass.Pipeline = null;
+    }
 }
 
 public abstract class Pass
 {
+    public Pipeline Pipeline { get; internal set; }
+    
     // cull
     public DepthFunc Depth;
     public BlendFunc Blend;

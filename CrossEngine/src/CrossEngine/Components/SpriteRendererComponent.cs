@@ -25,7 +25,7 @@ namespace CrossEngine.Components
         public Vector4 Color { get; set; } = Vector4.One;
         [SerializeInclude]
         [EditorEnum]
-        public BlendMode Blend { get; set; } = BlendMode.Blend;
+        public BlendMode Blend { get; set; } = BlendMode.Opaque;
         [EditorNullable]
         [SerializeInclude]
         [EditorAsset]

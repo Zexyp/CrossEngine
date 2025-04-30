@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -68,6 +69,7 @@ namespace CrossEngine.Components
         
         private SkyboxPass _passSkybox;
         private ScenePass _passScene;
+        private TransparentPass _passTransparent;
 
         //public ISurface SetSurface(ISurface surface)
         //{
@@ -97,9 +99,9 @@ namespace CrossEngine.Components
         {
             _pipeline = new Pipeline();
             _pipeline.PushBack(_passScene = new ScenePass());
-            _pipeline.PushBack(_passSkybox = new SkyboxPass());
             //_pipeline.PushBack(new LightingPass());
-            //_pipeline.PushBack(new TransparentPass());
+            _pipeline.PushBack(_passSkybox = new SkyboxPass());
+            _pipeline.PushBack(_passTransparent = new TransparentPass());
         }
 
         protected internal override void OnInit()
@@ -111,9 +113,13 @@ namespace CrossEngine.Components
             World.Storage.AddNotifyRegister(typeof(SkyboxRendererComponent), RegisterSkybox);
             World.Storage.AddNotifyUnregister(typeof(SkyboxRendererComponent), UnregisterSkybox);
 
-            _passScene.objects = new CastWrapCollection<IObjectRenderData>(World.Storage.GetIndex(typeof(RendererComponent)));
-            _passScene.CameraGetter = () => OverrideCamera ?? PrimaryCamera;
-            _passSkybox.CameraGetter = () => OverrideCamera ?? PrimaryCamera;
+            var coll = new CastWrapCollection<IObjectRenderData>(World.Storage.GetIndex(typeof(RendererComponent)));
+            _passScene.objects = coll;
+            _passTransparent.objects = coll;
+            var getter = () => OverrideCamera ?? PrimaryCamera;
+            _passScene.CameraGetter = getter;
+            _passSkybox.CameraGetter = getter;
+            _passTransparent.CameraGetter = getter;
         }
 
         protected internal override void OnShutdown()
@@ -353,6 +359,7 @@ class ScenePass : Pass
 {
     public IList<IObjectRenderData> objects;
     public Func<ICamera> CameraGetter;
+    public int TransparentIndex = 0;
 
     public ScenePass()
     {
@@ -387,15 +394,71 @@ class ScenePass : Pass
         if (camera == null)
             return;
         
-        CullVisibility(camera);
+        FilterTransparent();
         
+        FrustumCulling(camera.GetFrustum());
+        
+        DrawObjects(camera, objects, 0, TransparentIndex);
+    }
+
+    private void FrustumCulling(in Frustum frustum)
+    {
+        for (int i = 0; i < objects.Count; i++)
+        {
+            var obj = objects[i];
+            var volume = obj.GetVolume();
+            
+            CullChecker.Append(volume);
+            
+            if (volume == null)
+                continue;
+            
+            var result = volume.IsInFrustum(frustum);
+            obj.IsVisible = result != Halfspace.Outside;
+        }
+    }
+    
+    private void FilterTransparent()
+    {
+        if (objects is not IList) throw new InvalidOperationException();
+        
+        ArrayList.Adapter((IList)objects).Sort(new ComparisonComparer<IObjectRenderData>((o1, o2) =>
+        {
+            return IsTransparet(o1).CompareTo(IsTransparet(o2));
+        }));
+
+        TransparentIndex = FindFirstIndex(objects, o => IsTransparet(o));
+        TransparentIndex = TransparentIndex == -1 ? objects.Count : TransparentIndex;
+    }
+    
+    private static int FindFirstIndex<T>(IList<T> list, Predicate<T> predicate)
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (predicate(list[i]))
+                return i;
+        }
+        return -1;
+    }
+
+    private bool IsTransparet(IObjectRenderData obj)
+    {
+        switch (obj)
+        {
+            case ISpriteRenderData sprite: return sprite.Blend == BlendMode.Blend || sprite.Blend == BlendMode.Blend;
+            default: return false;
+        }
+    }
+
+    internal static void DrawObjects(ICamera camera, IList<IObjectRenderData> objects, int rangeStart, int rangeEnd)
+    {
         foreach (var rend in _renderables.Values)
         {
             rend.Begin(camera);
         }
 
         //framebuffer.GetValue().Bind();
-        for (int i = 0; i < objects.Count; i++)
+        for (int i = rangeStart; i < rangeEnd; i++)
         {
             var rd = objects[i];
             
@@ -416,25 +479,6 @@ class ScenePass : Pass
         foreach (var rend in _renderables.Values)
         {
             rend.End();
-        }
-    }
-
-    private void CullVisibility(ICamera camera)
-    {
-        var frustum = camera.GetFrustum();
-        
-        for (int i = 0; i < objects.Count; i++)
-        {
-            var obj = objects[i];
-            var volume = obj.GetVolume();
-            
-            CullChecker.Append(volume);
-            
-            if (volume == null)
-                continue;
-            
-            var result = volume.IsInFrustum(frustum);
-            obj.IsVisible = result != Halfspace.Outside;
         }
     }
     
@@ -465,6 +509,29 @@ class ScenePass : Pass
             }
             return baseInterface?.GetHashCode() ?? obj.GetHashCode();
         }
+    }
+}
+
+class TransparentPass : Pass
+{
+    public IList<IObjectRenderData> objects;
+    public Func<ICamera> CameraGetter;
+
+    public TransparentPass()
+    {
+        Depth = DepthFunc.Default;
+    }
+    
+    public override void Draw()
+    {
+        SortByDistance();
+        
+        ScenePass.DrawObjects(CameraGetter.Invoke(), objects, Pipeline.GetPass<ScenePass>().TransparentIndex, objects.Count);
+    }
+
+    private void SortByDistance()
+    {
+        //ArrayList.Adapter(objects).Sort();
     }
 }
 

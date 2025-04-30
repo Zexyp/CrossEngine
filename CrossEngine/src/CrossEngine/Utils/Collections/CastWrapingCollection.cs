@@ -2,12 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CrossEngine.Utils.Collections
 {
-    internal class CastWrapCollection<T> : ICollection<T>, IList<T>
+    public class CastWrapCollection<T> : ICollection<T>, IList<T>, IList
     {
         private ICollection _underlyingCollection;
         private IEnumerable _underlyingEnumerable;
@@ -21,36 +22,53 @@ namespace CrossEngine.Utils.Collections
             if (enumerable is IList list)
                 _underlyingList = list;
         }
-        
-        public int Count
+
+        void ICollection.CopyTo(Array array, int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        int ICollection.Count { get => _underlyingCollection.Count; }
+
+        int ICollection<T>.Count
         {
             get
             {
-                if (_underlyingCollection == null) throw new InvalidOperationException();
-                
                 return _underlyingCollection.Count;
             }
         }
 
-        public bool IsReadOnly => true;
-        
-        public T this[int index]
+        bool ICollection<T>.IsReadOnly { get; }
+
+        bool ICollection.IsSynchronized { get; }
+        object ICollection.SyncRoot { get; }
+
+        bool IList.IsReadOnly => true;
+        object IList.this[int index]
         {
             get
             {
-                if (_underlyingList == null) throw new InvalidOperationException();
-
                 return (T)_underlyingList[index];
             }
             set
             {
-                if (_underlyingList == null) throw new InvalidOperationException();
-
                 _underlyingList[index] = value;
             }
         }
 
-        public IEnumerator<T> GetEnumerator()
+        T IList<T>.this[int index]
+        {
+            get
+            {
+                return (T)_underlyingList[index];
+            }
+            set
+            {
+                _underlyingList[index] = value;
+            }
+        }
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             foreach (var item in _underlyingEnumerable)
             {
@@ -59,45 +77,86 @@ namespace CrossEngine.Utils.Collections
         }
         
         IEnumerator IEnumerable.GetEnumerator() => _underlyingEnumerable.GetEnumerator();
-        
-        public void Add(T item)
+
+        void ICollection<T>.Add(T item)
         {
             throw new NotImplementedException();
         }
 
-        public void Clear()
+        void ICollection<T>.Clear()
         {
             throw new NotImplementedException();
         }
 
-        public bool Contains(T item)
+        int IList.Add(object value)
+        {
+            return _underlyingList.Add(value);
+        }
+
+        void IList.Clear()
+        {
+            _underlyingList.Clear();
+        }
+
+        bool IList.Contains(object value)
+        {
+            return _underlyingList.Contains(value);
+        }
+
+        int IList.IndexOf(object value)
+        {
+            return _underlyingList.IndexOf(value);
+        }
+
+        void IList.Insert(int index, object value)
+        {
+            _underlyingList.Insert(index, value);
+        }
+
+        void IList.Remove(object value)
+        {
+            _underlyingList.Remove(value);
+        }
+
+        void IList.RemoveAt(int index)
+        {
+            _underlyingList.RemoveAt(index);
+        }
+
+
+        bool ICollection<T>.Contains(T item)
         {
             throw new NotImplementedException();
         }
 
-        public void CopyTo(T[] array, int arrayIndex)
+        void ICollection<T>.CopyTo(T[] array, int arrayIndex)
         {
             throw new NotImplementedException();
         }
 
-        public bool Remove(T item)
-        {
-            throw new NotImplementedException();
-        }
-        
-        public int IndexOf(T item)
+        bool ICollection<T>.Remove(T item)
         {
             throw new NotImplementedException();
         }
 
-        public void Insert(int index, T item)
+        int IList<T>.IndexOf(T item)
         {
             throw new NotImplementedException();
         }
 
-        public void RemoveAt(int index)
+        void IList<T>.Insert(int index, T item)
         {
             throw new NotImplementedException();
+        }
+
+        void IList<T>.RemoveAt(int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        bool IList.IsFixedSize
+        {
+            get => _underlyingList.IsFixedSize;
         }
     }
 }

@@ -80,7 +80,6 @@ namespace CrossEngine.FX.Particles
         public ParticleEmitter Emitter;
 
         //private TextureAtlas textureAtlas;
-        //public bool animated
         [EditorEnum]
         public BlendMode Blend { get; set; }
         protected override IVolume GetVolume() => AABox.CreateFromExtents(min, max);
