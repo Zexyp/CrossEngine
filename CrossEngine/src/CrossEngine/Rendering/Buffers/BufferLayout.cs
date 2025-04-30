@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using CrossEngine.Logging;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Structs;
 
 namespace CrossEngine.Rendering.Buffers
 {

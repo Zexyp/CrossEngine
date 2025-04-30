@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using CrossEngine.Display;
 using CrossEngine.Rendering;
 using CrossEngine.Profiling;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 using CrossEngine.Events;
 using CrossEngine.Utils;
 using CrossEngine.Platform;
@@ -17,8 +17,9 @@ using CrossEngine.Loaders;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Buffers;
 using System.Numerics;
+using CrossEngine.Utils.Rendering;
 
-namespace CrossEngine.Services
+namespace CrossEngine.Rendering
 {
     public class RenderService : Service, IScheduledService
     {

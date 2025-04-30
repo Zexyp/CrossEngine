@@ -8,6 +8,7 @@ using CrossEngine.Utils.Editor;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Serialization;
+using CrossEngine.Utils.Collections;
 
 namespace CrossEngine.FX.Particles
 {

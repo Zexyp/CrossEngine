@@ -7,8 +7,9 @@ using System.Numerics;
 using System.Diagnostics;
 
 using CrossEngine.Serialization;
+using CrossEngine.Utils.Maths;
 
-namespace CrossEngine.Utils
+namespace CrossEngine.Utils.Collections
 {
     //public interface IGradient
     //{
@@ -68,7 +69,7 @@ namespace CrossEngine.Utils
 
         private static readonly Dictionary<Type, Func<object, object, float, object>> Lerps = new Dictionary<Type, Func<object, object, float, object>>()
         {
-            { typeof(float), (a, b, factor) => MathExtension.Lerp((float)a, (float)b, factor) },
+            { typeof(float), (a, b, factor) => MathExt.Lerp((float)a, (float)b, factor) },
             { typeof(Vector2), (a, b, factor) => Vector2.Lerp((Vector2)a, (Vector2)b, factor) },
             { typeof(Vector3), (a, b, factor) => Vector3.Lerp((Vector3)a, (Vector3)b, factor) },
             { typeof(Vector4), (a, b, factor) => Vector4.Lerp((Vector4)a, (Vector4)b, factor) },

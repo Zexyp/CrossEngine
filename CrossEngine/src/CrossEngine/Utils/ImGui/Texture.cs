@@ -13,7 +13,7 @@ namespace CrossEngine.Utils.ImGui
 {
     using ImGui = ImGuiNET.ImGui;
 
-    public enum TextureCoordinate
+    enum TextureCoordinate
     {
         S = TextureParameterName.TextureWrapS,
         T = TextureParameterName.TextureWrapT,

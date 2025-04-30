@@ -1,4 +1,4 @@
-﻿namespace CrossEngine.Utils
+﻿namespace CrossEngine.Utils.Extensions
 {
     public static class StringExtension
     {

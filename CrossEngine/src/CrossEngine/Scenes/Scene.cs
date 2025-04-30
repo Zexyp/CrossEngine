@@ -11,7 +11,7 @@ using CrossEngine.Utils;
 using CrossEngine.Serialization;
 using System.Collections.ObjectModel;
 using System.Drawing;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 using System.Diagnostics;
 using CrossEngine.Logging;
 using CrossEngine.Profiling;

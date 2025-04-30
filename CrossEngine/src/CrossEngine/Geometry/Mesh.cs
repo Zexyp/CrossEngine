@@ -3,8 +3,9 @@ using System.Collections;
 using System.Numerics;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
 
-namespace CrossEngine.Rendering.Meshes;
+namespace CrossEngine.Geometry;
 
 public interface IMesh : IDisposable
 {

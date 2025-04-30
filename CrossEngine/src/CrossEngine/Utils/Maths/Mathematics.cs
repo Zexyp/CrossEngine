@@ -6,49 +6,10 @@ using System.Diagnostics;
 
 using CrossEngine.Logging;
 using System.Runtime.Versioning;
+using CrossEngine.Utils.Maths;
 
 namespace CrossEngine.Utils
 {
-    static public class MathExtension
-    {
-        public const float ToDegConstF = 180.0f / MathF.PI;
-        public const double ToDegConst = 180.0 / MathF.PI;
-        public const float ToRadConstF = MathF.PI / 180.0f;
-        public const double ToRadConst = MathF.PI / 180.0;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static public float ToRadians(float degrees)
-        {
-            return ToRadConstF * degrees;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static public float ToDegrees(float radians)
-        {
-            return ToDegConstF * radians;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static public double ToRadians(double degrees)
-        {
-            return ToRadConst * degrees;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static public double ToDegrees(double radians)
-        {
-            return ToDegConst * radians;
-        }
-
-        public static float Lerp(float first, float second, float amount)
-        {
-            return first * (1 - amount) + second * amount;
-        }
-
-        public static bool Compare(float a, float b, float precision = float.Epsilon)
-        {
-            return Math.Abs(a - b) <= precision * Math.Max(1.0f, Math.Max(Math.Abs(a), Math.Abs(b)));
-        }
-    }
-
     static class Vector2Extension
     {
         public static Vector2 Rotate(Vector2 vec, float angleRad)
@@ -64,6 +25,7 @@ namespace CrossEngine.Utils
 
             return vec;
         }
+        
         public static Vector2 RotateAroundOrigin(Vector2 vec, float angleRad, Vector2 origin)
         {
             float x = vec.X - origin.X;
@@ -80,7 +42,7 @@ namespace CrossEngine.Utils
 
         public static bool Compare(Vector2 a, Vector2 b, float precision = float.Epsilon)
         {
-            return MathExtension.Compare(a.X, b.X, precision) && MathExtension.Compare(a.Y, b.Y, precision);
+            return MathExt.Compare(a.X, b.X, precision) && MathExt.Compare(a.Y, b.Y, precision);
         }
     }
 
@@ -117,7 +79,10 @@ namespace CrossEngine.Utils
     public static class Vector4Extension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 XYZ(this Vector4 v) => new Vector3(v.X, v.Y, v.Z);
+        public static Vector3 XYZ(in this Vector4 v) => new Vector3(v.X, v.Y, v.Z);
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 XY(in this Vector4 v) => new Vector2(v.X, v.Y);
     }
 
     public static class Matrix4x4Extension
@@ -324,7 +289,7 @@ namespace CrossEngine.Utils
             translation.Z = matvposition.Z;
         }
 
-        public static bool HasNaNElement(Matrix4x4 matrix)
+        public static bool HasNaN(Matrix4x4 matrix)
         {
             // faster than using pointer in loop
             return
@@ -680,10 +645,7 @@ namespace CrossEngine.Utils
             return RotateX(x) * RotateY(y) * RotateZ(z);
         }
 
-        public static Quaternion RotateXYZ(Vector3 vec)
-        {
-            return RotateX(vec.X) * RotateY(vec.Y) * RotateZ(vec.Z);
-        }
+        public static Quaternion RotateXYZ(Vector3 vec) => RotateXYZ(vec.X, vec.Y, vec.Z);
     }
 
     // todo: merge with VecColor

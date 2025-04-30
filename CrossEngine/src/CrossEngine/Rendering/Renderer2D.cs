@@ -10,6 +10,7 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Textures;
 using System.Linq;
 using CrossEngine.Logging;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Rendering
 {

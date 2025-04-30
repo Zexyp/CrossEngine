@@ -9,12 +9,14 @@ using System.Numerics;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Geometry;
+using CrossEngine.Utils.Maths;
 
-namespace CrossEngine.Utils
+namespace CrossEngine.Utils.Rendering
 {
     public class FreeCamera : IResizableCamera
     {
-        public Matrix4x4 ProjectionMatrix { get => Matrix4x4.CreatePerspectiveFieldOfView(MathExtension.ToRadConstF * Fov, Aspect, Near, Far); }
+        public Matrix4x4 ProjectionMatrix { get => Matrix4x4.CreatePerspectiveFieldOfView(MathExt.ToRadConstF * Fov, Aspect, Near, Far); }
         public Vector3 Position = Vector3.Zero;
         public Quaternion Rotation = Quaternion.Identity;
         public Vector2 LookRot = Vector2.Zero;

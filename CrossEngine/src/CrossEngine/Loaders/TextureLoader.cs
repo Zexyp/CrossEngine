@@ -12,6 +12,7 @@ using CrossEngine.Utils;
 using CrossEngine.Profiling;
 using CrossEngine.Platform;
 using System.Threading.Tasks;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Loaders
 {

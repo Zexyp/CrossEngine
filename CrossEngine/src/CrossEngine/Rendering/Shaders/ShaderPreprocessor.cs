@@ -15,6 +15,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CrossEngine.Rendering.Shaders;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Loaders
 {

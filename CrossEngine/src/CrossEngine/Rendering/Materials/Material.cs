@@ -7,6 +7,7 @@ using CrossEngine.Loaders;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Rendering.Materials;
 

@@ -7,7 +7,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Rendering.Culling;
 
-namespace CrossEngine.Utils;
+namespace CrossEngine.Utils.Rendering;
 
 public class CullChecker : ISceneOverlay
 {

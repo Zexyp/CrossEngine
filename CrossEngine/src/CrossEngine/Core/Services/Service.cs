@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Events;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 
-namespace CrossEngine.Services
+namespace CrossEngine.Core.Services
 {
     public abstract class Service
     {

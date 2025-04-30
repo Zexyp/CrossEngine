@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CrossEngine.Utils
+namespace CrossEngine.Utils.Extensions
 {
     public static class WeakReferenceExtension
     {

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using CrossEngine.Utils;
 
 using CrossEngine.Platform.OpenGL;
+using CrossEngine.Utils.Structs;
 #if WINDOWS
 using CrossEngine.Platform.Windows;
 #endif

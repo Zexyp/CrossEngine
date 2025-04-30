@@ -5,6 +5,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
 using System.Runtime.InteropServices;
+using CrossEngine.Utils.Extensions;
 
 
 #if WASM

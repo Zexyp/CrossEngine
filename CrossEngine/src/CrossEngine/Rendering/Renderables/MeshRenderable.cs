@@ -10,6 +10,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Geometry;
+using CrossEngine.Utils.Extensions;
+using CrossEngine.Utils.Rendering;
 using static CrossEngine.Display.WindowService;
 
 namespace CrossEngine.Rendering.Renderables

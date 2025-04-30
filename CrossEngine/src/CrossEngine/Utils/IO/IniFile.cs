@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CrossEngine.Serialization;
 
-namespace CrossEngine.Utils
+namespace CrossEngine.Utils.IO
 {
     public class IniFile
     {
@@ -54,7 +54,7 @@ namespace CrossEngine.Utils
                         break;
                 }
             }
-            public Vector4 ReadVector4(string key)
+            public Vector4 ReadVec4(string key)
             {
                 var parts = _variables[key].Split(VectorSeparator);
                 return new Vector4(
@@ -63,7 +63,7 @@ namespace CrossEngine.Utils
                     float.Parse(parts[2].Trim(), IniFile.nfi),
                     float.Parse(parts[3].Trim(), IniFile.nfi));
             }
-            public Vector3 ReadVector3(string key)
+            public Vector3 ReadVec3(string key)
             {
                 var parts = _variables[key].Split(VectorSeparator);
                 return new Vector3(
@@ -71,7 +71,7 @@ namespace CrossEngine.Utils
                     float.Parse(parts[1].Trim(), IniFile.nfi),
                     float.Parse(parts[2].Trim(), IniFile.nfi));
             }
-            public Vector2 ReadVector2(string key)
+            public Vector2 ReadVec2(string key)
             {
                 var parts = _variables[key].Split(VectorSeparator);
                 return new Vector2(
@@ -237,9 +237,9 @@ namespace CrossEngine.Utils
                 case Type t when t == typeof(int): return _section.ReadInt32(name);
                 case Type t when t == typeof(float): return _section.ReadSingle(name);
                 case Type t when t == typeof(bool): return _section.ReadBoolean(name);
-                case Type t when t == typeof(Vector4): return _section.ReadVector4(name);
-                case Type t when t == typeof(Vector3): return _section.ReadVector3(name);
-                case Type t when t == typeof(Vector2): return _section.ReadVector2(name);
+                case Type t when t == typeof(Vector4): return _section.ReadVec4(name);
+                case Type t when t == typeof(Vector3): return _section.ReadVec3(name);
+                case Type t when t == typeof(Vector2): return _section.ReadVec2(name);
                 default: throw new NotImplementedException();
             }
         }

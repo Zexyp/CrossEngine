@@ -15,6 +15,7 @@ using CrossEngine.Rendering.Cameras;
 using CrossEngine.Rendering.Culling;
 using CrossEngine.Rendering.Renderables;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Rendering;
 
 namespace CrossEngine.FX.Particles
 {
@@ -79,11 +80,6 @@ namespace CrossEngine.FX.Particles
 
         public override void Submit(IParticleSystemRenderData data)
         {
-            var volume = data.GetVolume();
-            CullChecker.Append(volume);
-            
-            if (volume.IsInFrustum(frustum) == Halfspace.Outside) return;
-
             Renderer2D.SetBlending(data.Blend);
             data.Render(camera.GetViewMatrix());
             Renderer2D.Flush();

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Display;
 using CrossEngine.Events;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 using CrossEngine.Profiling;
 
 namespace CrossEngine.Inputs

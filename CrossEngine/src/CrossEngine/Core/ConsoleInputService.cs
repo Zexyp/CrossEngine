@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CrossEngine.Events;
 using CrossEngine.Logging;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 
 namespace CrossEngine.Core
 {

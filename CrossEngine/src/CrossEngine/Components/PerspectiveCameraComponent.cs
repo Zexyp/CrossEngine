@@ -8,6 +8,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Utils.Maths;
 
 namespace CrossEngine.Components
 {
@@ -73,7 +74,7 @@ namespace CrossEngine.Components
         {
             // rip depth
             // TODO: fix
-            _projection = Matrix4x4Extension.CreatePerspectiveFieldOfView(MathExtension.ToRadConstF * _fov, _aspect, _near, _far);
+            _projection = Matrix4x4Extension.CreatePerspectiveFieldOfView(MathExt.ToRadConstF * _fov, _aspect, _near, _far);
             _projectionDirty = false;
         }
 

@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Geometry;
 using CrossEngine.Rendering.Materials;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Textures;

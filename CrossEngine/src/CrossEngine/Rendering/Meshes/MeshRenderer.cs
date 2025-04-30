@@ -2,9 +2,11 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using CrossEngine.Geometry;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Materials;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Rendering.Meshes;
 

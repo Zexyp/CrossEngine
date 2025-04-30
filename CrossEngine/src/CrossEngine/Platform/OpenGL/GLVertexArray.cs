@@ -9,6 +9,7 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
 using CrossEngine.Rendering;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;

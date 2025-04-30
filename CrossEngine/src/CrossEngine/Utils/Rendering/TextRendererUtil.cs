@@ -13,8 +13,9 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Debugging;
 using CrossEngine.Loaders;
 using CrossEngine.Logging;
+using CrossEngine.Utils.Extensions;
 
-namespace CrossEngine.Utils
+namespace CrossEngine.Utils.Rendering
 {
     public static class TextRendererUtil
     {

@@ -12,6 +12,7 @@ using CrossEngine.Rendering;
 using CrossEngine.Display;
 using CrossEngine.Ecs;
 using CrossEngine.Events;
+using CrossEngine.Geometry;
 using CrossEngine.Loaders;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
@@ -22,6 +23,9 @@ using CrossEngine.Rendering.Meshes;
 using CrossEngine.Rendering.Renderables;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Collections;
+using CrossEngine.Utils.Extensions;
+using CrossEngine.Utils.Rendering;
 
 namespace CrossEngine.Components
 {
@@ -383,7 +387,7 @@ class ScenePass : Pass
         if (camera == null)
             return;
         
-        //CullVisibility(camera);
+        CullVisibility(camera);
         
         foreach (var rend in _renderables.Values)
         {
@@ -418,23 +422,19 @@ class ScenePass : Pass
     private void CullVisibility(ICamera camera)
     {
         var frustum = camera.GetFrustum();
+        
         for (int i = 0; i < objects.Count; i++)
         {
             var obj = objects[i];
             var volume = obj.GetVolume();
             
+            CullChecker.Append(volume);
+            
             if (volume == null)
                 continue;
+            
             var result = volume.IsInFrustum(frustum);
             obj.IsVisible = result != Halfspace.Outside;
-            
-            if (obj is SpriteRendererComponent sprite)
-                switch (result)
-                {
-                    case Halfspace.Outside: sprite.Color = VecColor.Red; break;
-                    case Halfspace.Intersect: sprite.Color = VecColor.Blue; break;
-                    case Halfspace.Inside: sprite.Color = VecColor.White; break;
-                }
         }
     }
     

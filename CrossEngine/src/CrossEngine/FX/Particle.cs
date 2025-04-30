@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using CrossEngine.Utils;
+using CrossEngine.Utils.Collections;
 
 namespace CrossEngine.FX.Particles
 {

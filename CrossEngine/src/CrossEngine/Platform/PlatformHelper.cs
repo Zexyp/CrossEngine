@@ -1,7 +1,7 @@
 ﻿using CrossEngine.Display;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 using Silk.NET.GLFW;
 using System;
 using System.Collections.Generic;

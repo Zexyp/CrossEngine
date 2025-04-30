@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 using CrossEngine;
 using CrossEngine.Profiling;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 
 namespace CrossEngine.Core
 {

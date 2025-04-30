@@ -190,7 +190,7 @@ namespace CrossEngine.Utils.ImGui
         private void OnEvent(Event e)
         {
             new EventDispatcher(e)
-                .Dispatch<WindowResizeEvent>(wre => WindowResized(new IntVec2((int)wre.Width, (int)wre.Height)))
+                .Dispatch<WindowResizeEvent>(wre => WindowResized((int)wre.Width, (int)wre.Height))
                 .Dispatch<KeyCharEvent>(kce => OnKeyChar(kce.Char))
                 .Dispatch<MouseScrolledEvent>(mse => { _scrollY += mse.Y; _scrollX += mse.X; });
         }
@@ -200,10 +200,11 @@ namespace CrossEngine.Utils.ImGui
             _pressedChars.Add(ch);
         }
 
-        private void WindowResized(IntVec2 size)
+        // IntVec2 privileges revoked 
+        private void WindowResized(int x, int y)
         {
-            _windowWidth = size.X;
-            _windowHeight = size.Y;
+            _windowWidth = x;
+            _windowHeight = y;
         }
 
         /// <summary>

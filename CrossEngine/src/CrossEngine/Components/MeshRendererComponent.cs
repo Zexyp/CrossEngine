@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Assets;
 using CrossEngine.Ecs;
+using CrossEngine.Geometry;
 using CrossEngine.Rendering.Culling;
 using CrossEngine.Rendering.Materials;
 using CrossEngine.Rendering.Meshes;

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CrossEngine.Utils
+namespace CrossEngine.Utils.Collections
 {
     internal class CastWrapCollection<T> : ICollection<T>, IList<T>
     {

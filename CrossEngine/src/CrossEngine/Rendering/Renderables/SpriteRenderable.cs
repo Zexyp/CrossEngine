@@ -4,6 +4,7 @@ using System;
 using System.Numerics;
 using CrossEngine.Rendering.Culling;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Rendering;
 
 namespace CrossEngine.Rendering.Renderables
 {
@@ -15,6 +16,7 @@ namespace CrossEngine.Rendering.Renderables
         public override void Begin(ICamera camera)
         {
             _lastBlend = null;
+            _frustum = camera.GetFrustum();
             Renderer2D.BeginScene(((ICamera)camera).GetViewProjectionMatrix());
         }
 
@@ -24,10 +26,7 @@ namespace CrossEngine.Rendering.Renderables
         }
 
         public override void Submit(ISpriteRenderData data)
-        {
-            var volume = data.GetVolume();
-            CullChecker.Append(volume);
-            
+        {            
             if (_lastBlend != data.Blend)
             {
                 _lastBlend = data.Blend;
