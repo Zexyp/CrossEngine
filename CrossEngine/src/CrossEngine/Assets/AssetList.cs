@@ -19,10 +19,14 @@ namespace CrossEngine.Assets
     public class AssetList : IAssetLoadContext, ISerializable
     {
         [EditorString]
-        public string Directory = "./";
+        public string DirectoryOffset = "./";
+        [EditorString]
+        public string RuntimeFilepath;
 
         Dictionary<Type, IDictionary> _collections = new();
         bool _loaded = false;
+        
+        public bool IsLoaded => _loaded;
 
         public void Add(Asset asset)
         {
@@ -198,7 +202,7 @@ namespace CrossEngine.Assets
             catch (Exception ex)
             {
                 Log.Default.Error($"failed to load asset '{asset}': {ex.GetType().FullName}: {ex.Message}");
-                Log.Default.Trace($"load asset failiure details: {ex}");
+                Log.Default.Trace($"load asset '{asset}' failure details: {ex}");
                 return false;
             }
         }
@@ -214,7 +218,7 @@ namespace CrossEngine.Assets
             catch (Exception ex)
             {
                 Log.Default.Error($"failed to unload asset '{asset}': {ex.GetType().FullName}: {ex.Message}");
-                Log.Default.Trace($"unload asset failiure details: {ex}");
+                Log.Default.Trace($"unload asset '{asset}' failure details: {ex}");
                 return false;
             }
         }
@@ -227,7 +231,7 @@ namespace CrossEngine.Assets
 
         string IAssetLoadContext.GetFullPath(string realtivePath)
         {
-            return Path.Join(Directory, realtivePath);
+            return Path.Join(Path.GetDirectoryName(RuntimeFilepath), DirectoryOffset, realtivePath);
         }
 
         public Asset GetDependency(Type type, Guid id)
@@ -239,7 +243,7 @@ namespace CrossEngine.Assets
         #region ISerializable
         void ISerializable.GetObjectData(SerializationInfo info)
         {
-            info.AddValue("Directory", Directory);
+            info.AddValue("DirectoryOffset", DirectoryOffset);
             List<Asset> imTooLazy = new();
             foreach (IDictionary col in _collections.Values)
                 foreach (Asset asset in col.Values)
@@ -249,7 +253,7 @@ namespace CrossEngine.Assets
 
         void ISerializable.SetObjectData(SerializationInfo info)
         {
-            Directory = info.GetValue("Directory", Directory);
+            DirectoryOffset = info.GetValue("DirectoryOffset", DirectoryOffset);
 
             var assets = info.GetValue<Asset[]>("Assets");
             for (int i = 0; i < assets.Length; i++)

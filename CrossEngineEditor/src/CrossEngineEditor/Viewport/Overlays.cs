@@ -43,8 +43,6 @@ namespace CrossEngineEditor.Viewport
 
         void IOverlay.Draw()
         {
-            if (Context.Scene?.IsInitialized != true)
-                return;
             LineRenderer.BeginScene(Camera.GetViewProjectionMatrix());
             Context.Scene.World.GetSystem<TransformSystem>().RenderDebugLines();
             LineRenderer.EndScene();

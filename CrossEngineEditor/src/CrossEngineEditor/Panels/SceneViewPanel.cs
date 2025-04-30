@@ -1,5 +1,6 @@
 ﻿using ImGuiNET;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 
 using CrossEngine;
@@ -11,6 +12,7 @@ using CrossEngine.Utils;
 using CrossEngine.Scenes;
 using CrossEngine.Services;
 using CrossEngine.Ecs;
+using CrossEngine.Logging;
 using CrossEngine.Platform.OpenGL;
 
 namespace CrossEngineEditor.Panels
@@ -23,12 +25,10 @@ namespace CrossEngineEditor.Panels
         protected Vector2 ViewportSize { get; private set; }
         protected WeakReference<Framebuffer> Framebuffer { get; private set; }
         protected bool ViewportResized;
-        private RenderService rs;
         protected FramebufferSurface Surface;
 
-        public SceneViewPanel(RenderService rs) : base("Scene View")
+        public SceneViewPanel() : base("Scene View")
         {
-            this.rs = rs;
             Surface = new FramebufferSurface();
         }
 
@@ -61,7 +61,7 @@ namespace CrossEngineEditor.Panels
                 }
             }
 
-            if (Scene?.IsInitialized != true || Framebuffer == null)
+            if (Scene == null)
             {
                 ImGui.TextDisabled("No scene");
                 return;
@@ -71,6 +71,8 @@ namespace CrossEngineEditor.Panels
             // as of latest rewrite this is not valid
             // wtf is this comment
             var renderSys = Scene.World.GetSystem<RenderSystem>();
+            if (!renderSys.GraphicsInitialized || Framebuffer == null) // reeeeeee
+                return;
             renderSys.OverrideCamera = DrawCamera;
 
             Framebuffer.GetValue().Bind();
@@ -109,19 +111,20 @@ namespace CrossEngineEditor.Panels
 
             ViewportSize = -Vector2.One;
 
-            rs.Execute(() =>
+            EditorApplication.Service.RendererRequest(() =>
             {
                 Framebuffer = CrossEngine.Rendering.Buffers.Framebuffer.Create(in spec);
-                Surface.Context = rs.MainSurface.Context;
+                Surface.Context = GraphicsContext.Current;
                 Surface.Buffer = Framebuffer;
                 Surface.Update += OnSurfaceUpdate;
+                Surface.Resize += OnSurfaceResize;
                 OnCameraResize();
             });
         }
 
         public override void OnClose()
         {
-            rs.Execute(() =>
+            EditorApplication.Service.RendererRequest(() =>
             {
                 Framebuffer.Dispose();
                 Framebuffer = null;
@@ -133,9 +136,14 @@ namespace CrossEngineEditor.Panels
             Surface.DoResize(ViewportSize.X, ViewportSize.Y);
         }
 
-        private void OnSurfaceUpdate(ISurface surface)
+        protected virtual void OnSurfaceUpdate(ISurface surface)
         {
             SceneRenderer.Render(Scene, surface);
+        }
+
+        protected virtual void OnSurfaceResize(ISurface surface, float width, float height)
+        {
+            
         }
     }
 }

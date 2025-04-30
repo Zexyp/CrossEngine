@@ -1,10 +1,12 @@
 ﻿using ImGuiNET;
 using System;
-
+using System.Diagnostics;
 using System.Numerics;
 
 using CrossEngine.Utils;
 using CrossEngine.Events;
+using CrossEngine.Logging;
+using CrossEngine.Serialization;
 using CrossEngine.Utils.ImGui;
 
 namespace CrossEngineEditor.Panels
@@ -37,8 +39,23 @@ namespace CrossEngineEditor.Panels
         protected Vector2 WindowPosition { get; private set; }
         protected bool Focused { get; private set; }
 
-        internal IEditorContext Context;
+        internal IEditorContext Context
+        {
+            get
+            {
+#if DEBUG
+                if (_context == null)
+                {
+                    EditorService.Log.Trace("null context detected");
+                    Debug.Fail("null context detected");
+                }
+#endif
+                return _context;
+            }
+            set => _context = value;
+        }
 
+        private IEditorContext _context;
         private bool _openStateDirty;
         private string _windowName;
 

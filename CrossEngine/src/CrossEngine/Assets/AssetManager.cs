@@ -50,7 +50,7 @@ namespace CrossEngine.Assets
             using (Stream stream = await PlatformHelper.FileRead(filepath))
             {
                 var pool = Read(stream);
-                pool.Directory = Path.Join(Path.GetDirectoryName(filepath), pool.Directory);
+                pool.RuntimeFilepath = filepath;
                 return pool;
             }
         }
@@ -64,10 +64,8 @@ namespace CrossEngine.Assets
         {
             using (Stream stream = PlatformHelper.FileCreate(filepath))
             {
-                string prevdir = pool.Directory;
-                pool.Directory = Path.GetRelativePath(Path.GetDirectoryName(filepath), pool.Directory);
+                pool.RuntimeFilepath = filepath;
                 Write(pool, stream);
-                pool.Directory = prevdir;
             }
         }
 

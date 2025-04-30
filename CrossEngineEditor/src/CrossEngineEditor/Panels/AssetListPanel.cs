@@ -44,7 +44,14 @@ namespace CrossEngineEditor.Panels
                 {
                     if (ImGui.MenuItem("New"))
                     {
-                        void CreateAssets() => Context.Assets = new AssetList();
+                        void CreateAssets()
+                        {
+                            EditorApplication.Service.DialogPickDirectory().ContinueWith(t =>
+                            {
+                                if (t.Result == null) return;
+                                Context.Assets = new AssetList() { DirectoryOffset = t.Result };
+                            });
+                        }
 
                         EditorApplication.Service.DialogDestructive(CreateAssets, Context.Assets != null);
                     }

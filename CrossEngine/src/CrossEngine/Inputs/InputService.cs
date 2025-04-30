@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +14,7 @@ namespace CrossEngine.Inputs
 {
     public class InputService : Service, IUpdatedService
     {
-        readonly Queue<Event> _events = new Queue<Event>();
+        readonly ConcurrentQueue<Event> _events = new ConcurrentQueue<Event>();
 
         readonly Keyboard keyboard = new();
         readonly Mouse mouse = new();
@@ -55,10 +57,12 @@ namespace CrossEngine.Inputs
 
         private void HandleEvent(Window ws, Event e)
         {
+            Debug.Assert(e != null);
+            
             _events.Enqueue(e);
         }
 
-        public override void OnStart()
+        public override void OnInit()
         {
             
         }

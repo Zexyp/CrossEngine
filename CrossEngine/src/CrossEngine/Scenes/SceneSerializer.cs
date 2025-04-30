@@ -5,6 +5,7 @@ using CrossEngine.Serialization.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -73,6 +74,8 @@ namespace CrossEngine.Serialization
         public static Scene DeserializeJson(Stream stream)
         {
             Scene scene;
+            
+            Debug.Assert(AssetManager.Current != null, "no asset lookup");
             
             lock (options)
             {

@@ -19,24 +19,20 @@ namespace CrossEngine.Core
         public readonly ServiceManager Manager = new ServiceManager();
         protected static Logger Log = new Logger("app");
 
-        private bool running = true;
+        private bool running;
         private EventWaitHandle wait = new EventWaitHandle(false, EventResetMode.ManualReset);
 
         public void Run()
         {
+            running = true;
             Thread.CurrentThread.Name = "main";
             ThreadWrapper(InternalRun);
         }
 
-        public virtual void OnInit()
-        {
-            
-        }
-
-        public virtual void OnDestroy()
-        {
-            
-        }
+        public virtual void OnInit() { }
+        public virtual void OnDestroy() { }
+        public virtual void OnStart() { }
+        public virtual void OnEnd() { }
 
         public virtual void OnUpdate()
         {
@@ -90,6 +86,8 @@ namespace CrossEngine.Core
 
         private void InternalInit()
         {
+            OnInit();
+
             PlatformHelper.Init();
 
             Manager.InitServices();
@@ -97,13 +95,13 @@ namespace CrossEngine.Core
             Manager.AttachServices();
 
             Manager.Event += OnEvent;
-
-            OnInit();
+            
+            OnStart();
         }
 
         private void InternalDestroy()
         {
-            OnDestroy();
+            OnEnd();
 
             Manager.Event -= OnEvent;
 
@@ -112,6 +110,8 @@ namespace CrossEngine.Core
             Manager.ShutdownServices();
 
             PlatformHelper.Terminate();
+            
+            OnDestroy();
         }
 
         private void InternalRun()

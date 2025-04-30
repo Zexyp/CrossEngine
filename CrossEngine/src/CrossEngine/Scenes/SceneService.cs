@@ -26,7 +26,7 @@ namespace CrossEngine.Scenes
 
         static readonly internal Logger Log = new Logger("scene-service");
 
-        public override void OnStart()
+        public override void OnInit()
         {
             Debug.Assert(SceneManager.service == null);
             SceneManager.service = this;

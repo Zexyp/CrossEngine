@@ -22,7 +22,7 @@ class PreferencesModal : EditorModal
         ImGui.Separator();
         
         if (ImGui.Button("Save"))
-            IniFile.Dump(EditorApplication.Service.Preferences, File.Create(EditorService.PreferencesPath));
+            IniFile.Dump(EditorApplication.Service.Preferences, File.Create(EditorService.ConfigPreferencesPath));
         ImGui.SameLine();
         if (ImGui.Button("Close"))
             End();

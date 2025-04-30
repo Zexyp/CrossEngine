@@ -4,21 +4,25 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CrossEngine.Serialization;
 
 namespace CrossEngine.Utils
 {
     public class IniFile
     {
         // peepee poopoo
-        static readonly NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = ".", NumberDecimalDigits = 3 };
+        internal static readonly NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = ".", NumberDecimalDigits = 3 };
         const string WriteSeparator = " = ";
 
         public struct IniFileSection
         {
+            private const string VectorSeparator = ",";
+            
             internal Dictionary<string, string> _variables = new Dictionary<string, string>();
 
             public IniFileSection()
@@ -49,6 +53,35 @@ namespace CrossEngine.Utils
                         throw new FormatException();
                         break;
                 }
+            }
+            public Vector4 ReadVector4(string key)
+            {
+                var parts = _variables[key].Split(VectorSeparator);
+                return new Vector4(
+                    float.Parse(parts[0].Trim(), IniFile.nfi),
+                    float.Parse(parts[1].Trim(), IniFile.nfi),
+                    float.Parse(parts[2].Trim(), IniFile.nfi),
+                    float.Parse(parts[3].Trim(), IniFile.nfi));
+            }
+            public Vector3 ReadVector3(string key)
+            {
+                var parts = _variables[key].Split(VectorSeparator);
+                return new Vector3(
+                    float.Parse(parts[0].Trim(), IniFile.nfi),
+                    float.Parse(parts[1].Trim(), IniFile.nfi),
+                    float.Parse(parts[2].Trim(), IniFile.nfi));
+            }
+            public Vector2 ReadVector2(string key)
+            {
+                var parts = _variables[key].Split(VectorSeparator);
+                return new Vector2(
+                    float.Parse(parts[0].Trim(), IniFile.nfi),
+                    float.Parse(parts[1].Trim(), IniFile.nfi));
+            }
+
+            public System.Drawing.Color ReadColor(string key)
+            {
+                return default;
             }
             #endregion
 
@@ -101,6 +134,9 @@ namespace CrossEngine.Utils
             public void Write(string key, int value) => Write(key, value.ToString());
             public void Write(string key, float value) => Write(key, value.ToString(nfi));
             public void Write(string key, bool value) => Write(key, value.ToString());
+            public void Write(string key, Vector4 value) => Write(key, $"{value.X.ToString(nfi)}{VectorSeparator}{value.Y.ToString(nfi)}{VectorSeparator}{value.Z.ToString(nfi)}{VectorSeparator}{value.W.ToString(nfi)}");
+            public void Write(string key, Vector3 value) => Write(key, $"{value.X.ToString(nfi)}{VectorSeparator}{value.Y.ToString(nfi)}{VectorSeparator}{value.Z.ToString(nfi)}");
+            public void Write(string key, Vector2 value) => Write(key, $"{value.X.ToString(nfi)}{VectorSeparator}{value.Y.ToString(nfi)}");
             #endregion
         }
 
@@ -163,6 +199,80 @@ namespace CrossEngine.Utils
                         writer.WriteLine($"{key}{WriteSeparator}{value}");
                     }
                 }
+            }
+        }
+    }
+
+    public class IniSerializationInfo : SerializationInfo
+    {
+        IniFile.IniFileSection _section;
+
+        public static IniSerializationInfo FromSection(IniFile.IniFileSection section)
+        {
+            return new IniSerializationInfo() { _section = section };
+        }
+
+        private IniSerializationInfo() { }
+        
+        public override void AddValue(string name, object value)
+        {
+            switch (value)
+            {
+                case string s: _section.Write(name, s); break;
+                case int i: _section.Write(name, i); break;
+                case float f: _section.Write(name, f); break;
+                case bool b: _section.Write(name, b); break;
+                case Vector4 v4: _section.Write(name, v4); break;
+                case Vector3 v3: _section.Write(name, v3); break;
+                case Vector2 v2: _section.Write(name, v2); break;
+                default: throw new NotImplementedException();
+            }
+        }
+
+        public override object GetValue(string name, Type typeOfValue)
+        {
+            switch (typeOfValue)
+            {
+                case Type t when t == typeof(string): return _section.ReadString(name);
+                case Type t when t == typeof(int): return _section.ReadInt32(name);
+                case Type t when t == typeof(float): return _section.ReadSingle(name);
+                case Type t when t == typeof(bool): return _section.ReadBoolean(name);
+                case Type t when t == typeof(Vector4): return _section.ReadVector4(name);
+                case Type t when t == typeof(Vector3): return _section.ReadVector3(name);
+                case Type t when t == typeof(Vector2): return _section.ReadVector2(name);
+                default: throw new NotImplementedException();
+            }
+        }
+
+        public override bool TryGetValue(string name, Type typeOfValue, out object value)
+        {
+            switch (typeOfValue)
+            {
+                case Type t when t == typeof(string):
+                {
+                    var result = _section.TryReadString(name, out var v);
+                    value = v;
+                    return result;
+                }
+                case Type t when t == typeof(int):
+                {
+                    var result = _section.TryReadInt32(name, out var v);
+                    value = v;
+                    return result;
+                }
+                case Type t when t == typeof(float):
+                {
+                    var result = _section.TryReadSingle(name, out var v);
+                    value = v;
+                    return result;
+                }
+                case Type t when t == typeof(bool):
+                {
+                    var result = _section.TryReadBoolean(name, out var v);
+                    value = v;
+                    return result;
+                }
+                default: throw new NotImplementedException();
             }
         }
     }

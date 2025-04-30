@@ -29,19 +29,14 @@ namespace CrossEngine.Services
 
         public void Unregister(Service service)
         {
-            foreach (var pair in _servicesDict)
-            {
-                if (pair.Value == service)
-                {
-                    _services.Remove(service);
-                    _servicesDict.Remove(pair.Key);
+            service.Manager = null;
                     
-                    if (service is IUpdatedService us)
-                        _updatedServices.Remove(us);
-
-                    service.Manager = null;
-                }
-            }
+            if (service is IUpdatedService us)
+                _updatedServices.Remove(us);
+            
+            _servicesDict.Remove(service.GetType(), out var dictRemove);
+            Debug.Assert(dictRemove == service);
+            _services.Remove(service);
         }
 
         public T GetService<T>() where T : Service
@@ -60,7 +55,7 @@ namespace CrossEngine.Services
         {
             for (int i = 0; i < _services.Count; i++)
             {
-                _services[i].OnStart();
+                _services[i].OnInit();
             }
         }
 

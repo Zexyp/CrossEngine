@@ -71,7 +71,7 @@ namespace CrossEngine.Debugging
         }
         public void RemoveOverlay(IOverlay overlay) => _overlays.Remove(overlay);
 
-        public override void OnStart()
+        public override void OnInit()
         {
             
         }

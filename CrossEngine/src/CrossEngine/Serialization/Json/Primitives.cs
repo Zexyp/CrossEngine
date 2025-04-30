@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define WRITE_VEC_ARRAY
+
+using System;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json;
@@ -25,10 +27,17 @@ namespace CrossEngine.Serialization.Json
 
         public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options)
         {
+#if WRITE_VEC_ARRAY
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.X);
+            writer.WriteNumberValue(value.Y);
+            writer.WriteEndArray();
+#else
             writer.WriteStartObject();
             writer.WriteNumber("X", value.X);
             writer.WriteNumber("Y", value.Y);
             writer.WriteEndObject();
+#endif
         }
     }
 
@@ -49,11 +58,19 @@ namespace CrossEngine.Serialization.Json
 
         public override void Write(Utf8JsonWriter writer, Vector3 value, JsonSerializerOptions options)
         {
+#if WRITE_VEC_ARRAY
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.X);
+            writer.WriteNumberValue(value.Y);
+            writer.WriteNumberValue(value.Z);
+            writer.WriteEndArray();
+#else
             writer.WriteStartObject();
             writer.WriteNumber("X", value.X);
             writer.WriteNumber("Y", value.Y);
             writer.WriteNumber("Z", value.Z);
             writer.WriteEndObject();
+#endif
         }
     }
 
@@ -74,12 +91,21 @@ namespace CrossEngine.Serialization.Json
 
         public override void Write(Utf8JsonWriter writer, Vector4 value, JsonSerializerOptions options)
         {
+#if WRITE_VEC_ARRAY
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.X);
+            writer.WriteNumberValue(value.Y);
+            writer.WriteNumberValue(value.Z);
+            writer.WriteNumberValue(value.W);
+            writer.WriteEndArray();
+#else
             writer.WriteStartObject();
             writer.WriteNumber("X", value.X);
             writer.WriteNumber("Y", value.Y);
             writer.WriteNumber("Z", value.Z);
             writer.WriteNumber("W", value.W);
             writer.WriteEndObject();
+#endif
         }
     }
     #endregion
@@ -101,12 +127,21 @@ namespace CrossEngine.Serialization.Json
 
         public override void Write(Utf8JsonWriter writer, Quaternion value, JsonSerializerOptions options)
         {
+#if WRITE_VEC_ARRAY
+            writer.WriteStartArray();
+            writer.WriteNumberValue(value.X);
+            writer.WriteNumberValue(value.Y);
+            writer.WriteNumberValue(value.Z);
+            writer.WriteNumberValue(value.W);
+            writer.WriteEndArray();
+#else
             writer.WriteStartObject();
             writer.WriteNumber("X", value.X);
             writer.WriteNumber("Y", value.Y);
             writer.WriteNumber("Z", value.Z);
             writer.WriteNumber("W", value.W);
             writer.WriteEndObject();
+#endif
         }
     }
 

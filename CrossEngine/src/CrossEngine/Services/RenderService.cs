@@ -198,7 +198,7 @@ namespace CrossEngine.Services
 
         private void OnInternalServiceReqest(Action action) => Execute(action);
 
-        public override void OnStart()
+        public override void OnInit()
         {
             
         }

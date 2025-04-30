@@ -14,8 +14,10 @@ class CreateProjectModal : EditorModal
     
     string directory = Path.GetTempPath();
     string name = "NewProject";
+    public Action<string> Callback;
     protected override void DrawModalContent()
     {
+        ImGui.TextDisabled("please sanitize the paths, i'm not paid enough");
         ImGui.InputText("Directory", ref directory, 260);
         ImGui.SameLine();
         if (ImGui.Button("..."))
@@ -27,6 +29,9 @@ class CreateProjectModal : EditorModal
 
         ImGui.Separator();
         if (ImGui.Button("Create"))
-            throw new NotImplementedException();
+        {
+            Callback.Invoke(Path.Join(projDir, $"{name}.ceproj"));
+            End();
+        }
     }
 }

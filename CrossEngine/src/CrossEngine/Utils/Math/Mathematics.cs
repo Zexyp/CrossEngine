@@ -118,11 +118,6 @@ namespace CrossEngine.Utils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 XYZ(this Vector4 v) => new Vector3(v.X, v.Y, v.Z);
-
-        public static Vector4 FromColor(System.Drawing.Color color)
-        {
-            return new Vector4((float)color.R / byte.MaxValue, (float)color.G / byte.MaxValue, (float)color.B / byte.MaxValue, (float)color.A / byte.MaxValue);
-        }
     }
 
     public static class Matrix4x4Extension
@@ -880,5 +875,21 @@ namespace CrossEngine.Utils
             o |= ((uint)ColF32ToU8(alpha)) << U32_A_SHIFT;
             return o;
         }
+        
+        public static Vector4 Vec4FromColor(System.Drawing.Color color)
+        {
+            return new Vector4((float)color.R / byte.MaxValue, (float)color.G / byte.MaxValue, (float)color.B / byte.MaxValue, (float)color.A / byte.MaxValue);
+        }
+        
+        public static string ToHex(uint color)
+        {
+            var r = (byte)color;
+            var g = (byte)(color >> 8);
+            var b = (byte)(color >> 16);
+            var a = (byte)(color >> 24);
+            return $"#{r:X2}{g:X2}{b:X2}{a:X2}";
+        }
+
+        public static string ToHex(System.Drawing.Color color) => throw new NotImplementedException();
     }
 }

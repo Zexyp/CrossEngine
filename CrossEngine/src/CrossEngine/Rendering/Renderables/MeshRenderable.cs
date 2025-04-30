@@ -31,7 +31,8 @@ namespace CrossEngine.Rendering.Renderables
 
         public override void Submit(IMeshRenderData data)
         {
-            CullChecker.Append(data.GetVolume());
+            var volume = data.GetVolume();
+            CullChecker.Append(volume);
             
             if (data.Mesh == null)
                 return;

@@ -43,7 +43,7 @@ namespace CrossEngine.Display
             _mode = mode;
         }
 
-        public override void OnStart()
+        public override void OnInit()
         {
             _running = true;
             if (_mode == Mode.ThreadLoop)

@@ -59,6 +59,8 @@ namespace CrossEngine.Components
         private ICamera _overrideCamera;
         private Vector2 _lastSize = Vector2.One;
         private Pipeline _pipeline;
+        private bool _graphicsInitialized = false;
+        public bool GraphicsInitialized => _graphicsInitialized;
         
         private SkyboxPass _passSkybox;
         private ScenePass _passScene;
@@ -188,10 +190,12 @@ namespace CrossEngine.Components
         public void GraphicsInit()
         {
             _pipeline.Init();
+            _graphicsInitialized = true;
         }
 
         public void GraphicsDestroy()
         {
+            _graphicsInitialized = false;
             _pipeline.Destroy();
         }
 

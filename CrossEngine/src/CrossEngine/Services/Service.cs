@@ -12,7 +12,7 @@ namespace CrossEngine.Services
     {
         protected internal ServiceManager Manager { get; internal set; }
 
-        public abstract void OnStart();
+        public abstract void OnInit();
         public abstract void OnDestroy();
 
         public abstract void OnAttach();

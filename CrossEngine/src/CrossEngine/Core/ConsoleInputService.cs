@@ -34,7 +34,7 @@ namespace CrossEngine.Core
         bool _enableLineInput = false;
         bool _consolCancelActive = true; // allows for termination if the app does not update
 
-        public override void OnStart()
+        public override void OnInit()
         {
             Debug.Assert(_thread == null);
 

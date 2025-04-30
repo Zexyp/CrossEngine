@@ -17,7 +17,7 @@ namespace CrossEngine.Core
 
         public event Action<TimeService> FixedUpdate;
 
-        public override void OnStart()
+        public override void OnInit()
         {
             sw.Start();
         }

@@ -81,7 +81,6 @@ public class PanelManager
         Debug.Assert(!_panels.Contains(panel));
 
         _panels.Add(panel);
-        panel.Context = _context;
 
         if (_initialized)
             AttachPanel(panel);
@@ -96,7 +95,6 @@ public class PanelManager
         if (_initialized)
             DetachPanel(panel);
         
-        panel.Context = null;
         _panels.Remove(panel);
         
         _log.Trace($"removed panel '{panel.GetType().FullName}'");
@@ -156,6 +154,8 @@ public class PanelManager
 
     public void Draw()
     {
+        Debug.Assert(_initialized);
+
         Profiler.BeginScope();
         
         DrawPanels();
@@ -230,6 +230,8 @@ public class PanelManager
 
     private void AttachPanel(EditorPanel panel)
     {
+        panel.Context = _context;
+        
         panel.OnAttach();
         
         if (panel.Open != false) panel.OnOpen();
@@ -244,5 +246,7 @@ public class PanelManager
         panel.OnDetach();
         
         _log.Trace($"detached panel '{panel.GetType().FullName}'");
+        
+        panel.Context = null;
     }
 }

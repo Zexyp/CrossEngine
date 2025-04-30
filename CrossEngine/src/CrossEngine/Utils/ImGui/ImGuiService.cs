@@ -62,6 +62,9 @@ namespace CrossEngine.Utils.ImGui
                         SetupTheme();
 
                         io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;    // Enable Docking
+
+                        // behaviour
+                        IG.SetColorEditOptions(ImGuiColorEditFlags.Float | ImGuiColorEditFlags.AlphaPreviewHalf | ImGuiColorEditFlags.AlphaBar);
                     });
             });
         }
@@ -78,7 +81,7 @@ namespace CrossEngine.Utils.ImGui
             controller.Render();
         }
 
-        public override void OnStart()
+        public override void OnInit()
         {
             
         }

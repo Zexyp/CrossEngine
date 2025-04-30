@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Rendering;
 using CrossEngine.Core;
+using CrossEngine.Serialization;
 
 namespace CrossEngineEditor.Panels
 {
@@ -35,12 +36,12 @@ namespace CrossEngineEditor.Panels
         private bool _viewDirty = true;
         private readonly List<(IViewportOverlay Overlay, bool Draw)> _overlays = new();
         private Vector2 _lookRot = Vector2.Zero;
-        private bool IsTouchpad => EditorApplication.Service.Preferences["navigation"].ReadBoolean("touchpad");
+        private bool IsTouchpad => EditorApplication.Service.Preferences["navigation"].ReadBooleanOrDefault("touchpad", true);
         private ViewportPass _viewportPass;
         private float _sensitivityPan = .25f;
         private float _sensitivityRotate = 8;
 
-        public ViewportPanel(RenderService rs) : base(rs)
+        public ViewportPanel()
         {
             WindowName = "Viewport";
             WindowFlags = ImGuiWindowFlags.MenuBar;
@@ -58,13 +59,13 @@ namespace CrossEngineEditor.Panels
         {
             DrawMenuBar();
 
-            if (Scene?.IsInitialized == true) AttachPass(Scene);
+            AttachPass(Scene);
             
             base.DrawWindowContent();
 
-            if (Scene?.IsInitialized == true) DetachPass(Scene);
+            DetachPass(Scene);
 
-            if (Scene?.IsInitialized != true || Framebuffer == null)
+            if (Scene == null || Framebuffer == null)
                 return;
 
             var io = ImGui.GetIO();
@@ -294,6 +295,16 @@ namespace CrossEngineEditor.Panels
             }
         }
 
+        public override void OnDetach()
+        {
+            base.OnDetach();
+
+            for (int i = 0; i < _overlays.Count; i++)
+            {
+                _overlays[i].Overlay.Context = null;
+            }
+        }
+
         private void AttachPass(Scene scene)
         {
             scene?.World.GetSystem<RenderSystem>().Pipeline.PushBack(_viewportPass);
@@ -357,7 +368,7 @@ namespace CrossEngineEditor.Panels
 
                     if (ImGui.BeginMenu("Viewpoint"))
                     {
-                        var cam = Context.Scene?.IsInitialized == true ? Context.Scene?.World.GetSystem<RenderSystem>().PrimaryCamera : null;
+                        var cam = Context.Scene?.World.GetSystem<RenderSystem>().PrimaryCamera;
                         if (ImGui.MenuItem("Camera", null, _editorCamera.ViewMatrix == cam?.ViewMatrix, cam != null)) {
                             _editorCamera.ViewMatrix = cam.ViewMatrix;
                         }
@@ -423,7 +434,6 @@ namespace CrossEngineEditor.Panels
         private void AddOverlay(IViewportOverlay overlay, bool draw = true)
         {
             overlay.Camera = _editorCamera;
-            overlay.Context = Context;
             _overlays.Add((overlay, draw));
         }
 
@@ -431,7 +441,6 @@ namespace CrossEngineEditor.Panels
         {
             _overlays.RemoveAll(tup => tup.Overlay == overlay);
             overlay.Camera = null;
-            overlay.Context = null;
         }
 
         private class ViewportPass : Pass

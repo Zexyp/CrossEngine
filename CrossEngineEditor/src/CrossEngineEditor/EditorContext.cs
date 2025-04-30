@@ -12,7 +12,7 @@ namespace CrossEngineEditor
 {
     public interface IEditorContext
     {
-        Scene? Scene { get; }
+        Scene? Scene { get; set; }
         Entity? ActiveEntity { get; set; }
         AssetList? Assets { get; set; }
     }

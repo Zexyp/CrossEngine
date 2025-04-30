@@ -20,16 +20,31 @@ namespace CrossEngineEditor.Panels
         protected override ICamera DrawCamera => null;
         protected override Scene Scene => Context.Scene;
 
-        public GamePanel(RenderService rs) : base(rs)
+        public GamePanel()
         {
             WindowName = "Game";
-            Surface.Resize += OnSurfaceResize;
         }
 
-        private void OnSurfaceResize(ISurface surface, float width, float height)
+        public override void OnAttach()
         {
-            if (Scene?.IsInitialized == true)
-                Scene.World.GetSystem<RenderSystem>().OnSurfaceResize(surface, width, height);
+            EditorApplication.Service.Context.SceneChanged += OnSceneChanged;
+        }
+
+        public override void OnDetach()
+        {
+            EditorApplication.Service.Context.SceneChanged -= OnSceneChanged;
+        }
+
+        private void OnSceneChanged(Scene old)
+        {
+            OnSurfaceResize(Surface, Surface.Size.X, Surface.Size.Y);
+        }
+
+        protected override void OnSurfaceResize(ISurface surface, float width, float height)
+        {
+            base.OnSurfaceResize(surface, width, height);
+            
+            Scene?.World.GetSystem<RenderSystem>().OnSurfaceResize(surface, width, height);
         }
     }
 }

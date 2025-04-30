@@ -34,7 +34,7 @@ namespace CrossEngine.Assets
         {
         }
 
-        public override void OnStart()
+        public override void OnInit()
         {
         }
 

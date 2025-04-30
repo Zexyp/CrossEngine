@@ -30,9 +30,6 @@ namespace CrossEngineEditor
 
         public EditorApplication()
         {
-            Debug.Assert(Instance == null);
-            Instance = this;
-
             RenderService rs;
             MetricsOverlay mo;
             // register
@@ -41,7 +38,7 @@ namespace CrossEngineEditor
             Manager.Register(new InputService());
             Manager.Register(new WindowService(
                 WindowService.Mode.ThreadLoop
-                ));
+            ));
             Manager.Register(rs = new RenderService());
             // is not nice but
             Manager.Register(new ImGuiService("res/fonts/JetBrainsMono[wght].ttf"));
@@ -50,9 +47,23 @@ namespace CrossEngineEditor
             Manager.Register(new OverlayService(mo = new MetricsOverlay()));
 
             // yippee
-            Manager.Register(Service = new EditorService());
+            Manager.Register(new EditorService());
 
             // configure
+        }
+        
+        public override void OnInit()
+        {
+            Debug.Assert(Instance == null && Service == null);
+            
+            Instance = this;
+            Service = Manager.GetService<EditorService>();
+        }
+
+        public override void OnDestroy()
+        {
+            Instance = null;
+            Service = null;
         }
 
         class MetricsOverlay : HudOverlay
@@ -70,13 +81,6 @@ namespace CrossEngineEditor
                 var offset = new Vector3(0, Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 2, 0);
                 TextRendererUtil.DrawText(Matrix4x4.CreateTranslation(offset), t, ColorHelper.U32ToVec4(0x7fff006d));
             }
-        }
-
-        public override void OnDestroy()
-        {
-            base.OnDestroy();
-            Instance = null;
-            Service = null;
         }
     }
 }
