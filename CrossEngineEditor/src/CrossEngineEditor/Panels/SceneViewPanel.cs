@@ -10,10 +10,11 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Cameras;
 using CrossEngine.Utils;
 using CrossEngine.Scenes;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 using CrossEngine.Ecs;
 using CrossEngine.Logging;
 using CrossEngine.Platform.OpenGL;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngineEditor.Panels
 {

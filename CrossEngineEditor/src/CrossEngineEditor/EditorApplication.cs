@@ -2,7 +2,7 @@
 using CrossEngine.Core;
 using CrossEngine.Events;
 using CrossEngine.Rendering;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 using CrossEngine.Utils.ImGui;
 using CrossEngineEditor.Panels;
 using System;
@@ -20,6 +20,7 @@ using System.Numerics;
 using CrossEngine.Display;
 using CrossEngine.Scenes;
 using CrossEngine.Assets;
+using CrossEngine.Utils.Rendering;
 
 namespace CrossEngineEditor
 {

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Diagnostics;
 
 using CrossEngine.Utils;
+using CrossEngine.Utils.Collections;
 using CrossEngineEditor.Utils.Gui;
 
 namespace CrossEngineEditor.Utils.Gui

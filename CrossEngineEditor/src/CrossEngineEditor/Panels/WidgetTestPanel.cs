@@ -5,6 +5,7 @@ using CrossEngine.Assemblies;
 using CrossEngine.Rendering;
 using CrossEngine.Scenes;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Collections;
 using CrossEngine.Utils.Editor;
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Utils.Gui;

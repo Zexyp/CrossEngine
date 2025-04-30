@@ -1,8 +1,12 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using CrossEngine.Assets;
+using CrossEngine.Components;
+using CrossEngine.Ecs;
 using CrossEngine.Utils;
+using CrossEngine.Utils.IO;
 
 namespace CrossEngineEditor;
 

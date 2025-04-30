@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using CrossEngine.Utils;
+using CrossEngine.Utils.IO;
 using ImGuiNET;
 
 namespace CrossEngineEditor.Modals;
