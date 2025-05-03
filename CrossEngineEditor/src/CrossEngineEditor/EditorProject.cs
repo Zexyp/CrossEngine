@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using CrossEngine.Assets;
 using CrossEngine.Components;
 using CrossEngine.Ecs;
@@ -32,34 +33,37 @@ public class EditorProject
             IniFile.Dump(ini, stream);
     }
 
-    public void Load(IEditorContext context, string filepath, Action<IniFile> shim = null)
+    public Task Load(IEditorContext context, string filepath, Action<IniFile> shim = null)
     {
         IniFile ini;
         using (Stream stream = File.OpenRead(filepath))
             ini = IniFile.Load(stream);
         Filepath = filepath;
 
+        // parse
         var alistfile = ini["workspace"].ReadString("Assets");
-        if (File.Exists(alistfile))
+        var sceneId = ini["workspace"].ReadString("Scene");
+        var entityId = ini["workspace"].ReadString("ActiveEntity");
+        
+        var task = Task.CompletedTask;
+        AssetList alist;
+        task = task.ContinueWith(t => AssetManager.ReadFile(alistfile)).Unwrap()
+            .ContinueWith(t => context.SetAssets(t.Result)).Unwrap();
+        task = task.ContinueWith(t =>
         {
-            AssetManager.ReadFile(alistfile).ContinueWith(t =>
-            {
-                AssetList alist = t.Result;
-                AssetManager.Bind(alist);
-                AssetManager.Load(alist).ContinueWith(t2 =>
-                {
-                    context.Assets = alist;
+            if (context.Assets != null && Guid.TryParse(sceneId, out var scnguid))
+                return context.SetScene(context.Assets.Get<SceneAsset>(scnguid)?.Scene);
+            return Task.CompletedTask;
+        }).Unwrap();
 
-                    var sceneId = ini["workspace"].ReadString("Scene");
-                    if (context.Assets != null && Guid.TryParse(sceneId, out var scnguid))
-                        context.Scene = context.Assets.Get<SceneAsset>(scnguid)?.Scene;
-                    var entityId = ini["workspace"].ReadString("ActiveEntity");
-                    if (context.Scene != null && int.TryParse(entityId, out var entguid))
-                        context.ActiveEntity = context.Scene.GetEntity(entguid);
-                });
-            });
-        }
+        task = task.ContinueWith(t =>
+        {
+            if (context.Scene != null && int.TryParse(entityId, out var entguid))
+                context.ActiveEntity = context.Scene.GetEntity(entguid);
+        });
         
         shim?.Invoke(ini);
+
+        return task;
     }
 }

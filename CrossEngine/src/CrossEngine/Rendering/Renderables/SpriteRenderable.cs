@@ -11,12 +11,10 @@ namespace CrossEngine.Rendering.Renderables
     class SpriteRenderable : Renderable<ISpriteRenderData>
     {
         private BlendMode? _lastBlend = null;
-        private Frustum _frustum;
 
         public override void Begin(ICamera camera)
         {
             _lastBlend = null;
-            _frustum = camera.GetFrustum();
             Renderer2D.BeginScene(((ICamera)camera).GetViewProjectionMatrix());
         }
 

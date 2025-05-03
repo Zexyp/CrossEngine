@@ -90,39 +90,46 @@ namespace CrossEngine.Scenes
             }
         }
         
-        public void Push(Scene scene)
+        public Task Push(Scene scene)
         {
-            PushBackground(scene);
-
-            AttachRendering(scene);
+            return PushBackground(scene).ContinueWith(t => AttachRendering(scene)).Unwrap();
         }
 
-        public void PushBackground(Scene scene)
+        public Task PushBackground(Scene scene)
         {
-            lock (scene)
+            Debug.Assert(!_scenes.Contains(scene));
+            
+            Log.Debug("scene push started");
+            
+            return PrepareRendering(scene)
+            .ContinueWith(t =>
             {
-                _scenes.Add(scene);
                 scene.Init();
-
-                PrepareRendering(scene);
-                
+            
+                _scenes.Add(scene);
+            
                 Log.Info("scene pushed");
-            }
+            });
         }
 
-        public void Remove(Scene scene)
+        public Task Remove(Scene scene)
         {
-            lock (scene)
-            {
-                FinishRendering(scene);
+            Debug.Assert(_scenes.Contains(scene));
             
-                DetachRendering(scene);
+            Log.Debug("scene remove started");
+            
+            _scenes.Remove(scene);
 
+            return FinishRendering(scene).ContinueWith(t =>
+            {
                 scene.Deinit();
-                _scenes.Remove(scene);
-            
+                
+                var task = DetachRendering(scene);
+                
                 Log.Info("scene removed");
-            }
+                
+                return task;
+            }).Unwrap();
         }
 
         public void Start(Scene scene)
@@ -142,6 +149,7 @@ namespace CrossEngine.Scenes
         }
 
         public Task Execute(Action action) => _scheduler.Schedule(action);
+        public Task<TResult> Execute<TResult>(Func<TResult> func) => _scheduler.Schedule(func);
         public TaskScheduler GetScheduler() => _scheduler;
 
         public void OnRender(ISurface surface)
@@ -152,44 +160,58 @@ namespace CrossEngine.Scenes
             }
         }
         
-        private void AttachRendering(Scene scene)
+        // TODO: order of operations in detach and attach and prepare and finish is inconsistent: ServiceRequest
+        
+        private Task AttachRendering(Scene scene)
         {
-            Manager.GetService<RenderService>().Execute(() =>
+            var rs = scene.World.GetSystem<RenderSystem>();
+            var service = Manager.GetService<RenderService>();
+            
+            return service.Execute(() =>
             {
-                var rs = scene.World.GetSystem<RenderSystem>();
                 var sur = (ISurface)Manager.GetService<RenderService>().MainSurface;
                 
                 sur.Resize += rs.OnSurfaceResize;
                 rs.OnSurfaceResize(sur, sur.Width, sur.Height);
+                
             }).ContinueWith(t => _drawScenes.Add(scene));
         }
 
-        private void DetachRendering(Scene scene)
+        private Task DetachRendering(Scene scene)
         {
             _drawScenes.Remove(scene);
-            Manager.GetService<RenderService>().Execute(() =>
+            
+            var rs = scene.World.GetSystem<RenderSystem>();
+            var service = Manager.GetService<RenderService>();
+            
+            return service.Execute(() =>
             {
-                var rs = scene.World.GetSystem<RenderSystem>();
                 var sur = Manager.GetService<RenderService>().MainSurface;
-                
                 sur.Resize -= rs.OnSurfaceResize;
+
+                rs.RendererRequest = null;
             });
         }
 
-        private void PrepareRendering(Scene scene)
+        private Task PrepareRendering(Scene scene)
         {
-            Manager.GetService<RenderService>().Execute(() =>
+            var rs = scene.World.GetSystem<RenderSystem>();
+            var service = Manager.GetService<RenderService>();
+
+            return service.Execute(() =>
             {
-                var rs = scene.World.GetSystem<RenderSystem>();
+                rs.RendererRequest = service.Execute;
                 rs.GraphicsInit();
             });
         }
         
-        private void FinishRendering(Scene scene)
+        private Task FinishRendering(Scene scene)
         {
-            Manager.GetService<RenderService>().Execute(() =>
+            var rs = scene.World.GetSystem<RenderSystem>();
+            var service = Manager.GetService<RenderService>();
+
+            return service.Execute(() =>
             {
-                var rs = scene.World.GetSystem<RenderSystem>();
                 rs.GraphicsDestroy();
             });
         }

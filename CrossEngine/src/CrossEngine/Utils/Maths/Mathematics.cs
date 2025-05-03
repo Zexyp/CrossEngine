@@ -106,6 +106,8 @@ namespace CrossEngine.Utils
         //    return shear;
         //}
 
+        // goofy ahh fucked coordinates
+        // 
         public static Matrix4x4 CreateBillboard(Vector3 right, Vector3 up, Vector3 look, Vector3 pos)
         {
             Matrix4x4 matrix = new Matrix4x4();

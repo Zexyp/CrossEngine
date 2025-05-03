@@ -105,6 +105,8 @@ namespace CrossEngineEditor.Panels
                 // using floating point colors
                 new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F),
                 new FramebufferTextureSpecification(TextureFormat.ColorR32I),
+                new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F),
+                new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F),
                 new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
                 );
             spec.Width = 1;

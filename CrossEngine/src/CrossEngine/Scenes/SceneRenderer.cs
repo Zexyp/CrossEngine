@@ -16,14 +16,11 @@ namespace CrossEngine.Scenes
     {
         public static void Render(Scene scene, ISurface surface)
         {
-            lock (scene)
-            {
-                Debug.Assert(scene.IsInitialized);
-                
-                surface.Context.Api.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
-                
-                scene.World.GetSystem<RenderSystem>().Pipeline.Process(GraphicsContext.Current);
-            }
+            Debug.Assert(scene.IsInitialized);
+            
+            surface.Context.Api.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
+            
+            scene.World.GetSystem<RenderSystem>().Pipeline.Process(GraphicsContext.Current);
         }
     }
 }

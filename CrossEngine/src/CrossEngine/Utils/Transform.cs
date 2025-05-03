@@ -1,7 +1,7 @@
 using System;
 using System.Numerics;
 
-namespace CrossEngine.Geometry;
+namespace CrossEngine.Utils;
 
 public interface ITransform
 {

@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Rendering;
 using CrossEngine.Core;
+using CrossEngine.Logging;
 using CrossEngine.Serialization;
 using CrossEngine.Utils.Extensions;
 
@@ -52,6 +53,8 @@ namespace CrossEngineEditor.Panels
             AddOverlay(new SelectedOverlay());
             AddOverlay(new NameOverlay());
             AddOverlay(new ViewportCullCkecker());
+            AddOverlay(new EmitterOverlay());
+            AddOverlay(new IconOverlay());
             
             _viewportPass = new ViewportPass() { Overlays = _overlays };
         }
@@ -432,16 +435,44 @@ namespace CrossEngineEditor.Panels
             }
         }
 
+        [Obsolete("no init")]
         private void AddOverlay(IViewportOverlay overlay, bool draw = true)
         {
             overlay.Camera = _editorCamera;
             _overlays.Add((overlay, draw));
         }
 
+        [Obsolete("no init")]
         private void RemoveOverlay(IViewportOverlay overlay)
         {
             _overlays.RemoveAll(tup => tup.Overlay == overlay);
             overlay.Camera = null;
+        }
+
+        public override void OnOpen()
+        {
+            EditorApplication.Service.RendererRequest(() =>
+            {
+                for (int i = 0; i < _overlays.Count; i++)
+                {
+                    _overlays[i].Overlay.Init();
+                }
+            });
+
+            base.OnOpen();
+        }
+        
+        public override void OnClose()
+        {
+            base.OnClose();
+
+            EditorApplication.Service.RendererRequest(() =>
+            {
+                for (int i = 0; i < _overlays.Count; i++)
+                {
+                    _overlays[i].Overlay.Destroy();
+                }
+            });
         }
 
         private class ViewportPass : Pass
@@ -452,8 +483,15 @@ namespace CrossEngineEditor.Panels
             {
                 for (int i = 0; i < Overlays.Count; i++)
                 {
-                    if (Overlays[i].Draw)
-                        Overlays[i].Overlay.Draw();
+                    try
+                    {
+                        if (Overlays[i].Draw)
+                            Overlays[i].Overlay.Draw();
+                    }
+                    catch (Exception e)
+                    {
+                        EditorService.Log.Error($"viewport: overlay '{Overlays[i].Overlay.GetType().FullName}' draw failed: {e}");
+                    }
                 }
             }
         }

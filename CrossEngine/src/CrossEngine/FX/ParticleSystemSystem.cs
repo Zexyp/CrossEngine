@@ -62,19 +62,15 @@ namespace CrossEngine.FX.Particles
     class ParticleSystemRenderable : Renderable<IParticleSystemRenderData>
     {
         ICamera camera;
-        Frustum frustum;
+        
         public override void Begin(ICamera camera)
         {
             this.camera = camera;
-            this.frustum = camera.GetFrustum();
-            var mat = camera.GetViewProjectionMatrix();
-            Renderer2D.BeginScene(mat);
-            LineRenderer.BeginScene(mat);
+            Renderer2D.BeginScene(camera.GetViewProjectionMatrix());
         }
 
         public override void End()
         {
-            LineRenderer.EndScene();
             Renderer2D.EndScene();
         }
 

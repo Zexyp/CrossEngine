@@ -69,6 +69,7 @@ namespace CrossEngine.Display
         }
 
         public Task Execute(Action action) => _scheduler.Schedule(action);
+        public Task<TResult> Execute<TResult>(Func<TResult> func) => _scheduler.Schedule(func);
 
         public void Update()
         {

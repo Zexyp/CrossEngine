@@ -17,6 +17,7 @@ namespace CrossEngine.Utils.Rendering
     public class FreeCamera : IResizableCamera
     {
         public Matrix4x4 ProjectionMatrix { get => Matrix4x4.CreatePerspectiveFieldOfView(MathExt.ToRadConstF * Fov, Aspect, Near, Far); }
+
         public Vector3 Position = Vector3.Zero;
         public Quaternion Rotation = Quaternion.Identity;
         public Vector2 LookRot = Vector2.Zero;
@@ -26,8 +27,8 @@ namespace CrossEngine.Utils.Rendering
         public float Far = 100;
         public float Speed = 1;
 
-        Matrix4x4 ITransform.GetMatrix() => Matrix4x4.CreateFromQuaternion(Rotation) * Matrix4x4.CreateTranslation(Position);
-
+        public Matrix4x4 GetViewMatrix() => Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation)) * Matrix4x4.CreateTranslation(-Position);
+        
         public void Update()
         {
             var offset = Vector3.Zero;

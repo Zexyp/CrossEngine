@@ -45,7 +45,6 @@ namespace CrossEngine.Loaders
         public static Mesh<WavefrontVertex> LoadObj(Stream stream)
         {
             var mesh = ParseObj(stream);
-            ServiceRequest.Invoke(mesh.SetupGpuResources);
             return mesh;
         }
 
@@ -128,10 +127,5 @@ namespace CrossEngine.Loaders
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float FloatParse(in string s) => float.Parse(s, nfi);
-
-        public static void Free(IMesh mesh)
-        {
-            ServiceRequest.Invoke(mesh.FreeGpuResources);
-        }
     }
 }

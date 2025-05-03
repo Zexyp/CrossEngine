@@ -42,14 +42,14 @@ namespace CrossEngineEditor.Panels
             {
                 if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.MenuItem("New"))
+                    if (ImGui.MenuItem("New..."))
                     {
                         void CreateAssets()
                         {
                             EditorApplication.Service.DialogPickDirectory().ContinueWith(t =>
                             {
                                 if (t.Result == null) return;
-                                Context.Assets = new AssetList() { DirectoryOffset = t.Result };
+                                Context.SetAssets(new AssetList() { DirectoryOffset = t.Result });
                             });
                         }
 
@@ -66,8 +66,7 @@ namespace CrossEngineEditor.Panels
                                 {
                                     try
                                     {
-                                        var task = AssetManager.ReadFile(filepath);
-                                        Context.Assets = task.Result;
+                                        AssetManager.ReadFile(filepath).ContinueWith(t => Context.SetAssets(t.Result));
                                     }
                                     catch (Exception e)
                                     {
@@ -110,8 +109,8 @@ namespace CrossEngineEditor.Panels
                         void ReloadAssets()
                         {
                             var last = Context.Assets;
-                            Context.Assets = null;
-                            Context.Assets = last;
+                            Context.SetAssets(null)
+                                .ContinueWith(t => Context.SetAssets(last)).Unwrap();
                         }
                         EditorApplication.Service.DialogDestructive(ReloadAssets);
                     }

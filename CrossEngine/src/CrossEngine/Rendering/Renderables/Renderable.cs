@@ -60,7 +60,7 @@ namespace CrossEngine.Rendering.Renderables
     
     interface IMeshRenderData : IObjectRenderData
     {
-        IMesh Mesh { get; }
+        MeshRenderer Renderer { get; internal set; }
         IMaterial Material { get; }
     }
     

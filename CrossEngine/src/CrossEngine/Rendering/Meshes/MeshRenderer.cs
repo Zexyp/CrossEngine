@@ -15,7 +15,9 @@ public class MeshRenderer : IDisposable
     WeakReference<VertexBuffer> vb;
     WeakReference<IndexBuffer> ib;
     WeakReference<VertexArray> va;
+    private int _vertexCount;
 
+    // mby service request api
     public static MeshRenderer FromMesh(IMesh mesh)
     {
         throw new NotImplementedException();
@@ -48,6 +50,8 @@ public class MeshRenderer : IDisposable
             
             va.GetValue().SetIndexBuffer(ib);
         }
+
+        _vertexCount = mesh.Vertices.Length;
     }
 
     public void Dispose()
@@ -61,11 +65,11 @@ public class MeshRenderer : IDisposable
         ib = null;
     }
 
-    //public void Draw()
-    //{
-    //    if (ib is null)
-    //        GraphicsContext.Current.Api.DrawIndexed(va);
-    //    else
-    //        GraphicsContext.Current.Api.DrawArray(va, (uint)Mesh.Vertices.Length);
-    //}
+    public void Draw(RendererApi api)
+    {
+        if (ib == null)
+            api.DrawArray(va, (uint)_vertexCount);
+        else
+            api.DrawIndexed(va);
+    }
 }

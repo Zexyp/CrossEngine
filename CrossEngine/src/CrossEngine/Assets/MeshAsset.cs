@@ -25,7 +25,6 @@ namespace CrossEngine.Assets
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            MeshLoader.Free(Mesh);
             Mesh = null;
         }
     }

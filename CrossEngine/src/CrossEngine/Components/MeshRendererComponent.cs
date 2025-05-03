@@ -23,10 +23,24 @@ namespace CrossEngine.Components
         [EditorAsset]
         public MaterialAsset Material;
 
-        [EditorNullable] [SerializeInclude] [EditorAsset]
-        public MeshAsset Mesh;
+        [EditorNullable]
+        [SerializeInclude]
+        [EditorAsset]
+        public MeshAsset Mesh
+        {
+            get => _mesh;
+            set
+            {
+                _mesh = value;
+                MeshChanged?.Invoke(this);
+            }
+        }
+        
+        internal event Action<MeshRendererComponent> MeshChanged;
+            
+        private MeshAsset _mesh;
 
-        IMesh IMeshRenderData.Mesh => Mesh?.Mesh;
+        MeshRenderer IMeshRenderData.Renderer { get; set; }
         IMaterial IMeshRenderData.Material => Material?.Material;
     }
 }

@@ -10,11 +10,11 @@ using CrossEngine.Geometry;
 
 namespace CrossEngine.Rendering.Cameras
 {
-    public interface ICamera : ITransform
+    public interface ICamera
     {
         Matrix4x4 ProjectionMatrix { get; }
         virtual Matrix4x4 GetViewProjectionMatrix() => GetViewMatrix() * ProjectionMatrix;
-        virtual Matrix4x4 GetViewMatrix() => Matrix4x4Extension.SafeInvert(GetMatrix());
+        Matrix4x4 GetViewMatrix();
 
         virtual Frustum GetFrustum() => Frustum.Create(ProjectionMatrix, GetViewMatrix());
     }

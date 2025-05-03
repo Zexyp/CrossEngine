@@ -7,6 +7,7 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Rendering;
 
@@ -14,7 +15,9 @@ public class Pipeline
 {
     Vector4? _clearColor = VecColor.Gray;
     List<Pass> _passes = new List<Pass>();
-    WeakReference<Framebuffer> Buffer;
+    public WeakReference<Framebuffer> Buffer { get; protected set; }
+    
+    private bool _initialized;
 
     public void PushBack(Pass pass)
     {
@@ -36,6 +39,11 @@ public class Pipeline
 
     public void Process(GraphicsContext context)
     {
+        Debug.Assert(_initialized);
+        
+        //if (Buffer != null)
+        //    Buffer.GetValue().Bind();
+        
         if (_clearColor != null)
         {
             var color = _clearColor.Value;
@@ -58,22 +66,33 @@ public class Pipeline
 
             Profiler.EndScope();
         }
+        
+        //if (Buffer != null)
+        //    Buffer.GetValue().Unbind();
     }
 
     public void Init()
     {
+        OnInit();
+        
         for (int i = 0; i < _passes.Count; i++)
         {
             _passes[i].Init();
         }
+        
+        _initialized = true;
     }
     
     public void Destroy()
     {
+        _initialized = false;
+        
         for (int i = 0; i < _passes.Count; i++)
         {
             _passes[i].Destroy();
         }
+        
+        OnDestroy();
     }
 
     public T GetPass<T>() where T : Pass => (T)GetPass(typeof(T));
@@ -90,6 +109,9 @@ public class Pipeline
         Debug.Assert(pass.Pipeline == this);
         pass.Pipeline = null;
     }
+    
+    protected virtual void OnInit() { }
+    protected virtual void OnDestroy() { }
 }
 
 public abstract class Pass

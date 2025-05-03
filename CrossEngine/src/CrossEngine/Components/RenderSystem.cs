@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 using CrossEngine.Components;
 using CrossEngine.Rendering;
+using CrossEngine.Rendering;
 using CrossEngine.Display;
 using CrossEngine.Ecs;
 using CrossEngine.Events;
@@ -33,6 +34,20 @@ namespace CrossEngine.Components
     public class RenderSystem : Ecs.System
     {
         public Pipeline Pipeline => _pipeline;
+        public Func<Action, Task> RendererRequest { get; internal set; }
+        
+        event Action<RenderSystem> PrimaryCameraChanged;
+        
+        private CameraComponent? _primaryCamera = null;
+        private ICamera _overrideCamera;
+        private Vector2 _lastSize = Vector2.One;
+        private Pipeline _pipeline;
+        private bool _graphicsInitialized = false;
+        public bool GraphicsInitialized => _graphicsInitialized;
+        
+        private SkyboxPass _passSkybox;
+        private ScenePass _passScene;
+        private TransparentPass _passTransparent;
 
         public ICamera OverrideCamera
         {
@@ -53,23 +68,9 @@ namespace CrossEngine.Components
                 _primaryCamera = value;
 
                 _primaryCamera?.Resize(_lastSize.X, _lastSize.Y);
-                
                 PrimaryCameraChanged?.Invoke(this);
             }
         }
-        
-        event Action<RenderSystem> PrimaryCameraChanged;
-        
-        private CameraComponent? _primaryCamera = null;
-        private ICamera _overrideCamera;
-        private Vector2 _lastSize = Vector2.One;
-        private Pipeline _pipeline;
-        private bool _graphicsInitialized = false;
-        public bool GraphicsInitialized => _graphicsInitialized;
-        
-        private SkyboxPass _passSkybox;
-        private ScenePass _passScene;
-        private TransparentPass _passTransparent;
 
         //public ISurface SetSurface(ISurface surface)
         //{
@@ -97,11 +98,10 @@ namespace CrossEngine.Components
 
         public RenderSystem()
         {
-            _pipeline = new Pipeline();
-            _pipeline.PushBack(_passScene = new ScenePass());
-            //_pipeline.PushBack(new LightingPass());
-            _pipeline.PushBack(_passSkybox = new SkyboxPass());
-            _pipeline.PushBack(_passTransparent = new TransparentPass());
+            _pipeline = new DeferredPipeline();
+            _passScene = _pipeline.GetPass<ScenePass>();
+            _passSkybox = _pipeline.GetPass<SkyboxPass>();
+            _passTransparent = _pipeline.GetPass<TransparentPass>();
         }
 
         protected internal override void OnInit()
@@ -209,336 +209,19 @@ namespace CrossEngine.Components
             _pipeline.Destroy();
         }
 
-        [Obsolete("no init")]
         public void CommitRenderable(IRenderable renderable, Type key)
         {
-            ScenePass._renderables.Add(key, renderable);
+            RendererRequest.Invoke(renderable.Init);
+            _passScene._renderables.Add(key, renderable);
         }
 
-        [Obsolete("no init")]
         public void WithdrawRenderable(IRenderable renderable)
         {
-            foreach(var item in ScenePass._renderables.Where(kvp => kvp.Value == renderable).ToList())
+            foreach(var item in _passScene._renderables.Where(kvp => kvp.Value == renderable))
             {
-                ScenePass._renderables.Remove(item.Key);
+                _passScene._renderables.Remove(item.Key);
+                RendererRequest.Invoke(renderable.Destroy);
             }
         }
-    }
-}
-
-class SkyboxPass : Pass
-{
-    static Vector3[] skyboxVertices = {
-        // positions
-        // thx ogl tutorial
-        new (-1.0f,  1.0f, -1.0f),
-        new (-1.0f, -1.0f, -1.0f),
-        new (1.0f, -1.0f, -1.0f),
-        new (1.0f, -1.0f, -1.0f),
-        new (1.0f,  1.0f, -1.0f),
-        new (-1.0f,  1.0f, -1.0f),
-
-        new (-1.0f, -1.0f,  1.0f),
-        new (-1.0f, -1.0f, -1.0f),
-        new (-1.0f,  1.0f, -1.0f),
-        new (-1.0f,  1.0f, -1.0f),
-        new (-1.0f,  1.0f,  1.0f),
-        new (-1.0f, -1.0f,  1.0f),
-
-        new (1.0f, -1.0f, -1.0f),
-        new (1.0f, -1.0f,  1.0f),
-        new (1.0f,  1.0f,  1.0f),
-        new (1.0f,  1.0f,  1.0f),
-        new (1.0f,  1.0f, -1.0f),
-        new (1.0f, -1.0f, -1.0f),
-
-        new (-1.0f, -1.0f,  1.0f),
-        new (-1.0f,  1.0f,  1.0f),
-        new (1.0f,  1.0f,  1.0f),
-        new (1.0f,  1.0f,  1.0f),
-        new (1.0f, -1.0f,  1.0f),
-        new (-1.0f, -1.0f,  1.0f),
-
-        new (-1.0f,  1.0f, -1.0f),
-        new (1.0f,  1.0f, -1.0f),
-        new (1.0f,  1.0f,  1.0f),
-        new (1.0f,  1.0f,  1.0f),
-        new (-1.0f,  1.0f,  1.0f),
-        new (-1.0f,  1.0f, -1.0f),
-
-        new (-1.0f, -1.0f, -1.0f),
-        new (-1.0f, -1.0f,  1.0f),
-        new (1.0f, -1.0f, -1.0f),
-        new (1.0f, -1.0f, -1.0f),
-        new (-1.0f, -1.0f,  1.0f),
-        new (1.0f, -1.0f,  1.0f)
-    };
-
-    private const string skyboxShader = @"
-#type vertex
-#version 330 core
-layout (location = 0) in vec3 aPos;
-
-out vec3 TexCoords;
-
-uniform mat4 projection;
-uniform mat4 view;
-
-void main()
-{
-    TexCoords = aPos;
-    vec4 pos = projection * view * vec4(aPos, 1.0);
-    gl_Position = pos.xyww;
-}
-#type fragment
-#version 330 core
-out vec4 FragColor;
-
-in vec3 TexCoords;
-
-uniform samplerCube skybox;
-
-void main()
-{    
-    FragColor = texture(skybox, TexCoords);
-}
-";
-    
-    public ISkyboxRenderData Skybox;
-    public Func<ICamera> CameraGetter;
-
-    private IMesh _skyboxMesh;
-    private WeakReference<ShaderProgram> _skyboxShader;
-
-    public SkyboxPass()
-    {
-        Depth = DepthFunc.LessEqual;
-    }
-
-    public override void Init()
-    {
-        _skyboxMesh = new Mesh<Vector3>(skyboxVertices);
-        _skyboxMesh.SetupGpuResources();
-        using (var stream = new MemoryStream())
-        using (var writer = new StreamWriter(stream))
-        {
-            writer.Write(skyboxShader);
-            writer.Flush();
-            stream.Seek(0, SeekOrigin.Begin);
-            _skyboxShader = ShaderPreprocessor.CreateProgramFromStream(stream);
-        }
-    }
-
-    public override void Destroy()
-    {
-        _skyboxMesh.Dispose();
-        _skyboxShader.Dispose();
-        _skyboxMesh = null;
-        _skyboxShader = null;
-    }
-
-    public override void Draw()
-    {
-        var camera = CameraGetter.Invoke();
-
-        if (Skybox?.Texture == null || camera == null)
-            return;
-        
-        var shader = _skyboxShader.GetValue();
-        shader.Use();
-        var view = camera.GetViewMatrix();
-        view.Translation = Vector3.Zero;
-        shader.SetParameterMat4("view", view);
-        shader.SetParameterMat4("projection", camera.ProjectionMatrix);
-        Skybox.Texture.GetValue().Bind();
-        GraphicsContext.Current.Api.DrawArray(_skyboxMesh.VA, (uint)_skyboxMesh.Vertices.Length, DrawMode.Traingles);
-    }
-}
-
-class ScenePass : Pass
-{
-    public IList<IObjectRenderData> objects;
-    public Func<ICamera> CameraGetter;
-    public int TransparentIndex = 0;
-
-    public ScenePass()
-    {
-        Depth = DepthFunc.Default;
-    }
-    
-    public override void Init()
-    {
-        foreach (var rend in _renderables.Values)
-        {
-            rend.Init();
-        }
-    }
-
-    public override void Destroy()
-    {
-        foreach (var rend in _renderables.Values)
-        {
-            rend.Destroy();
-        }
-    }
-
-    internal static readonly Dictionary<Type, IRenderable> _renderables = new Dictionary<Type, IRenderable>(new InterfaceTypeComparer<IObjectRenderData>())
-    {
-        {typeof(ISpriteRenderData), new SpriteRenderable()},
-        {typeof(IMeshRenderData), new MeshRenderable()},
-    };
-    
-    public override void Draw()
-    {
-        var camera = CameraGetter.Invoke();
-        if (camera == null)
-            return;
-        
-        FilterTransparent();
-        
-        FrustumCulling(camera.GetFrustum());
-        
-        DrawObjects(camera, objects, 0, TransparentIndex);
-    }
-
-    private void FrustumCulling(in Frustum frustum)
-    {
-        for (int i = 0; i < objects.Count; i++)
-        {
-            var obj = objects[i];
-            var volume = obj.GetVolume();
-            
-            CullChecker.Append(volume);
-            
-            if (volume == null)
-                continue;
-            
-            var result = volume.IsInFrustum(frustum);
-            obj.IsVisible = result != Halfspace.Outside;
-        }
-    }
-    
-    private void FilterTransparent()
-    {
-        if (objects is not IList) throw new InvalidOperationException();
-        
-        ArrayList.Adapter((IList)objects).Sort(new ComparisonComparer<IObjectRenderData>((o1, o2) =>
-        {
-            return IsTransparet(o1).CompareTo(IsTransparet(o2));
-        }));
-
-        TransparentIndex = FindFirstIndex(objects, o => IsTransparet(o));
-        TransparentIndex = TransparentIndex == -1 ? objects.Count : TransparentIndex;
-    }
-    
-    private static int FindFirstIndex<T>(IList<T> list, Predicate<T> predicate)
-    {
-        for (int i = 0; i < list.Count; i++)
-        {
-            if (predicate(list[i]))
-                return i;
-        }
-        return -1;
-    }
-
-    private bool IsTransparet(IObjectRenderData obj)
-    {
-        switch (obj)
-        {
-            case ISpriteRenderData sprite: return sprite.Blend == BlendMode.Blend || sprite.Blend == BlendMode.Blend;
-            default: return false;
-        }
-    }
-
-    internal static void DrawObjects(ICamera camera, IList<IObjectRenderData> objects, int rangeStart, int rangeEnd)
-    {
-        foreach (var rend in _renderables.Values)
-        {
-            rend.Begin(camera);
-        }
-
-        //framebuffer.GetValue().Bind();
-        for (int i = rangeStart; i < rangeEnd; i++)
-        {
-            var rd = objects[i];
-            
-            if (!rd.IsVisible)
-                continue;
-
-            var type = rd.GetType();
-            if (!_renderables.TryGetValue(type, out var rndrbl))
-            {
-                // fixme
-                //Log.Default.Warn($"no usable renderable for '{type.FullName}'");
-                continue;
-            }
-            rndrbl.Submit(rd);
-        }
-        //framebuffer.GetValue().Unbind();
-        
-        foreach (var rend in _renderables.Values)
-        {
-            rend.End();
-        }
-    }
-    
-    // pot of boiling shit
-    private class InterfaceTypeComparer<T> : IEqualityComparer<Type>
-    {
-        public bool Equals(Type x, Type y)
-        {
-            if (x == y) return true;
-            if (x.IsAssignableFrom(y)) return true;
-            return false;
-        }
-
-        public int GetHashCode(Type obj)
-        {
-            if (obj.IsInterface)
-                return obj.GetHashCode();
-
-            Type baseInterface = null;
-            var ints = obj.GetInterfaces();
-            for (int i = ints.Length - 1; i >= 0; i--)
-            {
-                if (!typeof(T).IsAssignableFrom(ints[i]))
-                    continue;
-
-                baseInterface = ints[i];
-                break;
-            }
-            return baseInterface?.GetHashCode() ?? obj.GetHashCode();
-        }
-    }
-}
-
-class TransparentPass : Pass
-{
-    public IList<IObjectRenderData> objects;
-    public Func<ICamera> CameraGetter;
-
-    public TransparentPass()
-    {
-        Depth = DepthFunc.Default;
-    }
-    
-    public override void Draw()
-    {
-        SortByDistance();
-        
-        ScenePass.DrawObjects(CameraGetter.Invoke(), objects, Pipeline.GetPass<ScenePass>().TransparentIndex, objects.Count);
-    }
-
-    private void SortByDistance()
-    {
-        //ArrayList.Adapter(objects).Sort();
-    }
-}
-
-class LightingPass : Pass
-{
-    public override void Draw()
-    {
-        throw new NotImplementedException();
     }
 }

@@ -1,6 +1,10 @@
 ﻿#define SHOW_SOURCES
 #define SET_LINE
 
+#if WASM
+#error File reading is not okie dokie
+#endif
+
 using CrossEngine.Logging;
 using CrossEngine.Platform;
 using CrossEngine.Profiling;

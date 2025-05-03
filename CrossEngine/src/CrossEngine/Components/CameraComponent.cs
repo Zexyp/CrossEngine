@@ -28,7 +28,6 @@ namespace CrossEngine.Components
         public virtual Matrix4x4 ProjectionMatrix { get; set; } = Matrix4x4.Identity;
 
         Matrix4x4 ICamera.GetViewMatrix() => ViewMatrix;
-        Matrix4x4 ITransform.GetMatrix() => Matrix4x4Extension.SafeInvert(ViewMatrix);
 
         [EditorValue]
         public bool Primary

@@ -12,20 +12,18 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
+  <!-- core packages -->
+  <ItemGroup>
+    <PackageReference Include="StbImageSharp" Version="2.27.13" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
+  </ItemGroup>
+  
   <!-- resources -->
   <ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <EmbeddedResource Include="res/logo.png" />
+    <EmbeddedResource Include="res/default_texture.png" />
+    <EmbeddedResource Include="res/utils/debug_font_atlas.png" />
   </ItemGroup>
 
   <!-- defines and optimization -->
@@ -58,16 +56,13 @@
     <OSPlatform>Web</OSPlatform>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="StbImageSharp" Version="2.27.13" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
-  </ItemGroup>
-
   <!-- exclude platform -->
   <ItemGroup>
     <Compile Remove="src\CrossEngine\Platform\*\**" />
     <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="res\shaders\" />
   </ItemGroup>
 
   <!--
@@ -121,7 +116,6 @@
         <PackageReference Include="Pastel" Version="4.2.0" />
         <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
         <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.19.0" />
-        <PackageReference Include="Silk.NET.Windowing.Glfw" Version="2.22.0" />
         <PackageReference Include="Silk.NET.GLFW" Version="2.22.0" />
       </ItemGroup>
 

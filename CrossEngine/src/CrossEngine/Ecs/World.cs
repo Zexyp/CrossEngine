@@ -86,6 +86,20 @@ namespace CrossEngine.Ecs
             return _simpleArray[type];
         }
 
+        public IEnumerable<Component> EnumerateSubclasses(Type type)
+        {
+            foreach (var pair in _simpleArray)
+            {
+                if (!type.IsAssignableFrom(pair.Key))
+                    continue;
+                var list = pair.Value;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    yield return list[i];
+                }
+            }
+        }
+
         // this is pure ass
         public void AddNotifyRegister(Type type, Action<Component> callback, bool inherit = false)
         {

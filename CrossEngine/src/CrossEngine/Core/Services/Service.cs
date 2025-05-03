@@ -27,6 +27,7 @@ namespace CrossEngine.Core.Services
     public interface IScheduledService
     {
         Task Execute(Action action);
+        Task<TResult> Execute<TResult>(Func<TResult> func);
         TaskScheduler GetScheduler();
     }
 }

@@ -36,6 +36,7 @@ namespace CrossEngine.Scenes
 
             World.RegisterSystem(new TransformSystem());
             World.RegisterSystem(new RenderSystem());
+            World.RegisterSystem(new MeshRendererSystem());
             World.RegisterSystem(new CrossEngine.FX.Particles.ParticleSystemSystem());
         }
 

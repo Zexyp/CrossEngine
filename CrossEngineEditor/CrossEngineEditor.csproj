@@ -13,6 +13,22 @@
     <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
   </ItemGroup>
 
+  <!-- core packages -->
+  <ItemGroup>
+  </ItemGroup>
+  
+  <!-- resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="res/icons.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="res\fonts\JetBrainsMono[wght].ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>res\fonts\JetBrainsMono[wght].ttf</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+
   <!-- defines and optimization -->
   <PropertyGroup Condition="'$(Configuration)'=='Windows Debug'">
     <DefineConstants>DEBUG;WINDOWS</DefineConstants>
@@ -40,17 +56,11 @@
 
   <ItemGroup>
     <Compile Remove="vendor\**" />
-    <EmbeddedResource Remove="vendor\**" />
-    <None Remove="vendor\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath Include="res\fonts\JetBrainsMono[wght].ttf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <TargetPath>res\fonts\JetBrainsMono[wght].ttf</TargetPath>
-    </ContentWithTargetPath>
+    <Folder Include="Properties\" />
   </ItemGroup>
-
 
   <Choose>
 

@@ -8,8 +8,13 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.FX.Particles;
+using CrossEngine.Loaders;
+using CrossEngine.Rendering.Textures;
+using CrossEngine.Utils.Extensions;
 using CrossEngine.Utils.Rendering;
 
 file class Util
@@ -123,13 +128,60 @@ namespace CrossEngineEditor.Viewport
         public IEditorContext Context { get; set; }
         public ICamera Camera { get; set; }
 
+        private WeakReference<Texture> _iconTexture;
+        private Vector4[] _offsets = TextureAtlas.CreateOffsets(new Vector2(80, 16), new Vector2(16, 16), 5);
+
+        private const int IconCamera = 0;
+        private const int IconLight = 2;
+        private const int IconSun = 3;
+        private const int IconParticles = 4;
+        
+        List<(Type CompType, int Icon)> _iconLookup = new()
+        {
+            (typeof(CameraComponent), IconCamera),
+            (typeof(ParticleSystemComponent), IconParticles),
+        };
+
         public void Resize(float width, float height)
         {
         }
 
         public void Draw()
         {
+            if (Context.Scene == null)
+                return;
+
+            var viewMatrix = Camera.GetViewMatrix();
+            viewMatrix.Translation = Vector3.Zero;
+            viewMatrix = Matrix4x4Extension.SafeInvert(viewMatrix);
             
+            var cameraRight = Vector3.Transform(Vector3.UnitX, viewMatrix);
+            var cameraUp = Vector3.Transform(Vector3.UnitY, viewMatrix);
+            Renderer2D.BeginScene(Camera.GetViewProjectionMatrix());
+            Renderer2D.SetBlending(BlendMode.Blend);
+            foreach (var pair in _iconLookup)
+            {
+                foreach (var comp in Context.Scene.World.Storage.EnumerateSubclasses(pair.CompType))
+                {
+                    var pos = comp.Entity.Transform?.WorldPosition ?? Vector3.Zero;
+                    var matrix = Matrix4x4Extension.CreateBillboard(cameraUp, cameraRight, Vector3.Zero, pos);
+                    Renderer2D.DrawTexturedQuad(matrix, _iconTexture, VecColor.White, _offsets[pair.Icon], comp.Entity.Id);
+                }
+
+            }
+            Renderer2D.EndScene();
+        }
+
+        public void Init()
+        {
+            _iconTexture = TextureLoader.LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngineEditor.res.icons.png"));
+            _iconTexture.GetValue().SetFilterParameter(FilterParameter.Nearest);
+        }
+
+        public void Destroy()
+        {
+            _iconTexture.Dispose();
+            _iconTexture = null;
         }
     }
 
@@ -139,5 +191,30 @@ namespace CrossEngineEditor.Viewport
 
         public void Prepare() => Activate();
         public void Finish() => Deactivate();
+    }
+
+    class EmitterOverlay : IViewportOverlay
+    {
+        public ICamera Camera { get; set; }
+        public IEditorContext Context { get; set; }
+        
+        public void Resize(float width, float height)
+        {
+        }
+
+        public void Draw()
+        {
+            var pscs = Context.Scene?.World.Storage.GetArray(typeof(ParticleSystemComponent));
+            if (pscs == null)
+                return;
+            
+            LineRenderer.BeginScene(Camera.GetViewProjectionMatrix());
+            for (int i = 0; i < pscs.Count; i++)
+            {
+                var comp = pscs[i];
+                ((ParticleSystemComponent)comp).Emitter?.DebugDraw(comp.Entity.Transform?.GetWorldTransformMatrix() ?? Matrix4x4.Identity);
+            }
+            LineRenderer.EndScene();
+        }
     }
 }

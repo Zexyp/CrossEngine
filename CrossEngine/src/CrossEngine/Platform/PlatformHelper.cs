@@ -59,7 +59,7 @@ namespace CrossEngine.Platform
 #elif WASM
             return new CrossEngine.Platform.Wasm.CanvasWindow();
 #else
-#error
+#error No platform window creation
 #endif
         }
 
@@ -72,7 +72,7 @@ namespace CrossEngine.Platform
 #elif GDI
             return GraphicsApi.GDI;
 #else
-#error
+#error Unknown platform graphics backend
 #endif
         }
 
@@ -85,7 +85,7 @@ namespace CrossEngine.Platform
             // .Result creates deadlock
             return httpClient.GetStreamAsync(Path.Join(CrossEngine.Platform.Wasm.Interop.RootUri.ToString(), path));
 #else
-#error
+#error No platform file reading
 #endif
         }
 
@@ -99,7 +99,7 @@ namespace CrossEngine.Platform
 #elif WASM
             throw new NotSupportedException();
 #else
-#error
+#error No platform file creation
 #endif
         }
 

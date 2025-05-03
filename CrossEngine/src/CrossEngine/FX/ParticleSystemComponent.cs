@@ -172,8 +172,10 @@ namespace CrossEngine.FX.Particles
         void IParticleSystemRenderData.Render(Matrix4x4 viewMatrix)
         {
             var tr = Entity?.Transform;
+            
             viewMatrix.Translation = Vector3.Zero;
             Debug.Assert(Matrix4x4.Invert(viewMatrix, out viewMatrix));
+            
             var cameraRight = Vector3.Transform(Vector3.UnitX, viewMatrix);
             var cameraUp = Vector3.Transform(Vector3.UnitY, viewMatrix);
             var cameraLook = tr?.WorldPosition ?? Vector3.Zero;
@@ -182,7 +184,7 @@ namespace CrossEngine.FX.Particles
 
             for (int i = 0; i < _particlePool.Length; i++)
             {
-                var particle = _particlePool[i];
+                ref var particle = ref _particlePool[i];
                 if (!particle.active)
                     continue;
 
@@ -208,8 +210,6 @@ namespace CrossEngine.FX.Particles
                     matrix *= matrixLocal;
                 Renderer2D.DrawQuad(matrix, color, entId);
             }
-
-            Emitter?.DebugDraw(tr?.GetWorldTransformMatrix() ?? Matrix4x4.Identity);
         }
 
         private Random random = new Random();
@@ -219,7 +219,7 @@ namespace CrossEngine.FX.Particles
 
             particle.active = true;
 
-            // life
+            // fe
             float randomLife = (float)random.NextDouble() * Properties.lifeTimeVariation * Properties.lifeTime;
             particle.life = Properties.lifeTime - randomLife;
             particle.lifeRemaining = particle.life;

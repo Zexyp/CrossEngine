@@ -53,6 +53,7 @@ namespace CrossEngine.Rendering
         }
 
         public Task Execute(Action action) => _scheduler.Schedule(action);
+        public Task<TResult> Execute<TResult>(Func<TResult> func) => _scheduler.Schedule(func);
         public TaskScheduler GetScheduler() => _scheduler;
 
         private void Setup()

@@ -13,10 +13,12 @@ namespace CrossEngineEditor.Viewport
     public interface IViewportOverlay : ISceneOverlay
     {
         protected internal IEditorContext Context { get; internal set; }
-        //protected internal virtual void Init() { }
-        //protected internal virtual void Destroy() { }
+
+        virtual ISet<int> ModifyAttachments => new HashSet<int>() { 0 };
         virtual void Prepare() { }
         virtual void Finish() { }
+        virtual void Init() { }
+        virtual void Destroy() { }
     }
     
     class ViewportWrapOverlay : IViewportOverlay

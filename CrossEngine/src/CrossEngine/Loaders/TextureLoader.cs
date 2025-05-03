@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Textures;
@@ -39,7 +40,7 @@ namespace CrossEngine.Loaders
             //uint col = 0xffff00ff;
             //DefaultTexture.GetValue().SetData(&col, sizeof(uint));
 
-            DefaultTexture = LoadTextureFromBytes(Properties.Resources.DefaultTexture);
+            DefaultTexture = LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.default_texture.png"));
         
         }
 

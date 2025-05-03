@@ -26,7 +26,7 @@ public class PanelManager
 
     public PanelManager()
     {
-        Registered = _panels.AsReadOnly();
+        Registered = _registeredPanels.AsReadOnly();
     }
 
     public void Init(IEditorContext context)

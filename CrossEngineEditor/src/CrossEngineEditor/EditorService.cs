@@ -27,6 +27,8 @@ using CrossEngine.Rendering;
 using CrossEngineEditor.Modals;
 using CrossEngineEditor.Platform;
 using System.IO;
+using CrossEngine.Assemblies;
+using CrossEngine.Core;
 using CrossEngine.Events;
 using CrossEngine.Platform.Glfw;
 using CrossEngine.Utils.Extensions;
@@ -42,16 +44,42 @@ namespace CrossEngineEditor
         internal const string ConfigPreferencesPath = "preferences.ini";
         internal const string ConfigRecentsPath = "recents.ini";
         internal static Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
-        
-        public readonly EditorContext Context = new EditorContext();
+
+        public readonly EditorContext Context;
         private Window window = null;
+        
+        // static modals
         private ExitModal _exitModal = new ExitModal() { Exit = () => EditorApplication.Instance.Close()}; // iks de
+        private BlockModal _contextBlockModal = new BlockModal("Context Change");
+        private int _blockDepth = 0;
         
         public EditorProject Project { get; set; }
         private List<string> _recentProjects;
 
+        private Stream GetIconStream() => Assembly.GetAssembly(typeof(Application))
+            .GetManifestResourceStream("CrossEngine.res.logo.png");
+
         public EditorService()
         {
+            Context = new EditorContext((msg) =>
+            {
+                if (Panels.GetModal<BlockModal>() == null)
+                {
+                    _contextBlockModal.Open = null;
+                    _contextBlockModal.Text = msg;
+                    Panels.PushModal(_contextBlockModal);
+                }
+                _blockDepth++;
+            }, () =>
+            {
+                _blockDepth--;
+                if (_blockDepth == 0)
+                {
+                    _contextBlockModal.Open = false;
+                    _contextBlockModal.Text = "";
+                }
+            });
+            
             Panels.RegisterPanel(new InspectorPanel());
             Panels.RegisterPanel(new HierarchyPanel());
             //Panels.RegisterPanel(new SceneViewPanel(rs));
@@ -95,7 +123,7 @@ namespace CrossEngineEditor
                 Theming.UseImmersiveDarkMode(Process.GetCurrentProcess().MainWindowHandle, true);
 #endif
                 
-                var result = ImageResult.FromMemory(CrossEngine.Properties.Resources.Logo, ColorComponents.RedGreenBlueAlpha);
+                var result = ImageResult.FromStream(GetIconStream(), ColorComponents.RedGreenBlueAlpha);
                 fixed (void* p = &result.Data[0])
                     window.SetIcon(p, (uint)result.Width, (uint)result.Height);
 
@@ -104,7 +132,7 @@ namespace CrossEngineEditor
             rs.MainSurface.Update += OnRender;
             rs.Execute(() =>
             {
-                dockspaceIconTexture = TextureLoader.LoadTextureFromBytes(CrossEngine.Properties.Resources.Logo);
+                dockspaceIconTexture = TextureLoader.LoadTextureFromStream(GetIconStream());
                 dockspaceIconTexture.GetValue().SetFilterParameter(FilterParameter.Nearest);
             });
 
@@ -185,7 +213,6 @@ namespace CrossEngineEditor
 
         private void Init()
         {
-            Context.AssetsChanged += OnContextAssetsChanged;
             Context.SceneChanged += OnContextSceneChanged;
             
             Panels.Init(Context);
@@ -196,7 +223,6 @@ namespace CrossEngineEditor
             Panels.Destroy();
             //Context.Clear();
 
-            Context.AssetsChanged -= OnContextAssetsChanged;
             Context.SceneChanged -= OnContextSceneChanged;
         }
 
@@ -261,7 +287,7 @@ namespace CrossEngineEditor
                 {
                     if (ImGui.MenuItem("New"))
                     {
-                        void CreateScene() => Context.Scene = new Scene();
+                        void CreateScene() => Context.SetScene(new Scene());
 
                         DialogDestructive(CreateScene, Context.Scene != null);
                     }
@@ -294,7 +320,7 @@ namespace CrossEngineEditor
                             {
                                 void LoadScene()
                                 {
-                                    Context.Scene = item.Scene;
+                                    Context.SetScene(item.Scene);
                                 }
                                 DialogDestructive(LoadScene, Context.Scene != null);
                             }
@@ -315,12 +341,13 @@ namespace CrossEngineEditor
                 {
                     void OpenProject(string path)
                     {
-                        Context.Clear();
-                        
-                        Project = new EditorProject();
-                        Project.Load(Context, path);
-                        
-                        AppendRecent(Project.Filepath);
+                        Context.Clear().ContinueWith(t =>
+                        {
+                            Project = new EditorProject();
+                            Project.Load(Context, path);
+
+                            AppendRecent(Project.Filepath);
+                        });
                     }
 
                     void SaveProject()
@@ -443,25 +470,6 @@ namespace CrossEngineEditor
         private void OnContextSceneChanged(Scene old)
         {
             Context.ActiveEntity = null;
-
-            var task = Task.CompletedTask;
-            
-            if (old != null) task = task.ContinueWith(t => SceneManager.Remove(old));
-
-            if (Context.Scene != null) task = task.ContinueWith(t => SceneManager.PushBackground(Context.Scene));
-        }
-
-        private void OnContextAssetsChanged(AssetList old)
-        {
-            Context.Scene = null;
-
-            var task = Task.CompletedTask;
-
-            if (old?.IsLoaded == true) task = task.ContinueWith(t => AssetManager.Unload(old));
-
-            if (Context.Assets?.IsLoaded == false) task = task.ContinueWith(t => AssetManager.Load(Context.Assets));
-            
-            task = task.ContinueWith(t => AssetManager.Bind(Context.Assets));
         }
         #endregion
 

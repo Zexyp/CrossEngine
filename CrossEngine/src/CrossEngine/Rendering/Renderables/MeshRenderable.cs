@@ -37,7 +37,7 @@ namespace CrossEngine.Rendering.Renderables
             var volume = data.GetVolume();
             CullChecker.Append(volume);
             
-            if (data.Mesh == null)
+            if (data.Renderer == null)
                 return;
 
             IMaterial mater = (data.Material ?? defaultMaterial);
@@ -48,10 +48,7 @@ namespace CrossEngine.Rendering.Renderables
             shader.SetParameterMat4("uModel", data.Transform);
             shader.SetParameterInt("uEntityID", data.Id);
 
-            if (data.Mesh is IIndexedMesh)
-                GraphicsContext.Current.Api.DrawIndexed(data.Mesh.VA);
-            else
-                GraphicsContext.Current.Api.DrawArray(data.Mesh.VA, (uint)data.Mesh.Vertices.Length);
+            data.Renderer.Draw(GraphicsContext.Current.Api);
         }
     }
 }
