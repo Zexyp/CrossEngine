@@ -1,6 +1,4 @@
-﻿// same as GLFW
-
-namespace CrossEngine.Inputs
+﻿namespace CrossEngine.Inputs
 {
     public enum Key
     {

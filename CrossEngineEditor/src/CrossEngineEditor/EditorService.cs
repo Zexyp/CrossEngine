@@ -172,6 +172,8 @@ namespace CrossEngineEditor
                         throw;
                     
                     Log.Error($"action at {frame.GetMethod().DeclaringType}.{frame.GetMethod().Name} in {frame.GetFileName()}:{frame.GetFileLineNumber()} not implemented ({nie.Message})");
+                    
+                    Panels.PushModal(new ActionModal("Not implemented", "sigh"));
                 }
             }
             catch (Exception e)

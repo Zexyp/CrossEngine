@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Utils;
 
 using CrossEngine.Platform.OpenGL;
+using CrossEngine.Utils.Structs;
 
 namespace CrossEngine.Rendering.Buffers
 {
@@ -42,8 +44,9 @@ namespace CrossEngine.Rendering.Buffers
         public FilterParameter Filter;
         public WrapParameter Wrap;
         // TODO: wrap
+        // TODO: enabled
 
-        internal bool dontDraw;
+        public bool Enabled;
 
         public FramebufferTextureSpecification(TextureFormat format, FilterParameter filter = FilterParameter.Default, WrapParameter wrap = WrapParameter.Default)
         {
@@ -51,7 +54,7 @@ namespace CrossEngine.Rendering.Buffers
             Filter = filter;
             Wrap = wrap;
 
-            dontDraw = false;
+            Enabled = true;
         }
     }
 
@@ -74,6 +77,7 @@ namespace CrossEngine.Rendering.Buffers
     public abstract class Framebuffer : IDisposable
     {
         public bool Disposed { get; protected set; } = false;
+        public abstract ReadOnlyCollection<FramebufferTextureSpecification> ColorAttachments { get; protected set; }
 
         public void Dispose()
         {
@@ -101,6 +105,10 @@ namespace CrossEngine.Rendering.Buffers
             Dispose(false);
         }
 
+        public abstract uint Width { get; }
+        public abstract uint Height { get; }
+        public IntVec2 Size => new IntVec2((int)Width, (int)Height);
+
         public abstract void Bind();
         public abstract void Unbind();
 
@@ -108,7 +116,8 @@ namespace CrossEngine.Rendering.Buffers
         public abstract void ClearAttachment(int attachmentIndex, int value);
         public abstract int ReadPixel(int attachmentIndex, uint x, uint y);
         public abstract uint GetColorAttachmentRendererID(int index = 0);
-        public abstract void BlitTo(WeakReference<Framebuffer>? target);
+        public abstract void BlitTo(WeakReference<Framebuffer>? target, IList<int> attachmentIndexes = null);
+        public abstract void EnableColorAttachmentDraw(int attachmentIndex, bool enable);
         //public abstract ref FramebufferSpecification GetSpecification();
 
         public static unsafe WeakReference<Framebuffer> Create(in FramebufferSpecification specification)

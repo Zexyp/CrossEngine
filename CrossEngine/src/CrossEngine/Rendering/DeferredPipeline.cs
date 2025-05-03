@@ -7,6 +7,7 @@ using System.Linq;
 using System.Numerics;
 using CrossEngine.Geometry;
 using CrossEngine.Loaders;
+using CrossEngine.Platform.OpenGL;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Cameras;
@@ -22,6 +23,11 @@ namespace CrossEngine.Rendering;
 
 public class DeferredPipeline : Pipeline
 {
+    public const int FrambufferIndexColor = 0;
+    public const int FrambufferIndexId = 1;
+    public const int FrambufferIndexPosition = 2;
+    public const int FrambufferIndexNormal = 3;
+    
     public DeferredPipeline()
     {
         PushBack(new ScenePass());
@@ -185,6 +191,7 @@ class ScenePass : Pass
 
     public ScenePass()
     {
+        ModifyAttachments = new HashSet<int>() { DeferredPipeline.FrambufferIndexColor, DeferredPipeline.FrambufferIndexId };
         Depth = DepthFunc.Default;
     }
     
@@ -373,6 +380,7 @@ class TransparentPass : Pass
 
     public TransparentPass()
     {
+        ModifyAttachments = new HashSet<int>() { DeferredPipeline.FrambufferIndexColor, DeferredPipeline.FrambufferIndexId };
         Depth = DepthFunc.Default;
     }
     

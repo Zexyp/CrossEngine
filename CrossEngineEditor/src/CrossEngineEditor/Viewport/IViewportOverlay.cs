@@ -14,7 +14,6 @@ namespace CrossEngineEditor.Viewport
     {
         protected internal IEditorContext Context { get; internal set; }
 
-        virtual ISet<int> ModifyAttachments => new HashSet<int>() { 0 };
         virtual void Prepare() { }
         virtual void Finish() { }
         virtual void Init() { }

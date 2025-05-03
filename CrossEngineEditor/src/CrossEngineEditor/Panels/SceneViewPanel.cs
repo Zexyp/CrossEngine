@@ -78,14 +78,14 @@ namespace CrossEngineEditor.Panels
 
             Framebuffer.GetValue().Bind();
             ((GLFramebuffer)Framebuffer.GetValue()).EnableAllColorAttachments(true);
-            
+            Surface.Context.Api.SetClearColor(VecColor.Black);
             Surface.Context.Api.Clear();
+            
             lock (Scene)
             {
                 Surface.DoUpdate();
             }
-            
-            ((GLFramebuffer)Framebuffer.GetValue()).EnableColorAttachment(1, false);
+
             Framebuffer.GetValue().Unbind();
 
             renderSys.OverrideCamera = null;
@@ -105,8 +105,6 @@ namespace CrossEngineEditor.Panels
                 // using floating point colors
                 new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F),
                 new FramebufferTextureSpecification(TextureFormat.ColorR32I),
-                new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F),
-                new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F),
                 new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
                 );
             spec.Width = 1;

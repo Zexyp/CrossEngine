@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Numerics;
+using CrossEngine.Platform.OpenGL;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
@@ -37,38 +38,52 @@ public class Pipeline
         DetachPass(pass);
     }
 
-    public void Process(GraphicsContext context)
+    public void Process(ISurface surface)
     {
         Debug.Assert(_initialized);
+
+        var rapi = surface.Context.Api;
+        var buffer = Buffer.GetValue();
+
+        if (surface.Size != buffer.Size)
+        {
+            buffer.Resize((uint)surface.Size.X, (uint)surface.Size.Y);
+        }
         
-        //if (Buffer != null)
-        //    Buffer.GetValue().Bind();
+        buffer.Bind();
+        rapi.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
         
+        // clear
         if (_clearColor != null)
         {
             var color = _clearColor.Value;
-            context.Api.SetClearColor(color);
-            context.Api.Clear();
+            rapi.SetClearColor(color);
+            rapi.Clear();
         }
         
+        //Pass last = null;
         for (int i = 0; i < _passes.Count; i++)
         {
             Pass pass = _passes[i];
             
             Profiler.BeginScope($"processing pass {pass.GetType().Name}");
+
+            for (int ai = 0; ai < buffer.ColorAttachments.Count; ai++)
+            {
+                buffer.EnableColorAttachmentDraw(ai, pass.ModifyAttachments.Contains(ai));
+            }
                 
-            context.Api.SetDepthFunc(pass.Depth);
-            context.Api.SetBlendFunc(pass.Blend);
-            context.Api.SetPolygonMode(pass.PolyMode);
-            context.Api.SetCullFace(pass.Cull);
+            rapi.SetDepthFunc(pass.Depth);
+            rapi.SetBlendFunc(pass.Blend);
+            rapi.SetPolygonMode(pass.PolyMode);
+            rapi.SetCullFace(pass.Cull);
 
             pass.Draw();
 
             Profiler.EndScope();
         }
         
-        //if (Buffer != null)
-        //    Buffer.GetValue().Unbind();
+        buffer.BlitTo(surface.Buffer, new[] {0, 1});
     }
 
     public void Init()
@@ -117,6 +132,9 @@ public class Pipeline
 public abstract class Pass
 {
     public Pipeline Pipeline { get; internal set; }
+
+    // indexes
+    public ISet<int> ModifyAttachments = new HashSet<int>() { 0 };
     
     // cull
     public DepthFunc Depth;

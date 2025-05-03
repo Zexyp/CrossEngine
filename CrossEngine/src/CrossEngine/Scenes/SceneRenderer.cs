@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Scenes
 {
@@ -19,8 +20,10 @@ namespace CrossEngine.Scenes
             Debug.Assert(scene.IsInitialized);
             
             surface.Context.Api.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
+
+            var rs = scene.World.GetSystem<RenderSystem>();
             
-            scene.World.GetSystem<RenderSystem>().Pipeline.Process(GraphicsContext.Current);
+            rs.Pipeline.Process(surface);
         }
     }
 }

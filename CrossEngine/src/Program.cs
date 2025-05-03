@@ -1,6 +1,4 @@
-﻿// i'm sorry for any swear words and emojis xd
-
-namespace CrossEngine
+﻿namespace CrossEngine
 {
     internal class Program
     {
