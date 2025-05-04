@@ -69,6 +69,9 @@ namespace CrossEngineEditor
 
         class MetricsOverlay : HudOverlay
         {
+            private float[] _deltas = new float[256];
+            private int _deltasIndex = 0;
+            
             public override void Draw()
             {
                 Renderer2D.SetBlending(BlendMode.Blend);
@@ -78,9 +81,27 @@ namespace CrossEngineEditor
 
             protected override void Content()
             {
+                // text
                 var t = $"{1d / Time.UnscaledDelta:000.00} fps\n{Time.UnscaledDelta * 1000:00.000} ms\n";
                 var offset = new Vector3(0, Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 2, 0);
                 TextRendererUtil.DrawText(Matrix4x4.CreateTranslation(offset), t, ColorHelper.U32ToVec4(0x7fff006d));
+
+                // graph
+                var graphY = Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 2;
+                var graphX = 0;
+                _deltas[_deltasIndex] = Time.UnscaledDeltaF;
+                
+                for (int ioff = 0; ioff < _deltas.Length; ioff++)
+                {
+                    var i = (_deltasIndex + ioff) % _deltas.Length;
+                    Renderer2D.DrawQuad(Matrix4x4.CreateTranslation(new Vector3(0, 0.5f, 0)) *
+                                        Matrix4x4.CreateScale(new Vector3(1, _deltas[i] * 1000, 1)) *
+                                        Matrix4x4.CreateTranslation(new Vector3(ioff + graphX, -_deltas[i] * 1000 + graphY, 0)),
+                        new Vector4(1, 0, 0, .5f));
+                }
+                
+                _deltasIndex++;
+                _deltasIndex %= _deltas.Length;
             }
         }
     }

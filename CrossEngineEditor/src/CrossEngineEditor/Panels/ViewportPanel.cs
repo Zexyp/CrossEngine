@@ -40,8 +40,8 @@ namespace CrossEngineEditor.Panels
         private Vector2 _lookRot = Vector2.Zero;
         private bool IsTouchpad => EditorApplication.Service.Preferences["navigation"].ReadBooleanOrDefault("touchpad", true);
         private ViewportPass _viewportPass;
-        private float _sensitivityPan = .25f;
-        private float _sensitivityRotate = 8;
+        private float _sensitivityPan => EditorApplication.Service.Preferences["navigation"].ReadSingleOrDefault("touchpad.sensitivity.pan", .25f);
+        private float _sensitivityRotate => EditorApplication.Service.Preferences["navigation"].ReadSingleOrDefault("touchpad.sensitivity.rotate", 8);
 
         public ViewportPanel()
         {
@@ -50,11 +50,11 @@ namespace CrossEngineEditor.Panels
 
             AddOverlay(new TransformsOverlay());
             AddOverlay(new CameraOverlay());
+            AddOverlay(new IconOverlay());
+            AddOverlay(new EmitterOverlay());
             AddOverlay(new SelectedOverlay());
             AddOverlay(new NameOverlay());
             AddOverlay(new ViewportCullCkecker());
-            AddOverlay(new EmitterOverlay());
-            AddOverlay(new IconOverlay());
             
             _viewportPass = new ViewportPass() { Overlays = _overlays };
         }
@@ -435,6 +435,22 @@ namespace CrossEngineEditor.Panels
             }
         }
 
+        public override void SaveState(SerializationInfo info)
+        {
+            info.AddValue("ViewPosition", _cameraPosition);
+            info.AddValue("ViewRotation", _cameraRotation.AsVec4());
+            info.AddValue("ViewZoom", _zoom);
+            info.AddValue("ViewPerspective", _perspective);
+        }
+
+        public override void LoadState(SerializationInfo info)
+        {
+            _cameraPosition = info.GetValue("ViewPosition", _cameraPosition);
+            _cameraRotation = info.GetValue("ViewRotation", _cameraRotation.AsVec4()).AsQuat();
+            _zoom = info.GetValue("ViewZoom", _zoom);
+            _perspective = info.GetValue("ViewPerspective", _perspective);
+        }
+
         [Obsolete("no init")]
         private void AddOverlay(IViewportOverlay overlay, bool draw = true)
         {
@@ -481,16 +497,23 @@ namespace CrossEngineEditor.Panels
             
             public override void Draw()
             {
+                var buffer = Pipeline.Buffer.GetValue();
+                buffer.Bind();
+
                 for (int i = 0; i < Overlays.Count; i++)
                 {
+                    var (overlay, draw) = Overlays[i];
+                    if (!draw) continue;
+                    
+                    buffer.EnableColorAttachments(overlay.ModifyAttachments.ToList());
+                    
                     try
                     {
-                        if (Overlays[i].Draw)
-                            Overlays[i].Overlay.Draw();
+                        overlay.Draw();
                     }
                     catch (Exception e)
                     {
-                        EditorService.Log.Error($"viewport: overlay '{Overlays[i].Overlay.GetType().FullName}' draw failed: {e}");
+                        EditorService.Log.Error($"viewport: overlay '{overlay.GetType().FullName}' draw failed: {e}");
                     }
                 }
             }

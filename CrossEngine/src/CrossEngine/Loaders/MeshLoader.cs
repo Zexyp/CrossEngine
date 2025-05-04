@@ -41,24 +41,32 @@ namespace CrossEngine.Loaders
         //}
 
         static readonly NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = "." };
-
-        public static Mesh<WavefrontVertex> LoadObj(Stream stream)
+        
+        public static Dictionary<string, IMaterial> ParseMtl(Stream stream)
         {
-            var mesh = ParseObj(stream);
-            return mesh;
+            throw new NotImplementedException();
         }
 
-        public static void ParseMtl(Stream stream)
-        {
-            
-        }
-
-        public static Mesh<WavefrontVertex> ParseObj(Stream stream)
+        public static Dictionary<string, Mesh<WavefrontVertex>> ParseObj(Stream stream)
         {
             List<WavefrontVertex> vertices = new();
             List<Vector3> position = new();
             List<Vector3> normal = new();
             List<Vector2> texture = new();
+            
+            Dictionary<string, Mesh<WavefrontVertex>> meshes = new();
+            
+            string currentNameMesh = null;
+
+            void CompleteMesh()
+            {
+                if (currentNameMesh == null) return;
+                meshes.Add(currentNameMesh, new Mesh<WavefrontVertex>(vertices.ToArray()));
+                vertices.Clear();
+                position.Clear();
+                normal.Clear();
+                texture.Clear();
+            }
             
             using (StreamReader reader = new StreamReader(stream))
             {
@@ -74,7 +82,8 @@ namespace CrossEngine.Loaders
 
                         case var l when l.StartsWith("o "):
                             Debug.Assert(parts.Length == 2);
-                            Logging.Log.Default.Trace($"o '{parts[1]}'");
+                            CompleteMesh();
+                            currentNameMesh = parts[1];
                             break;
                         case var l when l.StartsWith("mtllib "):
                             Debug.Assert(parts.Length == 2);
@@ -120,9 +129,9 @@ namespace CrossEngine.Loaders
                     }
                 }
             }
+            CompleteMesh();
 
-            Mesh<WavefrontVertex> mesh = new(vertices.ToArray());
-            return mesh;
+            return meshes;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

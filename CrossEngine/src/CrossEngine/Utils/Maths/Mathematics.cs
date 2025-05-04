@@ -83,6 +83,9 @@ namespace CrossEngine.Utils
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 XY(in this Vector4 v) => new Vector2(v.X, v.Y);
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Quaternion AsQuat(in this Vector4 q) => new Quaternion(q.X, q.Y, q.Z, q.W);
     }
 
     public static class Matrix4x4Extension
@@ -604,6 +607,9 @@ namespace CrossEngine.Utils
 
             return angles;
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 AsVec4(in this Quaternion q) => new Vector4(q.X, q.Y, q.Z, q.W);
 
         //public static Quaternion ToQuaternion(Vector3 euler)
         //{

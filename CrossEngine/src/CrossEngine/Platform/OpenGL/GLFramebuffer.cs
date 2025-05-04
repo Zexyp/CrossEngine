@@ -90,8 +90,6 @@ namespace CrossEngine.Platform.OpenGL
 
         public unsafe GLFramebuffer(in FramebufferSpecification spec)
         {
-            ColorAttachments = colorAttachmentSpecifications.AsReadOnly();
-            
             Profiler.Function();
 
             specification = spec;
@@ -110,8 +108,6 @@ namespace CrossEngine.Platform.OpenGL
 
             RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
-
-        public override ReadOnlyCollection<FramebufferTextureSpecification> ColorAttachments { get; protected set; }
 
         protected override unsafe void Dispose(bool disposing)
         {
@@ -191,13 +187,14 @@ namespace CrossEngine.Platform.OpenGL
         }
 
         // TODO: fixme, inefficient
-        public override void EnableColorAttachmentDraw(int attachmentIndex, bool enable)
+        public override void EnableColorAttachments(IList<int> attachmentIndexes = null)
         {
-            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
-
-            FramebufferTextureSpecification s = colorAttachmentSpecifications[attachmentIndex];
-            s.Enabled = enable;
-            colorAttachmentSpecifications[attachmentIndex] = s;
+            for (int i = 0; i < colorAttachmentSpecifications.Count; i++)
+            {
+                FramebufferTextureSpecification s = colorAttachmentSpecifications[i];
+                s.Enabled = attachmentIndexes.Contains(i);
+                colorAttachmentSpecifications[i] = s;
+            }
 
             SetDrawBuffers();
         }

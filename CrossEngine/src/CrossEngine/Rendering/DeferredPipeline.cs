@@ -147,14 +147,7 @@ void main()
     {
         _skyboxMeshRenderer = new MeshRenderer();
         _skyboxMeshRenderer.Setup(new Mesh<Vector3>(skyboxVertices));
-        using (var stream = new MemoryStream())
-        using (var writer = new StreamWriter(stream))
-        {
-            writer.Write(skyboxShader);
-            writer.Flush();
-            stream.Seek(0, SeekOrigin.Begin);
-            _skyboxShader = ShaderPreprocessor.CreateProgramFromStream(stream);
-        }
+        _skyboxShader = ShaderPreprocessor.CreateProgramFromString(skyboxShader);
     }
 
     public override void Destroy()

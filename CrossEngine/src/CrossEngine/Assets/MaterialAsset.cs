@@ -3,25 +3,37 @@ using CrossEngine.Rendering.Shaders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Loaders;
+using CrossEngine.Utils.Editor;
 
 namespace CrossEngine.Assets
 {
-    public class MaterialAsset : Asset
+    public abstract class MaterialAsset : Asset
     {
         public IMaterial Material;
+    }
+
+    public class MtlMaterialAsset : MaterialAsset
+    {
+        [EditorString]
+        public string RelativePath;
+        [EditorString]
+        public string MaterialName;
 
         public override bool Loaded => Material != null;
 
-        public override Task Load(IAssetLoadContext context)
+        public override async Task Load(IAssetLoadContext context)
         {
-            throw new NotImplementedException();
+            using (var stream = await context.OpenRelativeStream(RelativePath))
+                Material = MeshLoader.ParseMtl(stream)[MaterialName];
         }
 
-        public override Task Unload(IAssetLoadContext context)
+        public override async Task Unload(IAssetLoadContext context)
         {
-            throw new NotImplementedException();
+            Material = null;
         }
     }
 }

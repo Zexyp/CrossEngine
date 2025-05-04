@@ -127,6 +127,7 @@ namespace CrossEngineEditor.Viewport
     {
         public IEditorContext Context { get; set; }
         public ICamera Camera { get; set; }
+        public ISet<int> ModifyAttachments => new HashSet<int>() { DeferredPipeline.FrambufferIndexColor, DeferredPipeline.FrambufferIndexId };
 
         private WeakReference<Texture> _iconTexture;
         private Vector4[] _offsets = TextureAtlas.CreateOffsets(new Vector2(80, 16), new Vector2(16, 16), 5);
@@ -167,7 +168,6 @@ namespace CrossEngineEditor.Viewport
                     var matrix = Matrix4x4Extension.CreateBillboard(cameraUp, cameraRight, Vector3.Zero, pos);
                     Renderer2D.DrawTexturedQuad(matrix, _iconTexture, VecColor.White, _offsets[pair.Icon], comp.Entity.Id);
                 }
-
             }
             Renderer2D.EndScene();
         }

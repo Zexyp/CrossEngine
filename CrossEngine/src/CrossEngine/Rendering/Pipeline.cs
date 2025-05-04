@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using CrossEngine.Platform.OpenGL;
 using CrossEngine.Profiling;
@@ -68,10 +69,7 @@ public class Pipeline
             
             Profiler.BeginScope($"processing pass {pass.GetType().Name}");
 
-            for (int ai = 0; ai < buffer.ColorAttachments.Count; ai++)
-            {
-                buffer.EnableColorAttachmentDraw(ai, pass.ModifyAttachments.Contains(ai));
-            }
+            buffer.EnableColorAttachments(pass.ModifyAttachments.ToList());
                 
             rapi.SetDepthFunc(pass.Depth);
             rapi.SetBlendFunc(pass.Blend);

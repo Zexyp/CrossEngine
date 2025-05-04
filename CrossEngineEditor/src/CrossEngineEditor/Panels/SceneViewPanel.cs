@@ -78,8 +78,6 @@ namespace CrossEngineEditor.Panels
 
             Framebuffer.GetValue().Bind();
             ((GLFramebuffer)Framebuffer.GetValue()).EnableAllColorAttachments(true);
-            Surface.Context.Api.SetClearColor(VecColor.Black);
-            Surface.Context.Api.Clear();
             
             lock (Scene)
             {

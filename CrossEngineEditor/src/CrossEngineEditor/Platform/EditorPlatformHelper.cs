@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.IO;
 using CrossEngine.Logging;
+using CrossEngine.Platform;
 
 
 #if NATIVEFILEDIALOGSHARP
@@ -55,5 +57,7 @@ namespace CrossEngineEditor.Platform
             return ShellFileDialogs.FileOpenDialog.ShowSingleSelectDialog(0, null, null, null, null, null);
 #endif
         }
+        
+        public static Stream FileCreate(string path) => PlatformHelper.FileCreate(path);
     }
 }

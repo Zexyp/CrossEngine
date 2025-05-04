@@ -302,7 +302,7 @@ namespace CrossEngineEditor
                         {
                             var filepath = t.Result;
                             if (filepath != null)
-                                using (Stream stream = File.Create(filepath))
+                                using (Stream stream = EditorPlatformHelper.FileCreate(filepath))
                                     SceneSerializer.SerializeJson(stream, Context.Scene);
                         });
                     }
@@ -345,8 +345,24 @@ namespace CrossEngineEditor
                     {
                         Context.Clear().ContinueWith(t =>
                         {
-                            Project = new EditorProject();
-                            Project.Load(Context, path);
+                            try
+                            {
+                                Project = new EditorProject();
+                                Project.Load(Context, path, ini =>
+                                {
+                                    for (int i = 0; i < Panels.Registered.Count; i++)
+                                    {
+                                        var panel = Panels.Registered[i];
+                                        var info = IniSerializationInfo.FromSection(ini[$"workspace.{panel.GetType().FullName}"]);
+                                        panel.LoadState(info);
+                                    }
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                EditorService.Log.Error($"project load failed: {e}");
+                                DialogGenericError();
+                            }
 
                             AppendRecent(Project.Filepath);
                         });
@@ -355,7 +371,31 @@ namespace CrossEngineEditor
                     void SaveProject()
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(Project.Filepath));
-                        Project.Save(Context, Project.Filepath);
+                        Project.Save(Context, Project.Filepath, ini =>
+                        {
+                            for (int i = 0; i < Panels.Registered.Count; i++)
+                            {
+                                var panel = Panels.Registered[i];
+                                var info = IniSerializationInfo.FromSection(ini[$"workspace.{panel.GetType().FullName}"]);
+                                panel.SaveState(info);
+                            }
+                        });
+                        if (Context.Assets != null)
+                        {
+                            if (!File.Exists(Context.Assets.RuntimeFilepath))
+                                Panels.PushModal(new ActionModal("Assets not saved", "Unsaved"));
+                            else
+                                AssetManager.WriteFile(Context.Assets, Context.Assets.RuntimeFilepath);
+                        }
+                        if (Context.Scene != null)
+                        {
+                            string filepath;
+                            if (!File.Exists(filepath = ((IAssetLoadContext)Context.Assets)?.GetFullPath(GetCurrentSceneAsset()?.RelativePath)))
+                                Panels.PushModal(new ActionModal("Scene not saved", "Unsaved"));
+                            else
+                                using (Stream stream = EditorPlatformHelper.FileCreate(filepath))
+                                    SceneSerializer.SerializeJson(stream, Context.Scene);
+                        }
                         
                         AppendRecent(Project.Filepath);
                     }
@@ -530,8 +570,8 @@ namespace CrossEngineEditor
             Log.Debug("configuring");
             
             // assert files
-            if (!File.Exists(ConfigPreferencesPath)) File.Create(ConfigPreferencesPath).Close();
-            if (!File.Exists(ConfigRecentsPath)) File.Create(ConfigRecentsPath).Close();
+            if (!File.Exists(ConfigPreferencesPath)) EditorPlatformHelper.FileCreate(ConfigPreferencesPath).Close();
+            if (!File.Exists(ConfigRecentsPath)) EditorPlatformHelper.FileCreate(ConfigRecentsPath).Close();
             
             Preferences = IniFile.Load(File.OpenRead(ConfigPreferencesPath));
             

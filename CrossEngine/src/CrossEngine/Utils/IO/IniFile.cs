@@ -86,34 +86,21 @@ namespace CrossEngine.Utils.IO
             #endregion
 
             #region TryRead
-            public bool TryReadString(string key, out string value)
+            private bool TryReadWrapper<T>(string key, out T value, Func<string, T> reader)
             {
                 value = default;
                 var result = _variables.ContainsKey(key);
-                if (result) value = ReadString(key);
+                if (result) value = reader(key);
                 return result;
             }
-            public bool TryReadInt32(string key, out int value)
-            {
-                value = default;
-                var result = _variables.ContainsKey(key);
-                if (result) value = ReadInt32(key);
-                return result;
-            }
-            public bool TryReadSingle(string key, out float value)
-            {
-                value = default;
-                var result = _variables.ContainsKey(key);
-                if (result) value = ReadSingle(key);
-                return result;
-            }
-            public bool TryReadBoolean(string key, out bool value)
-            {
-                value = default;
-                var result = _variables.ContainsKey(key);
-                if (result) value = ReadBoolean(key);
-                return result;
-            }
+            
+            public bool TryReadString(string key, out string value) => TryReadWrapper(key, out value, ReadString);
+            public bool TryReadInt32(string key, out int value) => TryReadWrapper(key, out value, ReadInt32);
+            public bool TryReadSingle(string key, out float value) => TryReadWrapper(key, out value, ReadSingle);
+            public bool TryReadBoolean(string key, out bool value) => TryReadWrapper(key, out value, ReadBoolean);
+            public bool TryReadVec4(string key, out Vector4 value) => TryReadWrapper(key, out value, ReadVec4);
+            public bool TryReadVec3(string key, out Vector3 value) => TryReadWrapper(key, out value, ReadVec3);
+            public bool TryReadVec2(string key, out Vector2 value) => TryReadWrapper(key, out value, ReadVec2);
             #endregion
             
             #region ReadOrDefault
@@ -248,30 +235,13 @@ namespace CrossEngine.Utils.IO
         {
             switch (typeOfValue)
             {
-                case Type t when t == typeof(string):
-                {
-                    var result = _section.TryReadString(name, out var v);
-                    value = v;
-                    return result;
-                }
-                case Type t when t == typeof(int):
-                {
-                    var result = _section.TryReadInt32(name, out var v);
-                    value = v;
-                    return result;
-                }
-                case Type t when t == typeof(float):
-                {
-                    var result = _section.TryReadSingle(name, out var v);
-                    value = v;
-                    return result;
-                }
-                case Type t when t == typeof(bool):
-                {
-                    var result = _section.TryReadBoolean(name, out var v);
-                    value = v;
-                    return result;
-                }
+                case Type t when t == typeof(string): return WrapOutTry(out value, (out string v) => _section.TryReadString(name, out v));
+                case Type t when t == typeof(int): return WrapOutTry(out value, (out int v) => _section.TryReadInt32(name, out v));
+                case Type t when t == typeof(float): return WrapOutTry(out value, (out float v) => _section.TryReadSingle(name, out v));
+                case Type t when t == typeof(bool): return WrapOutTry(out value, (out bool v) => _section.TryReadBoolean(name, out v));
+                case Type t when t == typeof(Vector4): return WrapOutTry(out value, (out Vector4 v) => _section.TryReadVec4(name, out v));
+                case Type t when t == typeof(Vector3): return WrapOutTry(out value, (out Vector3 v) => _section.TryReadVec3(name, out v));
+                case Type t when t == typeof(Vector2): return WrapOutTry(out value, (out Vector2 v) => _section.TryReadVec2(name, out v));
                 default: throw new NotImplementedException();
             }
         }

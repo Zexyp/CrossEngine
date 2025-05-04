@@ -77,7 +77,6 @@ namespace CrossEngine.Rendering.Buffers
     public abstract class Framebuffer : IDisposable
     {
         public bool Disposed { get; protected set; } = false;
-        public abstract ReadOnlyCollection<FramebufferTextureSpecification> ColorAttachments { get; protected set; }
 
         public void Dispose()
         {
@@ -117,7 +116,7 @@ namespace CrossEngine.Rendering.Buffers
         public abstract int ReadPixel(int attachmentIndex, uint x, uint y);
         public abstract uint GetColorAttachmentRendererID(int index = 0);
         public abstract void BlitTo(WeakReference<Framebuffer>? target, IList<int> attachmentIndexes = null);
-        public abstract void EnableColorAttachmentDraw(int attachmentIndex, bool enable);
+        public abstract void EnableColorAttachments(IList<int> attachmentIndexes = null);
         //public abstract ref FramebufferSpecification GetSpecification();
 
         public static unsafe WeakReference<Framebuffer> Create(in FramebufferSpecification specification)

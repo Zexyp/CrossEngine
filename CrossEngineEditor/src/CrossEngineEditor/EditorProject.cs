@@ -8,6 +8,7 @@ using CrossEngine.Components;
 using CrossEngine.Ecs;
 using CrossEngine.Utils;
 using CrossEngine.Utils.IO;
+using CrossEngineEditor.Platform;
 
 namespace CrossEngineEditor;
 
@@ -21,15 +22,15 @@ public class EditorProject
         Filepath = filepath;
 
         var alistfile = context.Assets?.RuntimeFilepath;
-        ini["workspace"].Write("Assets", alistfile ?? "null");
+        ini["context"].Write("Assets", alistfile ?? "null");
         var sceneId = EditorApplication.Service.GetCurrentSceneAsset()?.Id;
-        ini["workspace"].Write("Scene", sceneId != null ? sceneId.ToString() : "null");
+        ini["context"].Write("Scene", sceneId != null ? sceneId.ToString() : "null");
         var entityId = context.ActiveEntity?.Id;
-        ini["workspace"].Write("ActiveEntity", entityId != null ? entityId.ToString() : "null");
+        ini["context"].Write("ActiveEntity", entityId != null ? entityId.ToString() : "null");
         
         shim?.Invoke(ini);
         
-        using (Stream stream = File.Create(filepath))
+        using (Stream stream = EditorPlatformHelper.FileCreate(filepath))
             IniFile.Dump(ini, stream);
     }
 
@@ -41,9 +42,9 @@ public class EditorProject
         Filepath = filepath;
 
         // parse
-        var alistfile = ini["workspace"].ReadString("Assets");
-        var sceneId = ini["workspace"].ReadString("Scene");
-        var entityId = ini["workspace"].ReadString("ActiveEntity");
+        var alistfile = ini["context"].ReadString("Assets");
+        var sceneId = ini["context"].ReadString("Scene");
+        var entityId = ini["context"].ReadString("ActiveEntity");
         
         var task = Task.CompletedTask;
         AssetList alist;

@@ -1,18 +1,19 @@
-﻿using CrossEngine.Ecs;
+﻿using System;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+
+using CrossEngine.Ecs;
 using CrossEngine.Logging;
 using CrossEngine.Platform;
 using CrossEngine.Serialization;
 using CrossEngine.Core.Services;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
-using Silk.NET.Core.Native;
-using System;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 using CrossEngine.Utils.Collections;
 
 namespace CrossEngine.Assets
@@ -24,7 +25,7 @@ namespace CrossEngine.Assets
         [EditorString]
         public string RuntimeFilepath;
 
-        Dictionary<Type, IDictionary> _collections = new();
+        Dictionary<Type, Dictionary<Guid, Asset>> _collections = new();
         bool _loaded = false;
         
         public bool IsLoaded => _loaded;
@@ -59,10 +60,18 @@ namespace CrossEngine.Assets
             if (!type.IsSubclassOf(typeof(Asset)))
                 throw new InvalidOperationException();
 
-            if (!_collections.ContainsKey(type))
-                throw new KeyNotFoundException();
+            if (_collections.ContainsKey(type))
+                if (_collections[type].TryGetValue(id, out var asset))
+                    return asset;
 
-            return (Asset)_collections[type][id];
+            foreach (var pair in _collections)
+            {
+                if (type.IsAssignableFrom(pair.Key))
+                    if (pair.Value.TryGetValue(id, out var asset))
+                        return asset;
+            }
+            
+            throw new KeyNotFoundException();
         }
         
         public T GetNamed<T>(string name) where T : Asset => (T)GetNamed(typeof(T), name);
@@ -83,64 +92,51 @@ namespace CrossEngine.Assets
             throw new KeyNotFoundException();
         }
 
-        public ICollection<T> GetCollection<T>() where T : Asset
+        public IEnumerable<T> GetCollection<T>() where T : Asset => new CastWrapCollection<T>(GetCollection(typeof(T)));
+        public IEnumerable<Asset> GetCollection(Type ofType)
         {
-            var type = typeof(T);
+            IEnumerable<Asset> coll = Enumerable.Empty<Asset>();
+            foreach (var pair in _collections)
+            {
+                if (ofType.IsAssignableFrom(pair.Key))
+                    coll = coll.Concat(pair.Value.Values);
+            }
 
-            if (!_collections.ContainsKey(type))
-                throw new KeyNotFoundException();
-
-            return new CastWrapCollection<T>(_collections[type].Values);
+            return coll;
         }
 
-        public bool TryGetCollection<T>(out ICollection<T> collection) where T : Asset
+        public bool TryGetCollection<T>(out IEnumerable<T> collection) where T : Asset
         {
-            var type = typeof(T);
-
             collection = default;
-
-            if (!_collections.ContainsKey(type))
+            var result = TryGetCollection(typeof(T), out var coll);
+            if (result) collection = new CastWrapCollection<T>(coll);
+            return result;
+        }
+        public bool TryGetCollection(Type ofType, out IEnumerable<Asset> collection)
+        {
+            collection = default;
+            if (!HasCollection(ofType))
                 return false;
-
-            collection = new CastWrapCollection<T>(_collections[type].Values);
+            collection = GetCollection(ofType);
             return true;
         }
 
-        public ICollection<Asset> GetCollection(Type ofType)
-        {
-            if (!ofType.IsSubclassOf(typeof(Asset)))
-                throw new InvalidOperationException();
-
-            if (!_collections.ContainsKey(ofType))
-                throw new KeyNotFoundException();
-
-            return (ICollection<Asset>)_collections[ofType].Values;
-        }
-
-        public bool TryGetCollection(Type ofType, out ICollection<Asset> collection)
-        {
-            if (!ofType.IsSubclassOf(typeof(Asset)))
-                throw new InvalidOperationException();
-
-            collection = default;
-
-            if (!_collections.ContainsKey(ofType))
-                return false;
-
-            collection = (ICollection<Asset>)_collections[ofType].Values;
-            return true;
-        }
-
-        public bool HasCollection<T>() where T : Asset
-        {
-            return _collections.ContainsKey(typeof(T));
-        }
+        public bool HasCollection<T>() where T : Asset => HasCollection(typeof(T));
         public bool HasCollection(Type ofType)
         {
             if (!ofType.IsSubclassOf(typeof(Asset)))
                 throw new InvalidOperationException();
 
-            return _collections.ContainsKey(ofType);
+            if (_collections.ContainsKey(ofType))
+                return true;
+            
+            foreach (var pair in _collections)
+            {
+                if (ofType.IsAssignableFrom(pair.Key))
+                    return true;
+            }
+            
+            return false;
         }
 
         // funny
@@ -154,7 +150,7 @@ namespace CrossEngine.Assets
                 }
             }
 
-            foreach (var item in (IDictionary<Type, IDictionary>)_collections)
+            foreach (var item in _collections)
             {
                 yield return (item.Key, InnerEnumerate(item.Value.Values));
             }
@@ -163,7 +159,7 @@ namespace CrossEngine.Assets
         public async Task<bool> LoadAll()
         {
             var result = true;
-            foreach (IDictionary col in _collections.Values)
+            foreach (var col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
                 {
@@ -179,7 +175,7 @@ namespace CrossEngine.Assets
         public async Task<bool> UnloadAll()
         {
             var result = true;
-            foreach (IDictionary col in _collections.Values)
+            foreach (var col in _collections.Values)
             {
                 foreach (Asset asset in col.Values)
                 {
@@ -246,7 +242,7 @@ namespace CrossEngine.Assets
         {
             info.AddValue("DirectoryOffset", DirectoryOffset);
             List<Asset> imTooLazy = new();
-            foreach (IDictionary col in _collections.Values)
+            foreach (var col in _collections.Values)
                 foreach (Asset asset in col.Values)
                     imTooLazy.Add(asset);
             info.AddValue("Assets", imTooLazy.ToArray());

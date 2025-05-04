@@ -91,7 +91,7 @@ namespace CrossEngine.Platform
 
         public static Stream FileCreate(string path)
         {
-            Log.Trace($"file write '{path}'");
+            Log.Trace($"file create '{path}'");
 #if WINDOWS || LINUX
             var stream = File.Create(path);
             stream.SetLength(0);

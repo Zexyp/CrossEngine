@@ -102,5 +102,6 @@ public class Transform : ITransformCache
     private void OnParentInvlaidated(ITransformCache transform)
     {
         _dirty = true;
+        Invalidated?.Invoke(this);
     }
 }

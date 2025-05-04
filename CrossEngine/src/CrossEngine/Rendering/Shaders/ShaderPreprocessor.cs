@@ -71,14 +71,7 @@ void main() {{
         internal static void Init()
         {
             // erm
-            using (var stream = new MemoryStream())
-            using (var writer = new StreamWriter(stream))
-            {
-                writer.Write(DefaultShaderProgramSource);
-                writer.Flush();
-                stream.Seek(0, SeekOrigin.Begin);
-                DefaultShaderProgram = CreateProgramFromStream(stream);
-            }
+            DefaultShaderProgram = ShaderPreprocessor.CreateProgramFromString(DefaultShaderProgramSource);
         }
 
         internal static void Shutdown()
@@ -98,6 +91,14 @@ void main() {{
             }
 
             return CreateProgramFromStream(File.OpenRead(filepath), IncudeCallback);
+        }
+
+        public static WeakReference<ShaderProgram> CreateProgramFromString(string source)
+        {
+            using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(source)))
+            {
+                return CreateProgramFromStream(stream);
+            }
         }
 
         public static WeakReference<ShaderProgram> CreateProgramFromStream(Stream stream, Func<string, Stream> includeCallback = null)

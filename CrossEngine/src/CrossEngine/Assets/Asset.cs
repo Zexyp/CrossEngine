@@ -25,7 +25,6 @@ namespace CrossEngine.Assets
         public abstract bool Loaded { get; }
         [EditorString]
         public string Name;
-        public virtual IReadOnlyList<Guid> Dependencies { get => new Guid[0]; }
 
         public abstract Task Load(IAssetLoadContext context);
         public abstract Task Unload(IAssetLoadContext context);
@@ -48,7 +47,7 @@ namespace CrossEngine.Assets
             else guid = Guid.Empty;
         }
 
-        public string GetName() => Name != null ? Name : Id.ToString();
+        public string GetName() => Name ?? Id.ToString();
     }
 
     public abstract class FileAsset : Asset

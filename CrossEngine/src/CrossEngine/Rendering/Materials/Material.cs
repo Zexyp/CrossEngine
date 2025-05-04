@@ -97,7 +97,7 @@ void main() {
     oEntityIDColor = uEntityID;
 }";
 
-    static WeakReference<ShaderProgram> _shader = ShaderPreprocessor.CreateProgramFromStream(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(DefaultShaderSource)));
+    static WeakReference<ShaderProgram> _shader = ShaderPreprocessor.CreateProgramFromString(DefaultShaderSource);
 
     public WeakReference<ShaderProgram> Shader { get => _shader; }
 
