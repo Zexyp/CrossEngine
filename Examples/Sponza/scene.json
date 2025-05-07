@@ -1,0 +1,248 @@
+{
+  "Entities": [
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 48284195,
+      "Name": "sponza_00",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "89027226-ffa3-435d-b032-340c6d8a508d",
+          "Material": "8a212412-ab90-4e65-a513-1743e06ebc8b"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 39973308,
+      "Name": null,
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": -0.96707773,
+            "Y": 3.823537,
+            "Z": -0.23189464
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.PointLightComponent",
+          "Radius": 11.5,
+          "Color": {
+            "X": 10,
+            "Y": 9.324361,
+            "Z": 7.679325
+          }
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 17846822,
+      "Name": null,
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": -39.990524,
+            "Y": 45.13411,
+            "Z": 37.755013
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.PointLightComponent",
+          "Radius": 10,
+          "Color": {
+            "X": 3000,
+            "Y": 3000,
+            "Z": 3000
+          }
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 1855374,
+      "Name": null,
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": -12.631614,
+            "Y": 6.461306,
+            "Z": -0.596724
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.PointLightComponent",
+          "Radius": 10,
+          "Color": {
+            "X": 2.3129306,
+            "Y": 3,
+            "Z": 2.1898735
+          }
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 37501579,
+      "Name": null,
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 11.602577,
+            "Y": 6.729594,
+            "Z": -0.051350065
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.PointLightComponent",
+          "Radius": 10,
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 14049484,
+      "Name": null,
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": -12.788196,
+            "Y": 1.2367513,
+            "Z": 0.34881443
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.PointLightComponent",
+          "Radius": 10,
+          "Color": {
+            "X": 2.0463922,
+            "Y": 2.6219873,
+            "Z": 3.129
+          }
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 14588548,
+      "Name": "Env",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.AmbientLightComponent",
+          "Color": {
+            "X": 0.25,
+            "Y": 0.25,
+            "Z": 0.25
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.SkyboxRendererComponent",
+          "Skybox": "62f9b56c-7b18-42af-8edf-1430d89ecaae"
+        }
+      ]
+    }
+  ]
+}

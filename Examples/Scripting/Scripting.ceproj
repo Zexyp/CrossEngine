@@ -1,0 +1,24 @@
+[context]
+Assets = /media/pjavel/Acer/dev/CE3/Examples/Scripting/assets.json
+Scene = c58160c3-a84b-4d20-8124-d6c607bd88c5
+ActiveEntity = 22624442
+[workspace.CrossEngineEditor.Panels.InspectorPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.HierarchyPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.ViewportPanel]
+Open = True
+view.position = -0.72722214,0.92000633,0.7228918
+view.rotation = -0.068587124,0.26912242,0.019218054,0.9604684
+view.zoom = 18.124441
+view.perspective = True
+view.near = 0.1
+view.far = 1000
+view.fov = 90
+view.enableOverlays = True
+[workspace.CrossEngineEditor.Panels.GamePanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.AssetListPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.SimpleThemeGeneratorPanel]
+Open = True

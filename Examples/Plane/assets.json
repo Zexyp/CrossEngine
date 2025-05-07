@@ -1,0 +1,57 @@
+{
+  "$type": "CrossEngine.Assets.AssetList",
+  "DirectoryOffset": "./",
+  "Assets": [
+    {
+      "$type": "CrossEngine.Assets.MeshAsset",
+      "Id": "4fcaf72c-8df1-4626-8e68-1272f3e16557",
+      "Name": null,
+      "RelativePath": "internal:plane"
+    },
+    {
+      "$type": "CrossEngine.Assets.SceneAsset",
+      "Id": "b94ddfdc-ca26-47ba-a7e4-52a8d1d81af7",
+      "Name": null,
+      "RelativePath": "scene.json"
+    },
+    {
+      "$type": "CrossEngine.Assets.ShaderAsset",
+      "Id": "56cc048b-1487-435b-9737-b8371d8d695c",
+      "Name": null,
+      "RelativePath": "../shared/shader_wavefront.glsl"
+    },
+    {
+      "$type": "CrossEngine.Assets.WavefrontMaterialAsset",
+      "Id": "ae510bae-c760-4a60-8e4b-f6a1b080f904",
+      "Name": null,
+      "Material": {
+        "$type": "CrossEngine.Loaders.MeshLoader\u002BWavefrontMaterial",
+        "ambient": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "diffuse": {
+          "X": 1,
+          "Y": 1,
+          "Z": 1
+        },
+        "specular": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "emissive": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "specularExponent": 256,
+        "disolve": 0,
+        "refractiveIndex": 0
+      },
+      "MapDiffuse": "00000000-0000-0000-0000-000000000000",
+      "Shader": "56cc048b-1487-435b-9737-b8371d8d695c"
+    }
+  ]
+}

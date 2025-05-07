@@ -1,0 +1,125 @@
+{
+  "$type": "CrossEngine.Assets.AssetList",
+  "DirectoryOffset": "./",
+  "Assets": [
+    {
+      "$type": "CrossEngine.Assets.MeshAsset",
+      "Id": "4fcaf72c-8df1-4626-8e68-1272f3e16557",
+      "Name": null,
+      "RelativePath": "internal:plane"
+    },
+    {
+      "$type": "CrossEngine.Assets.SceneAsset",
+      "Id": "b94ddfdc-ca26-47ba-a7e4-52a8d1d81af7",
+      "Name": null,
+      "RelativePath": "scene.json"
+    },
+    {
+      "$type": "CrossEngine.Assets.SceneAsset",
+      "Id": "262d8ae1-21bf-43a3-ba2d-146de138fa20",
+      "Name": null,
+      "RelativePath": "sorting.json"
+    },
+    {
+      "$type": "CrossEngine.Assets.ShaderAsset",
+      "Id": "56cc048b-1487-435b-9737-b8371d8d695c",
+      "Name": null,
+      "RelativePath": "../shared/shader_wavefront.glsl"
+    },
+    {
+      "$type": "CrossEngine.Assets.WavefrontMaterialAsset",
+      "Id": "7d4cd7e8-ea63-4e6b-811c-7a8fa183b513",
+      "Name": null,
+      "Material": {
+        "$type": "CrossEngine.Loaders.MeshLoader\u002BWavefrontMaterial",
+        "ambient": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "diffuse": {
+          "X": 1,
+          "Y": 1,
+          "Z": 1
+        },
+        "specular": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "emissive": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "specularExponent": 100,
+        "disolve": 0,
+        "refractiveIndex": 0
+      },
+      "MapDiffuse": "00000000-0000-0000-0000-000000000000",
+      "Shader": "56cc048b-1487-435b-9737-b8371d8d695c"
+    },
+    {
+      "$type": "CrossEngine.Assets.TextureAtlasAsset",
+      "Id": "366056ef-6c11-4932-8f67-e65b100f9d22",
+      "Name": null,
+      "TextureOffsets": [
+        {
+          "X": 0,
+          "Y": -1,
+          "Z": 0.125,
+          "W": 1
+        },
+        {
+          "X": 0.125,
+          "Y": -1,
+          "Z": 0.125,
+          "W": 1
+        },
+        {
+          "X": 0.25,
+          "Y": -1,
+          "Z": 0.125,
+          "W": 1
+        },
+        {
+          "X": 0.375,
+          "Y": -1,
+          "Z": 0.125,
+          "W": 1
+        },
+        {
+          "X": 0.5,
+          "Y": -1,
+          "Z": 0.125,
+          "W": 1
+        },
+        {
+          "X": 0.625,
+          "Y": -1,
+          "Z": 0.125,
+          "W": 1
+        },
+        {
+          "X": 0.75,
+          "Y": -1,
+          "Z": 0.125,
+          "W": 1
+        },
+        {
+          "X": 0.875,
+          "Y": -1,
+          "Z": 0.125,
+          "W": 1
+        }
+      ],
+      "Texture": "15e8f269-002f-4844-9d42-27125a188d8d"
+    },
+    {
+      "$type": "CrossEngine.Assets.TextureAsset",
+      "Id": "15e8f269-002f-4844-9d42-27125a188d8d",
+      "Name": null,
+      "RelativePath": "../shared/atlases/effect.png"
+    }
+  ]
+}

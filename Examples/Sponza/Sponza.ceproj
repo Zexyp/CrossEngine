@@ -1,0 +1,24 @@
+[context]
+Assets = /media/pjavel/Acer/dev/CE3/Examples/Sponza/assets.json
+Scene = d04c3015-5317-40f6-8489-abf2d9cc1fc1
+ActiveEntity = 14588548
+[workspace.CrossEngineEditor.Panels.InspectorPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.HierarchyPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.ViewportPanel]
+Open = True
+view.position = -2.0841186,2.937487,-0.44368228
+view.rotation = 0.13387533,-0.6941502,-0.13380818,-0.6944985
+view.zoom = 7.5849776
+view.perspective = True
+view.near = 0.1
+view.far = 1000
+view.fov = 90
+view.enableOverlays = False
+[workspace.CrossEngineEditor.Panels.GamePanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.AssetListPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.SimpleThemeGeneratorPanel]
+Open = True

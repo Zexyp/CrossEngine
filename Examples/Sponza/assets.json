@@ -1,0 +1,65 @@
+{
+  "$type": "CrossEngine.Assets.AssetList",
+  "DirectoryOffset": "./",
+  "Assets": [
+    {
+      "$type": "CrossEngine.Assets.SceneAsset",
+      "Id": "d04c3015-5317-40f6-8489-abf2d9cc1fc1",
+      "Name": null,
+      "RelativePath": "scene.json"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshAsset",
+      "Id": "89027226-ffa3-435d-b032-340c6d8a508d",
+      "Name": null,
+      "RelativePath": "sponza_merged.obj",
+      "RelativePath": "sponza_merged.obj",
+      "MeshName": "sponza_00"
+    },
+    {
+      "$type": "CrossEngine.Assets.ShaderAsset",
+      "Id": "e2dae62e-4f2f-447d-96d4-ab60df3fd092",
+      "Name": null,
+      "RelativePath": "../shared/shader_wavefront.glsl"
+    },
+    {
+      "$type": "CrossEngine.Assets.WavefrontMaterialAsset",
+      "Id": "8a212412-ab90-4e65-a513-1743e06ebc8b",
+      "Name": null,
+      "Material": {
+        "$type": "CrossEngine.Loaders.MeshLoader\u002BWavefrontMaterial",
+        "ambient": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "diffuse": {
+          "X": 1,
+          "Y": 1,
+          "Z": 1
+        },
+        "specular": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "emissive": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "specularExponent": 256,
+        "disolve": 0,
+        "refractiveIndex": 0
+      },
+      "MapDiffuse": "00000000-0000-0000-0000-000000000000",
+      "Shader": "e2dae62e-4f2f-447d-96d4-ab60df3fd092"
+    },
+    {
+      "$type": "CrossEngine.Assets.SkyboxAsset",
+      "Id": "62f9b56c-7b18-42af-8edf-1430d89ecaae",
+      "Name": null,
+      "RelativePath": "../shared/cubemap/map.jpg"
+    }
+  ]
+}

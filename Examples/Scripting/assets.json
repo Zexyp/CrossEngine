@@ -1,0 +1,24 @@
+{
+  "$type": "CrossEngine.Assets.AssetList",
+  "DirectoryOffset": "./",
+  "Assets": [
+    {
+      "$type": "CrossEngine.Assets.SceneAsset",
+      "Id": "c58160c3-a84b-4d20-8124-d6c607bd88c5",
+      "Name": null,
+      "RelativePath": "scene.json"
+    },
+    {
+      "$type": "CrossEngine.Assets.ScriptAsset",
+      "Id": "9aac021e-29aa-48ea-9ae4-ad9c9559076f",
+      "Name": null,
+      "RelativePath": "Script.cs"
+    },
+    {
+      "$type": "CrossEngine.Assets.MeshAsset",
+      "Id": "52129ece-3d66-4e28-b618-33a272f8827c",
+      "Name": null,
+      "RelativePath": "internal:plane"
+    }
+  ]
+}

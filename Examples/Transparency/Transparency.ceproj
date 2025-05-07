@@ -1,0 +1,24 @@
+[context]
+Assets = /media/pjavel/Acer/dev/CE3/Examples/Transparency/assets.json
+Scene = b94ddfdc-ca26-47ba-a7e4-52a8d1d81af7
+ActiveEntity = 11660060
+[workspace.CrossEngineEditor.Panels.InspectorPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.HierarchyPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.ViewportPanel]
+Open = True
+view.position = 0.10764188,0.6946361,-0.83188164
+view.rotation = 0.24177596,0.45927083,0.1314731,-0.8445884
+view.zoom = 8.154896
+view.perspective = True
+view.near = 0.1
+view.far = 1000
+view.fov = 90
+view.enableOverlays = False
+[workspace.CrossEngineEditor.Panels.GamePanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.AssetListPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.SimpleThemeGeneratorPanel]
+Open = True
