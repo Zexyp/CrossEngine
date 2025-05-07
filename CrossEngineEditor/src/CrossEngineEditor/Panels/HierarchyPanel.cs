@@ -27,9 +27,16 @@ namespace CrossEngineEditor.Panels
                 if (ImGui.BeginMenu("Entity", Context.Scene != null))
                 {
                     if (ImGui.MenuItem("Add"))
-                        Context.Scene.CreateEntity();
+                        Context.ActiveEntity = Context.Scene.CreateEntity();
                     if (ImGui.MenuItem("Add Empty"))
-                        Context.Scene.CreateEmptyEntity();
+                        Context.ActiveEntity = Context.Scene.CreateEmptyEntity();
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Duplicate", Context.ActiveEntity != null))
+                    {
+                        var newent = (Entity)Context.ActiveEntity.Clone();
+                        Context.Scene.AddEntity(newent);
+                        Context.ActiveEntity = newent;
+                    }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Delete", Context.ActiveEntity != null))
                     {

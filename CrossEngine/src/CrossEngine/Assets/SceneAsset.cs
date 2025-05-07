@@ -28,19 +28,5 @@ namespace CrossEngine.Assets
         {
             Scene = null;
         }
-
-        public override void GetObjectData(SerializationInfo info)
-        {
-            base.GetObjectData(info);
-
-            info.AddValue(nameof(RelativePath), RelativePath);
-        }
-
-        public override void SetObjectData(SerializationInfo info)
-        {
-            base.SetObjectData(info);
-
-            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
-        }
     }
 }

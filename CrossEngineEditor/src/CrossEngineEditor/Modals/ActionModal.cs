@@ -20,8 +20,8 @@ public class ActionModal : EditorModal
     }
     private readonly ButtonFlags[] UniqueButtonFlags = {
         ButtonFlags.OK,
-        ButtonFlags.Cancel,
         ButtonFlags.Yes,
+        ButtonFlags.Cancel,
         ButtonFlags.No,
     };
 

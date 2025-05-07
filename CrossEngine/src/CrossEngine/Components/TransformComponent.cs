@@ -46,9 +46,9 @@ public class TransformComponent : Component, ITransform
         }
     }
 
-    public Vector3 WorldPosition { get => _transform.WorldPosition; }
-    public Quaternion WorldRotation { get => _transform.WorldRotation; }
-    public Vector3 WorldScale { get => _transform.WorldScale; }
+    public Vector3 WorldPosition { get => _transform.WorldPosition; set => _transform.WorldPosition = value; }
+    public Quaternion WorldRotation { get => _transform.WorldRotation; set => _transform.WorldRotation = value; }
+    public Vector3 WorldScale { get => _transform.WorldScale; set => _transform.WorldScale = value; }
 
     internal TransformComponent Parent { set => _transform.WorldTransformProvider = value?._transform; }
 

@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using CrossEngine.Components;
+using CrossEngine.Rendering.Lighting;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering;
 using CrossEngine.Display;
@@ -44,10 +45,12 @@ namespace CrossEngine.Components
         private Pipeline _pipeline;
         private bool _graphicsInitialized = false;
         public bool GraphicsInitialized => _graphicsInitialized;
+        public ICamera DrawCamera => OverrideCamera ?? PrimaryCamera;
         
         private SkyboxPass _passSkybox;
         private ScenePass _passScene;
         private TransparentPass _passTransparent;
+        private LightPass _passLight;
 
         public ICamera OverrideCamera
         {
@@ -102,11 +105,13 @@ namespace CrossEngine.Components
             _passScene = _pipeline.GetPass<ScenePass>();
             _passSkybox = _pipeline.GetPass<SkyboxPass>();
             _passTransparent = _pipeline.GetPass<TransparentPass>();
+            _passLight = _pipeline.GetPass<LightPass>();
         }
 
         protected internal override void OnInit()
         {
             World.Storage.MakeIndex(typeof(RendererComponent));
+            World.Storage.MakeIndex(typeof(LightComponent));
             
             World.Storage.AddNotifyRegister(typeof(CameraComponent), RegisterCamera, true);
             World.Storage.AddNotifyUnregister(typeof(CameraComponent), UnregisterCamera, true);
@@ -116,16 +121,14 @@ namespace CrossEngine.Components
             var coll = new CastWrapCollection<IObjectRenderData>(World.Storage.GetIndex(typeof(RendererComponent)));
             _passScene.objects = coll;
             _passTransparent.objects = coll;
-            var getter = () => OverrideCamera ?? PrimaryCamera;
-            _passScene.CameraGetter = getter;
-            _passSkybox.CameraGetter = getter;
-            _passTransparent.CameraGetter = getter;
+            _passLight.lights = new CastWrapCollection<ILightRenderData>(World.Storage.GetIndex(typeof(LightComponent)));
         }
 
         protected internal override void OnShutdown()
         {
             World.Storage.DropIndex(typeof(RendererComponent));
-            
+            World.Storage.DropIndex(typeof(LightComponent));
+
             World.Storage.RemoveNotifyRegister(typeof(CameraComponent), RegisterCamera);
             World.Storage.RemoveNotifyUnregister(typeof(CameraComponent), UnregisterCamera);
             World.Storage.RemoveNotifyRegister(typeof(SkyboxRendererComponent), RegisterSkybox);

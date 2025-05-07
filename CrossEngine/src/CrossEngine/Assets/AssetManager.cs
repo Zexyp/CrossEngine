@@ -47,7 +47,7 @@ namespace CrossEngine.Assets
 
         public static async Task<AssetList> ReadFile(string filepath)
         {
-            using (Stream stream = await PlatformHelper.FileRead(filepath))
+            using (Stream stream = await PlatformHelper.FileReadAsync(filepath))
             {
                 var pool = Read(stream);
                 pool.RuntimeFilepath = filepath;

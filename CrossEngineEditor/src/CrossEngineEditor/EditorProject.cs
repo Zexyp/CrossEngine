@@ -18,6 +18,8 @@ public class EditorProject
 
     public void Save(IEditorContext context, string filepath, Action<IniFile> shim = null)
     {
+        EditorService.Log.Info("saving project");
+        
         IniFile ini = new IniFile();
         Filepath = filepath;
 
@@ -36,6 +38,8 @@ public class EditorProject
 
     public Task Load(IEditorContext context, string filepath, Action<IniFile> shim = null)
     {
+        EditorService.Log.Info("loading project");
+        
         IniFile ini;
         using (Stream stream = File.OpenRead(filepath))
             ini = IniFile.Load(stream);
@@ -47,11 +51,22 @@ public class EditorProject
         var entityId = ini["context"].ReadString("ActiveEntity");
         
         var task = Task.CompletedTask;
-        AssetList alist;
-        task = task.ContinueWith(t => AssetManager.ReadFile(alistfile)).Unwrap()
-            .ContinueWith(t => context.SetAssets(t.Result)).Unwrap();
+        if (alistfile != "null")
+        {
+            task = task.ContinueWith(t =>
+                {
+                    EditorService.Log.Trace("reading alist");
+                    return AssetManager.ReadFile(alistfile);
+                }).Unwrap()
+                .ContinueWith(t =>
+                {
+                    EditorService.Log.Trace("setting alist");
+                    return context.SetAssets(t.Result);
+                }).Unwrap();
+        }
         task = task.ContinueWith(t =>
         {
+            EditorService.Log.Trace("checking for scene");
             if (context.Assets != null && Guid.TryParse(sceneId, out var scnguid))
                 return context.SetScene(context.Assets.Get<SceneAsset>(scnguid)?.Scene);
             return Task.CompletedTask;
@@ -59,6 +74,7 @@ public class EditorProject
 
         task = task.ContinueWith(t =>
         {
+            EditorService.Log.Trace("checking for entity");
             if (context.Scene != null && int.TryParse(entityId, out var entguid))
                 context.ActiveEntity = context.Scene.GetEntity(entguid);
         });

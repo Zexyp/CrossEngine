@@ -123,8 +123,16 @@ namespace CrossEngineEditor.Panels
         public virtual void OnDetach() { }
         public virtual void OnOpen() { }
         public virtual void OnClose() { }
-        public virtual void SaveState(SerializationInfo info) { }
-        public virtual void LoadState(SerializationInfo info) { }
+
+        public virtual void SaveState(SerializationInfo info)
+        {
+            info.AddValue("Open", Open != false);
+        }
+
+        public virtual void LoadState(SerializationInfo info)
+        {
+            Open = info.GetValue<bool>("Open", true);
+        }
 
         private void UpdateOpenState()
         {

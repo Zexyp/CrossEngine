@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using CrossEngine.Rendering.Lighting;
+using CrossEngine.FX.Particles;
 using CrossEngine.Geometry;
 using CrossEngine.Loaders;
 using CrossEngine.Platform.OpenGL;
@@ -23,17 +25,18 @@ namespace CrossEngine.Rendering;
 
 public class DeferredPipeline : Pipeline
 {
-    public const int FrambufferIndexColor = 0;
-    public const int FrambufferIndexId = 1;
-    public const int FrambufferIndexPosition = 2;
-    public const int FrambufferIndexNormal = 3;
+    public const int AttachmentIndexColor = 0;
+    public const int AttachmentIndexId = 1;
+    public const int AttachmentIndexPosition = 2;
+    public const int AttachmentIndexNormal = 3;
     
     public DeferredPipeline()
     {
-        PushBack(new ScenePass());
-        PushBack(new LightingPass());
+        var scene = new ScenePass();
+        PushBack(scene);
+        PushBack(new LightPass());
         PushBack(new SkyboxPass());
-        PushBack(new TransparentPass());
+        PushBack(new TransparentPass(scene));
     }
 
     protected override void OnInit()
@@ -43,14 +46,23 @@ public class DeferredPipeline : Pipeline
             // using floating point colors
             new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F), // color
             new FramebufferTextureSpecification(TextureFormat.ColorR32I), // id
-            new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F), // position
-            new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F), // normal
+            new FramebufferTextureSpecification(TextureFormat.ColorRGB16F), // position
+            new FramebufferTextureSpecification(TextureFormat.ColorRGB16F), // normal
             new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
         );
         spec.Width = 1;
         spec.Height = 1;
 
         Buffer = Framebuffer.Create(spec);
+    }
+
+    protected override void OnBeforePasses()
+    {
+        var buffer = Buffer.GetValue();
+        buffer.EnableColorAttachments([AttachmentIndexId, AttachmentIndexPosition, AttachmentIndexNormal]);
+        buffer.ClearAttachment(AttachmentIndexId, 0);
+        buffer.ClearAttachment(AttachmentIndexPosition, Vector4.Zero);
+        buffer.ClearAttachment(AttachmentIndexNormal, Vector4.Zero);
     }
 }
 
@@ -105,35 +117,36 @@ class SkyboxPass : Pass
     private const string skyboxShader = @"
 #type vertex
 #version 330 core
-layout (location = 0) in vec3 aPos;
+layout (location = 0) in vec3 aPosition;
 
-out vec3 TexCoords;
+out vec3 vTexCoord;
 
-uniform mat4 projection;
-uniform mat4 view;
+uniform mat4 uProjection = mat4(1);
+uniform mat4 uView = mat4(1);
+uniform mat4 uModel;
 
 void main()
 {
-    TexCoords = aPos;
-    vec4 pos = projection * view * vec4(aPos, 1.0);
+    vTexCoord = (uModel * vec4(aPosition, 0.0)).xyz;
+
+    vec4 pos = uProjection * uView * vec4(aPosition, 1.0);
+
     gl_Position = pos.xyww;
 }
 #type fragment
 #version 330 core
-out vec4 FragColor;
+in vec3 vTexCoord;
+out vec4 oFragColor;
 
-in vec3 TexCoords;
-
-uniform samplerCube skybox;
+uniform samplerCube uSkybox;
 
 void main()
 {    
-    FragColor = texture(skybox, TexCoords);
+    oFragColor = texture(uSkybox, vTexCoord);
 }
 ";
     
     public ISkyboxRenderData Skybox;
-    public Func<ICamera> CameraGetter;
 
     private MeshRenderer _skyboxMeshRenderer;
     private WeakReference<ShaderProgram> _skyboxShader;
@@ -146,7 +159,7 @@ void main()
     public override void Init()
     {
         _skyboxMeshRenderer = new MeshRenderer();
-        _skyboxMeshRenderer.Setup(new Mesh<Vector3>(skyboxVertices));
+        _skyboxMeshRenderer.Setup(MeshGenerator.GenerateCube(new Vector3(2)));
         _skyboxShader = ShaderPreprocessor.CreateProgramFromString(skyboxShader);
     }
 
@@ -160,17 +173,16 @@ void main()
 
     public override void Draw()
     {
-        var camera = CameraGetter.Invoke();
-
-        if (Skybox?.Texture == null || camera == null)
+        if (Skybox?.Texture == null)
             return;
         
         var shader = _skyboxShader.GetValue();
         shader.Use();
-        var view = camera.GetViewMatrix();
+        var view = Pipeline.Camera.GetViewMatrix();
         view.Translation = Vector3.Zero;
-        shader.SetParameterMat4("view", view);
-        shader.SetParameterMat4("projection", camera.ProjectionMatrix);
+        shader.SetParameterMat4("uView", view);
+        shader.SetParameterMat4("uProjection", Pipeline.Camera.ProjectionMatrix);
+        shader.SetParameterMat4("uModel", Skybox.Transform);
         Skybox.Texture.GetValue().Bind();
         _skyboxMeshRenderer.Draw(GraphicsContext.Current.Api);
     }
@@ -179,12 +191,11 @@ void main()
 class ScenePass : Pass
 {
     public IList<IObjectRenderData> objects;
-    public Func<ICamera> CameraGetter;
-    public int TransparentIndex = 0;
+    private int _transparentIndex;
 
     public ScenePass()
     {
-        ModifyAttachments = new HashSet<int>() { DeferredPipeline.FrambufferIndexColor, DeferredPipeline.FrambufferIndexId };
+        ModifyAttachments = [DeferredPipeline.AttachmentIndexColor, DeferredPipeline.AttachmentIndexId, DeferredPipeline.AttachmentIndexNormal, DeferredPipeline.AttachmentIndexPosition];
         Depth = DepthFunc.Default;
     }
     
@@ -212,15 +223,32 @@ class ScenePass : Pass
     
     public override void Draw()
     {
-        var camera = CameraGetter.Invoke();
-        if (camera == null)
-            return;
+        var transparentIndex = FilterTransparent();
         
-        FilterTransparent();
+        FrustumCulling(Pipeline.Camera.GetFrustum());
         
-        FrustumCulling(camera.GetFrustum());
+        SortByDistance(Pipeline.Camera, transparentIndex);
         
-        DrawObjects(camera, objects, 0, TransparentIndex);
+        DrawObjects(Pipeline.Camera, objects, 0, transparentIndex);
+        
+        _transparentIndex = transparentIndex;
+    }
+
+    public void DrawTransparent()
+    {
+        DrawObjects(Pipeline.Camera, objects, _transparentIndex, objects.Count);
+    }
+    
+    private void SortByDistance(ICamera camera, int indexStart)
+    {
+        var cameraPos = Matrix4x4Extension.SafeInvert(camera.GetViewMatrix()).Translation;
+        
+        ArrayList.Adapter((IList)objects).Sort(indexStart, objects.Count - indexStart, new ComparisonComparer<IObjectRenderData>((o1, o2) =>
+        {
+            var d1 = Vector3.DistanceSquared(cameraPos, o1.Transform.Translation);
+            var d2 = Vector3.DistanceSquared(cameraPos, o2.Transform.Translation);
+            return d2.CompareTo(d1);
+        }));
     }
 
     private void FrustumCulling(in Frustum frustum)
@@ -240,7 +268,7 @@ class ScenePass : Pass
         }
     }
     
-    private void FilterTransparent()
+    private int FilterTransparent()
     {
         if (objects is not IList) throw new InvalidOperationException();
         
@@ -249,8 +277,8 @@ class ScenePass : Pass
             return IsTransparet(o1).CompareTo(IsTransparet(o2));
         }));
 
-        TransparentIndex = FindFirstIndex(objects, o => IsTransparet(o));
-        TransparentIndex = TransparentIndex == -1 ? objects.Count : TransparentIndex;
+        var index = FindFirstIndex(objects, o => IsTransparet(o));
+        return index == -1 ? objects.Count : index;
     }
     
     private static int FindFirstIndex<T>(IList<T> list, Predicate<T> predicate)
@@ -267,7 +295,8 @@ class ScenePass : Pass
     {
         switch (obj)
         {
-            case ISpriteRenderData sprite: return sprite.Blend == BlendMode.Blend || sprite.Blend == BlendMode.Blend;
+            case ISpriteRenderData sprite: return sprite.Blend == BlendMode.Blend || sprite.Blend == BlendMode.Add;
+            case IParticleSystemRenderData particleSystem: return particleSystem.Blend == BlendMode.Blend || particleSystem.Blend == BlendMode.Add;
             default: return false;
         }
     }
@@ -369,43 +398,187 @@ class ScenePass : Pass
 class TransparentPass : Pass
 {
     public IList<IObjectRenderData> objects;
-    public Func<ICamera> CameraGetter;
 
-    public TransparentPass()
+    private ScenePass _scenePass;
+    
+    public TransparentPass(ScenePass scene)
     {
-        ModifyAttachments = new HashSet<int>() { DeferredPipeline.FrambufferIndexColor, DeferredPipeline.FrambufferIndexId };
+        _scenePass = scene;
+        ModifyAttachments = [DeferredPipeline.AttachmentIndexColor, DeferredPipeline.AttachmentIndexId];
         Depth = DepthFunc.Default;
     }
     
     public override void Draw()
     {
-        var camera = CameraGetter.Invoke();
-        if (camera == null)
-            return;
-
-        var ti = Pipeline.GetPass<ScenePass>().TransparentIndex;
-        SortByDistance(camera, ti);
-        
-        Pipeline.GetPass<ScenePass>().DrawObjects(camera, objects, ti, objects.Count);
-    }
-
-    private void SortByDistance(ICamera camera, int indexStart)
-    {
-        var cameraPos = camera.GetViewMatrix().Translation;
-        
-        ArrayList.Adapter((IList)objects).Sort(indexStart, objects.Count - indexStart, new ComparisonComparer<IObjectRenderData>((o1, o2) =>
-        {
-            var d1 = Vector3.DistanceSquared(cameraPos, o1.Transform.Translation);
-            var d2 = Vector3.DistanceSquared(cameraPos, o2.Transform.Translation);
-           return d1.CompareTo(d2);
-        }));
+        _scenePass.DrawTransparent();
     }
 }
 
-class LightingPass : Pass
+class LightPass : Pass
 {
+    public IList<ILightRenderData> lights;
+    
+    WeakReference<ShaderProgram> _shader;
+    MeshRenderer _plane;
+
+    public LightPass()
+    {
+        Depth = DepthFunc.None;
+        DepthMask = false;
+    }
+
+    const int NumLights = 32;
+    
+    private static readonly string ShaderSource = $@"
+#type vertex
+#version 330 core
+layout (location = 0) in vec3 aPosition;
+layout (location = 1) in vec2 aTexCoord;
+
+out vec2 vTexCoord;
+
+void main()
+{{
+    vTexCoord = aTexCoord;
+
+    gl_Position = vec4(aPosition, 1.0);
+}}
+#type fragment
+#version 330 core
+in vec2 vTexCoord;
+out vec4 oFragColor;
+
+#include ""internal:lights.glsl""
+
+uniform sampler2D uColor;
+uniform sampler2D uPosition;
+uniform sampler2D uNormal;
+uniform int uNumLights;
+uniform PointLight uLights[{NumLights}];
+uniform vec3 uViewPosition;
+uniform vec3 uAmbient;
+
+void main()
+{{
+    vec3 color = texture(uColor, vTexCoord).xyz;
+    vec3 normal = normalize(texture(uNormal, vTexCoord).xyz);
+    vec3 position = texture(uPosition, vTexCoord).xyz;
+    float specularExponent = texture(uColor, vTexCoord).w;
+
+    vec3 lighting = color * uAmbient;
+    for (int i = 0; i < uNumLights; i++) {{
+        float distance = length(uLights[i].Position - position);
+        //if(distance > uLights[i].Radius) // radius clip control
+        //    continue;
+
+        vec3 viewDir = normalize(uViewPosition - position);
+        vec3 lightDir = normalize(uLights[i].Position - position);
+        // diffuse
+        float diffuse = max(dot(normal, lightDir), 0.0);
+        // specular
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float specular = pow(max(dot(normal, halfwayDir), 0.0), specularExponent);
+
+        float attenuation = 1.0 / (1.0 + uLights[i].Linear * distance + uLights[i].Quadratic * distance * distance);
+        diffuse *= attenuation;
+        specular *= attenuation;
+        lighting += diffuse * color * uLights[i].Color;
+        lighting += specular * uLights[i].Color;
+    }}
+
+    oFragColor = vec4(lighting, 1.0);
+}}
+";
+    
+    WeakReference<Framebuffer> _workbuffer;
+
+    public override void Init()
+    {
+        _plane = new MeshRenderer();
+        _plane.Setup(MeshGenerator.GenerateGrid(new Vector2(2)));
+        _shader = ShaderPreprocessor.CreateProgramFromString(ShaderSource);
+        
+        var spec = new FramebufferSpecification();
+                spec.Attachments = new FramebufferAttachmentSpecification(
+                    // using floating point colors
+                    new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F)
+                );
+                spec.Width = 1;
+                spec.Height = 1;
+                _workbuffer = Framebuffer.Create(spec);
+    }
+
+    public override void Destroy()
+    {
+        _plane.Dispose();
+        _shader.Dispose();
+        _workbuffer.Dispose();
+    }
+
     public override void Draw()
     {
-        //throw new NotImplementedException();
+        // init vars
+        var shader = _shader.GetValue();
+        var gbuffer = Pipeline.Buffer.GetValue();
+        var workbuffer = _workbuffer.GetValue();
+        
+        // init shader
+        shader.Use();
+        shader.SetParameterVec3("uViewPosition", Matrix4x4Extension.SafeInvert(Pipeline.Camera.GetViewMatrix()).Translation);
+        shader.SetParameterInt("uColor", DeferredPipeline.AttachmentIndexColor);
+        shader.SetParameterInt("uPosition", DeferredPipeline.AttachmentIndexPosition);
+        shader.SetParameterInt("uNormal", DeferredPipeline.AttachmentIndexNormal);
+        gbuffer.BindColorAttachment(DeferredPipeline.AttachmentIndexColor, DeferredPipeline.AttachmentIndexColor);
+        gbuffer.BindColorAttachment(DeferredPipeline.AttachmentIndexPosition, DeferredPipeline.AttachmentIndexPosition);
+        gbuffer.BindColorAttachment(DeferredPipeline.AttachmentIndexNormal, DeferredPipeline.AttachmentIndexNormal);
+
+        var ambientAccumulator = Vector3.Zero;
+        foreach (var light in lights)
+        {
+            if (light is IAmbientLightRenderData ambient)
+                ambientAccumulator += ambient.Color;
+        }
+        shader.SetParameterVec3("uAmbient", ambientAccumulator);
+        // prepare work buffer
+        //workbuffer.Bind();
+        //if (gbuffer.Size != workbuffer.Size)
+        //    workbuffer.Resize((uint)gbuffer.Size.X, (uint)gbuffer.Size.Y);
+        //workbuffer.EnableColorAttachments([0]);
+        //workbuffer.ClearAttachment(0, Vector4.One);
+        int bufferidx = 0;
+        for (int li = 0; li < lights.Count; li++)
+        {
+            if (lights[li] is not IPointLightRenderData light)
+                continue;
+            
+            shader.SetParameterVec3($"uLights[{bufferidx}].Position", light.Position);
+            shader.SetParameterVec3($"uLights[{bufferidx}].Color", light.Color);
+
+            const float constant = 1.0f; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
+            const float linear = 0.7f;
+            const float quadratic = 1.8f;
+            var maxBrightness = Math.Max(Math.Max(light.Color.X, light.Color.Y), light.Color.Z);
+            var radius = (-linear + MathF.Sqrt(linear * linear - 4 * quadratic * (constant - (256.0f / 5.0f) * maxBrightness))) / (2.0f * quadratic);
+            shader.SetParameterFloat($"uLights[{bufferidx}].Radius", radius);
+            shader.SetParameterFloat($"uLights[{bufferidx}].Linear", linear);
+            shader.SetParameterFloat($"uLights[{bufferidx}].Quadratic", quadratic);
+            bufferidx++;
+            if (bufferidx >= NumLights)
+            {
+                Flush(shader, bufferidx);
+                bufferidx = 0;
+            }
+        }
+        Flush(shader, bufferidx);
+        
+        //workbuffer.BlitTo(Pipeline.Buffer, [(0, DeferredPipeline.AttachmentIndexColor)]);
+        //
+        //gbuffer.Bind();
+    }
+
+    private void Flush(ShaderProgram shader, int bufferLen)
+    {
+        shader.SetParameterInt($"uNumLights", bufferLen);
+        _plane.Draw(GraphicsContext.Current.Api);
     }
 }

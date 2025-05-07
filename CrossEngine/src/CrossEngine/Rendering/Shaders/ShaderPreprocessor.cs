@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -84,13 +85,7 @@ void main() {{
         {
             _log.Debug($"processing '{filepath}'");
 
-            Stream IncudeCallback(string path)
-            {
-                _log.Trace($"including '{path}'");
-                return File.OpenRead(Path.Join(Path.GetDirectoryName(filepath), path));
-            }
-
-            return CreateProgramFromStream(File.OpenRead(filepath), IncudeCallback);
+            return CreateProgramFromStream(File.OpenRead(filepath), path => File.OpenRead(Path.Join(Path.GetDirectoryName(filepath), path)));
         }
 
         public static WeakReference<ShaderProgram> CreateProgramFromString(string source)
@@ -141,7 +136,7 @@ void main() {{
                     {
                         case string s when s.StartsWith("#include"):
                             string include = Regex.Match(s, "^#include\\s+\\\"(.+?)\\\"$").Groups[1].Value;
-                            stream = includeCallback(include);
+                            stream = InternalInclude(include, includeCallback);
                             readersStack.Push(new StreamReader(stream));
                             goto jump_reader; // we need to break while
                         case string s when s.StartsWith("#type"):
@@ -190,6 +185,17 @@ void main() {{
         public static void Free(WeakReference<ShaderProgram> program)
         {
             ServiceRequest.Invoke(program.Dispose);
+        }
+        
+        private static Stream InternalInclude(string path, Func<string, Stream> fallback)
+        {
+            _log.Trace($"including '{path}'");
+
+            if (!path.StartsWith("internal:"))
+                return fallback.Invoke(path);
+                
+            path = path.RemovePrefix("internal:").Replace("/", ".");
+            return Assembly.GetExecutingAssembly().GetManifestResourceStream($"CrossEngine.res.shaders.{path}");
         }
     }
 }

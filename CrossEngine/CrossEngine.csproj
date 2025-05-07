@@ -24,6 +24,8 @@
     <EmbeddedResource Include="res/logo.png" />
     <EmbeddedResource Include="res/default_texture.png" />
     <EmbeddedResource Include="res/utils/debug_font_atlas.png" />
+    <EmbeddedResource Include="res/utils/white.png" />
+    <EmbeddedResource Include="res/shaders/**" />
   </ItemGroup>
 
   <!-- defines and optimization -->
@@ -62,7 +64,7 @@
     <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="res\shaders\" />
+    <ClInclude Include="res\shaders\lights.glsl" />
   </ItemGroup>
 
   <!--

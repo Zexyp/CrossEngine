@@ -22,7 +22,8 @@ namespace CrossEngine.Scenes
             surface.Context.Api.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
 
             var rs = scene.World.GetSystem<RenderSystem>();
-            
+
+            rs.Pipeline.Camera = rs.DrawCamera;
             rs.Pipeline.Process(surface);
         }
     }

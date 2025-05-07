@@ -8,6 +8,15 @@ using CrossEngine.Utils.Rendering;
 
 namespace CrossEngine.Rendering.Renderables
 {
+    interface ISpriteRenderData : IObjectRenderData
+    {
+        Vector4 Color { get; }
+        virtual Vector4 TextureOffsets => new Vector4(0, 0, 1, 1);
+        virtual WeakReference<Texture> Texture => null;
+        virtual BlendMode Blend => BlendMode.Opaque;
+        virtual Vector4 DrawOffsets => new Vector4(0, 0, 1, 1);
+    }
+    
     class SpriteRenderable : Renderable<ISpriteRenderData>
     {
         private BlendMode? _lastBlend = null;

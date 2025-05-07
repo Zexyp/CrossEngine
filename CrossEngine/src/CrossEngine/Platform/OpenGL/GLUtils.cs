@@ -247,6 +247,7 @@ namespace CrossEngine.Platform.OpenGL
             {
                 case TextureFormat.ColorRGBA8: return GLEnum.Rgb8;
                 case TextureFormat.ColorR32I: return GLEnum.R32i;
+                case TextureFormat.ColorRGB16F: return GLEnum.Rgb16f;
                 case TextureFormat.ColorRGBA16F: return GLEnum.Rgba16f;
                 case TextureFormat.ColorRGBA32F: return GLEnum.Rgba32f;
                 case TextureFormat.Depth24Stencil8: return GLEnum.Depth24Stencil8;

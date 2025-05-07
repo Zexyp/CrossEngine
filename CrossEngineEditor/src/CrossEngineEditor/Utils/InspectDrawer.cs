@@ -18,12 +18,14 @@ using System.Xml.Linq;
 using Silk.NET.Core.Native;
 using CrossEngine.Assets;
 using CrossEngine.Utils.Structs;
-using CrossEngineEditor.Utils.Gui;
+using CrossEngineEditor.Utils.UI;
 
 namespace CrossEngineEditor.Utils
 {
     public static unsafe class InspectDrawer
     {
+        public const string NullExpression = "<null>";
+        
         [Flags]
         public enum EditResult
         {
@@ -417,7 +419,7 @@ namespace CrossEngineEditor.Utils
                 bool pushedColor = v == null;
                 if (pushedColor) ImGui.PushStyleColor(ImGuiCol.Text, 0xff0000ff);
 
-                var t = (v != null) ? v : "<null>";
+                var t = (v != null) ? v : NullExpression;
                 byte[] buffer = new byte[cattrib.MaxLength + 1];
                 Encoding.Default.GetBytes(t, buffer);
 
@@ -662,27 +664,30 @@ namespace CrossEngineEditor.Utils
                 
                 if (ImGui.TreeNode(name))
                 {
-                    if (type.IsValueType)
+                    if (value != null)
                     {
-                        var vrb = value;
-                        InspectDrawer.Inspect(value, null, (memb, targ, er) =>
+                        if (type.IsValueType)
                         {
-                            if ((er & EditResult.Changed) != 0)
+                            var vrb = value;
+                            InspectDrawer.Inspect(value, null, (memb, targ, er) =>
                             {
-                                vrb = targ;
-                                result |= EditResult.Changed;
-                            }
-                        });
+                                if ((er & EditResult.Changed) != 0)
+                                {
+                                    vrb = targ;
+                                    result |= EditResult.Changed;
+                                }
+                            });
+                        }
+                        else
+                            InspectDrawer.Inspect(value);
                     }
-                    else
-                        InspectDrawer.Inspect(value);
                     
                     ImGui.TreePop();
                 }
                 else
                 {
                     ImGui.SameLine();
-                    ImGui.Text($"...");
+                    ImGui.Text(value != null ? "..." : NullExpression);
                 }
                 
                 return result;

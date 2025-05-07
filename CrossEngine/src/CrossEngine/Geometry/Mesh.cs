@@ -2,11 +2,13 @@ using System;
 using System.Collections;
 using System.Numerics;
 using CrossEngine.Rendering.Buffers;
+using CrossEngine.Rendering.Culling;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Geometry;
 
+// TODO: mesh elements
 public interface IMesh : IDisposable
 {
     WeakReference<VertexArray> VA { get; }

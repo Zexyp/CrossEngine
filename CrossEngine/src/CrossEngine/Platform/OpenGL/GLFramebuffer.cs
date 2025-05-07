@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-
+using System.Numerics;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
@@ -49,6 +49,7 @@ namespace CrossEngine.Platform.OpenGL
                 switch (format)
                 {
                     case TextureFormat.ColorRGBA8: return GLEnum.Rgba;
+                    case TextureFormat.ColorRGB16F: return GLEnum.Rgb;
                     case TextureFormat.ColorRGBA16F: return GLEnum.Rgba;
                     case TextureFormat.ColorRGBA32F: return GLEnum.Rgba;
                     case TextureFormat.ColorR32I: return GLEnum.RedInteger;
@@ -179,14 +180,25 @@ namespace CrossEngine.Platform.OpenGL
             Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
 
             //var spec = colorAttachmentSpecifications[attachmentIndex];
-
             //(int)_colorAttachments[(int)attachmentIndex]
-            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
 
-            gl.ClearBuffer(GLEnum.Color, (int)_rendererId, &value);
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
+            
+            gl.ClearBuffer(GLEnum.Color, attachmentIndex, &value);
+        }
+        
+        public override unsafe void ClearAttachment(int attachmentIndex, Vector4 value)
+        {
+            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
+
+            //var spec = colorAttachmentSpecifications[attachmentIndex];
+            //(int)_colorAttachments[(int)attachmentIndex]
+
+            gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
+            
+            gl.ClearBuffer(GLEnum.Color, attachmentIndex, (float*)&value);
         }
 
-        // TODO: fixme, inefficient
         public override void EnableColorAttachments(IList<int> attachmentIndexes = null)
         {
             for (int i = 0; i < colorAttachmentSpecifications.Count; i++)
@@ -211,9 +223,18 @@ namespace CrossEngine.Platform.OpenGL
             SetDrawBuffers();
         }
 
+        public override void BindColorAttachment(int attachmentIndex, uint slot = 0)
+        {
+            Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
+
+            gl.ActiveTexture(GLEnum.Texture0 + (int)slot);
+            gl.BindTexture(GLEnum.Texture2D, _colorAttachments[attachmentIndex]);
+        }
+
         public override uint GetColorAttachmentRendererID(int attachmentIndex = 0)
         {
             Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
+            
             return _colorAttachments[attachmentIndex];
         }
 
@@ -225,7 +246,7 @@ namespace CrossEngine.Platform.OpenGL
                               (int)GLEnum.ColorBufferBit, GLEnum.Nearest);
         }
         
-        public override void BlitTo(WeakReference<Framebuffer> target, IList<int> attachmentIndexes = null)
+        public override void BlitTo(WeakReference<Framebuffer>? target, IList<(int from, int to)> attachmentIndexes = null)
         {
             gl.BindFramebuffer(GLEnum.ReadFramebuffer, this._rendererId);
             gl.BindFramebuffer(GLEnum.DrawFramebuffer, target == null ? 0 : ((GLFramebuffer)target.GetValue())._rendererId);
@@ -234,12 +255,21 @@ namespace CrossEngine.Platform.OpenGL
                 for (int i = 0; i < attachmentIndexes.Count; i++)
                 {
                     var index = attachmentIndexes[i];
-                    gl.ReadBuffer(GLEnum.ColorAttachment0 + index);
-                    gl.DrawBuffer(GLEnum.ColorAttachment0 + index);
+                    gl.ReadBuffer(GLEnum.ColorAttachment0 + index.from);
+                    gl.DrawBuffer(GLEnum.ColorAttachment0 + index.to);
                     gl.BlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height, (uint)GLEnum.ColorBufferBit, GLEnum.Nearest);
                 }
             else
                 gl.BlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height, (uint)GLEnum.ColorBufferBit, GLEnum.Nearest);
+            gl.BindFramebuffer(GLEnum.Framebuffer, 0);
+        }
+        
+        public override void BlitDepthTo(WeakReference<Framebuffer>? target)
+        {
+            gl.BindFramebuffer(GLEnum.ReadFramebuffer, this._rendererId);
+            gl.BindFramebuffer(GLEnum.DrawFramebuffer, target == null ? 0 : ((GLFramebuffer)target.GetValue())._rendererId);
+            
+            gl.BlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height, (uint)GLEnum.DepthBufferBit, GLEnum.Nearest);
             gl.BindFramebuffer(GLEnum.Framebuffer, 0);
         }
 
@@ -254,10 +284,6 @@ namespace CrossEngine.Platform.OpenGL
                 }
                 fixed (void* p = & buffers[0])
                     gl.DrawBuffers((uint)buffers.Length, (GLEnum*)p);
-            }
-            else if (_colorAttachments.Count == 0)
-            {
-                gl.DrawBuffer(colorAttachmentSpecifications[0].Enabled ? GLEnum.ColorAttachment0 : GLEnum.None);
             }
             else
             {

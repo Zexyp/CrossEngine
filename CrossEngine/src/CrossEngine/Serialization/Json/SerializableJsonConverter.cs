@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CrossEngine.Assets;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Serialization.Json
 {
@@ -52,7 +54,12 @@ namespace CrossEngine.Serialization.Json
 
             Type type = Resolver?.Resolve(typeString) ?? Type.GetType(typeString);
 
-            Debug.Assert(type != null, $"Type '{typeString}' not resolved");
+            if (type == null)
+            {
+                var msg = $"type '{typeString}' not resolved";
+                Log.Default.Error(msg);
+                Debug.Fail(msg);
+            }
 
             var serializable = (ISerializable)Activator.CreateInstance(type);
 

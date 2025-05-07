@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define LOG_MISSING_UNIFORM
+
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -275,9 +277,11 @@ namespace CrossEngine.Platform.OpenGL
             int location = gl.GetUniformLocation(_rendererId, name);
             if (location != -1)
                 _uniformLocationCache.Add(name, location);
+#if LOG_MISSING_UNIFORM
             else
-                RendererApi.Log.Warn($"no uniform named '{name}' found");
-
+                RendererApi.Log.Debug($"no uniform named '{name}' found");
+#endif
+            
             return location;
         }
 

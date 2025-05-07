@@ -57,14 +57,34 @@ namespace CrossEngine.Assemblies
             }
             return null;
         }
+        
+        public static (AssemblyLoadContext Context, Assembly Assembly) Load(Stream stream)
+        {
+            Debug.Assert(stream != null);
 
-        public static async Task<(AssemblyLoadContext Context, Assembly Assembly)> Load(string path)
+            var context = new AssemblyLoadContext(null, isCollectible: true);
+
+            Assembly assembly = context.LoadFromStream(stream);
+            
+            // add to collections
+            _contexts.Add(context, assembly);
+            _loaded.Add(assembly);
+
+            var tmpa = assembly;
+            context.Unloading += c => Log.Info($"assembly unloading '{GetPrintName(tmpa)}'");
+
+            Log.Info($"assembly loaded '{GetPrintName(assembly)}'");
+            
+            return (context, assembly);
+        }
+
+        public static async Task<(AssemblyLoadContext Context, Assembly Assembly)> LoadFile(string path)
         {
             Debug.Assert(path != null);
 
-            var context = new AssemblyLoadContext(null, true);
+            var context = new AssemblyLoadContext(null, isCollectible: true);
 
-            Assembly assembly = context.LoadFromStream(await PlatformHelper.FileRead(path));
+            Assembly assembly = context.LoadFromStream(await PlatformHelper.FileReadAsync(path));
             
             // this shoudld prevent duplicit static structures
             foreach (var defaultAssembly in AssemblyLoadContext.Default.Assemblies)
@@ -86,14 +106,13 @@ namespace CrossEngine.Assemblies
             await LoadDependencies(path, assembly, context);
 
             Log.Info($"assembly loaded '{GetPrintName(assembly)}'");
-             
+            
             return (context, assembly);
         }
 
         public static void Unload(AssemblyLoadContext context)
         {
-            if (context == AssemblyLoadContext.Default)
-                return;
+            Debug.Assert(context != AssemblyLoadContext.Default);
 
             Debug.Assert(context != null);
 
@@ -127,7 +146,7 @@ namespace CrossEngine.Assemblies
                     continue;
                 }
 
-                var stream = await PlatformHelper.FileRead(Path.Join(Path.GetDirectoryName(path), name.Name + ".dll"));
+                var stream = await PlatformHelper.FileReadAsync(Path.Join(Path.GetDirectoryName(path), name.Name + ".dll"));
                 var a = context.LoadFromStream(stream);
 
                 Log.Info($"loaded dependency '{GetPrintName(name)}'");

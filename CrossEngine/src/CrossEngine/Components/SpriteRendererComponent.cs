@@ -32,7 +32,7 @@ namespace CrossEngine.Components
         public SpriteAsset Sprite;
 
         Vector4 ISpriteRenderData.TextureOffsets => Sprite?.TextureOffsets ?? new Vector4(0, 0, 1, 1);
-        WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Texture?.Texture;
+        WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Atlas?.Texture?.Texture;
         BlendMode ISpriteRenderData.Blend => Blend;
         Vector4 ISpriteRenderData.DrawOffsets => DrawOffsets;
         
@@ -45,7 +45,7 @@ namespace CrossEngine.Components
             var matrix = Matrix4x4.CreateScale(new Vector3(DrawOffsets.Z, DrawOffsets.W, 1)) *
                          Matrix4x4.CreateTranslation(new Vector3(DrawOffsets.X, DrawOffsets.Y, 0)) * 
                          transform.GetWorldTransformMatrix();
-            return new Sphere(matrix.Translation, transform.WorldScale.Length() * new Vector2(this.DrawOffsets.Z, this.DrawOffsets.W).Length() / 2);
+            return new Sphere(matrix.Translation, transform.WorldScale.Length() * Math.Max(this.DrawOffsets.Z, this.DrawOffsets.W) / 2);
         }
 
         public override object Clone()

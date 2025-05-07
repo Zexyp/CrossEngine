@@ -9,6 +9,7 @@ using ImGuiNET;
 using CrossEngine.Utils;
 using System.Diagnostics.Contracts;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using CrossEngine.Display;
 using CrossEngine.Events;
 using Silk.NET.GLFW;
@@ -550,7 +551,10 @@ namespace CrossEngine.Utils.ImGui
 
                     if (cmdPtr.UserCallback != IntPtr.Zero)
                     {
-                        throw new NotImplementedException();
+                        if (cmdPtr.UserCallback == ImGuiHelper.ImDrawCallback_ResetRenderState)
+                            SetupRenderState(drawDataPtr, framebufferWidth, framebufferHeight);
+                        else
+                            Marshal.GetDelegateForFunctionPointer<ImGuiHelper.ImDrawCallback>(cmdPtr.UserCallback)(cmdListPtr, cmdPtr);
                     }
                     else
                     {

@@ -27,7 +27,7 @@ namespace CrossEngineEditor.Utils.UI
             {
                 var types = assembly.GetTypes().Where(t => t.IsPublic && !t.IsAbstract && t.IsSubclassOf(_baseType));
 
-                if (types.Count() > 0) ImGui.SeparatorText(assembly.GetName().Name);
+                ImGui.SeparatorText(assembly.GetName().Name);
 
                 foreach (var t in types)
                 {

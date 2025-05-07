@@ -33,6 +33,11 @@ namespace CrossEngineEditor.Modals
 
             if (ImGui.IsKeyPressed(ImGuiKey.Escape))
                 End();
+            if (ImGui.IsKeyPressed(ImGuiKey.Enter))
+            {
+                Exit.Invoke();
+                End();
+            }
         }
     }
 }

@@ -14,6 +14,9 @@ namespace CrossEngine.Utils.Extensions
                 return result;
             return null;
         }
+        
+        public static T Get<T>(this WeakReference<T> value) where T : class => value.TryGetTarget(out T result) ? result : null;
+        public static bool HasValue<T>(this WeakReference<T> value) where T : class => value.TryGetTarget(out _);
 
         public static void Dispose<T>(this WeakReference<T> value) where T : class, IDisposable
         {

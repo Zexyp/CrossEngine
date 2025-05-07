@@ -58,7 +58,7 @@ namespace CrossEngine.Assets
         public Asset Get(Type type, Guid id)
         {
             if (!type.IsSubclassOf(typeof(Asset)))
-                throw new InvalidOperationException();
+                throw new ArgumentException();
 
             if (_collections.ContainsKey(type))
                 if (_collections[type].TryGetValue(id, out var asset))
@@ -79,7 +79,7 @@ namespace CrossEngine.Assets
         public Asset GetNamed(Type type, string name)
         {
             if (!type.IsSubclassOf(typeof(Asset)))
-                throw new InvalidOperationException();
+                throw new ArgumentException();
 
             if (!_collections.ContainsKey(type))
                 throw new KeyNotFoundException();
@@ -198,7 +198,7 @@ namespace CrossEngine.Assets
             }
             catch (Exception ex)
             {
-                Log.Default.Error($"failed to load asset '{asset}': {ex.GetType().FullName}: {ex.Message}");
+                Log.Default.Error($"failed to load asset '{asset}': {ex.GetType().FullName}:\n{ex.Message}");
                 Log.Default.Trace($"load asset '{asset}' failure details: {ex}");
                 return false;
             }
@@ -214,7 +214,7 @@ namespace CrossEngine.Assets
             }
             catch (Exception ex)
             {
-                Log.Default.Error($"failed to unload asset '{asset}': {ex.GetType().FullName}: {ex.Message}");
+                Log.Default.Error($"failed to unload asset '{asset}': {ex.GetType().FullName}:\n{ex.Message}");
                 Log.Default.Trace($"unload asset '{asset}' failure details: {ex}");
                 return false;
             }
@@ -223,7 +223,7 @@ namespace CrossEngine.Assets
         #region IAssetLoadContext
         Task<Stream> IAssetLoadContext.OpenStream(string path)
         {
-            return PlatformHelper.FileRead(path);
+            return PlatformHelper.FileReadAsync(path);
         }
 
         string IAssetLoadContext.GetFullPath(string realtivePath)

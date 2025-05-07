@@ -82,12 +82,12 @@ namespace CrossEngineEditor
             protected override void Content()
             {
                 // text
-                var t = $"{1d / Time.UnscaledDelta:000.00} fps\n{Time.UnscaledDelta * 1000:00.000} ms\n";
-                var offset = new Vector3(0, Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 2, 0);
+                var t = $"{1d / Time.UnscaledDelta:000.00} fps\n{Time.UnscaledDelta * 1000:00.000} ms\n[{(Debugger.IsAttached ? "debug" : "alone")}]";
+                var offset = new Vector3(0, Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 3, 0);
                 TextRendererUtil.DrawText(Matrix4x4.CreateTranslation(offset), t, ColorHelper.U32ToVec4(0x7fff006d));
 
                 // graph
-                var graphY = Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 2;
+                var graphY = Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 3;
                 var graphX = 0;
                 _deltas[_deltasIndex] = Time.UnscaledDeltaF;
                 

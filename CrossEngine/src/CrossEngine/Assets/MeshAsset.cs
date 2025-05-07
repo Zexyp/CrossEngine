@@ -5,27 +5,61 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Geometry;
 using CrossEngine.Serialization;
+using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Assets
 {
-    public abstract class MeshAsset : Asset
+    public class MeshAsset : Asset
     {
         public IMesh Mesh;
+        public override bool Loaded => Mesh != null;
+        
+        [EditorString]
+        public string RelativePath;
+
+        public override async Task Load(IAssetLoadContext context)
+        {
+            if (RelativePath.StartsWith("internal:"))
+            {
+                switch (RelativePath.RemovePrefix("internal:"))
+                {
+                    case "cube": Mesh = MeshGenerator.GenerateCube(Vector3.One); break;
+                    case "plane": Mesh = MeshGenerator.GenerateGrid(Vector2.One); break;
+                }
+            }
+        }
+
+        public override async Task Unload(IAssetLoadContext context)
+        {
+            Mesh = null;
+        }
+
+        public override void GetObjectData(SerializationInfo info)
+        {
+            base.GetObjectData(info);
+            
+            info.AddValue(nameof(RelativePath), RelativePath);
+        }
+        
+        public override void SetObjectData(SerializationInfo info)
+        {
+            base.SetObjectData(info);
+            
+            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
+        }
     }
     
     public class ObjMeshAsset : MeshAsset
     {
         [EditorString]
-        public string RelativePath;
-        [EditorString]
         public string MeshName;
-
-        public override bool Loaded => Mesh != null;
-
+        
         public override async Task Load(IAssetLoadContext context)
         {
             using (Stream stream = await context.OpenRelativeStream(RelativePath))

@@ -79,18 +79,6 @@ namespace CrossEngine.Components
             Profiler.EndScope();
         }
 
-        public void RenderDebugLines()
-        {
-            var arr = World.Storage.GetArray(typeof(TransformComponent));
-            if (arr == null)
-                return;
-            
-            for (int i = 0; i < arr.Count; i++)
-            {
-                Rendering.LineRenderer.DrawAxies(((TransformComponent)arr[i]).GetWorldTransformMatrix());
-            }
-        }
-
         // i do not care about memory
         private TransformComponent[] GetBottomTransformComponents(Entity root)
         {

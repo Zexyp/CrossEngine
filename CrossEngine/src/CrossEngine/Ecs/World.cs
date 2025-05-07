@@ -79,7 +79,7 @@ namespace CrossEngine.Ecs
             return _indexes[type];
         }
 
-        public IList<Component> GetArray(Type type)
+        public IList<Component>? GetArray(Type type)
         {
             if (!_simpleArray.ContainsKey(type))
                 return null;

@@ -107,12 +107,10 @@ namespace CrossEngine.Rendering
         {
             ShaderPreprocessor.ServiceRequest = Execute;
             TextureLoader.ServiceRequest = Execute;
-            MeshLoader.ServiceRequest = Execute;
         }
 
         private void CallingThreadDestroy()
         {
-            MeshLoader.ServiceRequest = null;
             TextureLoader.ServiceRequest = null;
             ShaderPreprocessor.ServiceRequest = null;
         }
@@ -174,7 +172,6 @@ namespace CrossEngine.Rendering
             ShaderPreprocessor.Init();
             TextureLoader.ServiceRequest = OnServiceRequest;
             TextureLoader.Init();
-            MeshLoader.ServiceRequest = OnServiceRequest;
 
             Renderer2D.Init(_context.Api);
             LineRenderer.Init(_context.Api);
@@ -191,7 +188,6 @@ namespace CrossEngine.Rendering
             LineRenderer.Shutdown();
             Renderer2D.Shutdown();
 
-            MeshLoader.ServiceRequest = null;
             TextureLoader.Shutdown();
             TextureLoader.ServiceRequest = null;
             ShaderPreprocessor.Shutdown();

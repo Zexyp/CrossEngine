@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 using System.Diagnostics;
 using System.Drawing;
+using CrossEngine.Assets;
 using CrossEngine.Components;
 using CrossEngine.Core;
 using CrossEngine.Ecs;
@@ -79,7 +80,9 @@ namespace CrossEngine.FX.Particles
         [EditorInnerDraw]
         public ParticleEmitter Emitter;
 
-        //private TextureAtlas textureAtlas;
+        [EditorAsset]
+        [EditorNullable]
+        public TextureAtlasAsset Atlas;
         [EditorEnum]
         public BlendMode Blend { get; set; }
         protected override IVolume GetVolume() => AABox.CreateFromExtents(min, max);
@@ -181,7 +184,9 @@ namespace CrossEngine.FX.Particles
             var cameraLook = tr?.WorldPosition ?? Vector3.Zero;
             var matrixLocal = (tr != null) ? Matrix4x4.CreateScale(tr.WorldScale) * Matrix4x4.CreateTranslation(tr.WorldPosition) : Matrix4x4.Identity;
             var entId = Entity.Id.GetHashCode();
-
+            var texture = Atlas?.Texture?.Texture;
+            var atlas = Atlas?.TextureOffsets;
+            
             for (int i = 0; i < _particlePool.Length; i++)
             {
                 ref var particle = ref _particlePool[i];
@@ -208,7 +213,14 @@ namespace CrossEngine.FX.Particles
                 matrix *= Matrix4x4.CreateRotationZ(particle.rotation) * Matrix4x4Extension.CreateBillboard(cameraRight, cameraUp, cameraLook, particle.position);
                 if (Space == ParticleSpace.Local)
                     matrix *= matrixLocal;
-                Renderer2D.DrawQuad(matrix, color, entId);
+                
+                if (texture == null)
+                    Renderer2D.DrawQuad(matrix, color, entId);
+                else
+                {
+                    var texOffsets = atlas.Length > 0 ? atlas[(int)((atlas.Length * life))] : new Vector4(0, 0, 1, 1);
+                    Renderer2D.DrawTexturedQuad(matrix, texture, color, texOffsets, entId);
+                }
             }
         }
 
@@ -281,6 +293,8 @@ namespace CrossEngine.FX.Particles
             info.AddValue(nameof(EmitEvery), EmitEvery);
             info.AddValue(nameof(Emitter), Emitter);
             info.AddValue(nameof(Properties), Properties);
+            info.AddValue(nameof(Atlas), Atlas);
+            info.AddValue(nameof(Blend), Blend);
         }
 
 #if INTERNAL
@@ -295,6 +309,8 @@ namespace CrossEngine.FX.Particles
             EmitEvery = info.GetValue<float>(nameof(EmitEvery));
             Emitter = info.GetValue<ParticleEmitter>(nameof(Emitter));
             Properties = info.GetValue<ParticleProperties>(nameof(Properties));
+            Atlas = info.GetValue(nameof(Atlas), Atlas);
+            Blend = info.GetValue(nameof(Blend), Blend);
         }
     }
 }

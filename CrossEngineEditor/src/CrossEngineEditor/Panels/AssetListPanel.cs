@@ -70,7 +70,7 @@ namespace CrossEngineEditor.Panels
                                     }
                                     catch (Exception e)
                                     {
-                                        Log.Default.Error($"asset file reading failed: {e}");
+                                        Log.Default.Error($"asset file reading failed:\n{e}");
                                         EditorApplication.Service.DialogGenericError();
                                     }
                                 }
@@ -126,10 +126,12 @@ namespace CrossEngineEditor.Panels
 
             typeSelect.Draw();
 
-            if (Context.Assets == null)
+            // drawing critical
+            var alist = Context.Assets;
+            if (alist == null)
                 return;
 
-            InspectDrawer.Inspect(Context.Assets);
+            InspectDrawer.Inspect(alist);
 
             if (ImGui.BeginTable("Assets", 2, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuterH | ImGuiTableFlags.Resizable | ImGuiTableFlags.RowBg | ImGuiTableFlags.NoBordersInBody))
             {
@@ -137,7 +139,7 @@ namespace CrossEngineEditor.Panels
                 ImGui.TableSetupColumn("Data", ImGuiTableColumnFlags.WidthFixed);
                 ImGui.TableHeadersRow();
 
-                foreach ((Type Type, IEnumerable<Asset> EnumerateMore) item in Context.Assets.Enumerate())
+                foreach ((Type Type, IEnumerable<Asset> EnumerateMore) item in alist.Enumerate())
                 {
                     var sectionBroken = item.EnumerateMore.Any(a => !a.Loaded);
                     
@@ -165,18 +167,19 @@ namespace CrossEngineEditor.Panels
                             ImGui.TableNextColumn();
                             if (innerOpen)
                             {
-                                if (ImGui.Button("×"))
-                                    Context.Assets.Remove(asset);
+                                if (ImGuiUtil.SquareButton("×"))
+                                    alist.Remove(asset);
+                                
+                                if (ImGui.Button("Reload"))
+                                {
+                                    if (asset.Loaded) alist.UnloadAsset(asset);
+                                    if (!asset.Loaded) alist.LoadAsset(asset);
+                                }
+                                ImGui.SameLine();
                                 ImGui.BeginDisabled();
                                 var loaded = asset.Loaded;
                                 ImGui.Checkbox("Loaded", ref loaded);
                                 ImGui.EndDisabled();
-                                ImGui.SameLine();
-                                if (ImGui.Button("Reload"))
-                                {
-                                    if (asset.Loaded) Context.Assets.UnloadAsset(asset);
-                                    if (!asset.Loaded) Context.Assets.LoadAsset(asset);
-                                }
                                 InspectDrawer.Inspect(asset);
 
                                 ImGui.TreePop();

@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Serialization.Json
 {
@@ -21,7 +22,16 @@ namespace CrossEngine.Serialization.Json
 
         public override Asset Read(JsonElement reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return AssetManager.Get(typeToConvert, reader.GetGuid());
+            var id = reader.GetGuid();
+            try
+            {
+                return AssetManager.Get(typeToConvert, id);
+            }
+            catch (KeyNotFoundException e)
+            {
+                Log.Default.Error($"asset not found '{id}'");
+                return null;
+            }
         }
     }
 }

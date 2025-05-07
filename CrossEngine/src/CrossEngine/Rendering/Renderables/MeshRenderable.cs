@@ -17,6 +17,12 @@ using static CrossEngine.Display.WindowService;
 
 namespace CrossEngine.Rendering.Renderables
 {
+    interface IMeshRenderData : IObjectRenderData
+    {
+        MeshRenderer Renderer { get; internal set; }
+        IMaterial Material { get; }
+    }
+    
     class MeshRenderable : Renderable<IMeshRenderData>
     {
         ICamera _camera;
@@ -41,7 +47,7 @@ namespace CrossEngine.Rendering.Renderables
                 return;
 
             IMaterial mater = (data.Material ?? defaultMaterial);
-            ShaderProgram shader = mater.Shader.GetValue();
+            ShaderProgram shader = mater.Shader?.GetValue() ?? defaultMaterial.Shader.GetValue();
             shader.Use();
             mater.Update(shader);
             shader.SetParameterMat4("uViewProjection", _camera.GetViewProjectionMatrix());

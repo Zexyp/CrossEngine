@@ -25,8 +25,7 @@ public class Transform : ITransformCache
         set
         {
             _translation = value;
-            _dirty = true;
-            Invalidated?.Invoke(this);
+            Invalidate();
         }
     }
     public Quaternion Rotation
@@ -35,8 +34,7 @@ public class Transform : ITransformCache
         set
         {
             _rotation = value;
-            _dirty = true;
-            Invalidated?.Invoke(this);
+            Invalidate();
         }
     }
     public Vector3 Scale
@@ -45,15 +43,21 @@ public class Transform : ITransformCache
         set
         {
             _scale = value;
-            _dirty = true;
-            Invalidated?.Invoke(this);
+            Invalidate();
         }
     }
 
     public Vector3 WorldPosition
     {
         get => _worldTransformProvider == null ? _translation : Vector3.Transform(_translation, _worldTransformProvider.GetMatrix());
-        set => throw new NotImplementedException();
+        set
+        {
+            if (_worldTransformProvider == null)
+                _translation = value;
+            else
+                _translation = Vector3.Transform(value, Matrix4x4Extension.SafeInvert(_worldTransformProvider.GetMatrix()));
+            Invalidate();
+        }
     }
     public Quaternion WorldRotation
     {
@@ -100,6 +104,12 @@ public class Transform : ITransformCache
     Matrix4x4 ITransform.GetMatrix() => GetWorldTransform();
 
     private void OnParentInvlaidated(ITransformCache transform)
+    {
+        _dirty = true;
+        Invalidated?.Invoke(this);
+    }
+
+    private void Invalidate()
     {
         _dirty = true;
         Invalidated?.Invoke(this);

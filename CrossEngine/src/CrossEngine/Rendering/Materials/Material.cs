@@ -13,7 +13,7 @@ namespace CrossEngine.Rendering.Materials;
 
 public interface IMaterial
 {
-    WeakReference<ShaderProgram> Shader { get; }
+    WeakReference<ShaderProgram> Shader { get; set; }
     void Update(ShaderProgram shader);
 }
 
@@ -99,7 +99,7 @@ void main() {
 
     static WeakReference<ShaderProgram> _shader = ShaderPreprocessor.CreateProgramFromString(DefaultShaderSource);
 
-    public WeakReference<ShaderProgram> Shader { get => _shader; }
+    public WeakReference<ShaderProgram> Shader { get => _shader; set => throw new InvalidOperationException(); }
 
     public void Update(ShaderProgram shader)
     {

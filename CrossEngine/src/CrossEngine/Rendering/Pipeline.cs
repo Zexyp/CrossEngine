@@ -8,6 +8,7 @@ using CrossEngine.Platform.OpenGL;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
+using CrossEngine.Rendering.Cameras;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Extensions;
 
@@ -18,6 +19,7 @@ public class Pipeline
     Vector4? _clearColor = VecColor.Gray;
     List<Pass> _passes = new List<Pass>();
     public WeakReference<Framebuffer> Buffer { get; protected set; }
+    public ICamera Camera;
     
     private bool _initialized;
 
@@ -42,6 +44,8 @@ public class Pipeline
     public void Process(ISurface surface)
     {
         Debug.Assert(_initialized);
+        if (Camera is null)
+            return;
 
         var rapi = surface.Context.Api;
         var buffer = Buffer.GetValue();
@@ -61,27 +65,34 @@ public class Pipeline
             rapi.SetClearColor(color);
             rapi.Clear();
         }
+
+        OnBeforePasses();
         
-        //Pass last = null;
+        Pass last = null;
         for (int i = 0; i < _passes.Count; i++)
         {
             Pass pass = _passes[i];
             
             Profiler.BeginScope($"processing pass {pass.GetType().Name}");
 
-            buffer.EnableColorAttachments(pass.ModifyAttachments.ToList());
-                
+            buffer.EnableColorAttachments(pass.ModifyAttachments);
+
             rapi.SetDepthFunc(pass.Depth);
             rapi.SetBlendFunc(pass.Blend);
-            rapi.SetPolygonMode(pass.PolyMode);
+            //rapi.SetPolygonMode(pass.PolyMode); // mby in futere, now i need to debug
             rapi.SetCullFace(pass.Cull);
+            rapi.SetDepthMask(pass.DepthMask);
 
             pass.Draw();
 
             Profiler.EndScope();
         }
+
+        OnAfterPasses();
         
-        buffer.BlitTo(surface.Buffer, new[] {0, 1});
+        buffer.BlitTo(surface.Buffer, new[] {(0, 0), (1, 1)});
+        
+        buffer.Unbind();
     }
 
     public void Init()
@@ -125,6 +136,8 @@ public class Pipeline
     
     protected virtual void OnInit() { }
     protected virtual void OnDestroy() { }
+    protected virtual void OnBeforePasses() { }
+    protected virtual void OnAfterPasses() { }
 }
 
 public abstract class Pass
@@ -132,13 +145,14 @@ public abstract class Pass
     public Pipeline Pipeline { get; internal set; }
 
     // indexes
-    public ISet<int> ModifyAttachments = new HashSet<int>() { 0 };
+    public IList<int> ModifyAttachments = [0];
     
     // cull
     public DepthFunc Depth;
     public BlendFunc Blend;
     public PolygonMode PolyMode = PolygonMode.Fill;
     public CullFace Cull;
+    public bool DepthMask = true;
 
     public virtual void Init() { }
     public virtual void Destroy() { }

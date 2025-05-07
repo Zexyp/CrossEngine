@@ -29,9 +29,11 @@ namespace CrossEngine.FX.Particles
         
         public void OnUpdate()
         {
+            var components = World.Storage.GetArray(typeof(ParticleSystemComponent));
+            if (components == null) return;
             Profiler.BeginScope();
 
-            Parallel.ForEach(World.Storage.GetArray(typeof(ParticleSystemComponent)), _parallelOptions, (component) => { ((ParticleSystemComponent)component).Update(); });
+            Parallel.ForEach(components, _parallelOptions, (component) => { ((ParticleSystemComponent)component).Update(); });
 
             Profiler.EndScope();
         }

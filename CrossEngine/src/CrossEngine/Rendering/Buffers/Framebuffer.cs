@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
-
+using System.Numerics;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Utils;
 
@@ -22,6 +22,7 @@ namespace CrossEngine.Rendering.Buffers
         // color
         ColorRGBA8,
         ColorR32I,
+        ColorRGB16F,
         ColorRGBA16F,
         ColorRGBA32F,
 
@@ -113,9 +114,12 @@ namespace CrossEngine.Rendering.Buffers
 
         public abstract void Resize(uint width, uint height);
         public abstract void ClearAttachment(int attachmentIndex, int value);
+        public abstract void ClearAttachment(int attachmentIndex, Vector4 value);
         public abstract int ReadPixel(int attachmentIndex, uint x, uint y);
-        public abstract uint GetColorAttachmentRendererID(int index = 0);
-        public abstract void BlitTo(WeakReference<Framebuffer>? target, IList<int> attachmentIndexes = null);
+        public abstract uint GetColorAttachmentRendererID(int attachmentIndex = 0);
+        public abstract void BindColorAttachment(int attachmentIndex, uint slot = 0);
+        public abstract void BlitTo(WeakReference<Framebuffer>? target, IList<(int from, int to)> attachmentIndexes = null);
+        public abstract void BlitDepthTo(WeakReference<Framebuffer>? target);
         public abstract void EnableColorAttachments(IList<int> attachmentIndexes = null);
         //public abstract ref FramebufferSpecification GetSpecification();
 

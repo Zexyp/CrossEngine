@@ -13,7 +13,9 @@ using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.FX.Particles;
 using CrossEngine.Loaders;
+using CrossEngine.Rendering.Lighting;
 using CrossEngine.Rendering.Textures;
+using CrossEngine.Utils.Editor;
 using CrossEngine.Utils.Extensions;
 using CrossEngine.Utils.Rendering;
 
@@ -23,17 +25,24 @@ file class Util
     /// Convert to screen pos
     /// </summary>
     /// <returns>Is visible</returns>
+    [Obsolete("opengl specific")]
     public static bool ToScreen(Vector3 scenePosition, Vector2 screenSize, ICamera camera, out Vector2 screenPos)
     {
         screenPos = Vector2.Zero;
-        
+
         Vector4 clipSpace = Vector4.Transform(new Vector4(scenePosition, 1), camera.GetViewProjectionMatrix());
-        //if (clipSpace.W == 0)
-        //    return; // avoid divide by zero 😬
-        if (clipSpace.Z < -1) // 0 or -1
-            return false; // behind camera
+
+        if (clipSpace.W <= 0)
+            return false; // behind or invalid
+
         Vector3 ndc = new Vector3(clipSpace.X, clipSpace.Y, clipSpace.Z) / clipSpace.W;
+
+        if (ndc.Z < 0 || ndc.Z > 1)
+            return false; // outside view frustum
+
+        // Flip Y if needed based on screen origin
         ndc.Y *= -1;
+
         Vector3 pos = (ndc + Vector3.One) / 2 * new Vector3(screenSize, 0);
         screenPos = new Vector2(pos.X, pos.Y);
         return true;
@@ -47,10 +56,20 @@ namespace CrossEngineEditor.Viewport
         public IEditorContext Context { get; set; }
         public ICamera Camera { get; set; }
 
+        [EditorDrag]
+        public float Length = 1;
+
         void IOverlay.Draw()
         {
             LineRenderer.BeginScene(Camera.GetViewProjectionMatrix());
-            Context.Scene.World.GetSystem<TransformSystem>().RenderDebugLines();
+            var arr = Context.Scene?.World.Storage.GetArray(typeof(TransformComponent));
+            if (arr == null)
+                return;
+            
+            for (int i = 0; i < arr.Count; i++)
+            {
+                LineRenderer.DrawAxies(Matrix4x4.CreateScale(Length) * ((TransformComponent)arr[i]).GetWorldTransformMatrix());
+            }
             LineRenderer.EndScene();
         }
 
@@ -64,7 +83,9 @@ namespace CrossEngineEditor.Viewport
         public IEditorContext Context { get; set; }
         public ICamera Camera { get; set; }
 
-        [Obsolete("opengl specific")]
+        public const float PointSize = 8;
+        public const float PointOutlineSize = 4;
+        
         protected override void Content()
         {
             var model = Context.ActiveEntity?.Transform?.WorldPosition;
@@ -73,7 +94,9 @@ namespace CrossEngineEditor.Viewport
 
             if (!Util.ToScreen(model.Value, Size, Camera, out var screenPos)) return;
             
-            Renderer2D.DrawQuad(Matrix4x4.CreateScale(8) * Matrix4x4.CreateTranslation(new Vector3(screenPos, 0)), new Vector4(1f, .75f, 0,1));
+            var translation = Matrix4x4.CreateTranslation(new Vector3(screenPos, 0));
+            Renderer2D.DrawQuad(Matrix4x4.CreateRotationZ(MathF.PI / 4) * Matrix4x4.CreateScale(PointSize + PointOutlineSize) * translation, VecColor.Black);
+            Renderer2D.DrawQuad(Matrix4x4.CreateRotationZ(MathF.PI / 4) * Matrix4x4.CreateScale(PointSize) * translation, new Vector4(1f, .75f, 0, 1));
         }
     }
     
@@ -81,8 +104,8 @@ namespace CrossEngineEditor.Viewport
     {
         public IEditorContext Context { get; set; }
         public ICamera Camera { get; set; }
+        public IList<int> ModifyAttachments => [0, 1];
 
-        [Obsolete("opengl specific")]
         protected override void Content()
         {
             var ents = Context.Scene?.Entities;
@@ -96,7 +119,11 @@ namespace CrossEngineEditor.Viewport
                     continue;
                 
                 if (!Util.ToScreen(model.Value, Size, Camera, out var screenPos)) return;
-                TextRendererUtil.DrawText(Matrix4x4.CreateScale(.5f) * Matrix4x4.CreateTranslation(new Vector3(screenPos, 0)), ent.ToString(), VecColor.White);
+
+                screenPos += new Vector2(SelectedOverlay.PointSize + SelectedOverlay.PointOutlineSize) / 2;
+                TextRendererUtil.DrawText(Matrix4x4.CreateScale(.5f) * Matrix4x4.CreateTranslation(new Vector3(screenPos, 0)), ent.ToString(),
+                    VecColor.White,
+                    ent.Id);
             }
         }
     }
@@ -127,13 +154,15 @@ namespace CrossEngineEditor.Viewport
     {
         public IEditorContext Context { get; set; }
         public ICamera Camera { get; set; }
-        public ISet<int> ModifyAttachments => new HashSet<int>() { DeferredPipeline.FrambufferIndexColor, DeferredPipeline.FrambufferIndexId };
-
+        public IList<int> ModifyAttachments => [DeferredPipeline.AttachmentIndexColor, DeferredPipeline.AttachmentIndexId];
+        [EditorDrag]
+        public float Size = 1;
+        
         private WeakReference<Texture> _iconTexture;
         private Vector4[] _offsets = TextureAtlas.CreateOffsets(new Vector2(80, 16), new Vector2(16, 16), 5);
 
         private const int IconCamera = 0;
-        private const int IconLight = 2;
+        private const int IconBulb = 2;
         private const int IconSun = 3;
         private const int IconParticles = 4;
         
@@ -141,6 +170,7 @@ namespace CrossEngineEditor.Viewport
         {
             (typeof(CameraComponent), IconCamera),
             (typeof(ParticleSystemComponent), IconParticles),
+            (typeof(LightComponent), IconBulb),
         };
 
         public void Resize(float width, float height)
@@ -165,7 +195,7 @@ namespace CrossEngineEditor.Viewport
                 foreach (var comp in Context.Scene.World.Storage.EnumerateSubclasses(pair.CompType))
                 {
                     var pos = comp.Entity.Transform?.WorldPosition ?? Vector3.Zero;
-                    var matrix = Matrix4x4Extension.CreateBillboard(cameraUp, cameraRight, Vector3.Zero, pos);
+                    var matrix = Matrix4x4.CreateScale(Size) * Matrix4x4Extension.CreateBillboard(cameraUp, cameraRight, Vector3.Zero, pos);
                     Renderer2D.DrawTexturedQuad(matrix, _iconTexture, VecColor.White, _offsets[pair.Icon], comp.Entity.Id);
                 }
             }
@@ -216,5 +246,30 @@ namespace CrossEngineEditor.Viewport
             }
             LineRenderer.EndScene();
         }
+    }
+
+    class LightOverlay : IViewportOverlay
+    {
+        public void Resize(float width, float height)
+        {
+        }
+
+        public void Draw()
+        {
+            throw new NotImplementedException();
+            
+            var light = Context.ActiveEntity?.GetComponent<LightComponent>();
+            if (light == null)
+                return;
+            
+            LineRenderer.BeginScene(Camera.GetViewProjectionMatrix());
+
+            var lightData = (ILightRenderData)light;
+            
+            LineRenderer.EndScene();
+        }
+
+        public ICamera Camera { get; set; }
+        public IEditorContext Context { get; set; }
     }
 }

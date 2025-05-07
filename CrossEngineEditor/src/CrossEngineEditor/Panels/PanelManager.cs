@@ -218,7 +218,7 @@ public class PanelManager
             }
             catch (Exception e)
             {
-                _log.Error($"incident while drawing a modal '{m.ModalName}' ({m.GetType().FullName}): {e.GetType().FullName}: {e.Message}");
+                _log.Error($"incident while drawing a modal '{m.ModalName}' ({m.GetType().FullName}): {e.GetType().FullName}:\n{e.Message}");
                 throw;
             }
         }

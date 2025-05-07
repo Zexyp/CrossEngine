@@ -59,5 +59,6 @@ namespace CrossEngineEditor.Platform
         }
         
         public static Stream FileCreate(string path) => PlatformHelper.FileCreate(path);
+        public static Stream FileRead(string path) => PlatformHelper.FileRead(path);
     }
 }

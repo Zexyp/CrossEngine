@@ -67,6 +67,12 @@ namespace CrossEngineEditor.Panels
                 ImGui.TextDisabled("No scene");
                 return;
             }
+            
+            if (DrawCamera == null)
+            {
+                ImGui.TextDisabled("No camera");
+                return;
+            }
 
             // needs to be set back so SceneManager can render only from given scene data
             // as of latest rewrite this is not valid
@@ -76,7 +82,8 @@ namespace CrossEngineEditor.Panels
                 return;
             renderSys.OverrideCamera = DrawCamera;
 
-            Framebuffer.GetValue().Bind();
+            var viewportBuffer = Framebuffer.GetValue();
+            viewportBuffer.Bind();
             ((GLFramebuffer)Framebuffer.GetValue()).EnableAllColorAttachments(true);
             
             lock (Scene)
@@ -84,7 +91,7 @@ namespace CrossEngineEditor.Panels
                 Surface.DoUpdate();
             }
 
-            Framebuffer.GetValue().Unbind();
+            viewportBuffer.Unbind();
 
             renderSys.OverrideCamera = null;
 
@@ -132,7 +139,8 @@ namespace CrossEngineEditor.Panels
 
         protected virtual void OnCameraResize()
         {
-            Surface.DoResize(ViewportSize.X, ViewportSize.Y);
+            if (Framebuffer?.HasValue() == true)
+                Surface.DoResize(ViewportSize.X, ViewportSize.Y);
         }
 
         protected virtual void OnSurfaceUpdate(ISurface surface)

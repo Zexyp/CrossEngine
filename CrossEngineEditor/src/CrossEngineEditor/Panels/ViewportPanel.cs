@@ -10,13 +10,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using CrossEngine.Rendering;
 using CrossEngine.Core;
 using CrossEngine.Logging;
+using CrossEngine.Platform.OpenGL;
 using CrossEngine.Serialization;
 using CrossEngine.Utils.Extensions;
+using CrossEngine.Utils.ImGui;
+using CrossEngineEditor.Utils;
 
 namespace CrossEngineEditor.Panels
 {
@@ -26,22 +30,28 @@ namespace CrossEngineEditor.Panels
         protected override Scene Scene => Context.Scene;
         
         private Camera _editorCamera = new Camera();
+        private float _cameraSpeed = 10;
+        
         private Vector3 _cameraPosition = Vector3.Zero;
         private Quaternion _cameraRotation = Quaternion.Identity;
-        private float _cameraSpeed = 10;
         private float _near = .1f;
         private float _far = 1000f;
         private float _fov = 90f;
         private float _zoom = 10;
         private bool _perspective = false;
+        private bool _enableOverlays = true;
+        
         private bool _projectionDirty = true;
         private bool _viewDirty = true;
         private readonly List<(IViewportOverlay Overlay, bool Draw)> _overlays = new();
         private Vector2 _lookRot = Vector2.Zero;
         private bool IsTouchpad => EditorApplication.Service.Preferences["navigation"].ReadBooleanOrDefault("touchpad", true);
         private ViewportPass _viewportPass;
-        private float _sensitivityPan => EditorApplication.Service.Preferences["navigation"].ReadSingleOrDefault("touchpad.sensitivity.pan", .25f);
-        private float _sensitivityRotate => EditorApplication.Service.Preferences["navigation"].ReadSingleOrDefault("touchpad.sensitivity.rotate", 8);
+        private float SensitivityPan => EditorApplication.Service.Preferences["navigation"].ReadSingleOrDefault("touchpad.sensitivity.pan", .25f);
+        private float SensitivityRotate => EditorApplication.Service.Preferences["navigation"].ReadSingleOrDefault("touchpad.sensitivity.rotate", 8);
+        //private ImGuiHelper.ImDrawCallback _callbackHolder;
+        private bool _showGbuffers = false;
+        private bool _simpleMove = false;
 
         public ViewportPanel()
         {
@@ -59,21 +69,31 @@ namespace CrossEngineEditor.Panels
             _viewportPass = new ViewportPass() { Overlays = _overlays };
         }
 
-        protected override void DrawWindowContent()
+        protected override unsafe void DrawWindowContent()
         {
             DrawMenuBar();
 
-            AttachPass(Scene);
-            
+            var cursorPos = ImGui.GetCursorPos();
+
+            // overlay begin
+            bool overlaysAttached = false;
+            if (_enableOverlays)
+            {
+                AttachPass(Scene);
+                overlaysAttached = true;
+            }
+
             base.DrawWindowContent();
 
-            DetachPass(Scene);
+            // remove overlay
+            if (overlaysAttached) DetachPass(Scene);
 
             if (Scene == null || Framebuffer == null)
                 return;
 
             var io = ImGui.GetIO();
 
+            // selection
             if (ImGui.IsItemClicked() && Context.Scene != null)
             {
                 Vector2 winpos = ImGui.GetWindowPos();
@@ -83,15 +103,60 @@ namespace CrossEngineEditor.Panels
                 var result = Framebuffer.GetValue().ReadPixel(1, (uint)texpos.X, (uint)texpos.Y);
                 Context.ActiveEntity = Context.Scene.GetEntity(result);
             }
+            // simple move
+            else if (_simpleMove && Context.ActiveEntity != null && ImGui.IsMouseDragging(ImGuiMouseButton.Left) && Focused)
+            {
+                var trans = Context.ActiveEntity.Transform;
+                if (!_perspective)
+                    trans.WorldPosition += Vector3.Transform(new Vector3(io.MouseDelta.X / ViewportSize.Y * _zoom, -io.MouseDelta.Y / ViewportSize.Y * _zoom, 0), _cameraRotation);
+                else
+                {
+                    var tan = MathF.Tan(_fov) * _zoom;
+                    trans.WorldPosition -= Vector3.Transform(new Vector3(io.MouseDelta.X / ViewportSize.Y * tan, -io.MouseDelta.Y / ViewportSize.Y * tan, 0), _cameraRotation);
+                }
+            }
 
+            // navigation
             else
                 Navigate(io);
 
+            // update after navigate since navigate causes update
             if (_projectionDirty)
                 UpdateProjection();
 
             if (_viewDirty)
                 UpdateView();
+
+            if (_showGbuffers)
+            {
+                // debug buffers
+                ImGui.SetCursorPos(cursorPos);
+                var buffer = Scene.World.GetSystem<RenderSystem>().Pipeline.Buffer.GetValue();
+                
+                //var drawList = ImGui.GetWindowDrawList();
+                //drawList.AddCallback(Marshal.GetFunctionPointerForDelegate<ImGuiHelper.ImDrawCallback>(_callbackHolder = ((drawListPtr, drawCmdPtr) =>
+                //{
+                //    drawCmdPtr++;
+                //    drawCmdPtr->TextureId = (IntPtr)buffer.GetColorAttachmentRendererID(0);
+                //})), IntPtr.Zero);
+                //drawList.AddImage(IntPtr.Zero, Vector2.Zero, Vector2.One * 200);
+                
+                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(0), Vector2.One * 200, 
+                    new Vector2(0, 1),
+                    new Vector2(1, 0));
+                ImGui.SameLine();
+                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(1), Vector2.One * 200, 
+                    new Vector2(0, 1),
+                    new Vector2(1, 0));
+                
+                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(2), Vector2.One * 200, 
+                    new Vector2(0, 1),
+                    new Vector2(1, 0));
+                ImGui.SameLine();
+                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(3), Vector2.One * 200, 
+                    new Vector2(0, 1),
+                    new Vector2(1, 0));
+            }
         }
 
         private void Navigate(in ImGuiIOPtr io)
@@ -144,6 +209,13 @@ namespace CrossEngineEditor.Panels
             {
                 _perspective = !_perspective;
                 _projectionDirty = true;
+                _viewDirty = true;
+            }
+
+            if (ImGui.IsKeyPressed(ImGuiKey.KeypadDecimal) && Context.ActiveEntity?.Transform != null)
+            {
+                _cameraPosition = Context.ActiveEntity.Transform.Position;
+                _viewDirty = true;
             }
         }
 
@@ -164,9 +236,9 @@ namespace CrossEngineEditor.Panels
                 if (io.KeyShift && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
                     if (io.KeyAlt)
-                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * _sensitivityPan, io.MouseWheelH * _zoom * _sensitivityPan, 0), _cameraRotation);
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * SensitivityPan, io.MouseWheelH * _zoom * SensitivityPan, 0), _cameraRotation);
                     else
-                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * _sensitivityPan, io.MouseWheel * _zoom * _sensitivityPan, 0), _cameraRotation);
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * SensitivityPan, io.MouseWheel * _zoom * SensitivityPan, 0), _cameraRotation);
 
                     _viewDirty = true;
                 }
@@ -226,9 +298,9 @@ namespace CrossEngineEditor.Panels
                 if (!io.KeyShift && !io.KeyCtrl && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
                     if (io.KeyAlt)
-                        _lookRot += new Vector2(-io.MouseWheel, -io.MouseWheelH) / _sensitivityRotate;
+                        _lookRot += new Vector2(-io.MouseWheel, -io.MouseWheelH) / SensitivityRotate;
                     else
-                        _lookRot += new Vector2(-io.MouseWheelH, -io.MouseWheel) / _sensitivityRotate;
+                        _lookRot += new Vector2(-io.MouseWheelH, -io.MouseWheel) / SensitivityRotate;
 
                     _cameraRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, _lookRot.X) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, _lookRot.Y);
 
@@ -248,9 +320,9 @@ namespace CrossEngineEditor.Panels
                 if (io.KeyShift && !io.KeyCtrl && (io.MouseWheel != 0 || io.MouseWheelH != 0))
                 {
                     if (io.KeyAlt)
-                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * _sensitivityPan, io.MouseWheelH * _zoom * _sensitivityPan, 0), _cameraRotation);
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheel * _zoom * SensitivityPan, io.MouseWheelH * _zoom * SensitivityPan, 0), _cameraRotation);
                     else
-                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * _sensitivityPan, io.MouseWheel * _zoom * _sensitivityPan, 0), _cameraRotation);
+                        _cameraPosition += Vector3.Transform(new Vector3(-io.MouseWheelH * _zoom * SensitivityPan, io.MouseWheel * _zoom * SensitivityPan, 0), _cameraRotation);
 
                     _viewDirty = true;
                 }
@@ -343,14 +415,6 @@ namespace CrossEngineEditor.Panels
                         _projectionDirty = true;
                         _viewDirty = true;
                     }
-
-                    if (ImGui.MenuItem("Reset"))
-                    {
-                        _cameraPosition = Vector3.Zero;
-                        _cameraRotation = Quaternion.Identity;
-                        _lookRot = Vector2.Zero;
-                        _viewDirty = true;
-                    }
                     
                     ImGui.Separator();
 
@@ -415,19 +479,67 @@ namespace CrossEngineEditor.Panels
                         ImGui.EndMenu();
                     }
                     
+                    ImGui.Separator();
+                    
+                    if (ImGui.MenuItem("Reset"))
+                    {
+                        _cameraPosition = Vector3.Zero;
+                        _cameraRotation = Quaternion.Identity;
+                        _lookRot = Vector2.Zero;
+                        _viewDirty = true;
+                    }
+                    
                     ImGui.EndMenu();
                 }
 
                 if (ImGui.BeginMenu("Overlays"))
                 {
+                    if (ImGui.MenuItem("Enable", null, _enableOverlays))
+                    {
+                        _enableOverlays = !_enableOverlays;
+                    }
+                    ImGui.Separator();
                     for (int i = 0; i < _overlays.Count; i++)
                     {
-                        var drawn = _overlays[i].Draw;
-                        if (ImGui.MenuItem(_overlays[i].Overlay.GetType().Name, "", drawn))
-                            if (drawn) _overlays[i] = (_overlays[i].Overlay, false);
-                            else _overlays[i] = (_overlays[i].Overlay, true);
+                        var (overlay, drawn) = _overlays[i];
+                        if (ImGui.BeginMenu(overlay.GetType().Name))
+                        {
+                            if (ImGui.MenuItem("Enable", "", drawn))
+                            {
+                                if (drawn) _overlays[i] = (overlay, false);
+                                else _overlays[i] = (overlay, true);
+                            }
+                            
+                            ImGui.Separator();
+                            
+                            InspectDrawer.Inspect(overlay);
+                            
+                            ImGui.EndMenu();
+                        }
                     }
 
+                    ImGui.EndMenu();
+                }
+
+                if (ImGui.BeginMenu("debug"))
+                {
+                    if (ImGui.MenuItem("gbuffers", null, _showGbuffers))
+                        _showGbuffers = !_showGbuffers;
+                    if (ImGui.MenuItem("simple move", null, _simpleMove))
+                        _simpleMove = !_simpleMove;
+                    
+                    if (ImGui.BeginMenu("polygon mode"))
+                    {
+                        if (ImGui.MenuItem("point"))
+                            GraphicsContext.Current.Api.SetPolygonMode(PolygonMode.Point);
+                        if (ImGui.MenuItem("line"))
+                            GraphicsContext.Current.Api.SetPolygonMode(PolygonMode.Line);
+                        if (ImGui.MenuItem("fill"))
+                            GraphicsContext.Current.Api.SetPolygonMode(PolygonMode.Fill);
+                    
+                        ImGui.EndMenu();
+                    }
+                    
                     ImGui.EndMenu();
                 }
 
@@ -437,18 +549,33 @@ namespace CrossEngineEditor.Panels
 
         public override void SaveState(SerializationInfo info)
         {
-            info.AddValue("ViewPosition", _cameraPosition);
-            info.AddValue("ViewRotation", _cameraRotation.AsVec4());
-            info.AddValue("ViewZoom", _zoom);
-            info.AddValue("ViewPerspective", _perspective);
+            base.SaveState(info);
+            
+            info.AddValue("view.position", _cameraPosition);
+            info.AddValue("view.rotation", _cameraRotation.AsVec4());
+            info.AddValue("view.zoom", _zoom);
+            info.AddValue("view.perspective", _perspective);
+            info.AddValue("view.near", _near);
+            info.AddValue("view.far", _far);
+            info.AddValue("view.fov", _fov);
+            info.AddValue("view.enableOverlays", _enableOverlays);
         }
 
         public override void LoadState(SerializationInfo info)
         {
-            _cameraPosition = info.GetValue("ViewPosition", _cameraPosition);
-            _cameraRotation = info.GetValue("ViewRotation", _cameraRotation.AsVec4()).AsQuat();
-            _zoom = info.GetValue("ViewZoom", _zoom);
-            _perspective = info.GetValue("ViewPerspective", _perspective);
+            base.LoadState(info);
+
+            _cameraPosition = info.GetValue("view.position", _cameraPosition);
+            _cameraRotation = info.GetValue("view.rotation", _cameraRotation.AsVec4()).AsQuat();
+            _zoom = info.GetValue("view.zoom", _zoom);
+            _perspective = info.GetValue("view.perspective", _perspective);
+            _near = info.GetValue("view.near", _near);
+            _far = info.GetValue("view.far", _far);
+            _fov = info.GetValue("view.fov", _fov);
+            _enableOverlays = info.GetValue("view.enableOverlays", _enableOverlays);
+
+            _viewDirty = true;
+            _projectionDirty = true;
         }
 
         [Obsolete("no init")]
@@ -505,7 +632,7 @@ namespace CrossEngineEditor.Panels
                     var (overlay, draw) = Overlays[i];
                     if (!draw) continue;
                     
-                    buffer.EnableColorAttachments(overlay.ModifyAttachments.ToList());
+                    buffer.EnableColorAttachments(overlay.ModifyAttachments);
                     
                     try
                     {
@@ -513,7 +640,7 @@ namespace CrossEngineEditor.Panels
                     }
                     catch (Exception e)
                     {
-                        EditorService.Log.Error($"viewport: overlay '{overlay.GetType().FullName}' draw failed: {e}");
+                        EditorService.Log.Error($"viewport: overlay '{overlay.GetType().FullName}' draw failed:\n{e}");
                     }
                 }
             }

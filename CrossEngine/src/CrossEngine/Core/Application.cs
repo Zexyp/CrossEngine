@@ -79,13 +79,18 @@ namespace CrossEngine.Core
             }
             catch (Exception ex)
             {
-                Log.Fatal($"a wild unhandled exception has appeared in thread '{Thread.CurrentThread.Name}':\n{ex}");
+                Log.Fatal(@$"application has undergone a rapid unscheduled disassembly
+thread '{Thread.CurrentThread.Name}' said ""nah"" and yeeted into the fucking wall:
+{ex}");
                 throw;
             }
         }
 
         private void InternalInit()
         {
+            AppDomain.CurrentDomain.UnhandledException += OnAppDomainUnhandleException; 
+            TaskScheduler.UnobservedTaskException += OnTaskSchedulerUnobservedTaskException;
+
             OnInit();
 
             PlatformHelper.Init();
@@ -112,6 +117,9 @@ namespace CrossEngine.Core
             PlatformHelper.Terminate();
             
             OnDestroy();
+            
+            TaskScheduler.UnobservedTaskException -= OnTaskSchedulerUnobservedTaskException;
+            AppDomain.CurrentDomain.UnhandledException -= OnAppDomainUnhandleException;
         }
 
         private void InternalRun()
@@ -151,6 +159,16 @@ namespace CrossEngine.Core
             Log.Trace("ended");
 
             wait.Set();
+        }
+
+        private void OnTaskSchedulerUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            Log.Fatal($"task scheduler unobserved exception:\n{e.Exception}");
+        }
+
+        private void OnAppDomainUnhandleException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Log.Fatal($"app domain unhandled exception:\n{e.ExceptionObject}");
         }
     }
 }

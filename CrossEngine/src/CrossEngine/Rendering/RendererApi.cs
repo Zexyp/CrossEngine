@@ -27,7 +27,8 @@ namespace CrossEngine.Rendering
         public override void SetClearColor(float r, float g, float b, float a) { }
         public override void SetDepthFunc(DepthFunc func) { }
         public override void SetCullFace(CullFace face) { }
-        
+        public override void SetDepthMask(bool flag) { }
+
         public override void SetLineWidth(float width) { }
 
         public override void SetViewport(uint x, uint y, uint width, uint height) { }
@@ -80,6 +81,7 @@ namespace CrossEngine.Rendering
         public abstract void SetDepthFunc(DepthFunc func);
         public abstract void SetBlendFunc(BlendFunc func);
         public abstract void SetCullFace(CullFace face);
+        public abstract void SetDepthMask(bool flag);
 
         public abstract void SetLineWidth(float width);
 

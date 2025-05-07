@@ -8,7 +8,7 @@ using CrossEngine.Utils;
 using CrossEngine.Utils.Collections;
 using CrossEngine.Utils.Editor;
 using CrossEngineEditor.Utils;
-using CrossEngineEditor.Utils.Gui;
+using CrossEngineEditor.Utils.UI;
 using ImGuiNET;
 
 namespace CrossEngineEditor.Panels;

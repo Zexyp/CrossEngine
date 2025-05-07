@@ -21,6 +21,7 @@ namespace CrossEngine.Loaders
     public static class TextureLoader
     {
         public static WeakReference<Texture> DefaultTexture { get; private set; }
+        public static WeakReference<Texture> WhiteTexture { get; private set; }
 
         // wtf, how is this not crashing the whole thing?
         // (the static ctor is very funky - nobody knows when or how it gets called
@@ -41,18 +42,20 @@ namespace CrossEngine.Loaders
             //DefaultTexture.GetValue().SetData(&col, sizeof(uint));
 
             DefaultTexture = LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.default_texture.png"));
-        
+            WhiteTexture = LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.utils.white.png"));
         }
 
         internal static void Shutdown()
         {
             DefaultTexture.Dispose();
+            WhiteTexture.Dispose();
             DefaultTexture = null;
+            WhiteTexture = null;
         }
 
         public static async Task<WeakReference<Texture>> LoadTextureFromFile(string filepath, ColorFormat? desiredFormat = null)
         {
-            using (Stream stream = await PlatformHelper.FileRead(filepath))
+            using (Stream stream = await PlatformHelper.FileReadAsync(filepath))
             {
                 return LoadTextureFromStream(stream, desiredFormat);
             }

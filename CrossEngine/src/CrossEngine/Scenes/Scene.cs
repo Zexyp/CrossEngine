@@ -38,6 +38,7 @@ namespace CrossEngine.Scenes
             World.RegisterSystem(new RenderSystem());
             World.RegisterSystem(new MeshRendererSystem());
             World.RegisterSystem(new CrossEngine.FX.Particles.ParticleSystemSystem());
+            World.RegisterSystem(new ScriptSystem());
         }
 
         public Entity GetEntityById(int id)

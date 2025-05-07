@@ -47,7 +47,7 @@ namespace CrossEngine.Assets
             else guid = Guid.Empty;
         }
 
-        public string GetName() => Name ?? Id.ToString();
+        public virtual string GetName() => Name ?? Id.ToString();
     }
 
     public abstract class FileAsset : Asset
@@ -68,5 +68,7 @@ namespace CrossEngine.Assets
 
             RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
         }
+
+        public override string GetName() => Name ?? RelativePath ?? Id.ToString();
     }
 }

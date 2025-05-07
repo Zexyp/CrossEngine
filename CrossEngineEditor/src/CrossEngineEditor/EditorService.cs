@@ -33,6 +33,7 @@ using CrossEngine.Events;
 using CrossEngine.Platform.Glfw;
 using CrossEngine.Utils.Extensions;
 using CrossEngine.Utils.IO;
+using CrossEngineEditor.Modals.Importer;
 
 namespace CrossEngineEditor
 {
@@ -58,6 +59,8 @@ namespace CrossEngineEditor
 
         private Stream GetIconStream() => Assembly.GetAssembly(typeof(Application))
             .GetManifestResourceStream("CrossEngine.res.logo.png");
+
+        private List<ImportModal> _importers = new();
 
         public EditorService()
         {
@@ -87,6 +90,10 @@ namespace CrossEngineEditor
             Panels.RegisterPanel(new GamePanel());
             Panels.RegisterPanel(new AssetListPanel());
             Panels.RegisterPanel(new SimpleThemeGeneratorPanel());
+            
+            _importers.Add(new ObjImport());
+            _importers.Add(new MtlImport());
+            _importers.Add(new AtlasImport());
             
 #if DEBUG
             Panels.PushPanel(new WidgetTestPanel());
@@ -129,7 +136,6 @@ namespace CrossEngineEditor
 
             });
             var rs = Manager.GetService<RenderService>();
-            rs.MainSurface.Update += OnRender;
             rs.Execute(() =>
             {
                 dockspaceIconTexture = TextureLoader.LoadTextureFromStream(GetIconStream());
@@ -137,15 +143,18 @@ namespace CrossEngineEditor
             });
 
             Init();
+            
+            rs.MainSurface.Update += OnRender;
         }
 
         public override void OnDetach()
         {
-            Deinit();
-
             // dispose visuals
             var rs = Manager.GetService<RenderService>();
             rs.MainSurface.Update -= OnRender;
+            
+            Deinit();
+            
             rs.Execute(() =>
             {
                 dockspaceIconTexture.Dispose();
@@ -283,7 +292,7 @@ namespace CrossEngineEditor
                 var disable = Context.Assets == null;
                 if (disable) ImGui.BeginDisabled();
                 var name = GetCurrentSceneAsset()?.GetName();
-                name ??= Context.Scene == null ? "<null>" : "<unknown>";
+                name ??= Context.Scene == null ? InspectDrawer.NullExpression : "<unknown>";
                 ImGui.SetNextItemWidth(120);
                 if (ImGui.BeginCombo("Scene", name))
                 {
@@ -399,18 +408,29 @@ namespace CrossEngineEditor
                         
                         AppendRecent(Project.Filepath);
                     }
-                    
-                    if (ImGui.MenuItem("New...")) Panels.PushModal(new CreateProjectModal() {Callback = path =>
+
+                    if (ImGui.MenuItem("New..."))
                     {
-                        if (Path.Exists(path))
+                        DialogDestructive(() =>
                         {
-                            DialogGenericError();
-                            return;
-                        }
-                        Project = new EditorProject();
-                        Project.Filepath = path;
-                        SaveProject();
-                    }});
+                            Panels.PushModal(new CreateProjectModal() {Callback = path =>
+                            {
+                                Context.Clear().ContinueWith(t =>
+                                {
+                                    if (Path.Exists(path))
+                                    {
+                                        DialogGenericError();
+                                        return;
+                                    }
+
+                                    Project = new EditorProject();
+                                    Project.Filepath = path;
+                                    SaveProject();
+                                });
+
+                            }});
+                        });
+                    }
                     if (ImGui.MenuItem("Open..."))
                     {
                         DialogDestructive(() =>
@@ -426,9 +446,14 @@ namespace CrossEngineEditor
                     {
                         for (int i = 0; i < _recentProjects.Count; i++)
                         {
-                            var propth = _recentProjects[i];
-                            if (ImGui.Selectable(propth))
-                                DialogDestructive(() => OpenProject(propth));
+                            var projpath = _recentProjects[i];
+                            if (ImGui.Selectable(projpath))
+                            {
+                                if (File.Exists(projpath)) DialogDestructive(() => OpenProject(projpath));
+                                else Panels.PushModal(new ActionModal("File not found.\nRemove from recents?", "Upsík dupsík", ActionModal.ButtonFlags.Yes | ActionModal.ButtonFlags.Cancel) {Success =
+                                    () => _recentProjects.Remove(projpath)
+                                });
+                            }
                         }
 
                         ImGui.Separator();
@@ -450,6 +475,20 @@ namespace CrossEngineEditor
                             if (t.Result == null) return;
                             Project.Save(Context, t.Result);
                         });
+                    }
+                    ImGui.Separator();
+                    if (ImGui.BeginMenu("Import", Context.Assets != null))
+                    {
+                        for (int i = 0; i < _importers.Count; i++)
+                        {
+                            var importer = _importers[i];
+                            if (ImGui.MenuItem(importer.GetType().Name))
+                            {
+                                importer.Open = true;
+                                Panels.PushModal(importer);
+                            }
+                        }
+                        ImGui.EndMenu();
                     }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Quit"))
@@ -594,12 +633,14 @@ namespace CrossEngineEditor
             {
                 ediini["recents"].Write($"recent{i}", _recentProjects[i]);
             }
-            IniFile.Dump(ediini, File.OpenWrite(ConfigRecentsPath));
+            IniFile.Dump(ediini, File.Create(ConfigRecentsPath));
         }
 
         private void AppendRecent(string filepath)
         {
-            if (!_recentProjects.Contains(filepath)) _recentProjects.Add(filepath);
+            if (_recentProjects.Contains(filepath))
+                _recentProjects.Remove(filepath);
+            _recentProjects.Insert(0, filepath);
         }
     }
 }

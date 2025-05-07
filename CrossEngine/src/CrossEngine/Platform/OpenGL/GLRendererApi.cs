@@ -95,6 +95,11 @@ namespace CrossEngine.Platform.OpenGL
             gl.CullFace(GLUtils.ToGLCullFace(face));
         }
 
+        public override void SetDepthMask(bool flag)
+        {
+            gl.DepthMask(flag);
+        }
+
         public override void SetLineWidth(float width) => gl.LineWidth(width);
     }
 }
