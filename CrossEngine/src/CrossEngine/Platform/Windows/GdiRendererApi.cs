@@ -16,6 +16,7 @@ using System.Reflection;
 using static CrossEngine.Display.WindowService;
 using CrossEngine.Platform.OpenGL;
 using System.Runtime.CompilerServices;
+using CrossEngine.Utils.Extensions;
 
 // todo: geometry emission
 namespace CrossEngine.Platform.Windows
@@ -250,6 +251,11 @@ namespace CrossEngine.Platform.Windows
                 (int)(Math.Clamp(r, 0, 1) * 255),
                 (int)(Math.Clamp(g, 0, 1) * 255),
                 (int)(Math.Clamp(b, 0, 1) * 255));
+        }
+
+        public override void SetDepthMask(bool flag)
+        {
+            throw new NotImplementedException();
         }
     }
 }
