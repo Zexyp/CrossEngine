@@ -67,20 +67,22 @@ namespace CrossEngineEditor.Panels
                 ImGui.TextDisabled("No scene");
                 return;
             }
-            
-            if (DrawCamera == null)
-            {
-                ImGui.TextDisabled("No camera");
-                return;
-            }
 
             // needs to be set back so SceneManager can render only from given scene data
             // as of latest rewrite this is not valid
             // wtf is this comment
             var renderSys = Scene.World.GetSystem<RenderSystem>();
-            if (!renderSys.GraphicsInitialized || Framebuffer == null) // reeeeeee
+            if (!renderSys.GraphicsInitialized || Framebuffer == null)
+            {
+                ImGui.TextDisabled("Initializing...");
                 return;
+            }
             renderSys.OverrideCamera = DrawCamera;
+            if (renderSys.DrawCamera == null)
+            {
+                ImGui.TextDisabled("No camera");
+                return;
+            }
 
             var viewportBuffer = Framebuffer.GetValue();
             viewportBuffer.Bind();
@@ -109,8 +111,7 @@ namespace CrossEngineEditor.Panels
             spec.Attachments = new FramebufferAttachmentSpecification(
                 // using floating point colors
                 new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F),
-                new FramebufferTextureSpecification(TextureFormat.ColorR32I),
-                new FramebufferTextureSpecification(TextureFormat.Depth24Stencil8)
+                new FramebufferTextureSpecification(TextureFormat.ColorR32I)
                 );
             spec.Width = 1;
             spec.Height = 1;

@@ -14,6 +14,7 @@
 
   <!-- core packages -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.VsixColorCompiler" Version="17.0.31709.430" />
     <PackageReference Include="StbImageSharp" Version="2.27.13" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
@@ -24,7 +25,7 @@
     <EmbeddedResource Include="res/logo.png" />
     <EmbeddedResource Include="res/default_texture.png" />
     <EmbeddedResource Include="res/utils/debug_font_atlas.png" />
-    <EmbeddedResource Include="res/utils/white.png" />
+    <EmbeddedResource Include="res/utils/textures/**" />
     <EmbeddedResource Include="res/shaders/**" />
   </ItemGroup>
 
@@ -63,9 +64,6 @@
     <Compile Remove="src\CrossEngine\Platform\*\**" />
     <Compile Remove="src\CrossEngine\Utils\ImGui\**" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="res\shaders\lights.glsl" />
-  </ItemGroup>
 
   <!--
   <ItemGroup>
@@ -75,8 +73,8 @@
 
   <!-- ##### platform branching stuff ##### -->
   <Target Name="LogOSPlatform" BeforeTargets="Build">
-    <Message Text="This is pain..." Importance="High"/>
-    <Message Text="Platform is '$(OSPlatform)'" Importance="High"/>
+    <Message Text="This is pain..." Importance="High" />
+    <Message Text="Platform is '$(OSPlatform)'" Importance="High" />
   </Target>
 
   <Choose>

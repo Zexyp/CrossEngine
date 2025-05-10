@@ -4,6 +4,7 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Serialization;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
+using CrossEngine.Utils.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,23 +27,30 @@ namespace CrossEngine.Assets
 
         public override async Task Load(IAssetLoadContext context)
         {
-            using (Stream stream = await context.OpenRelativeStream(RelativePath))
-            {
-                Texture = TextureLoader.LoadTextureFromStream(stream);
-            }
+            if (RelativePath?.StartsWith("internal:") != true)
+                using (Stream stream = await context.OpenRelativeStream(RelativePath))
+                {
+                    Texture = TextureLoader.LoadTextureFromStream(stream);
+                }
+            else
+                switch (RelativePath.RemovePrefix("internal:"))
+                {
+                    case "default": Texture = TextureLoader.DefaultTexture; break;
+                    case "white": Texture = TextureLoader.WhiteTexture; break;
+                    case "black": Texture = TextureLoader.BlackTexture; break;
+                    case "normal": Texture = TextureLoader.NormalTexture; break;
+                }
         }
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            TextureLoader.Free(Texture);            
+            TextureLoader.Free(Texture);
             Texture = null;
         }
     }
 
     public class SkyboxAsset : TextureAsset
     {
-        public WeakReference<Texture> Texture = null;
-        
         public override bool Loaded => Texture != null;
 
         //[EditorEnum]

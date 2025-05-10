@@ -12,13 +12,13 @@ namespace CrossEngine.Utils.Collections
 {
     public interface IOrderedDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IOrderedDictionary { }
 
-    internal class OrderedDictionary<TKey, TValue> : OrderedDictionary, IOrderedDictionary<TKey, TValue>
+    internal class OrderedDictionary<TKey, TValue> : OrderedDictionary, IOrderedDictionary<TKey, TValue>, IEnumerable<KeyValuePair<TKey, TValue>>
     {
         public TValue this[TKey key] { get => (TValue)base[key]; set => base[key] = value; }
 
-        ICollection<TKey> IDictionary<TKey, TValue>.Keys => base.Keys.Cast<TKey>().ToArray();
+        public ICollection<TKey> Keys => base.Keys.Cast<TKey>().ToArray();
 
-        ICollection<TValue> IDictionary<TKey, TValue>.Values => base.Values.Cast<TValue>().ToArray();
+        public ICollection<TValue> Values => base.Values.Cast<TValue>().ToArray();
 
         public void Add(TKey key, TValue value)
         {
@@ -70,12 +70,12 @@ namespace CrossEngine.Utils.Collections
             return false;
         }
 
-        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
             return new Enumerator(base.Keys.GetEnumerator(), base.Values.GetEnumerator());
         }
 
-        public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, IEnumerator
+        public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, IEnumerator, IDictionaryEnumerator
         {
             private IEnumerator _keys;
             private IEnumerator _values;
@@ -83,6 +83,10 @@ namespace CrossEngine.Utils.Collections
             public KeyValuePair<TKey, TValue> Current => new KeyValuePair<TKey, TValue>((TKey)_keys.Current, (TValue)_values.Current);
 
             object IEnumerator.Current => Current;
+
+            public DictionaryEntry Entry => new(_keys.Current, _values.Current);
+            public object Key => _keys.Current;
+            public object Value => _values.Current;
 
             public Enumerator(IEnumerator keys, IEnumerator values)
             {

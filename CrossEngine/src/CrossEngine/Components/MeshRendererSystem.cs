@@ -62,13 +62,16 @@ public class MeshRendererSystem : Ecs.System
             ((IMeshRenderData)component).Renderer = renderer;
             return;
         }
-        
-        World.GetSystem<RenderSystem>().RendererRequest(() => // deal with it
+        else
         {
-            var renderer = new MeshRenderer();
-            renderer.Setup(mesh);
-            _renderers.Add(mesh, renderer);
-            ((IMeshRenderData)component).Renderer = renderer;
-        });
+            var newRenderer = new MeshRenderer();
+            _renderers.Add(mesh, newRenderer);
+            ((IMeshRenderData)component).Renderer = newRenderer;
+            
+            World.GetSystem<RenderSystem>().RendererRequest(() => // deal with it
+            {
+                newRenderer.Setup(mesh);
+            });
+        }
     }
 }

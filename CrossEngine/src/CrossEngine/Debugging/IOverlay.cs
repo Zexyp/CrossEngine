@@ -25,20 +25,20 @@ namespace CrossEngine.Debugging
 
     public abstract class HudOverlay : IOverlay
     {
-        protected readonly Camera Camera = new Camera();
+        protected readonly Camera HudCamera = new Camera();
         protected Vector2 Size;
 
         public virtual void Resize(float width, float height)
         {
             Size = new Vector2(width, height);
 
-            Camera.ProjectionMatrix = Matrix4x4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
+            HudCamera.ProjectionMatrix = Matrix4x4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
         }
 
         public virtual void Draw()
         {
-            Renderer2D.BeginScene(((ICamera)Camera).GetViewProjectionMatrix());
-            LineRenderer.BeginScene(((ICamera)Camera).GetViewProjectionMatrix());
+            Renderer2D.BeginScene(((ICamera)HudCamera).GetViewProjectionMatrix());
+            LineRenderer.BeginScene(((ICamera)HudCamera).GetViewProjectionMatrix());
 
             var prevTextMode = TextRendererUtil.SetMode(TextRendererUtil.DrawMode.YDown);
 

@@ -13,7 +13,6 @@ public interface IAmbientLightRenderData : ILightRenderData;
 public interface IPointLightRenderData : ILightRenderData
 {
     Vector3 Position { get; }
-    float Radius { get; }
 }
 
 public interface IDirectionalLightRenderData : ILightRenderData
@@ -24,5 +23,5 @@ public interface IDirectionalLightRenderData : ILightRenderData
 public interface ISpotLightRenderData : IDirectionalLightRenderData, IPointLightRenderData
 {
     float Angle { get; }
-    float Blend { get; }
+    float Blend => 0;
 }

@@ -92,11 +92,10 @@ namespace CrossEngineEditor
             Panels.RegisterPanel(new SimpleThemeGeneratorPanel());
             
             _importers.Add(new ObjImport());
-            _importers.Add(new MtlImport());
             _importers.Add(new AtlasImport());
             
 #if DEBUG
-            Panels.PushPanel(new WidgetTestPanel());
+            //Panels.PushPanel(new WidgetTestPanel());
 #endif
         }
 
@@ -457,18 +456,23 @@ namespace CrossEngineEditor
                         }
 
                         ImGui.Separator();
-                        
+
                         if (ImGui.MenuItem("Clear"))
-                            _recentProjects.Clear();
+                            DialogDestructive(_recentProjects.Clear);
                         
                         ImGui.EndMenu();
                     }
                     ImGui.Separator();
-                    if (ImGui.MenuItem("Save"))
+                    if (ImGui.MenuItem("Close", Project != null))
+                    {
+                        DialogDestructive(() => { Project = null; });
+                    }
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Save", Project != null))
                     {
                         SaveProject();
                     }
-                    if (ImGui.MenuItem("Save As..."))
+                    if (ImGui.MenuItem("Save As...", Project != null))
                     {
                         DialogFileSave().ContinueWith(t =>
                         {
@@ -538,7 +542,12 @@ namespace CrossEngineEditor
                 ImGui.SameLine();
                 DrawSceneDropdown();
 
+                ImGui.SameLine();
+                if (ImGui.Button("start") && Context.Scene != null)
+                    SceneManager.Start(Context.Scene);
+
                 var projectText = Project == null ? "*" : Project.Filepath;
+                projectText ??= "Initializing...";
                 ImGui.SameLine(ImGui.GetWindowWidth() - ImGui.CalcTextSize(projectText).X - ImGui.GetStyle().ItemSpacing.X * 2);
                 ImGui.TextDisabled(projectText);
 
@@ -638,6 +647,9 @@ namespace CrossEngineEditor
 
         private void AppendRecent(string filepath)
         {
+            if (filepath == null)
+                return;
+
             if (_recentProjects.Contains(filepath))
                 _recentProjects.Remove(filepath);
             _recentProjects.Insert(0, filepath);

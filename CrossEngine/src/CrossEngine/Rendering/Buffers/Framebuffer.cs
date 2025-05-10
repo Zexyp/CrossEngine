@@ -47,7 +47,7 @@ namespace CrossEngine.Rendering.Buffers
         // TODO: wrap
         // TODO: enabled
 
-        public bool Enabled;
+        public bool Enabled = true;
 
         public FramebufferTextureSpecification(TextureFormat format, FilterParameter filter = FilterParameter.Default, WrapParameter wrap = WrapParameter.Default)
         {
@@ -113,11 +113,13 @@ namespace CrossEngine.Rendering.Buffers
         public abstract void Unbind();
 
         public abstract void Resize(uint width, uint height);
-        public abstract void ClearAttachment(int attachmentIndex, int value);
+        public abstract void ClearAttachment(int attachmentIndex, IntVec4 value);
         public abstract void ClearAttachment(int attachmentIndex, Vector4 value);
         public abstract int ReadPixel(int attachmentIndex, uint x, uint y);
         public abstract uint GetColorAttachmentRendererID(int attachmentIndex = 0);
-        public abstract void BindColorAttachment(int attachmentIndex, uint slot = 0);
+        public abstract uint GetDepthAttachmentRendererID();
+        public abstract void BindColorAttachment(int attachmentIndex = 0, uint slot = 0);
+        public abstract void BindDepthAttachment(uint slot = 0);
         public abstract void BlitTo(WeakReference<Framebuffer>? target, IList<(int from, int to)> attachmentIndexes = null);
         public abstract void BlitDepthTo(WeakReference<Framebuffer>? target);
         public abstract void EnableColorAttachments(IList<int> attachmentIndexes = null);

@@ -45,8 +45,7 @@ namespace CrossEngine.Core
                 Profiler.EndScope();
             }
 
-            sw.Reset();
-            sw.Start();
+            sw.Restart();
         }
 
         public override void OnAttach()

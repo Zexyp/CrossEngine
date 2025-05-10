@@ -15,6 +15,9 @@ using CrossEngine.Core.Services;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Utils.Collections;
+using System.Diagnostics;
+using Microsoft.VisualBasic;
+using System.Security.Cryptography;
 
 namespace CrossEngine.Assets
 {
@@ -25,10 +28,12 @@ namespace CrossEngine.Assets
         [EditorString]
         public string RuntimeFilepath;
 
-        Dictionary<Type, Dictionary<Guid, Asset>> _collections = new();
-        bool _loaded = false;
-        
         public bool IsLoaded => _loaded;
+
+        Dictionary<Type, Dictionary<Guid, Asset>> _collections = new();
+        Dictionary<string, List<FileAsset>> _fileAssets = new(new PathEqualityComparer());
+        
+        bool _loaded = false;
 
         public void Add(Asset asset)
         {
@@ -40,14 +45,45 @@ namespace CrossEngine.Assets
                 _collections.Add(type, new Dictionary<Guid, Asset>());
             
             _collections[type].Add(asset.Id, asset);
+
+            if (asset is FileAsset fasset)
+            {
+                if (fasset.RelativePath != null)
+                {
+                    // add
+                    if (!_fileAssets.TryGetValue(fasset.RelativePath, out var list))
+                        _fileAssets.Add(fasset.RelativePath, list = new());
+
+                    list.Add(fasset);
+                }
+
+                fasset.RelativePathChanged += OnFileAssetPathChanged;
+            }
         }
 
         public void Remove(Asset asset)
         {
+            if (asset is FileAsset fasset)
+            {
+                fasset.RelativePathChanged -= OnFileAssetPathChanged;
+
+                if (fasset.RelativePath != null)
+                {
+                    // remove
+                    if (!_fileAssets.TryGetValue(fasset.RelativePath, out var list))
+                    {
+                        list.Remove(fasset);
+                        if (list.Count == 0)
+                            _fileAssets.Remove(fasset.RelativePath);
+                    }
+                }
+            }
+
             Type type = asset.GetType();
             
             var col = _collections[type];
-            col.Remove(asset.Id);
+            var result = col.Remove(asset.Id);
+            Debug.Assert(result);
 
             if (col.Count == 0)
                 _collections.Remove(type);
@@ -96,7 +132,7 @@ namespace CrossEngine.Assets
         public IEnumerable<Asset> GetCollection(Type ofType)
         {
             IEnumerable<Asset> coll = Enumerable.Empty<Asset>();
-            foreach (var pair in _collections)
+            foreach (KeyValuePair<Type, Dictionary<Guid, Asset>> pair in _collections)
             {
                 if (ofType.IsAssignableFrom(pair.Key))
                     coll = coll.Concat(pair.Value.Values);
@@ -130,7 +166,7 @@ namespace CrossEngine.Assets
             if (_collections.ContainsKey(ofType))
                 return true;
             
-            foreach (var pair in _collections)
+            foreach (KeyValuePair<Type, Dictionary<Guid, Asset>> pair in _collections)
             {
                 if (ofType.IsAssignableFrom(pair.Key))
                     return true;
@@ -138,6 +174,13 @@ namespace CrossEngine.Assets
             
             return false;
         }
+
+        //public void MoveCollection(Type typeOfCollection, int index)
+        //{
+        //    Debug.Assert(_collections.Contains(typeOfCollection));
+        //    _collections.Remove(typeOfCollection, out var value);
+        //    _collections.Insert(index, typeOfCollection, value);
+        //}
 
         // funny
         public IEnumerable<(Type, IEnumerable<Asset>)> Enumerate()
@@ -175,7 +218,7 @@ namespace CrossEngine.Assets
         public async Task<bool> UnloadAll()
         {
             var result = true;
-            foreach (var col in _collections.Values)
+            foreach (var col in _collections.Reverse().Select(p => p.Value))
             {
                 foreach (Asset asset in col.Values)
                 {
@@ -194,7 +237,6 @@ namespace CrossEngine.Assets
             {
                 if (!asset.Loaded)
                     await asset.Load(this);
-                return true;
             }
             catch (Exception ex)
             {
@@ -202,6 +244,8 @@ namespace CrossEngine.Assets
                 Log.Default.Trace($"load asset '{asset}' failure details: {ex}");
                 return false;
             }
+
+            return true;
         }
 
         public async Task<bool> UnloadAsset(Asset asset)
@@ -210,13 +254,37 @@ namespace CrossEngine.Assets
             {
                 if (asset.Loaded)
                     await asset.Unload(this);
-                return true;
             }
             catch (Exception ex)
             {
                 Log.Default.Error($"failed to unload asset '{asset}': {ex.GetType().FullName}:\n{ex.Message}");
                 Log.Default.Trace($"unload asset '{asset}' failure details: {ex}");
                 return false;
+            }
+
+            return true;
+        }
+
+        private void OnFileAssetPathChanged(FileAsset fasset, string old)
+        {
+            if (old != null)
+            {
+                // remove
+                if (!_fileAssets.TryGetValue(old, out var list))
+                {
+                    list.Remove(fasset);
+                    if (list.Count == 0)
+                        _fileAssets.Remove(old);
+                }
+            }
+            
+            if (fasset.RelativePath != null)
+            {
+                // add
+                if (!_fileAssets.TryGetValue(fasset.RelativePath, out var list))
+                    _fileAssets.Add(fasset.RelativePath, list = new());
+
+                list.Add(fasset);
             }
         }
 
@@ -233,14 +301,25 @@ namespace CrossEngine.Assets
 
         public Asset GetDependency(Type type, Guid id)
         {
-            return Get(type, id);
+            var asset = Get(type, id);
+            if (asset?.Loaded == false) LoadAsset(asset);
+            return asset;
+        }
+
+        public Asset GetFileAsset(Type type, string file)
+        {
+            Asset result = null;
+            if (_fileAssets.TryGetValue(file, out var ls))
+                result = ls.FirstOrDefault();
+            LoadAsset(result);
+            return result;
         }
         #endregion
 
         #region ISerializable
         void ISerializable.GetObjectData(SerializationInfo info)
         {
-            info.AddValue("DirectoryOffset", DirectoryOffset);
+            info.AddValue(nameof(DirectoryOffset), DirectoryOffset);
             List<Asset> imTooLazy = new();
             foreach (var col in _collections.Values)
                 foreach (Asset asset in col.Values)
@@ -250,7 +329,7 @@ namespace CrossEngine.Assets
 
         void ISerializable.SetObjectData(SerializationInfo info)
         {
-            DirectoryOffset = info.GetValue("DirectoryOffset", DirectoryOffset);
+            DirectoryOffset = info.GetValue(nameof(DirectoryOffset), DirectoryOffset);
 
             var assets = info.GetValue<Asset[]>("Assets");
             for (int i = 0; i < assets.Length; i++)
@@ -259,5 +338,27 @@ namespace CrossEngine.Assets
             }
         }
         #endregion
+
+        private class PathEqualityComparer : IEqualityComparer<string>
+        {
+            public bool Equals(string path1, string path2)
+            {
+                string norm1 = NormalizePath(path1);
+                string norm2 = NormalizePath(path2);
+
+                return string.Equals(norm1, norm2);
+            }
+
+            public int GetHashCode(string path)
+            {
+                string norm = NormalizePath(path);
+                return norm.GetHashCode();
+            }
+
+            private string NormalizePath(string path)
+            {
+                return path.Replace("\\", "/");
+            }
+        }
     }
 }

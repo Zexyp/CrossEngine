@@ -12,79 +12,130 @@ using CrossEngine.Geometry;
 using CrossEngine.Serialization;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Extensions;
+using System.ComponentModel.DataAnnotations;
+using static CrossEngine.Loaders.MeshLoader;
 
 namespace CrossEngine.Assets
 {
-    public class MeshAsset : Asset
+    public abstract class MeshAsset : Asset
     {
-        public IMesh Mesh;
-        public override bool Loaded => Mesh != null;
-        
+        public abstract IMesh Mesh { get; }
+    }
+
+    public class GeneratedMeshAsset : MeshAsset
+    {
+        public override bool Loaded => _mesh != null;
+
+        public override IMesh Mesh => _mesh;
+
         [EditorString]
-        public string RelativePath;
+        public string Generate;
+
+        private IMesh _mesh;
 
         public override async Task Load(IAssetLoadContext context)
         {
-            if (RelativePath.StartsWith("internal:"))
+            if (Generate?.StartsWith("internal:") == true)
             {
-                switch (RelativePath.RemovePrefix("internal:"))
+                switch (Generate.RemovePrefix("internal:"))
                 {
-                    case "cube": Mesh = MeshGenerator.GenerateCube(Vector3.One); break;
-                    case "plane": Mesh = MeshGenerator.GenerateGrid(Vector2.One); break;
+                    case "cube": _mesh = MeshGenerator.GenerateCube(Vector3.One); break;
+                    case "plane": _mesh = MeshGenerator.GenerateGrid(Vector2.One); break;
                 }
             }
         }
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            Mesh = null;
+            _mesh = null;
         }
 
         public override void GetObjectData(SerializationInfo info)
         {
             base.GetObjectData(info);
-            
-            info.AddValue(nameof(RelativePath), RelativePath);
+
+            info.AddValue(nameof(Generate), Generate);
         }
-        
+
         public override void SetObjectData(SerializationInfo info)
         {
             base.SetObjectData(info);
-            
-            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
+
+            Generate = info.GetValue(nameof(Generate), Generate);
         }
     }
-    
-    public class ObjMeshAsset : MeshAsset
+
+    public class ObjMeshReferenceAsset : MeshAsset
     {
+        [EditorAsset]
+        public ObjModelAsset Parent
+        {
+            get => parent;
+            set => SetChildId(value, ref parent, ref idParent);
+        }
+        public override IMesh Mesh => parent?.Meshes?.TryGetValue(MeshName, out var m) == true ? m : null;
+
+        public override bool Loaded => parent?.Meshes?.ContainsKey(MeshName) == true;
+
         [EditorString]
         public string MeshName;
-        
+
+        private ObjModelAsset parent = null;
+        private Guid idParent = Guid.Empty;
+
         public override async Task Load(IAssetLoadContext context)
         {
-            using (Stream stream = await context.OpenRelativeStream(RelativePath))
-                Mesh = MeshLoader.ParseObj(stream)[MeshName];
+            parent = context.GetDependency<ObjModelAsset>(idParent);
         }
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            Mesh = null;
+            parent = null;
         }
 
         public override void GetObjectData(SerializationInfo info)
         {
             base.GetObjectData(info);
-            
-            info.AddValue(nameof(RelativePath), RelativePath);
+
+            info.AddValue(nameof(Parent), idParent);
             info.AddValue(nameof(MeshName), MeshName);
         }
 
         public override void SetObjectData(SerializationInfo info)
         {
             base.SetObjectData(info);
-            
-            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
+
+            idParent = info.GetValue(nameof(Parent), idParent);
             MeshName = info.GetValue(nameof(MeshName), MeshName);
+        }
+    }
+    
+    public class ObjModelAsset : FileAsset
+    {
+        public Dictionary<string, WavefrontMesh> Meshes { get; private set; }
+
+        public override bool Loaded => Meshes != null;
+
+        public ObjModelAsset()
+        {
+
+        }
+
+        public ObjModelAsset(Dictionary<string, WavefrontMesh> meshes)
+        {
+            Meshes = meshes;
+        }
+
+        public override async Task Load(IAssetLoadContext context)
+        {
+            if (Meshes == null)
+                using (Stream stream = await context.OpenRelativeStream(RelativePath))
+                    Meshes = MeshLoader.ParseObj(stream, out _);
+        }
+
+        public override async Task Unload(IAssetLoadContext context)
+        {
+            Meshes = null;
         }
     }
 }

@@ -16,8 +16,11 @@ namespace CrossEngine.Assets
 
         public override async Task Load(IAssetLoadContext context)
         {
-            using (var stream = await context.OpenRelativeStream(RelativePath))
-                Shader = ShaderPreprocessor.CreateProgramFromStream(stream);
+            if (RelativePath?.StartsWith("internal:") != true)
+                using (var stream = await context.OpenRelativeStream(RelativePath))
+                    Shader = ShaderPreprocessor.CreateProgramFromStream(stream);
+            else
+                Shader = ShaderPreprocessor.CreateProgramFromStream(ShaderPreprocessor.GetInternalShader(RelativePath));
         }
 
         public override async Task Unload(IAssetLoadContext context)

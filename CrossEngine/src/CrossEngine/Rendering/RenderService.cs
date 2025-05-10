@@ -18,6 +18,7 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Buffers;
 using System.Numerics;
 using CrossEngine.Utils.Rendering;
+using System.Diagnostics;
 
 namespace CrossEngine.Rendering
 {
@@ -27,6 +28,8 @@ namespace CrossEngine.Rendering
         public ScreenSurface MainSurface => _surface;
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
+        private Stopwatch _sw = new Stopwatch();
+        private double _lastFrameDuration = 0;
         GraphicsContext _context;
         GraphicsApi _api;
         ScreenSurface _surface = new ScreenSurface();
@@ -52,12 +55,26 @@ namespace CrossEngine.Rendering
             ws.Execute(Destroy);
         }
 
+        public override void OnInit()
+        {
+
+        }
+
+        public override void OnDestroy()
+        {
+
+        }
+
         public Task Execute(Action action) => _scheduler.Schedule(action);
         public Task<TResult> Execute<TResult>(Func<TResult> func) => _scheduler.Schedule(func);
         public TaskScheduler GetScheduler() => _scheduler;
 
+        public double GetLastFrameDuration() => _lastFrameDuration;
+
         private void Setup()
         {
+            _sw.Restart();
+
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent += OnWindowEvent;
             ws.WindowUpdate += OnWindowUpdate;
@@ -101,18 +118,9 @@ namespace CrossEngine.Rendering
 
             _context.Dispose();
             _context = null;
-        }
 
-        private void CallingThreadSetup()
-        {
-            ShaderPreprocessor.ServiceRequest = Execute;
-            TextureLoader.ServiceRequest = Execute;
-        }
-
-        private void CallingThreadDestroy()
-        {
-            TextureLoader.ServiceRequest = null;
-            ShaderPreprocessor.ServiceRequest = null;
+            _sw.Stop();
+            _lastFrameDuration = _sw.Elapsed.TotalSeconds;
         }
 
         private void OnWindowEvent(Window w, Event e)
@@ -145,6 +153,9 @@ namespace CrossEngine.Rendering
 
         private void DrawPresent(GraphicsContext context)
         {
+            _lastFrameDuration = _sw.Elapsed.TotalSeconds;
+            _sw.Restart();
+
             Profiler.BeginScope("Render");
 
             _scheduler.RunOnCurrentThread();
@@ -162,15 +173,9 @@ namespace CrossEngine.Rendering
 
         private void Prepare()
         {
-            Task OnServiceRequest(Action action)
-            {
-                action.Invoke();
-                return Task.CompletedTask;
-            }
+            RenderThreadSetup();
 
-            ShaderPreprocessor.ServiceRequest = OnServiceRequest;
             ShaderPreprocessor.Init();
-            TextureLoader.ServiceRequest = OnServiceRequest;
             TextureLoader.Init();
 
             Renderer2D.Init(_context.Api);
@@ -189,22 +194,42 @@ namespace CrossEngine.Rendering
             Renderer2D.Shutdown();
 
             TextureLoader.Shutdown();
-            TextureLoader.ServiceRequest = null;
             ShaderPreprocessor.Shutdown();
+
+            RenderThreadDestroy();
+        }
+
+        private void CallingThreadSetup()
+        {
+            ShaderPreprocessor.ServiceRequest = Execute;
+            TextureLoader.ServiceRequest = Execute;
+        }
+
+        private void CallingThreadDestroy()
+        {
+            TextureLoader.ServiceRequest = null;
+            ShaderPreprocessor.ServiceRequest = null;
+        }
+
+        private void RenderThreadSetup()
+        {
+            Task OnServiceRequest(Action action)
+            {
+                action.Invoke();
+                return Task.CompletedTask;
+            }
+
+            ShaderPreprocessor.ServiceRequest = OnServiceRequest;
+            TextureLoader.ServiceRequest = OnServiceRequest;
+        }
+
+        private void RenderThreadDestroy()
+        {
+            TextureLoader.ServiceRequest = null;
             ShaderPreprocessor.ServiceRequest = null;
         }
 
         private void OnInternalServiceReqest(Action action) => Execute(action);
-
-        public override void OnInit()
-        {
-            
-        }
-
-        public override void OnDestroy()
-        {
-
-        }
 
         public class ScreenSurface : ISurface
         {

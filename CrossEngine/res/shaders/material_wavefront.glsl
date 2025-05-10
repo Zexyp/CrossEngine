@@ -7,5 +7,7 @@ struct WavefrontMaterial {
     float Disolve;
     float RefractiveIndex;
     sampler2D MapDiffuse;
+    sampler2D MapSpecular;
+    sampler2D MapSpecularHighlight;
+    sampler2D MapNormal;
 };
-    

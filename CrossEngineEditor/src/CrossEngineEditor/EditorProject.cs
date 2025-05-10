@@ -23,7 +23,7 @@ public class EditorProject
         IniFile ini = new IniFile();
         Filepath = filepath;
 
-        var alistfile = context.Assets?.RuntimeFilepath;
+        var alistfile = context.Assets != null ? Path.GetRelativePath(Path.GetDirectoryName(filepath), context.Assets.RuntimeFilepath) : null;
         ini["context"].Write("Assets", alistfile ?? "null");
         var sceneId = EditorApplication.Service.GetCurrentSceneAsset()?.Id;
         ini["context"].Write("Scene", sceneId != null ? sceneId.ToString() : "null");
@@ -56,7 +56,7 @@ public class EditorProject
             task = task.ContinueWith(t =>
                 {
                     EditorService.Log.Trace("reading alist");
-                    return AssetManager.ReadFile(alistfile);
+                    return AssetManager.ReadFile(Path.Join(Path.GetDirectoryName(filepath), alistfile));
                 }).Unwrap()
                 .ContinueWith(t =>
                 {

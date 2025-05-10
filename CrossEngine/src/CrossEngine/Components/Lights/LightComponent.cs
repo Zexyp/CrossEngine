@@ -11,6 +11,9 @@ public abstract class LightComponent : Component, ILightRenderData
     [SerializeInclude]
     [EditorColor]
     public Vector3 Color = Vector3.One;
-    
-    Vector3 ILightRenderData.Color => Color;
+    [SerializeInclude]
+    [EditorDrag]
+    public float Intensity = 1;
+
+    Vector3 ILightRenderData.Color => Color * Intensity;
 }

@@ -1,4 +1,4 @@
-﻿#define LOG_UNUSED
+﻿//#define LOG_UNUSED
 
 using CrossEngine.Rendering.Meshes;
 using System;
@@ -23,11 +23,13 @@ namespace CrossEngine.Loaders
 {
     public static class MeshLoader
     {
-        public struct WavefrontVertex
+        public struct WavefrontVertex : IPosition
         {
             public Vector3 Position;
             public Vector2 TexCoord;
             public Vector3 Normal;
+
+            Vector3 IPosition.Position => Position;
 
             public WavefrontVertex(Vector3 position, Vector2 texCoord, Vector3 normal)
             {
@@ -55,28 +57,49 @@ namespace CrossEngine.Loaders
             public float refractiveIndex;
 
             public WeakReference<Texture> mapDiffuse;
+            public WeakReference<Texture> mapSpecular;
+            public WeakReference<Texture> mapSpecularHighlight;
+            public WeakReference<Texture> mapNormal;
 
             public string texturePathDiffuse;
+            public string texturePathSpecular;
+            public string texturePathSpecularHighlight;
+            public string texturePathNormal;
 
             public WeakReference<ShaderProgram> Shader { get; set; }
+
+            string mountPoint = "uMaterial.";
 
             public void Update(ShaderProgram shader)
             {
                 shader.Use();
-                shader.SetParameterVec3("uMaterial.Ambient", ambient);
-                shader.SetParameterVec3("uMaterial.Diffuse", diffuse);
-                shader.SetParameterVec3("uMaterial.Specular", specular);
-                shader.SetParameterVec3("uMaterial.Emissive", emissive);
-                shader.SetParameterFloat("uMaterial.SpecularExponent", specularExponent);
-                shader.SetParameterFloat("uMaterial.Disolve", disolve);
-                shader.SetParameterFloat("uMaterial.RefractiveIndex", refractiveIndex);
+                shader.SetParameterVec3(mountPoint + "Ambient", ambient);
+                shader.SetParameterVec3(mountPoint + "Diffuse", diffuse);
+                shader.SetParameterVec3(mountPoint + "Specular", specular);
+                shader.SetParameterVec3(mountPoint + "Emissive", emissive);
+                shader.SetParameterFloat(mountPoint + "SpecularExponent", specularExponent);
+                shader.SetParameterFloat(mountPoint + "Disolve", disolve);
+                shader.SetParameterFloat(mountPoint + "RefractiveIndex", refractiveIndex);
                 
-                shader.SetParameterInt("uMaterial.MapDiffuse", 0);
+                shader.SetParameterInt(mountPoint + "MapDiffuse", 0);
                 (mapDiffuse ?? TextureLoader.WhiteTexture).GetValue().Bind(0);
+                shader.SetParameterInt(mountPoint + "MapSpecular", 1);
+                (mapSpecular ?? TextureLoader.WhiteTexture).GetValue().Bind(1);
+                shader.SetParameterInt(mountPoint + "MapSpecularHighlight", 2);
+                (mapSpecularHighlight ?? TextureLoader.WhiteTexture).GetValue().Bind(2);
+                shader.SetParameterInt(mountPoint + "MapNormal", 3);
+                (mapNormal ?? TextureLoader.NormalTexture).GetValue().Bind(3);
             }
 
             public void GetObjectData(SerializationInfo info) => Serializer.UseAttributesWrite(this, info);
             public void SetObjectData(SerializationInfo info) => Serializer.UseAttributesRead(this, info);
+        }
+
+        public class WavefrontMesh : Mesh<WavefrontVertex>
+        {
+            public string MaterialName;
+
+            public WavefrontMesh(WavefrontVertex[] vertices) : base(vertices) { }
         }
 
         static readonly NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = "." };
@@ -94,7 +117,10 @@ namespace CrossEngine.Loaders
             float refractiveIndex = 0;
             
             string texturePathDiffuse = null;
-            
+            string texturePathSpecular = null;
+            string texturePathSpecularHighlight = null;
+            string texturePathNormal = null;
+
             string currentNameMaterial = null;
 
             void CompleteMaterial()
@@ -112,6 +138,9 @@ namespace CrossEngine.Loaders
                 material.refractiveIndex = refractiveIndex;
                 
                 material.texturePathDiffuse = texturePathDiffuse;
+                material.texturePathSpecular = texturePathSpecular;
+                material.texturePathSpecularHighlight = texturePathSpecularHighlight;
+                material.texturePathNormal = texturePathNormal;
 
                 materials[currentNameMaterial] = material;
                 
@@ -173,7 +202,31 @@ namespace CrossEngine.Loaders
                         Debug.Assert(parts.Length == 2);
                         texturePathDiffuse = parts[1];
                         break;
-                    
+                    case var l when l.StartsWith("map_Ks "):
+                        Debug.Assert(parts.Length == 2);
+                        texturePathSpecular = parts[1];
+                        break;
+                    case var l when l.StartsWith("map_Ns "):
+                        Debug.Assert(parts.Length == 2);
+                        texturePathSpecularHighlight = parts[1];
+                        break;
+                    case var l when l.StartsWith("map_Disp "):
+                        Debug.Assert(parts.Length == 2);
+                        texturePathNormal = parts[1];
+                        break;
+                    case var l when l.StartsWith("map_d "):
+                        Debug.Assert(parts.Length == 2);
+#if LOG_UNUSED
+                        Logging.Log.Default.Trace($"map_d '{parts[1]}'");
+#endif
+                        break;
+                    case var l when l.StartsWith("map_Ka "):
+                        Debug.Assert(parts.Length == 2);
+#if LOG_UNUSED
+                        Logging.Log.Default.Trace($"map_Ka '{parts[1]}'");
+#endif
+                        break;
+
                     case var l when l.StartsWith("illum "):
                         Debug.Assert(parts.Length == 2);
 #if LOG_UNUSED
@@ -192,22 +245,25 @@ namespace CrossEngine.Loaders
             return materials;
         }
 
-        public static Dictionary<string, Mesh<WavefrontVertex>> ParseObj(Stream stream)
+        public static Dictionary<string, WavefrontMesh> ParseObj(Stream stream, out string mtllib)
         {
             List<WavefrontVertex> vertices = new();
             List<Vector3> position = new();
             List<Vector3> normal = new();
             List<Vector2> texture = new();
             
-            Dictionary<string, Mesh<WavefrontVertex>> meshes = new();
+            Dictionary<string, WavefrontMesh> meshes = new();
             
             string currentNameMesh = null;
+            string currentNameMaterial = null;
+
+            string materialLib = null;
 
             void CompleteMesh()
             {
                 if (currentNameMesh == null) return;
                 
-                meshes.Add(currentNameMesh, new Mesh<WavefrontVertex>(vertices.ToArray()));
+                meshes.Add(currentNameMesh, new WavefrontMesh(vertices.ToArray()) { MaterialName = currentNameMaterial });
                 
                 vertices.Clear();
             }
@@ -232,15 +288,12 @@ namespace CrossEngine.Loaders
                         break;
                     case var l when l.StartsWith("mtllib "):
                         Debug.Assert(parts.Length == 2);
-#if LOG_UNUSED
-                        Logging.Log.Default.Trace($"mtllib '{parts[1]}'");
-#endif
+                        Debug.Assert(materialLib == null);
+                        materialLib = parts[1];
                         break;
                     case var l when l.StartsWith("usemtl "):
                         Debug.Assert(parts.Length == 2);
-#if LOG_UNUSED
-                        Logging.Log.Default.Trace($"usemtl '{parts[1]}'");
-#endif
+                        currentNameMaterial = parts[1];
                         break;
                     case var l when l.StartsWith("s "):
                         Debug.Assert(parts.Length == 2);
@@ -282,6 +335,7 @@ namespace CrossEngine.Loaders
             
             CompleteMesh();
 
+            mtllib = materialLib;
             return meshes;
         }
 

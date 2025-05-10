@@ -51,20 +51,25 @@ namespace CrossEngineEditor.Panels
         private float SensitivityRotate => EditorApplication.Service.Preferences["navigation"].ReadSingleOrDefault("touchpad.sensitivity.rotate", 8);
         //private ImGuiHelper.ImDrawCallback _callbackHolder;
         private bool _showGbuffers = false;
-        private bool _simpleMove = false;
+        private SimpleOp _simpleOp = SimpleOp.None;
+
+        private enum SimpleOp
+        {
+            None, Translate, Rotate
+        }
 
         public ViewportPanel()
         {
             WindowName = "Viewport";
             WindowFlags = ImGuiWindowFlags.MenuBar;
 
-            AddOverlay(new TransformsOverlay());
+            AddOverlay(new ViewportCullCkecker(), false);
+            AddOverlay(new TransformsOverlay(), false);
             AddOverlay(new CameraOverlay());
             AddOverlay(new IconOverlay());
             AddOverlay(new EmitterOverlay());
             AddOverlay(new SelectedOverlay());
             AddOverlay(new NameOverlay());
-            AddOverlay(new ViewportCullCkecker());
             
             _viewportPass = new ViewportPass() { Overlays = _overlays };
         }
@@ -104,17 +109,8 @@ namespace CrossEngineEditor.Panels
                 Context.ActiveEntity = Context.Scene.GetEntity(result);
             }
             // simple move
-            else if (_simpleMove && Context.ActiveEntity != null && ImGui.IsMouseDragging(ImGuiMouseButton.Left) && Focused)
-            {
-                var trans = Context.ActiveEntity.Transform;
-                if (!_perspective)
-                    trans.WorldPosition += Vector3.Transform(new Vector3(io.MouseDelta.X / ViewportSize.Y * _zoom, -io.MouseDelta.Y / ViewportSize.Y * _zoom, 0), _cameraRotation);
-                else
-                {
-                    var tan = MathF.Tan(_fov) * _zoom;
-                    trans.WorldPosition -= Vector3.Transform(new Vector3(io.MouseDelta.X / ViewportSize.Y * tan, -io.MouseDelta.Y / ViewportSize.Y * tan, 0), _cameraRotation);
-                }
-            }
+            else if (Context.ActiveEntity != null && ImGui.IsMouseDragging(ImGuiMouseButton.Left) && Focused)
+                HandleSimpleOps(io);
 
             // navigation
             else
@@ -132,7 +128,7 @@ namespace CrossEngineEditor.Panels
                 // debug buffers
                 ImGui.SetCursorPos(cursorPos);
                 var buffer = Scene.World.GetSystem<RenderSystem>().Pipeline.Buffer.GetValue();
-                
+
                 //var drawList = ImGui.GetWindowDrawList();
                 //drawList.AddCallback(Marshal.GetFunctionPointerForDelegate<ImGuiHelper.ImDrawCallback>(_callbackHolder = ((drawListPtr, drawCmdPtr) =>
                 //{
@@ -140,22 +136,50 @@ namespace CrossEngineEditor.Panels
                 //    drawCmdPtr->TextureId = (IntPtr)buffer.GetColorAttachmentRendererID(0);
                 //})), IntPtr.Zero);
                 //drawList.AddImage(IntPtr.Zero, Vector2.Zero, Vector2.One * 200);
-                
-                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(0), Vector2.One * 200, 
+
+                var imageSize = ViewportSize * .25f;
+                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(0), imageSize, 
                     new Vector2(0, 1),
                     new Vector2(1, 0));
                 ImGui.SameLine();
-                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(1), Vector2.One * 200, 
-                    new Vector2(0, 1),
-                    new Vector2(1, 0));
-                
-                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(2), Vector2.One * 200, 
+                ImGui.Image((IntPtr)buffer.GetDepthAttachmentRendererID(), imageSize,
                     new Vector2(0, 1),
                     new Vector2(1, 0));
                 ImGui.SameLine();
-                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(3), Vector2.One * 200, 
+                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(1), imageSize, 
                     new Vector2(0, 1),
                     new Vector2(1, 0));
+                
+                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(2), imageSize, 
+                    new Vector2(0, 1),
+                    new Vector2(1, 0));
+                ImGui.SameLine();
+                ImGui.Image((IntPtr)buffer.GetColorAttachmentRendererID(3), imageSize, 
+                    new Vector2(0, 1),
+                    new Vector2(1, 0));
+            }
+        }
+
+        private void HandleSimpleOps(in ImGuiIOPtr io)
+        {
+            var trans = Context.ActiveEntity.Transform;
+
+            if (_simpleOp == SimpleOp.Translate)
+            {
+                if (!_perspective)
+                    trans.WorldPosition += Vector3.Transform(new Vector3(io.MouseDelta.X / ViewportSize.Y * _zoom, -io.MouseDelta.Y / ViewportSize.Y * _zoom, 0), _cameraRotation);
+                else
+                {
+                    var tan = MathF.Tan(_fov) * _zoom;
+                    trans.WorldPosition -= Vector3.Transform(new Vector3(io.MouseDelta.X / ViewportSize.Y * tan, -io.MouseDelta.Y / ViewportSize.Y * tan, 0), _cameraRotation);
+                }
+            }
+            if (_simpleOp == SimpleOp.Rotate)
+            {
+                // this is cursed
+                var rotateX = Quaternion.CreateFromAxisAngle(Vector3.Transform(-Vector3.UnitX, _cameraRotation), io.MouseDelta.X / ViewportSize.Y);
+                var rotateY = Quaternion.CreateFromAxisAngle(Vector3.Transform(-Vector3.UnitY, _cameraRotation), -io.MouseDelta.Y / ViewportSize.Y);
+                trans.WorldRotation *= rotateY * rotateX;
             }
         }
 
@@ -215,6 +239,17 @@ namespace CrossEngineEditor.Panels
             if (ImGui.IsKeyPressed(ImGuiKey.KeypadDecimal) && Context.ActiveEntity?.Transform != null)
             {
                 _cameraPosition = Context.ActiveEntity.Transform.Position;
+                _viewDirty = true;
+            }
+
+            if (ImGui.IsKeyDown(ImGuiKey.KeypadAdd))
+            {
+                _zoom -= 1 * Time.DeltaF;
+                _viewDirty = true;
+            }
+            if (ImGui.IsKeyDown(ImGuiKey.KeypadSubtract))
+            {
+                _zoom += 1 * Time.DeltaF;
                 _viewDirty = true;
             }
         }
@@ -525,8 +560,14 @@ namespace CrossEngineEditor.Panels
                 {
                     if (ImGui.MenuItem("gbuffers", null, _showGbuffers))
                         _showGbuffers = !_showGbuffers;
-                    if (ImGui.MenuItem("simple move", null, _simpleMove))
-                        _simpleMove = !_simpleMove;
+                    if (ImGui.BeginMenu("simple op"))
+                    {
+                        if (ImGui.MenuItem("none", null, _simpleOp == SimpleOp.None)) _simpleOp = SimpleOp.None;
+                        if (ImGui.MenuItem("translate", null, _simpleOp == SimpleOp.Translate)) _simpleOp = SimpleOp.Translate;
+                        if (ImGui.MenuItem("rotate", null, _simpleOp == SimpleOp.Rotate)) _simpleOp = SimpleOp.Rotate;
+
+                        ImGui.EndMenu();
+                    }
                     
                     if (ImGui.BeginMenu("polygon mode"))
                     {
@@ -627,12 +668,15 @@ namespace CrossEngineEditor.Panels
                 var buffer = Pipeline.Buffer.GetValue();
                 buffer.Bind();
 
+                IViewportOverlay last = null;
                 for (int i = 0; i < Overlays.Count; i++)
                 {
                     var (overlay, draw) = Overlays[i];
                     if (!draw) continue;
                     
                     buffer.EnableColorAttachments(overlay.ModifyAttachments);
+
+                    IPassConfig.Configure(overlay, GraphicsContext.Current.Api, last);
                     
                     try
                     {
@@ -642,6 +686,8 @@ namespace CrossEngineEditor.Panels
                     {
                         EditorService.Log.Error($"viewport: overlay '{overlay.GetType().FullName}' draw failed:\n{e}");
                     }
+
+                    last = overlay;
                 }
             }
         }

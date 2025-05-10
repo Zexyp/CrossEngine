@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CrossEngineEditor.Viewport
 {
-    public interface IViewportOverlay : ISceneOverlay
+    public interface IViewportOverlay : ISceneOverlay, IPassConfig
     {
         protected internal IEditorContext Context { get; internal set; }
         virtual IList<int> ModifyAttachments => [0];

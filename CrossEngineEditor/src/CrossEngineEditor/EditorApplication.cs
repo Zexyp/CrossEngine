@@ -45,7 +45,7 @@ namespace CrossEngineEditor
             Manager.Register(new ImGuiService("res/fonts/JetBrainsMono[wght].ttf"));
             Manager.Register(new SceneService());
             Manager.Register(new AssetService());
-            Manager.Register(new OverlayService(mo = new MetricsOverlay()));
+            Manager.Register(new OverlayService(mo = new MetricsOverlay(rs)));
 
             // yippee
             Manager.Register(new EditorService());
@@ -69,9 +69,16 @@ namespace CrossEngineEditor
 
         class MetricsOverlay : HudOverlay
         {
-            private float[] _deltas = new float[256];
+            private double[] _deltas = new double[256];
             private int _deltasIndex = 0;
-            
+            private RenderService _rs;
+
+            public MetricsOverlay(RenderService rs)
+            {
+                _rs = rs;
+            }
+
+
             public override void Draw()
             {
                 Renderer2D.SetBlending(BlendMode.Blend);
@@ -81,22 +88,25 @@ namespace CrossEngineEditor
 
             protected override void Content()
             {
+                var frameDuration = _rs.GetLastFrameDuration();
+
                 // text
-                var t = $"{1d / Time.UnscaledDelta:000.00} fps\n{Time.UnscaledDelta * 1000:00.000} ms\n[{(Debugger.IsAttached ? "debug" : "alone")}]";
+                var t = $"{1d / frameDuration:000.00} fps\n{frameDuration * 1000:00.000} ms\n[{(Debugger.IsAttached ? "debug" : "alone")}]";
                 var offset = new Vector3(0, Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 3, 0);
                 TextRendererUtil.DrawText(Matrix4x4.CreateTranslation(offset), t, ColorHelper.U32ToVec4(0x7fff006d));
 
                 // graph
                 var graphY = Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 3;
                 var graphX = 0;
-                _deltas[_deltasIndex] = Time.UnscaledDeltaF;
+                _deltas[_deltasIndex] = frameDuration;
                 
                 for (int ioff = 0; ioff < _deltas.Length; ioff++)
                 {
                     var i = (_deltasIndex + ioff) % _deltas.Length;
+                    var barHeight = (float)(_deltas[i] * 1000);
                     Renderer2D.DrawQuad(Matrix4x4.CreateTranslation(new Vector3(0, 0.5f, 0)) *
-                                        Matrix4x4.CreateScale(new Vector3(1, _deltas[i] * 1000, 1)) *
-                                        Matrix4x4.CreateTranslation(new Vector3(ioff + graphX, -_deltas[i] * 1000 + graphY, 0)),
+                                        Matrix4x4.CreateScale(new Vector3(1, barHeight, 1)) *
+                                        Matrix4x4.CreateTranslation(new Vector3(ioff + graphX, -barHeight + graphY, 0)),
                         new Vector4(1, 0, 0, .5f));
                 }
                 

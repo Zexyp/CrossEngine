@@ -1,6 +1,6 @@
 struct PointLight {
-    vec3 Position;
     vec3 Color;
+    vec3 Position;
 
     float Radius;
     float Linear;
@@ -8,9 +8,11 @@ struct PointLight {
 };
 
 struct SpotLight {
+    vec3 Color;
     vec3 Position;
     vec3 Direction;
-    vec3 Color;
+    float Angle;
+    float Blend;
 
     float Radius;
     float Linear;
@@ -18,6 +20,6 @@ struct SpotLight {
 };
 
 struct DirectionalLight {
-    vec3 Direction;
     vec3 Color;
+    vec3 Direction;
 };

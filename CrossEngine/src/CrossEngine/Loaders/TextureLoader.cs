@@ -22,6 +22,8 @@ namespace CrossEngine.Loaders
     {
         public static WeakReference<Texture> DefaultTexture { get; private set; }
         public static WeakReference<Texture> WhiteTexture { get; private set; }
+        public static WeakReference<Texture> NormalTexture { get; private set; }
+        public static WeakReference<Texture> BlackTexture { get; private set; }
 
         // wtf, how is this not crashing the whole thing?
         // (the static ctor is very funky - nobody knows when or how it gets called
@@ -42,15 +44,22 @@ namespace CrossEngine.Loaders
             //DefaultTexture.GetValue().SetData(&col, sizeof(uint));
 
             DefaultTexture = LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.default_texture.png"));
-            WhiteTexture = LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.utils.white.png"));
+            WhiteTexture = LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.utils.textures.white.png"));
+            NormalTexture = LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.utils.textures.normal.png"));
+            BlackTexture = LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.utils.textures.black.png"));   
         }
 
         internal static void Shutdown()
         {
             DefaultTexture.Dispose();
             WhiteTexture.Dispose();
+            NormalTexture.Dispose();
+            BlackTexture.Dispose();
+
             DefaultTexture = null;
             WhiteTexture = null;
+            NormalTexture = null;
+            BlackTexture = null;
         }
 
         public static async Task<WeakReference<Texture>> LoadTextureFromFile(string filepath, ColorFormat? desiredFormat = null)
@@ -63,23 +72,27 @@ namespace CrossEngine.Loaders
 
         public static WeakReference<Texture> LoadTextureFromBytes(byte[] filedata, ColorFormat? desiredFormat = null)
         {
-            var gapi = RendererApi.GetApi();
-            StbImage.stbi_set_flip_vertically_on_load((gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES) ? 1 : 0);
-            
             Profiler.BeginScope("texture parsing");
+
+            StbImage.stbi_set_flip_vertically_on_load(1);
+
             ImageResult result = ImageResult.FromMemory(filedata);
+            
             Profiler.EndScope();
+
             return InternalLoad(result, desiredFormat);
         }
 
         public static WeakReference<Texture> LoadTextureFromStream(Stream filedata, ColorFormat? desiredFormat = null)
         {
-            var gapi = RendererApi.GetApi();
-            StbImage.stbi_set_flip_vertically_on_load((gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES) ? 1 : 0);
-            
             Profiler.BeginScope("texture parsing");
+            
+            StbImage.stbi_set_flip_vertically_on_load(1);
+
             ImageResult result = ImageResult.FromStream(filedata);
+            
             Profiler.EndScope();
+            
             return InternalLoad(result, desiredFormat);
         }
 
@@ -88,9 +101,8 @@ namespace CrossEngine.Loaders
         {
             if (filedata.Length != 6) throw new InvalidOperationException();
 
-            var gapi = RendererApi.GetApi();
-            StbImage.stbi_set_flip_vertically_on_load((gapi == GraphicsApi.OpenGL || gapi == GraphicsApi.OpenGLES) ? 0 : 1);
-            
+            StbImage.stbi_set_flip_vertically_on_load(0);
+
             var px = ImageResult.FromStream(filedata[0]);
             var nx = ImageResult.FromStream(filedata[1]);
             var py = ImageResult.FromStream(filedata[2]);
@@ -114,6 +126,9 @@ namespace CrossEngine.Loaders
 
         public static void Free(WeakReference<Texture> texture)
         {
+            if (new[] { BlackTexture, WhiteTexture, NormalTexture, DefaultTexture }.Contains(texture))
+                return;
+
             ServiceRequest.Invoke(texture.Dispose);
         }
 

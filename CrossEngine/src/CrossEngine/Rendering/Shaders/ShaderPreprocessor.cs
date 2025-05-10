@@ -81,6 +81,12 @@ void main() {{
             DefaultShaderProgram = null;
         }
 
+        internal static Stream GetInternalShader(string filename)
+        {
+            filename = filename.RemovePrefix("internal:").Replace("/", ".");
+            return Assembly.GetExecutingAssembly().GetManifestResourceStream($"CrossEngine.res.shaders.{filename}");
+        }
+
         public static WeakReference<ShaderProgram> CreateProgramFromFile(string filepath)
         {
             _log.Debug($"processing '{filepath}'");
@@ -194,8 +200,7 @@ void main() {{
             if (!path.StartsWith("internal:"))
                 return fallback.Invoke(path);
                 
-            path = path.RemovePrefix("internal:").Replace("/", ".");
-            return Assembly.GetExecutingAssembly().GetManifestResourceStream($"CrossEngine.res.shaders.{path}");
+            return GetInternalShader(path);
         }
     }
 }

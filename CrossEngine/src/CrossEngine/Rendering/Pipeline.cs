@@ -77,21 +77,20 @@ public class Pipeline
 
             buffer.EnableColorAttachments(pass.ModifyAttachments);
 
-            rapi.SetDepthFunc(pass.Depth);
-            rapi.SetBlendFunc(pass.Blend);
-            //rapi.SetPolygonMode(pass.PolyMode); // mby in futere, now i need to debug
-            rapi.SetCullFace(pass.Cull);
-            rapi.SetDepthMask(pass.DepthMask);
+            IPassConfig.Configure(pass, rapi, last);
 
             pass.Draw();
 
             Profiler.EndScope();
+            last = pass;
         }
 
         OnAfterPasses();
-        
+
+        rapi.SetDepthMask(true);
         buffer.BlitTo(surface.Buffer, new[] {(0, 0), (1, 1)});
-        
+        buffer.BlitDepthTo(surface.Buffer);
+
         buffer.Unbind();
     }
 
@@ -140,7 +139,7 @@ public class Pipeline
     protected virtual void OnAfterPasses() { }
 }
 
-public abstract class Pass
+public abstract class Pass : IPassConfig
 {
     public Pipeline Pipeline { get; internal set; }
 
@@ -148,14 +147,39 @@ public abstract class Pass
     public IList<int> ModifyAttachments = [0];
     
     // cull
-    public DepthFunc Depth;
+    public DepthFunc Depth = DepthFunc.Default;
     public BlendFunc Blend;
     public PolygonMode PolyMode = PolygonMode.Fill;
     public CullFace Cull;
     public bool DepthMask = true;
 
+    DepthFunc IPassConfig.Depth => Depth;
+    BlendFunc IPassConfig.Blend => Blend;
+    PolygonMode IPassConfig.PolyMode => PolyMode;
+    CullFace IPassConfig.Cull => Cull;
+    bool IPassConfig.DepthMask => DepthMask;
+
     public virtual void Init() { }
     public virtual void Destroy() { }
     
     public abstract void Draw();
+}
+
+public interface IPassConfig
+{
+    public DepthFunc Depth => DepthFunc.Default;
+    public BlendFunc Blend => BlendFunc.None;
+    public PolygonMode PolyMode => PolygonMode.Fill;
+    public CullFace Cull => CullFace.None;
+    public bool DepthMask => true;
+
+    public static void Configure(IPassConfig config, RendererApi rapi, IPassConfig? last = null)
+    {
+        // trying to avoid api calls
+        if (last?.Depth != config.Depth) rapi.SetDepthFunc(config.Depth);
+        if (last?.Blend != config.Blend) rapi.SetBlendFunc(config.Blend);
+        if (last?.Cull != config.Cull) rapi.SetCullFace(config.Cull);
+        if (last?.DepthMask != config.DepthMask) rapi.SetDepthMask(config.DepthMask);
+        //rapi.SetPolygonMode(pass.PolyMode); // mby in futere, now i need to debug
+    }
 }

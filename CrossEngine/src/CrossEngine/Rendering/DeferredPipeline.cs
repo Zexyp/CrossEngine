@@ -20,6 +20,8 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Extensions;
 using CrossEngine.Utils.Rendering;
+using CrossEngine.Utils.Structs;
+using System.Drawing.Text;
 
 namespace CrossEngine.Rendering;
 
@@ -37,6 +39,8 @@ public class DeferredPipeline : Pipeline
         PushBack(new LightPass());
         PushBack(new SkyboxPass());
         PushBack(new TransparentPass(scene));
+        // TODO: bloom
+        PushBack(new FogPass());
     }
 
     protected override void OnInit()
@@ -44,7 +48,7 @@ public class DeferredPipeline : Pipeline
         var spec = new FramebufferSpecification();
         spec.Attachments = new FramebufferAttachmentSpecification(
             // using floating point colors
-            new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F), // color
+            new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F), // color + specular
             new FramebufferTextureSpecification(TextureFormat.ColorR32I), // id
             new FramebufferTextureSpecification(TextureFormat.ColorRGB16F), // position
             new FramebufferTextureSpecification(TextureFormat.ColorRGB16F), // normal
@@ -60,7 +64,7 @@ public class DeferredPipeline : Pipeline
     {
         var buffer = Buffer.GetValue();
         buffer.EnableColorAttachments([AttachmentIndexId, AttachmentIndexPosition, AttachmentIndexNormal]);
-        buffer.ClearAttachment(AttachmentIndexId, 0);
+        buffer.ClearAttachment(AttachmentIndexId, IntVec4.Zero);
         buffer.ClearAttachment(AttachmentIndexPosition, Vector4.Zero);
         buffer.ClearAttachment(AttachmentIndexNormal, Vector4.Zero);
     }
@@ -423,11 +427,12 @@ class LightPass : Pass
 
     public LightPass()
     {
+        Blend = BlendFunc.One;
         Depth = DepthFunc.None;
         DepthMask = false;
     }
 
-    const int NumLights = 32;
+    const int LightBatchBufferSize = 16;
     
     private static readonly string ShaderSource = $@"
 #type vertex
@@ -453,43 +458,91 @@ out vec4 oFragColor;
 uniform sampler2D uColor;
 uniform sampler2D uPosition;
 uniform sampler2D uNormal;
-uniform int uNumLights;
-uniform PointLight uLights[{NumLights}];
 uniform vec3 uViewPosition;
 uniform vec3 uAmbient;
+
+uniform int uNumPointLights;
+uniform PointLight uPointLights[{LightBatchBufferSize}];
+uniform int uNumSpotLights;
+uniform SpotLight uSpotLights[{LightBatchBufferSize}];
+uniform int uNumDirectionalLights;
+uniform DirectionalLight uDirectionalLights[{LightBatchBufferSize}];
 
 void main()
 {{
     vec3 color = texture(uColor, vTexCoord).xyz;
     vec3 normal = normalize(texture(uNormal, vTexCoord).xyz);
     vec3 position = texture(uPosition, vTexCoord).xyz;
-    float specularExponent = texture(uColor, vTexCoord).w;
+    float specularHighlight = texture(uColor, vTexCoord).w;
+    float specularExponent = 256;
 
     vec3 lighting = color * uAmbient;
-    for (int i = 0; i < uNumLights; i++) {{
-        float distance = length(uLights[i].Position - position);
-        //if(distance > uLights[i].Radius) // radius clip control
+
+    for (int i = 0; i < uNumPointLights; i++) {{
+        float distance = length(uPointLights[i].Position - position);
+        //if(distance > uPointLights[i].Radius) // radius clip control
         //    continue;
 
-        vec3 viewDir = normalize(uViewPosition - position);
-        vec3 lightDir = normalize(uLights[i].Position - position);
+        vec3 lightDir = normalize(uPointLights[i].Position - position);
         // diffuse
         float diffuse = max(dot(normal, lightDir), 0.0);
-        // specular
+        // specular (blinn-phong)
+        vec3 viewDir = normalize(uViewPosition - position);
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float specular = pow(max(dot(normal, halfwayDir), 0.0), specularExponent);
 
-        float attenuation = 1.0 / (1.0 + uLights[i].Linear * distance + uLights[i].Quadratic * distance * distance);
+        float attenuation = 1.0 / (1.0 + uPointLights[i].Linear * distance + uPointLights[i].Quadratic * distance * distance);
+
         diffuse *= attenuation;
         specular *= attenuation;
-        lighting += diffuse * color * uLights[i].Color;
-        lighting += specular * uLights[i].Color;
+        lighting += diffuse * color * uPointLights[i].Color;
+        lighting += specular * uPointLights[i].Color * specularHighlight;
+    }}
+
+    for (int i = 0; i < uNumSpotLights; i++) {{
+        float distance = length(uSpotLights[i].Position - position);
+        //if(distance > uSpotLights[i].Radius) // radius clip control
+        //    continue;
+
+        vec3 lightDir = normalize(uSpotLights[i].Position - position);
+        // diffuse
+        float diffuse = max(dot(normal, lightDir), 0.0);
+        // specular (blinn-phong)
+        vec3 viewDir = normalize(uViewPosition - position);
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float specular = pow(max(dot(normal, halfwayDir), 0.0), specularExponent);
+
+        float attenuation = 1.0 / (1.0 + uSpotLights[i].Linear * distance + uSpotLights[i].Quadratic * distance * distance);
+
+        // calculate angle
+        float factor = dot(lightDir, normalize(-uSpotLights[i].Direction));
+        float cosAngle = cos(uSpotLights[i].Angle / 2);
+        float intensity = smoothstep(cosAngle, cosAngle + uSpotLights[i].Blend, factor);
+            
+        diffuse *= attenuation * intensity;
+        specular *= attenuation * intensity;
+        lighting += diffuse * color * uSpotLights[i].Color;
+        lighting += specular * uSpotLights[i].Color * specularHighlight;
+    }}
+
+    for (int i = 0; i < uNumDirectionalLights; i++) {{
+        vec3 lightDir = normalize(-uDirectionalLights[i].Direction);
+        // diffuse
+        float diffuse = max(dot(normal, lightDir), 0.0);
+        // specular (blinn-phong)
+        vec3 viewDir = normalize(uViewPosition - position);
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float specular = pow(max(dot(normal, halfwayDir), 0.0), specularExponent);
+
+        lighting += diffuse * color * uDirectionalLights[i].Color;
+        lighting += specular * uDirectionalLights[i].Color * specularHighlight;
     }}
 
     oFragColor = vec4(lighting, 1.0);
 }}
 ";
     
+    // light accumulation buffer
     WeakReference<Framebuffer> _workbuffer;
 
     public override void Init()
@@ -501,7 +554,7 @@ void main()
         var spec = new FramebufferSpecification();
                 spec.Attachments = new FramebufferAttachmentSpecification(
                     // using floating point colors
-                    new FramebufferTextureSpecification(TextureFormat.ColorRGBA16F)
+                    new FramebufferTextureSpecification(TextureFormat.ColorRGB16F)
                 );
                 spec.Width = 1;
                 spec.Height = 1;
@@ -532,53 +585,214 @@ void main()
         gbuffer.BindColorAttachment(DeferredPipeline.AttachmentIndexPosition, DeferredPipeline.AttachmentIndexPosition);
         gbuffer.BindColorAttachment(DeferredPipeline.AttachmentIndexNormal, DeferredPipeline.AttachmentIndexNormal);
 
-        var ambientAccumulator = Vector3.Zero;
+        // handle ambient lighting
+        bool useAmbientAccumulator = false;
+        Vector3 ambientAccumulator = Vector3.Zero;
         foreach (var light in lights)
         {
             if (light is IAmbientLightRenderData ambient)
+            {
                 ambientAccumulator += ambient.Color;
+                useAmbientAccumulator = true;
+            }
         }
-        shader.SetParameterVec3("uAmbient", ambientAccumulator);
+
+        ambientAccumulator = useAmbientAccumulator ? ambientAccumulator : Vector3.One / 2;
+        useAmbientAccumulator = true;
+
         // prepare work buffer
-        //workbuffer.Bind();
-        //if (gbuffer.Size != workbuffer.Size)
-        //    workbuffer.Resize((uint)gbuffer.Size.X, (uint)gbuffer.Size.Y);
-        //workbuffer.EnableColorAttachments([0]);
-        //workbuffer.ClearAttachment(0, Vector4.One);
-        int bufferidx = 0;
-        for (int li = 0; li < lights.Count; li++)
+        if (gbuffer.Size != workbuffer.Size)
+            workbuffer.Resize((uint)gbuffer.Size.X, (uint)gbuffer.Size.Y);
+
+        workbuffer.Bind();
+        workbuffer.EnableColorAttachments([0]);
+        workbuffer.ClearAttachment(0, Vector4.Zero);
+
+        int pointBufferIdx = 0;
+        int spotBufferIdx = 0;
+        int directionalBufferIdx = 0;
+
+        void StartBatch()
         {
-            if (lights[li] is not IPointLightRenderData light)
-                continue;
-            
-            shader.SetParameterVec3($"uLights[{bufferidx}].Position", light.Position);
-            shader.SetParameterVec3($"uLights[{bufferidx}].Color", light.Color);
+            pointBufferIdx = 0;
+            spotBufferIdx = 0;
+            directionalBufferIdx = 0;
+        }
+
+        void NextBatch()
+        {
+            Flush();
+            StartBatch();
+        }
+
+        void Flush()
+        {
+            shader.SetParameterVec3("uAmbient", useAmbientAccumulator ? ambientAccumulator : Vector3.Zero);
+            useAmbientAccumulator = false;
+
+            shader.SetParameterInt($"uNumPointLights", pointBufferIdx);
+            shader.SetParameterInt($"uNumSpotLights", spotBufferIdx);
+            shader.SetParameterInt($"uNumDirectionalLights", directionalBufferIdx);
+            _plane.Draw(GraphicsContext.Current.Api);
+        }
+
+        void AddPointLight(IPointLightRenderData light)
+        {
+            shader.SetParameterVec3($"uPointLights[{pointBufferIdx}].Color", light.Color);
+            shader.SetParameterVec3($"uPointLights[{pointBufferIdx}].Position", light.Position);
 
             const float constant = 1.0f; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
             const float linear = 0.7f;
             const float quadratic = 1.8f;
             var maxBrightness = Math.Max(Math.Max(light.Color.X, light.Color.Y), light.Color.Z);
             var radius = (-linear + MathF.Sqrt(linear * linear - 4 * quadratic * (constant - (256.0f / 5.0f) * maxBrightness))) / (2.0f * quadratic);
-            shader.SetParameterFloat($"uLights[{bufferidx}].Radius", radius);
-            shader.SetParameterFloat($"uLights[{bufferidx}].Linear", linear);
-            shader.SetParameterFloat($"uLights[{bufferidx}].Quadratic", quadratic);
-            bufferidx++;
-            if (bufferidx >= NumLights)
+            shader.SetParameterFloat($"uPointLights[{pointBufferIdx}].Radius", radius);
+            shader.SetParameterFloat($"uPointLights[{pointBufferIdx}].Linear", linear);
+            shader.SetParameterFloat($"uPointLights[{pointBufferIdx}].Quadratic", quadratic);
+
+            pointBufferIdx++;
+            if (pointBufferIdx >= LightBatchBufferSize)
+                NextBatch();
+        }
+
+        void AddSpotLight(ISpotLightRenderData light)
+        {
+            shader.SetParameterVec3($"uSpotLights[{spotBufferIdx}].Color", light.Color);
+            shader.SetParameterVec3($"uSpotLights[{spotBufferIdx}].Position", light.Position);
+            shader.SetParameterVec3($"uSpotLights[{spotBufferIdx}].Direction", light.Direction);
+            shader.SetParameterFloat($"uSpotLights[{spotBufferIdx}].Angle", light.Angle);
+            shader.SetParameterFloat($"uSpotLights[{spotBufferIdx}].Blend", light.Blend);
+
+            const float constant = 1.0f; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
+            const float linear = 0.7f;
+            const float quadratic = 1.8f;
+            var maxBrightness = Math.Max(Math.Max(light.Color.X, light.Color.Y), light.Color.Z);
+            var radius = (-linear + MathF.Sqrt(linear * linear - 4 * quadratic * (constant - (256.0f / 5.0f) * maxBrightness))) / (2.0f * quadratic);
+            shader.SetParameterFloat($"uSpotLights[{spotBufferIdx}].Radius", radius);
+            shader.SetParameterFloat($"uSpotLights[{spotBufferIdx}].Linear", linear);
+            shader.SetParameterFloat($"uSpotLights[{spotBufferIdx}].Quadratic", quadratic);
+            
+            spotBufferIdx++;
+            if (spotBufferIdx >= LightBatchBufferSize)
+                NextBatch();
+        }
+
+        void AddDirectionalLight(IDirectionalLightRenderData light)
+        {
+            shader.SetParameterVec3($"uDirectionalLights[{directionalBufferIdx}].Color", light.Color);
+            shader.SetParameterVec3($"uDirectionalLights[{directionalBufferIdx}].Direction", light.Direction);
+
+            directionalBufferIdx++;
+            if (directionalBufferIdx >= LightBatchBufferSize)
+                NextBatch();
+        }
+
+        for (int li = 0; li < lights.Count; li++)
+        {
+            switch (lights[li])
             {
-                Flush(shader, bufferidx);
-                bufferidx = 0;
+                case ISpotLightRenderData spot: AddSpotLight(spot); break;
+                case IDirectionalLightRenderData directional: AddDirectionalLight(directional); break;
+                case IPointLightRenderData point: AddPointLight(point); break;
+                default: break;
             }
         }
-        Flush(shader, bufferidx);
+        Flush();
+
+        workbuffer.BlitTo(Pipeline.Buffer, [(0, DeferredPipeline.AttachmentIndexColor)]);
         
-        //workbuffer.BlitTo(Pipeline.Buffer, [(0, DeferredPipeline.AttachmentIndexColor)]);
-        //
-        //gbuffer.Bind();
+        gbuffer.Bind();
+    }
+}
+
+class FogPass : Pass
+{
+    private static readonly string ShaderSource = @"
+#type vertex
+#version 330 core
+layout (location = 0) in vec3 aPosition;
+layout (location = 1) in vec2 aTexCoord;
+
+out vec2 vTexCoord;
+
+void main()
+{
+    vTexCoord = aTexCoord;
+
+    gl_Position = vec4(aPosition, 1.0);
+}
+
+#type fragment
+#version 330 core
+#include ""internal:utils.glsl""
+
+in vec2 vTexCoord;
+out vec4 oFragColor;
+
+uniform sampler2D uPosition;
+uniform vec4 uColor;
+uniform float uStart;
+uniform float uDensity;
+uniform vec3 uViewPosition;
+
+void main()
+{
+    vec3 position = texture(uPosition, vTexCoord).xyz;
+    if (position == vec3(0))
+        discard;
+
+    float distance = length(uViewPosition - position);
+    float fogFactor = exp(-pow(uDensity * max(distance - uStart, 0.0), 2.0));
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+    float alpha = uColor.a * (1.0 - fogFactor);
+
+    oFragColor = vec4(uColor.rgb, alpha);
+
+    // linear
+    //float distance = length(uViewPosition - position);
+    //oFragColor = vec4(uColor.xyz, clamp(uColor.w * map(distance, uStart, uEnd, 0, 1), 0, 1));
+}
+";
+
+    public FogPass()
+    {
+        Depth = DepthFunc.None;
+        Blend = BlendFunc.OneMinusSrcAlpha;
+        DepthMask = false;
     }
 
-    private void Flush(ShaderProgram shader, int bufferLen)
+    WeakReference<ShaderProgram> _shader;
+    MeshRenderer _quad;
+
+    public override void Init()
     {
-        shader.SetParameterInt($"uNumLights", bufferLen);
-        _plane.Draw(GraphicsContext.Current.Api);
+        _shader = ShaderPreprocessor.CreateProgramFromString(ShaderSource);
+        _quad = new MeshRenderer();
+        _quad.Setup(MeshGenerator.GenerateGrid(Vector2.One * 2));
+    }
+
+    public override void Destroy()
+    {
+        _shader.Dispose();
+        _shader = null;
+        _quad.Dispose();
+        _quad = null;
+    }
+
+    public override void Draw()
+    {
+        var fogComp = (CrossEngine.Components.FogComponent)CrossEngine.Scenes.SceneManager.Current?.World.Storage.GetArray(typeof(CrossEngine.Components.FogComponent))?.FirstOrDefault();
+        if (fogComp == null) return;
+
+        var gbuffer = Pipeline.Buffer.GetValue();
+        var shader = _shader.GetValue();
+        gbuffer.BindColorAttachment(2);
+        shader.Use();
+        shader.SetParameterFloat("uStart", fogComp.Start);
+        shader.SetParameterFloat("uDensity", fogComp.Density);
+        shader.SetParameterVec4("uColor", fogComp.Color);
+        shader.SetParameterVec3("uViewPosition", Matrix4x4Extension.SafeInvert(Pipeline.Camera.GetViewMatrix()).Translation);
+        _quad.Draw(GraphicsContext.Current.Api);
     }
 }

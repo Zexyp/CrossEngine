@@ -13,6 +13,8 @@ namespace CrossEngine.Serialization.Json
 {
     internal class AssetGuidJsonConverter : ElementJsonConverter<Asset>
     {
+        public IAssetLoadContext AssetContext;
+
         public override bool CanConvert(Type typeToConvert) => typeToConvert.IsSubclassOf(typeof(Asset));
 
         public override void Write(Utf8JsonWriter writer, Asset value, JsonSerializerOptions options)
@@ -25,7 +27,7 @@ namespace CrossEngine.Serialization.Json
             var id = reader.GetGuid();
             try
             {
-                return AssetManager.Get(typeToConvert, id);
+                return AssetContext.GetDependency(typeToConvert, id);
             }
             catch (KeyNotFoundException e)
             {

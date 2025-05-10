@@ -1,17 +1,26 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using CrossEngine.Assets;
 using CrossEngine.Components;
 using CrossEngine.Loaders;
 using CrossEngine.Rendering.Textures;
+using CrossEngine.Utils.Editor;
 using CrossEngine.Utils.Structs;
 using CrossEngineEditor.Platform;
+using CrossEngineEditor.Utils;
 using ImGuiNET;
+using static CrossEngine.Loaders.MeshLoader;
 
 namespace CrossEngineEditor.Modals.Importer;
 
 public class ObjImport : ImportModal
 {
+    [EditorAsset]
+    public ShaderAsset Shader;
+    [EditorDrag]
+    public float Scale = 1;
+
     private string path = "";
     
     protected override void DrawModalContent()
@@ -20,6 +29,8 @@ public class ObjImport : ImportModal
         ImGui.SameLine();
         if (ImGui.Button("..."))
             EditorApplication.Service.DialogFileOpen().ContinueWith(t => { var newpath = t.Result; if (newpath != null) path = newpath; });
+
+        InspectDrawer.Inspect(this);
         
         base.DrawModalContent();
     }
@@ -28,45 +39,52 @@ public class ObjImport : ImportModal
     {
         var scene = EditorApplication.Service.Context.Scene;
         var alist = EditorApplication.Service.Context.Assets;
-        var realative = Path.GetRelativePath(Path.Join(Path.GetDirectoryName(alist.RuntimeFilepath), alist.DirectoryOffset), path);
-        using var stream = EditorPlatformHelper.FileRead(path);
-        var meshes = MeshLoader.ParseObj(stream);
-        foreach (var pair in meshes)
-        {
-            ObjMeshAsset mesh = new ObjMeshAsset() {RelativePath = realative, MeshName = pair.Key, Mesh = pair.Value};
-            alist.Add(mesh);
-            
-            var entity = scene.CreateEntity();
-            entity.Name = pair.Key;
-            entity.AddComponent<MeshRendererComponent>().Mesh = mesh;
-        }
-    }
-}
-
-public class MtlImport : ImportModal
-{
-    private string path = "";
-    
-    protected override void DrawModalContent()
-    {
-        ImGui.InputText("File", ref path, 512);
-        ImGui.SameLine();
-        if (ImGui.Button("..."))
-            EditorApplication.Service.DialogFileOpen().ContinueWith(t => { var newpath = t.Result; if (newpath != null) path = newpath; });
         
-        base.DrawModalContent();
-    }
+        var alistdir = Path.Join(Path.GetDirectoryName(alist.RuntimeFilepath), alist.DirectoryOffset);
+        
+        var objRelative = Path.GetRelativePath(Path.Join(Path.GetDirectoryName(alist.RuntimeFilepath), alist.DirectoryOffset), path);
+        var objFile = Path.Join(alistdir, objRelative);
 
-    protected override void Process()
-    {
-        var alist = EditorApplication.Service.Context.Assets;
-        var realative = Path.GetRelativePath(Path.Join(Path.GetDirectoryName(alist.RuntimeFilepath), alist.DirectoryOffset), path);
-        using var stream = EditorPlatformHelper.FileRead(path);
-        var materials = MeshLoader.ParseMtl(stream);
-        foreach (var pair in materials)
+        Dictionary<string, WavefrontMesh> meshes;
+        string mtllib;
+        using (var stream = EditorPlatformHelper.FileRead(objFile))
+            meshes = MeshLoader.ParseObj(stream, out mtllib);
+
+        Dictionary<string, MaterialAsset> matdict = new();
+        if (mtllib != null)
         {
-            MtlMaterialAsset material = new MtlMaterialAsset() {RelativePath = realative, MaterialName = pair.Key, Material = pair.Value};
-            alist.Add(material);
+            var mtlRelative = Path.Join(Path.GetDirectoryName(objRelative), mtllib);
+            var mtlFile = Path.Join(Path.GetDirectoryName(objFile), mtllib);
+            var materials = MeshLoader.ParseMtl(EditorPlatformHelper.FileRead(mtlFile));
+            var libAsset = new MtlMaterialLibraryAsset(materials) { RelativePath = mtlRelative, Shader = Shader };
+            alist.Add(libAsset);
+            foreach (var pair in materials)
+            {
+                if (pair.Value.texturePathDiffuse != null) alist.Add(new TextureAsset() { RelativePath = Path.Join(Path.GetDirectoryName(mtlRelative), pair.Value.texturePathDiffuse), Name = pair.Value.texturePathDiffuse });
+                if (pair.Value.texturePathNormal != null) alist.Add(new TextureAsset() { RelativePath = Path.Join(Path.GetDirectoryName(mtlRelative), pair.Value.texturePathNormal), Name = pair.Value.texturePathNormal });
+                if (pair.Value.texturePathSpecular != null) alist.Add(new TextureAsset() { RelativePath = Path.Join(Path.GetDirectoryName(mtlRelative), pair.Value.texturePathSpecular), Name = pair.Value.texturePathSpecular });
+                if (pair.Value.texturePathSpecularHighlight != null) alist.Add(new TextureAsset() { RelativePath = Path.Join(Path.GetDirectoryName(mtlRelative), pair.Value.texturePathSpecularHighlight), Name = pair.Value.texturePathSpecularHighlight });
+
+                MtlMaterialReferenceAsset material = new MtlMaterialReferenceAsset() { MaterialName = pair.Key, Parent = libAsset, Name = pair.Key };
+                alist.Add(material);
+                matdict.Add(pair.Key, material);
+            }
+        }
+
+        ObjModelAsset objAsset = new ObjModelAsset(meshes) { RelativePath = objRelative };
+        alist.Add(objAsset);
+        foreach (var pair in objAsset.Meshes)
+        {
+            ObjMeshReferenceAsset mesh = new ObjMeshReferenceAsset() { MeshName = pair.Key, Parent = objAsset, Name = pair.Key };
+            alist.Add(mesh);
+
+            var entity = scene.CreateEntity();
+            entity.GetComponent<TransformComponent>().Scale = new(Scale);
+            entity.Name = pair.Key;
+            
+            var renderer = entity.AddComponent<MeshRendererComponent>();
+            renderer.Mesh = mesh;
+            renderer.Material = meshes[pair.Key].MaterialName != null ? matdict[meshes[pair.Key].MaterialName] : null;
         }
     }
 }

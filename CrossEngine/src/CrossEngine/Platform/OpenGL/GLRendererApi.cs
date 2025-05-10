@@ -46,7 +46,10 @@ namespace CrossEngine.Platform.OpenGL
             // TODO: consider unbinding to keep the vertex array state safe
         }
 
-        public override void Clear() => gl.Clear((uint)(GLEnum.ColorBufferBit | GLEnum.DepthBufferBit));
+        public override void Clear()
+        {
+            gl.Clear((uint)(GLEnum.ColorBufferBit | GLEnum.DepthBufferBit));
+        }
 
         public override void SetViewport(uint x, uint y, uint width, uint height) => gl.Viewport((int)x, (int)y, width, height);
 

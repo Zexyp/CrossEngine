@@ -20,6 +20,8 @@ namespace CrossEngine.Serialization
         static readonly JsonSerializerOptions options;
         static readonly TypeResolver resolver;
 
+        private static readonly AssetGuidJsonConverter AssetConverter;
+
         static SceneSerializer()
         {
             AssetGuidJsonConverter assConv;
@@ -35,7 +37,7 @@ namespace CrossEngine.Serialization
                 {
                     new EntityStructureJsonConverter(),
 
-                    new AssetGuidJsonConverter(),
+                    AssetConverter = new AssetGuidJsonConverter(),
 
                     new SceneJsonConverter(),
                 }.Concat(Serialization.Serializer.BaseJsonConverters))
@@ -71,14 +73,18 @@ namespace CrossEngine.Serialization
             }
         }
 
-        public static Scene DeserializeJson(Stream stream)
+        public static Scene DeserializeJson(Stream stream, IAssetLoadContext assetContext = null)
         {
             Scene scene;
             
             Debug.Assert(AssetManager.Current != null, "no asset lookup");
-            
+
+            assetContext ??= AssetManager.Current;
+
             lock (options)
             {
+                AssetConverter.AssetContext = assetContext;
+
                 for (int i = 0; i < options.Converters.Count; i++)
                 {
                     if (options.Converters[i] is IInitializedConverter initMe)

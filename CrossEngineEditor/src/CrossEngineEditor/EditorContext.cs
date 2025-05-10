@@ -63,6 +63,9 @@ namespace CrossEngineEditor
             block.Invoke("Loading Scene...");
             
             var old = _scene;
+
+            _scene = null;
+
             var task = Task.CompletedTask;
             
             if (old != null)
@@ -87,6 +90,9 @@ namespace CrossEngineEditor
             block.Invoke("Loading Assets...");
 
             var old = _assets;
+
+            _assets = null;
+
             var task = Task.CompletedTask;
 
             task = SetScene(null);

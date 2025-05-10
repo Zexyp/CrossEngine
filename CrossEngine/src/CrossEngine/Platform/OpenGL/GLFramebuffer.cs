@@ -14,6 +14,8 @@ using CrossEngine.Utils;
 using CrossEngine.Utils.Extensions;
 using Silk.NET.OpenGL;
 using Framebuffer = CrossEngine.Rendering.Buffers.Framebuffer;
+using CrossEngine.Utils.Structs;
+
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -175,7 +177,7 @@ namespace CrossEngine.Platform.OpenGL
             return pixelData;
         }
 
-        public override unsafe void ClearAttachment(int attachmentIndex, int value)
+        public override unsafe void ClearAttachment(int attachmentIndex, IntVec4 value)
         {
             Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
 
@@ -184,7 +186,7 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
             
-            gl.ClearBuffer(GLEnum.Color, attachmentIndex, &value);
+            gl.ClearBuffer(GLEnum.Color, attachmentIndex, &value.X);
         }
         
         public override unsafe void ClearAttachment(int attachmentIndex, Vector4 value)
@@ -196,7 +198,7 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.BindFramebuffer(GLEnum.Framebuffer, _rendererId);
             
-            gl.ClearBuffer(GLEnum.Color, attachmentIndex, (float*)&value);
+            gl.ClearBuffer(GLEnum.Color, attachmentIndex, &value.X);
         }
 
         public override void EnableColorAttachments(IList<int> attachmentIndexes = null)
@@ -223,7 +225,7 @@ namespace CrossEngine.Platform.OpenGL
             SetDrawBuffers();
         }
 
-        public override void BindColorAttachment(int attachmentIndex, uint slot = 0)
+        public override void BindColorAttachment(int attachmentIndex = 0, uint slot = 0)
         {
             Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
 
@@ -231,11 +233,22 @@ namespace CrossEngine.Platform.OpenGL
             gl.BindTexture(GLEnum.Texture2D, _colorAttachments[attachmentIndex]);
         }
 
+        public override void BindDepthAttachment(uint slot = 0)
+        {
+            gl.ActiveTexture(GLEnum.Texture0 + (int)slot);
+            gl.BindTexture(GLEnum.Texture2D, _depthAttachment);
+        }
+
         public override uint GetColorAttachmentRendererID(int attachmentIndex = 0)
         {
             Debug.Assert(attachmentIndex < colorAttachmentSpecifications.Count);
             
             return _colorAttachments[attachmentIndex];
+        }
+
+        public override uint GetDepthAttachmentRendererID()
+        {
+            return _depthAttachment;
         }
 
         public void CopyToScreen()
@@ -275,7 +288,7 @@ namespace CrossEngine.Platform.OpenGL
 
         private unsafe void SetDrawBuffers()
         {
-            if (_colorAttachments.Count > 1)
+            if (_colorAttachments.Count > 0)
             {
                 int[] buffers = new int[_colorAttachments.Count];
                 for (int i = 0; i < buffers.Length; i++)

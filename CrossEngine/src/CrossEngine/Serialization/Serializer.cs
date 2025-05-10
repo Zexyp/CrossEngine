@@ -100,7 +100,7 @@ namespace CrossEngine.Serialization
                 var prop = props[i];
                 if (!Attribute.IsDefined(prop, typeof(SerializeIncludeAttribute)))
                     continue;
-                prop.SetValue(target, info.GetValue(prop.Name, prop.PropertyType));
+                prop.SetValue(target, info.GetValue(prop.Name, prop.PropertyType, prop.GetValue(target)));
             }
             FieldInfo[] fields = type.GetFields();
             for (int i = 0; i < fields.Length; i++)
@@ -108,7 +108,7 @@ namespace CrossEngine.Serialization
                 var field = fields[i];
                 if (!Attribute.IsDefined(field, typeof(SerializeIncludeAttribute)))
                     continue;
-                field.SetValue(target, info.GetValue(field.Name, field.FieldType));
+                field.SetValue(target, info.GetValue(field.Name, field.FieldType, field.GetValue(target)));
             }
         }
     }

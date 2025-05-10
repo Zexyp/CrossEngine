@@ -17,7 +17,7 @@ namespace CrossEngineEditor.Panels
 {
     internal class GamePanel : SceneViewPanel
     {
-        protected override ICamera DrawCamera => null;
+        protected override ICamera DrawCamera => Scene.World.GetSystem<RenderSystem>().DrawCamera;
         protected override Scene Scene => Context.Scene;
 
         public GamePanel()

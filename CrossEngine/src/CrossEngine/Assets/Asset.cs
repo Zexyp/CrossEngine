@@ -15,6 +15,8 @@ namespace CrossEngine.Assets
 
         Asset GetDependency(Type type, Guid id);
         virtual T GetDependency<T>(Guid id) where T : Asset => (T)GetDependency(typeof(T), id);
+        Asset GetFileAsset(Type type, string file);
+        virtual T GetFileAsset<T>(string file) where T : FileAsset => (T)GetFileAsset(typeof(T), file);
 
         virtual Task<Stream> OpenRelativeStream(string realtivePath) => OpenStream(GetFullPath(realtivePath));
     }
@@ -53,7 +55,20 @@ namespace CrossEngine.Assets
     public abstract class FileAsset : Asset
     {
         [EditorString]
-        public string RelativePath;
+        public string RelativePath
+        {
+            get => _relativePath;
+            set
+            {
+                var old = _relativePath;
+                _relativePath = value;
+                RelativePathChanged?.Invoke(this, old);
+            }
+        }
+
+        internal event Action<FileAsset, string> RelativePathChanged;
+
+        private string _relativePath;
 
         public override void GetObjectData(SerializationInfo info)
         {

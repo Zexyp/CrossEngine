@@ -1,4 +1,4 @@
-﻿//#define WRITE_VEC_ARRAY
+﻿//#define WRITE_VEC_AS_ARRAY
 
 using System;
 using System.Linq;
@@ -27,7 +27,7 @@ namespace CrossEngine.Serialization.Json
 
         public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options)
         {
-#if WRITE_VEC_ARRAY
+#if WRITE_VEC_AS_ARRAY
             writer.WriteStartArray();
             writer.WriteNumberValue(value.X);
             writer.WriteNumberValue(value.Y);
@@ -58,7 +58,7 @@ namespace CrossEngine.Serialization.Json
 
         public override void Write(Utf8JsonWriter writer, Vector3 value, JsonSerializerOptions options)
         {
-#if WRITE_VEC_ARRAY
+#if WRITE_VEC_AS_ARRAY
             writer.WriteStartArray();
             writer.WriteNumberValue(value.X);
             writer.WriteNumberValue(value.Y);
@@ -91,7 +91,7 @@ namespace CrossEngine.Serialization.Json
 
         public override void Write(Utf8JsonWriter writer, Vector4 value, JsonSerializerOptions options)
         {
-#if WRITE_VEC_ARRAY
+#if WRITE_VEC_AS_ARRAY
             writer.WriteStartArray();
             writer.WriteNumberValue(value.X);
             writer.WriteNumberValue(value.Y);
@@ -127,7 +127,7 @@ namespace CrossEngine.Serialization.Json
 
         public override void Write(Utf8JsonWriter writer, Quaternion value, JsonSerializerOptions options)
         {
-#if WRITE_VEC_ARRAY
+#if WRITE_VEC_AS_ARRAY
             writer.WriteStartArray();
             writer.WriteNumberValue(value.X);
             writer.WriteNumberValue(value.Y);

@@ -9,34 +9,21 @@ using System.Threading.Tasks;
 using CrossEngine.Loaders;
 using CrossEngine.Serialization;
 using CrossEngine.Utils.Editor;
-using CrossEngine.Utils.ImGui;
+using CrossEngine.Rendering.Buffers;
+using System.IO;
+using CrossEngine.Rendering.Textures;
+using static CrossEngine.Loaders.MeshLoader;
+using CrossEngine.Geometry;
+using System.Diagnostics;
 
 namespace CrossEngine.Assets
 {
-    // TODO: material instances
-    public class MaterialAsset : Asset
+    public abstract class MaterialAsset : Asset
     {
-        [EditorInnerDraw]
-        public IMaterial Material;
-
-        public override bool Loaded => Material != null;
-        public override Task Load(IAssetLoadContext context) => Task.CompletedTask;
-        public override Task Unload(IAssetLoadContext context) => Task.CompletedTask;
+        public abstract IMaterial Material { get; }
     }
     
     public class WavefrontMaterialAsset : MaterialAsset {
-        [EditorNullable]
-        [EditorAsset]
-        public TextureAsset MapDiffuse
-        {
-            get => texture;
-            set
-            {
-                SetChildId(value, ref texture, ref idMapDiffuse);
-                ((MeshLoader.WavefrontMaterial)Material).mapDiffuse = texture?.Texture;
-            }
-        }
-
         [EditorAsset]
         public ShaderAsset Shader
         {
@@ -44,62 +31,194 @@ namespace CrossEngine.Assets
             set
             {
                 SetChildId(value, ref shader, ref idShader);
-                Material.Shader = value?.Shader;
+                _material.Shader = value?.Shader;
+            }
+        }
+
+        [EditorNullable]
+        [EditorAsset]
+        public TextureAsset MapDiffuse
+        {
+            get => textureDiffuse;
+            set
+            {
+                SetChildId(value, ref textureDiffuse, ref idTextureDiffuse);
+                _material.mapDiffuse = textureDiffuse?.Texture;
+            }
+        }
+        [EditorNullable]
+        [EditorAsset]
+        public TextureAsset MapSpecular
+        {
+            get => textureSpecular;
+            set
+            {
+                SetChildId(value, ref textureSpecular, ref idTextureSpecular);
+                _material.mapSpecular = textureSpecular?.Texture;
+            }
+        }
+        [EditorNullable]
+        [EditorAsset]
+        public TextureAsset MapSpecularHighlight
+        {
+            get => textureSpecularHighlight;
+            set
+            {
+                SetChildId(value, ref textureSpecularHighlight, ref idTextureSpecularHighlight);
+                _material.mapSpecularHighlight = textureSpecularHighlight?.Texture;
+            }
+        }
+        [EditorNullable]
+        [EditorAsset]
+        public TextureAsset MapNormal
+        {
+            get => textureNormal;
+            set
+            {
+                SetChildId(value, ref textureNormal, ref idTextureNormal);
+                _material.mapNormal = textureNormal?.Texture;
             }
         }
 
         public override bool Loaded => Material.Shader != null;
 
+        [EditorInnerDraw]
+        public override IMaterial Material => _material;
+
+        private WavefrontMaterial _material;
         private ShaderAsset shader = null;
         private Guid idShader = Guid.Empty;
-        private TextureAsset texture = null;
-        private Guid idMapDiffuse = Guid.Empty;
+
+        private TextureAsset textureDiffuse = null;
+        private TextureAsset textureNormal = null;
+        private TextureAsset textureSpecular = null;
+        private TextureAsset textureSpecularHighlight = null;
+        private Guid idTextureDiffuse = Guid.Empty;
+        private Guid idTextureNormal = Guid.Empty;
+        private Guid idTextureSpecular = Guid.Empty;
+        private Guid idTextureSpecularHighlight = Guid.Empty;
         
         public WavefrontMaterialAsset()
         {
-            Material = new MeshLoader.WavefrontMaterial();
+            _material = new WavefrontMaterial();
         }
 
         public override async Task Load(IAssetLoadContext context)
         {
-            var mat = (MeshLoader.WavefrontMaterial)Material;
             Shader = context.GetDependency<ShaderAsset>(idShader);
-            if (idMapDiffuse != Guid.Empty) MapDiffuse = context.GetDependency<TextureAsset>(idMapDiffuse);
+
+            if (idTextureDiffuse != Guid.Empty) MapDiffuse = context.GetDependency<TextureAsset>(idTextureDiffuse);
+            if (idTextureNormal != Guid.Empty) MapNormal = context.GetDependency<TextureAsset>(idTextureNormal);
+            if (idTextureSpecular != Guid.Empty) MapSpecular = context.GetDependency<TextureAsset>(idTextureSpecular);
+            if (idTextureSpecularHighlight != Guid.Empty) MapSpecularHighlight = context.GetDependency<TextureAsset>(idTextureSpecularHighlight);
         }
 
         override public async Task Unload(IAssetLoadContext context)
         {
-            var mat = (MeshLoader.WavefrontMaterial)Material;
-            mat.mapDiffuse = null;
+            _material.mapDiffuse = null;
+            _material.mapNormal = null;
+            _material.mapSpecular = null;
+            _material.mapSpecularHighlight = null;
         }
 
         public override void GetObjectData(SerializationInfo info)
         {
             base.GetObjectData(info);
             
-            info.AddValue(nameof(Material), Material);
-            info.AddValue(nameof(MapDiffuse), idMapDiffuse);
+            info.AddValue("Material", _material);
             info.AddValue("Shader", idShader);
+
+            info.AddValue(nameof(MapDiffuse), idTextureDiffuse);
+            info.AddValue(nameof(MapNormal), idTextureNormal);
+            info.AddValue(nameof(MapSpecular), idTextureSpecular);
+            info.AddValue(nameof(MapSpecularHighlight), idTextureSpecularHighlight);
         }
 
         public override void SetObjectData(SerializationInfo info)
         {
             base.SetObjectData(info);
 
-            Material = info.GetValue<MeshLoader.WavefrontMaterial>(nameof(Material), (MeshLoader.WavefrontMaterial)Material);
-            idMapDiffuse = info.GetValue(nameof(MapDiffuse), idMapDiffuse);
+            _material = info.GetValue("Material", _material);
             idShader = info.GetValue("Shader", idShader);
+
+            idTextureDiffuse = info.GetValue(nameof(MapDiffuse), idTextureDiffuse);
+            idTextureNormal = info.GetValue(nameof(MapNormal), idTextureNormal);
+            idTextureSpecular = info.GetValue(nameof(MapSpecular), idTextureSpecular);
+            idTextureSpecularHighlight = info.GetValue(nameof(MapSpecularHighlight), idTextureSpecularHighlight);   
         }
     }
 
-    public class MtlMaterialAsset : MaterialAsset
+    public class MtlMaterialReferenceAsset : MaterialAsset
     {
-        [EditorString]
-        [EditorNullable]
-        public string RelativePath;
         [EditorString]
         public string MaterialName;
         
+        [EditorAsset]
+        public MtlMaterialLibraryAsset Parent
+        {
+            get => parent;
+            set => SetChildId(value, ref parent, ref idParent);
+        }
+
+        public override bool Loaded => Parent != null && Parent.Shader?.Loaded == true;
+        public override IMaterial Material => parent?.Materials?.TryGetValue(MaterialName, out var m) == true ? m : null;
+
+        private MtlMaterialLibraryAsset parent;
+        private TextureAsset textureDiffuse = null;
+        private TextureAsset textureNormal = null;
+        private TextureAsset textureSpecular = null;
+        private TextureAsset textureSpecularHighlight = null;
+        private Guid idParent;
+
+        public override async Task Load(IAssetLoadContext context)
+        {
+            Parent = context.GetDependency<MtlMaterialLibraryAsset>(idParent);
+
+            var mat = (WavefrontMaterial)Material;
+
+            LoadTexture(context, mat.texturePathDiffuse,            ref textureDiffuse,             ref mat.mapDiffuse);
+            LoadTexture(context, mat.texturePathNormal,             ref textureNormal,              ref mat.mapNormal);
+            LoadTexture(context, mat.texturePathSpecular,           ref textureSpecular,            ref mat.mapSpecular);
+            LoadTexture(context, mat.texturePathSpecularHighlight,  ref textureSpecularHighlight,   ref mat.mapSpecularHighlight);
+        }
+
+        public override async Task Unload(IAssetLoadContext context)
+        {
+            var mat = (WavefrontMaterial)Material;
+
+            mat.mapDiffuse = null;
+            mat.mapNormal = null;
+            mat.mapSpecular = null;
+            mat.mapSpecularHighlight = null;
+        }
+
+        public override void GetObjectData(SerializationInfo info)
+        {
+            base.GetObjectData(info);
+
+            info.AddValue(nameof(Parent), idParent);
+            info.AddValue(nameof(MaterialName), MaterialName);
+        }
+
+        public override void SetObjectData(SerializationInfo info)
+        {
+            base.SetObjectData(info);
+
+            idParent = info.GetValue(nameof(Parent), idParent);
+            MaterialName = info.GetValue(nameof(MaterialName), MaterialName);
+        }
+
+        private void LoadTexture(IAssetLoadContext context, string file, ref TextureAsset slot, ref WeakReference<Texture> texture)
+        {
+            if (file == null) return;
+            slot = context.GetFileAsset<TextureAsset>(Path.Join(Path.GetDirectoryName(parent.RelativePath), file));
+            texture = slot?.Texture;
+            Debug.Assert(slot?.Loaded != false);
+        }
+    }
+
+    public class MtlMaterialLibraryAsset : FileAsset
+    {
         [EditorAsset]
         public ShaderAsset Shader
         {
@@ -107,51 +226,55 @@ namespace CrossEngine.Assets
             set
             {
                 SetChildId(value, ref shader, ref idShader);
-                if (Material != null)
-                    Material.Shader = value?.Shader;
+                if (Materials != null)
+                    foreach(var mat in Materials.Values)
+                        mat.Shader = value?.Shader;
             }
         }
 
-        public override bool Loaded => Material != null && shader?.Loaded == true;
+        public override bool Loaded => Materials != null && Shader?.Loaded == true;
 
+        public Dictionary<string, WavefrontMaterial> Materials;
         private ShaderAsset shader;
         private Guid idShader;
 
+        public MtlMaterialLibraryAsset()
+        {
+
+        }
+
+        public MtlMaterialLibraryAsset(Dictionary<string, WavefrontMaterial> materials)
+        {
+            Materials = materials;
+        }
+
         public override async Task Load(IAssetLoadContext context)
         {
-            if (RelativePath != null)
+            if (Materials == null)
                 using (var stream = await context.OpenRelativeStream(RelativePath))
-                    Material = MeshLoader.ParseMtl(stream)[MaterialName];
-            
+                    Materials = MeshLoader.ParseMtl(stream);
+
             Shader = context.GetDependency<ShaderAsset>(idShader);
 
-            var mat = (MeshLoader.WavefrontMaterial)Material;
         }
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            var mat = (MeshLoader.WavefrontMaterial)Material;
-            mat.mapDiffuse = null;
-            
-            Material = null;
+            Materials = null;
             shader = null;
         }
 
         public override void GetObjectData(SerializationInfo info)
         {
             base.GetObjectData(info);
-            
-            info.AddValue(nameof(RelativePath), RelativePath);
-            info.AddValue(nameof(MaterialName), MaterialName);
+
             info.AddValue("Shader", idShader);
         }
 
         public override void SetObjectData(SerializationInfo info)
         {
             base.SetObjectData(info);
-            
-            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
-            MaterialName = info.GetValue(nameof(MaterialName), MaterialName);
+
             idShader = info.GetValue("Shader", idShader);
         }
     }

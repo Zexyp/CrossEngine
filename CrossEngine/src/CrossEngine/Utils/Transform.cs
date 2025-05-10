@@ -62,12 +62,26 @@ public class Transform : ITransformCache
     public Quaternion WorldRotation
     {
         get => _worldTransformProvider == null ? _rotation : _rotation * _worldTransformProvider.WorldRotation;
-        set => throw new NotImplementedException();
+        set
+        {
+            if (_worldTransformProvider == null)
+                _rotation = value;
+            else
+                _rotation = Quaternion.Inverse(_worldTransformProvider.WorldRotation) * value;
+            Invalidate();
+        }
     }
     public Vector3 WorldScale
     {
         get => _worldTransformProvider == null ? _scale : _scale * _worldTransformProvider.WorldScale;
-        set => throw new NotImplementedException();
+        set
+        {
+            if (_worldTransformProvider == null)
+                _scale = value;
+            else
+                _scale = value / _worldTransformProvider.WorldScale;
+            Invalidate();
+        }
     }
 
     public ITransformCache WorldTransformProvider

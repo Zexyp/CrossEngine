@@ -18,6 +18,9 @@ using CrossEngine.Rendering.Textures;
 using CrossEngine.Utils.Editor;
 using CrossEngine.Utils.Extensions;
 using CrossEngine.Utils.Rendering;
+using CrossEngine.Rendering.Renderables;
+using CrossEngine.Rendering.Culling;
+using System.Diagnostics;
 
 file class Util
 {
@@ -85,10 +88,14 @@ namespace CrossEngineEditor.Viewport
 
         public const float PointSize = 8;
         public const float PointOutlineSize = 4;
+        Vector4 selectedColor = new Vector4(1f, .75f, 0, 1);
+
+        DepthFunc IPassConfig.Depth => DepthFunc.None;
         
         protected override void Content()
         {
-            var model = Context.ActiveEntity?.Transform?.WorldPosition;
+            var ent = Context.ActiveEntity;
+            var model = ent?.Transform?.WorldPosition;
             if (model == null)
                 return;
 
@@ -96,7 +103,24 @@ namespace CrossEngineEditor.Viewport
             
             var translation = Matrix4x4.CreateTranslation(new Vector3(screenPos, 0));
             Renderer2D.DrawQuad(Matrix4x4.CreateRotationZ(MathF.PI / 4) * Matrix4x4.CreateScale(PointSize + PointOutlineSize) * translation, VecColor.Black);
-            Renderer2D.DrawQuad(Matrix4x4.CreateRotationZ(MathF.PI / 4) * Matrix4x4.CreateScale(PointSize) * translation, new Vector4(1f, .75f, 0, 1));
+            Renderer2D.DrawQuad(Matrix4x4.CreateRotationZ(MathF.PI / 4) * Matrix4x4.CreateScale(PointSize) * translation, selectedColor);
+
+            LineRenderer.EndScene();
+            LineRenderer.BeginScene(this.Camera.GetViewProjectionMatrix());
+            var volume = ((IObjectRenderData)ent?.GetComponent<RendererComponent>())?.GetVolume();
+            if (volume != null)
+                switch (volume)
+                {
+                    case AABox box:
+                        LineRenderer.DrawBox(box.corner, box.corner + new Vector3(box.x, box.y, box.z), selectedColor);
+                        break;
+                    case Sphere sphere:
+                        LineRenderer.DrawSphere(sphere.center, selectedColor, sphere.radius);
+                        break;
+                    default: Debug.Fail($"Unknown volume type: {volume.GetType()}"); break;
+                }
+            LineRenderer.EndScene();
+            LineRenderer.BeginScene(((ICamera)this.HudCamera).GetViewProjectionMatrix());
         }
     }
     
@@ -162,15 +186,18 @@ namespace CrossEngineEditor.Viewport
         private Vector4[] _offsets = TextureAtlas.CreateOffsets(new Vector2(80, 16), new Vector2(16, 16), 5);
 
         private const int IconCamera = 0;
-        private const int IconBulb = 2;
-        private const int IconSun = 3;
-        private const int IconParticles = 4;
+        private const int IconBulb = 1;
+        private const int IconSun = 2;
+        private const int IconParticles = 3;
+        private const int IconLamp = 4;
         
         List<(Type CompType, int Icon)> _iconLookup = new()
         {
             (typeof(CameraComponent), IconCamera),
             (typeof(ParticleSystemComponent), IconParticles),
-            (typeof(LightComponent), IconBulb),
+            (typeof(PointLightComponent), IconBulb),
+            (typeof(DirectionalLightComponent), IconSun),
+            (typeof(SpotLightComponent), IconLamp),
         };
 
         public void Resize(float width, float height)

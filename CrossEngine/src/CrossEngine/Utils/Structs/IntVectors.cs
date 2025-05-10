@@ -11,6 +11,11 @@ namespace CrossEngine.Utils.Structs
         public int X;
         public int Y;
 
+        public static IntVec2 Zero => new IntVec2(0);
+        public static IntVec2 One => new IntVec2(1);
+        public static IntVec2 UnitX => new IntVec2(1, 0);
+        public static IntVec2 UnitY => new IntVec2(0, 1);
+
         public IntVec2(int x, int y)
         {
             this.X = x;
@@ -60,6 +65,12 @@ namespace CrossEngine.Utils.Structs
         public int X;
         public int Y;
         public int Z;
+
+        public static IntVec3 Zero => new IntVec3(0);
+        public static IntVec3 One => new IntVec3(1);
+        public static IntVec3 UnitX => new IntVec3(1, 0, 0);
+        public static IntVec3 UnitY => new IntVec3(0, 1, 0);
+        public static IntVec3 UnitZ => new IntVec3(0, 0, 1);
 
         public IntVec3(IntVec2 vec2, int z)
         {
@@ -119,6 +130,13 @@ namespace CrossEngine.Utils.Structs
         public int Y;
         public int Z;
         public int W;
+
+        public static IntVec4 Zero => new IntVec4(0);
+        public static IntVec4 One => new IntVec4(1);
+        public static IntVec4 UnitX => new IntVec4(1, 0, 0, 0);
+        public static IntVec4 UnitY => new IntVec4(0, 1, 0, 0);
+        public static IntVec4 UnitZ => new IntVec4(0, 0, 1, 0);
+        public static IntVec4 UnitW => new IntVec4(0, 0, 0, 1);
 
         public IntVec4(IntVec3 vec3, int w)
         {

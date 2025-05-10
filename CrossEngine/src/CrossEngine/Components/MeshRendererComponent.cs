@@ -42,5 +42,13 @@ namespace CrossEngine.Components
 
         MeshRenderer IMeshRenderData.Renderer { get; set; }
         IMaterial IMeshRenderData.Material => Material?.Material;
+
+        protected override IVolume GetVolume()
+        {
+            var val = _mesh?.Mesh?.Bounds;
+            if (val != null && Entity.Transform != null)
+                val = AABox.Transform(val.Value, Entity.Transform.GetWorldTransformMatrix());
+            return val;
+        }
     }
 }

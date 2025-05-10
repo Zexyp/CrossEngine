@@ -18,13 +18,18 @@ namespace CrossEngine.Scenes
         public static void Render(Scene scene, ISurface surface)
         {
             Debug.Assert(scene.IsInitialized);
-            
+
+            // TODO: remove
+            SceneManager.Current = scene;
+
             surface.Context.Api.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
 
             var rs = scene.World.GetSystem<RenderSystem>();
 
             rs.Pipeline.Camera = rs.DrawCamera;
             rs.Pipeline.Process(surface);
+            
+            SceneManager.Current = null;
         }
     }
 }
