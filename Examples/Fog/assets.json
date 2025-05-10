@@ -1,0 +1,158 @@
+{
+  "$type": "CrossEngine.Assets.AssetList",
+  "DirectoryOffset": ".",
+  "Assets": [
+    {
+      "$type": "CrossEngine.Assets.SceneAsset",
+      "Id": "678c9684-abbd-47f6-8d16-021d4ed8e9e8",
+      "Name": null,
+      "RelativePath": "scene.json"
+    },
+    {
+      "$type": "CrossEngine.Assets.ShaderAsset",
+      "Id": "b687d7fa-5a8c-4603-9dd9-285cef7b89d5",
+      "Name": null,
+      "RelativePath": "internal:shader_wavefront.glsl"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "543bdc48-fa11-4515-a3d9-620528e851ea",
+      "Name": "Cylinder",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "70e39eb2-cfbc-4301-98a3-1f4a4bc6ca9b",
+      "Name": "Plane",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Plane"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "44e8e2cd-c835-41cf-8c4a-d3226e9d5df5",
+      "Name": "Cylinder.001",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.001"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "11e482d8-7808-45fd-a9ad-33586792330e",
+      "Name": "Cylinder.002",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.002"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "1249d768-f425-4326-9839-1b0dbad21211",
+      "Name": "Cylinder.003",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.003"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "e252296d-f8cb-45ee-803f-c14958fcbb43",
+      "Name": "Cylinder.004",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.004"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "3d6930fa-1be0-4510-8c89-d60877ca5be5",
+      "Name": "Cylinder.005",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.005"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "f8c2ce1f-bd44-4c95-9c83-d64f4c2a40a3",
+      "Name": "Cylinder.006",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.006"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "3525cd3e-6ef1-43aa-9e55-8e7669bb6486",
+      "Name": "Cylinder.007",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.007"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "6cf29849-847c-4033-8623-fe074933ab03",
+      "Name": "Cylinder.008",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.008"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "1da79964-b9cf-4a9c-87f9-d1012d044961",
+      "Name": "Cylinder.009",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.009"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "6922fe6b-0bf6-4aee-9346-92bde743c13b",
+      "Name": "Cylinder.010",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.010"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "c2f90743-cee4-4d11-b870-10de0e3a6262",
+      "Name": "Cylinder.011",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.011"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "a815ac67-43ca-4ac4-88cb-5c8a042db49d",
+      "Name": "Cylinder.012",
+      "Parent": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "MeshName": "Cylinder.012"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjModelAsset",
+      "Id": "c0421947-a29b-435a-bda5-c6c22bbab4c6",
+      "Name": null,
+      "RelativePath": "trees.obj"
+    },
+    {
+      "$type": "CrossEngine.Assets.WavefrontMaterialAsset",
+      "Id": "75fdcd71-0416-46b9-a552-5d3063d4d371",
+      "Name": null,
+      "Material": {
+        "$type": "CrossEngine.Loaders.MeshLoader\u002BWavefrontMaterial",
+        "ambient": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "diffuse": {
+          "X": 1,
+          "Y": 1,
+          "Z": 1
+        },
+        "specular": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "emissive": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "specularExponent": 0,
+        "disolve": 0,
+        "refractiveIndex": 0
+      },
+      "Shader": "b687d7fa-5a8c-4603-9dd9-285cef7b89d5",
+      "MapDiffuse": "00000000-0000-0000-0000-000000000000",
+      "MapNormal": "00000000-0000-0000-0000-000000000000",
+      "MapSpecular": "00000000-0000-0000-0000-000000000000",
+      "MapSpecularHighlight": "00000000-0000-0000-0000-000000000000"
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "Entities": [
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 11660060,
+      "Name": "Plane",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": -0.70710677,
+            "Y": 0,
+            "Z": 0,
+            "W": 0.70710677
+          },
+          "Scale": {
+            "X": 20,
+            "Y": 20,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "4fcaf72c-8df1-4626-8e68-1272f3e16557",
+          "Material": "ae510bae-c760-4a60-8e4b-f6a1b080f904"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 16876026,
+      "Name": "Point",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 2,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.PointLightComponent",
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          },
+          "Intensity": 10
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 24142300,
+      "Name": "Spot",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 3.3691218,
+            "Y": 2.14249,
+            "Z": 4.4428334
+          },
+          "Rotation": {
+            "X": -0.37809756,
+            "Y": -0.44157097,
+            "Z": -0.19593497,
+            "W": 0.7897367
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.SpotLightComponent",
+          "Angle": 75,
+          "Blend": 0.1,
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          },
+          "Intensity": 10
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 56552081,
+      "Name": "Sun",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 3.8,
+            "Z": -3.8
+          },
+          "Rotation": {
+            "X": 0.13181691,
+            "Y": 0.5276749,
+            "Z": 0.38270807,
+            "W": 0.7468128
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.DirectionalLightComponent",
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          },
+          "Intensity": 0.5
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 58550198,
+      "Name": "Icosphere",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": -5,
+            "Y": 3.8,
+            "Z": -3.5
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "7f96d40e-8644-4ffc-828f-7ca915cf04ef",
+          "Material": "ae510bae-c760-4a60-8e4b-f6a1b080f904"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 1855374,
+      "Name": "Env",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.AmbientLightComponent",
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          },
+          "Intensity": 0.2
+        }
+      ]
+    }
+  ]
+}

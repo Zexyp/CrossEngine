@@ -1,0 +1,484 @@
+{
+  "Entities": [
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 27518371,
+      "Name": "Cylinder",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "543bdc48-fa11-4515-a3d9-620528e851ea",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 19113179,
+      "Name": "Plane",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "70e39eb2-cfbc-4301-98a3-1f4a4bc6ca9b",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 359513,
+      "Name": "Cylinder.001",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "44e8e2cd-c835-41cf-8c4a-d3226e9d5df5",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 23369092,
+      "Name": "Cylinder.002",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "11e482d8-7808-45fd-a9ad-33586792330e",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 43059012,
+      "Name": "Cylinder.003",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "1249d768-f425-4326-9839-1b0dbad21211",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 1228290,
+      "Name": "Cylinder.004",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "e252296d-f8cb-45ee-803f-c14958fcbb43",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 29483941,
+      "Name": "Cylinder.005",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "3d6930fa-1be0-4510-8c89-d60877ca5be5",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 39634838,
+      "Name": "Cylinder.006",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "f8c2ce1f-bd44-4c95-9c83-d64f4c2a40a3",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 8603325,
+      "Name": "Cylinder.007",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "3525cd3e-6ef1-43aa-9e55-8e7669bb6486",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 8369024,
+      "Name": "Cylinder.008",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "6cf29849-847c-4033-8623-fe074933ab03",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 63258058,
+      "Name": "Cylinder.009",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "1da79964-b9cf-4a9c-87f9-d1012d044961",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 9165569,
+      "Name": "Cylinder.010",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "6922fe6b-0bf6-4aee-9346-92bde743c13b",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 24227341,
+      "Name": "Cylinder.011",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "c2f90743-cee4-4d11-b870-10de0e3a6262",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 42594135,
+      "Name": "Cylinder.012",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "a815ac67-43ca-4ac4-88cb-5c8a042db49d",
+          "Material": "75fdcd71-0416-46b9-a552-5d3063d4d371"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 16723142,
+      "Name": "Env",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0.33812866,
+            "Y": 0.8143041,
+            "Z": 0.18092327,
+            "W": 0.4357116
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.FogComponent",
+          "Start": 5,
+          "Density": 0.1,
+          "Color": {
+            "X": 0.6113744,
+            "Y": 0.30134094,
+            "Z": 0.30134094,
+            "W": 0.758
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.DirectionalLightComponent",
+          "Color": {
+            "X": 1,
+            "Y": 0.808,
+            "Z": 0.37130803
+          },
+          "Intensity": 0.25
+        }
+      ]
+    }
+  ]
+}

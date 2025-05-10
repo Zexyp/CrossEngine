@@ -1,5 +1,5 @@
 [context]
-Assets = /media/pjavel/Acer/dev/CE3/Examples/Scripting/assets.json
+Assets = ./assets.json
 Scene = c58160c3-a84b-4d20-8124-d6c607bd88c5
 ActiveEntity = 22624442
 [workspace.CrossEngineEditor.Panels.InspectorPanel]

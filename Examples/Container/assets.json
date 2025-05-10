@@ -1,0 +1,79 @@
+{
+  "$type": "CrossEngine.Assets.AssetList",
+  "DirectoryOffset": "./",
+  "Assets": [
+    {
+      "$type": "CrossEngine.Assets.SceneAsset",
+      "Id": "8e5b79db-d200-4d32-a091-a0891b3ab4b1",
+      "Name": null,
+      "RelativePath": "scene.json"
+    },
+    {
+      "$type": "CrossEngine.Assets.ShaderAsset",
+      "Id": "d59962b4-36d9-4f15-b7b4-c5855dec0d15",
+      "Name": null,
+      "RelativePath": "internal:shader_wavefront.glsl"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "1ddb2116-9893-4029-93c0-106c0ca25492",
+      "Name": "Cube",
+      "Parent": "f2cac796-aff3-4ac3-87f9-b3f729426230",
+      "MeshName": "Cube"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjModelAsset",
+      "Id": "f2cac796-aff3-4ac3-87f9-b3f729426230",
+      "Name": null,
+      "RelativePath": "container.obj"
+    },
+    {
+      "$type": "CrossEngine.Assets.WavefrontMaterialAsset",
+      "Id": "a81b83c1-afee-460a-b909-2451d60aaa66",
+      "Name": "Material",
+      "Material": {
+        "$type": "CrossEngine.Loaders.MeshLoader\u002BWavefrontMaterial",
+        "ambient": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "diffuse": {
+          "X": 1,
+          "Y": 1,
+          "Z": 1
+        },
+        "specular": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "emissive": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "specularExponent": 128,
+        "disolve": 0,
+        "refractiveIndex": 0
+      },
+      "Shader": "d59962b4-36d9-4f15-b7b4-c5855dec0d15",
+      "MapDiffuse": "5fc6c76b-9d77-4afc-990c-f09aa72d8cd2",
+      "MapNormal": "00000000-0000-0000-0000-000000000000",
+      "MapSpecular": "00000000-0000-0000-0000-000000000000",
+      "MapSpecularHighlight": "58cfb6d2-fc2e-4cc2-a057-936c58d74cac"
+    },
+    {
+      "$type": "CrossEngine.Assets.TextureAsset",
+      "Id": "5fc6c76b-9d77-4afc-990c-f09aa72d8cd2",
+      "Name": null,
+      "RelativePath": "container2.png"
+    },
+    {
+      "$type": "CrossEngine.Assets.TextureAsset",
+      "Id": "58cfb6d2-fc2e-4cc2-a057-936c58d74cac",
+      "Name": null,
+      "RelativePath": "container2_specular.png"
+    }
+  ]
+}

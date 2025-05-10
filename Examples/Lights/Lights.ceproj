@@ -1,0 +1,24 @@
+[context]
+Assets = assets.json
+Scene = b94ddfdc-ca26-47ba-a7e4-52a8d1d81af7
+ActiveEntity = 24142300
+[workspace.CrossEngineEditor.Panels.InspectorPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.HierarchyPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.ViewportPanel]
+Open = True
+view.position = -0.85844165,-0.58205426,-1.2198535
+view.rotation = 0.38563633,-0.2836633,-0.1258973,-0.8688898
+view.zoom = 11.222863
+view.perspective = True
+view.near = 0.1
+view.far = 1000
+view.fov = 90
+view.enableOverlays = True
+[workspace.CrossEngineEditor.Panels.GamePanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.AssetListPanel]
+Open = True
+[workspace.CrossEngineEditor.Panels.SimpleThemeGeneratorPanel]
+Open = True

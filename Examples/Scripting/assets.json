@@ -15,10 +15,10 @@
       "RelativePath": "Script.cs"
     },
     {
-      "$type": "CrossEngine.Assets.MeshAsset",
+      "$type": "CrossEngine.Assets.GeneratedMeshAsset",
       "Id": "52129ece-3d66-4e28-b618-33a272f8827c",
       "Name": null,
-      "RelativePath": "internal:plane"
+      "Generate": "internal:plane"
     }
   ]
 }

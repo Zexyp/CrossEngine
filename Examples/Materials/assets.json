@@ -1,0 +1,157 @@
+{
+  "$type": "CrossEngine.Assets.AssetList",
+  "DirectoryOffset": ".",
+  "Assets": [
+    {
+      "$type": "CrossEngine.Assets.SceneAsset",
+      "Id": "3cc4a8b1-7e7e-46bb-80ea-2dff7ae5cabe",
+      "Name": null,
+      "RelativePath": "scene.json"
+    },
+    {
+      "$type": "CrossEngine.Assets.ShaderAsset",
+      "Id": "700506d0-4587-4bba-9d74-93377f2e5ad6",
+      "Name": null,
+      "RelativePath": "internal:shader_wavefront.glsl"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjModelAsset",
+      "Id": "c7cd89ad-493d-4126-b9c2-193ea4419002",
+      "Name": null,
+      "RelativePath": "..\\shared\\sphere.obj"
+    },
+    {
+      "$type": "CrossEngine.Assets.ObjMeshReferenceAsset",
+      "Id": "151de1df-9396-4076-be40-b1b6be802e7c",
+      "Name": "Icosphere",
+      "Parent": "c7cd89ad-493d-4126-b9c2-193ea4419002",
+      "MeshName": "Icosphere"
+    },
+    {
+      "$type": "CrossEngine.Assets.WavefrontMaterialAsset",
+      "Id": "864eb85a-3acf-417d-adbb-6d695bf19605",
+      "Name": "White",
+      "Material": {
+        "$type": "CrossEngine.Loaders.MeshLoader\u002BWavefrontMaterial",
+        "ambient": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "diffuse": {
+          "X": 0.29113925,
+          "Y": 0.30908513,
+          "Z": 1
+        },
+        "specular": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "emissive": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "specularExponent": 0,
+        "disolve": 0,
+        "refractiveIndex": 0
+      },
+      "Shader": "700506d0-4587-4bba-9d74-93377f2e5ad6",
+      "MapDiffuse": "00000000-0000-0000-0000-000000000000",
+      "MapNormal": "00000000-0000-0000-0000-000000000000",
+      "MapSpecular": "00000000-0000-0000-0000-000000000000",
+      "MapSpecularHighlight": "2b00d016-65a2-4f9b-8a73-92f8dfc49ab9"
+    },
+    {
+      "$type": "CrossEngine.Assets.WavefrontMaterialAsset",
+      "Id": "f347eff4-b7d3-48b4-b78c-9ab5cdf9866a",
+      "Name": "Red",
+      "Material": {
+        "$type": "CrossEngine.Loaders.MeshLoader\u002BWavefrontMaterial",
+        "ambient": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "diffuse": {
+          "X": 0.29113925,
+          "Y": 0.30908513,
+          "Z": 1
+        },
+        "specular": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "emissive": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "specularExponent": 0,
+        "disolve": 0,
+        "refractiveIndex": 0
+      },
+      "Shader": "700506d0-4587-4bba-9d74-93377f2e5ad6",
+      "MapDiffuse": "00000000-0000-0000-0000-000000000000",
+      "MapNormal": "00000000-0000-0000-0000-000000000000",
+      "MapSpecular": "00000000-0000-0000-0000-000000000000",
+      "MapSpecularHighlight": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "$type": "CrossEngine.Assets.WavefrontMaterialAsset",
+      "Id": "b6bf04ee-86b3-4dc8-8819-2f317fde3b8c",
+      "Name": "Textured",
+      "Material": {
+        "$type": "CrossEngine.Loaders.MeshLoader\u002BWavefrontMaterial",
+        "ambient": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "diffuse": {
+          "X": 1,
+          "Y": 1,
+          "Z": 1
+        },
+        "specular": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "emissive": {
+          "X": 0,
+          "Y": 0,
+          "Z": 0
+        },
+        "specularExponent": 0,
+        "disolve": 0,
+        "refractiveIndex": 0
+      },
+      "Shader": "700506d0-4587-4bba-9d74-93377f2e5ad6",
+      "MapDiffuse": "737d19fe-3b78-4a35-ab1c-7e7567bfef8b",
+      "MapNormal": "00000000-0000-0000-0000-000000000000",
+      "MapSpecular": "00000000-0000-0000-0000-000000000000",
+      "MapSpecularHighlight": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "$type": "CrossEngine.Assets.TextureAsset",
+      "Id": "737d19fe-3b78-4a35-ab1c-7e7567bfef8b",
+      "Name": null,
+      "RelativePath": "../Container/container2.png"
+    },
+    {
+      "$type": "CrossEngine.Assets.TextureAsset",
+      "Id": "2b00d016-65a2-4f9b-8a73-92f8dfc49ab9",
+      "Name": null,
+      "RelativePath": "internal:black"
+    },
+    {
+      "$type": "CrossEngine.Assets.SkyboxAsset",
+      "Id": "6de7bde0-b35e-4401-b507-f2d8c25fe699",
+      "Name": null,
+      "RelativePath": "../shared/cubemap/map.jpg"
+    }
+  ]
+}

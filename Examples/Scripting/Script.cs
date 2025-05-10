@@ -12,8 +12,11 @@ using CrossEngine.Components;
 
 namespace Scripting;
 
-public class ScriptMaterial : IMaterial
+class ScriptMaterial : MaterialAsset, IMaterial
 {
+    public override IMaterial Material => this;
+    public override bool Loaded => true;
+
     private const string ShaderSource = @"
 #type vertex
 #version 330 core
@@ -45,9 +48,10 @@ in vec2 vTexCoord;
 uniform int uEntityID;
 uniform vec3 uColor;
 uniform sampler2D uTexture;
+uniform vec2 uOffset;
 
 void main() {
-	oColor = vec4(uColor * texture(uTexture, vTexCoord).xyz, 128);
+    oColor = vec4(uColor * texture(uTexture, vTexCoord + uOffset).xyz, 128);
     oEntityID = uEntityID;
     oPosition = vPosition;
     oNormal = vNormal;
@@ -59,7 +63,8 @@ void main() {
     public void Update(ShaderProgram shader)
     {
         shader.Use();
-        shader.SetParameterVec3("uColor", ColorHelper.HSVToRGB(new Vector3(Time.ElapsedF, .5f, 1)));
+        shader.SetParameterVec3("uColor", ColorHelper.HSVToRGB(new Vector3(Time.ElapsedF, .5f, 2)));
+        shader.SetParameterVec2("uOffset", new Vector2(Time.ElapsedF / 2));
         TextureLoader.DefaultTexture.GetValue().Bind();
     }
 
@@ -67,6 +72,9 @@ void main() {
     {
         Shader = ShaderPreprocessor.CreateProgramFromString(ShaderSource);
     }
+
+    public override async Task Load(IAssetLoadContext context) {}
+    public override async Task Unload(IAssetLoadContext context) {}
 }
 
 public class Script : Behaviour
@@ -74,6 +82,6 @@ public class Script : Behaviour
     public override void Start()
     {
         Component.Entity.GetComponent<MeshRendererComponent>().Material =
-            new MaterialAsset() { Material = new ScriptMaterial() };
+            new ScriptMaterial();
     }
 }

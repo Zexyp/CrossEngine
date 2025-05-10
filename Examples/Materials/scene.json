@@ -1,0 +1,136 @@
+{
+  "Entities": [
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 57533153,
+      "Name": "Icosphere",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "151de1df-9396-4076-be40-b1b6be802e7c",
+          "Material": "864eb85a-3acf-417d-adbb-6d695bf19605"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 52302769,
+      "Name": null,
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 3
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "151de1df-9396-4076-be40-b1b6be802e7c",
+          "Material": "f347eff4-b7d3-48b4-b78c-9ab5cdf9866a"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 46131636,
+      "Name": null,
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 6
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.MeshRendererComponent",
+          "Mesh": "151de1df-9396-4076-be40-b1b6be802e7c",
+          "Material": "b6bf04ee-86b3-4dc8-8819-2f317fde3b8c"
+        }
+      ]
+    },
+    {
+      "$type": "CrossEngine.Ecs.Entity",
+      "Id": 36472305,
+      "Name": "Env",
+      "Components": [
+        {
+          "$type": "CrossEngine.Components.TransformComponent",
+          "Position": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          },
+          "Rotation": {
+            "X": 0,
+            "Y": 0,
+            "Z": 0,
+            "W": 1
+          },
+          "Scale": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        },
+        {
+          "$type": "CrossEngine.Components.DirectionalLightComponent",
+          "Color": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          },
+          "Intensity": 1
+        },
+        {
+          "$type": "CrossEngine.Components.SkyboxRendererComponent",
+          "Skybox": "6de7bde0-b35e-4401-b507-f2d8c25fe699"
+        }
+      ]
+    }
+  ]
+}
