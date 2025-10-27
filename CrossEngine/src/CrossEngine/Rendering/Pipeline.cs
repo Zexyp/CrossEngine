@@ -18,7 +18,7 @@ public class Pipeline
 {
     Vector4? _clearColor = VecColor.Gray;
     List<Pass> _passes = new List<Pass>();
-    public WeakReference<Framebuffer> Buffer { get; protected set; }
+    public WasWeakReference<Framebuffer> Buffer { get; protected set; }
     public ICamera Camera;
     
     private bool _initialized;

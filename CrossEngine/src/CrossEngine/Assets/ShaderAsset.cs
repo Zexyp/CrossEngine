@@ -10,7 +10,7 @@ namespace CrossEngine.Assets
 {
     public class ShaderAsset : FileAsset
     {
-        public WeakReference<ShaderProgram> Shader;
+        public WasWeakReference<ShaderProgram> Shader;
 
         public override bool Loaded => Shader != null;
 

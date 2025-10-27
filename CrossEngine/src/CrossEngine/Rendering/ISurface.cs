@@ -12,7 +12,7 @@ namespace CrossEngine.Rendering
 {
     public interface ISurface
     {
-        public WeakReference<Framebuffer> Buffer { get; }
+        public WasWeakReference<Framebuffer> Buffer { get; }
         public Vector2 Size { get; }
         public virtual float Width => Size.X;
         public virtual float Height => Size.Y;
@@ -27,7 +27,7 @@ namespace CrossEngine.Rendering
 
     public class FramebufferSurface : ISurface
     {
-        public WeakReference<Framebuffer> Buffer { get; set; }
+        public WasWeakReference<Framebuffer> Buffer { get; set; }
 
         public Vector2 Size { get; private set; }
         public GraphicsContext Context { get; set; }
@@ -35,7 +35,7 @@ namespace CrossEngine.Rendering
         public event Action<ISurface, float, float> Resize;
         public event Action<ISurface> Update;
 
-        public FramebufferSurface(WeakReference<Framebuffer> buffer = null)
+        public FramebufferSurface(WasWeakReference<Framebuffer> buffer = null)
         {
             Buffer = buffer;
         }

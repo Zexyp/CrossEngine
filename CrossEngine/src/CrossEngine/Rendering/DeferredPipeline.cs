@@ -153,7 +153,7 @@ void main()
     public ISkyboxRenderData Skybox;
 
     private MeshRenderer _skyboxMeshRenderer;
-    private WeakReference<ShaderProgram> _skyboxShader;
+    private WasWeakReference<ShaderProgram> _skyboxShader;
 
     public SkyboxPass()
     {
@@ -422,7 +422,7 @@ class LightPass : Pass
 {
     public IList<ILightRenderData> lights;
     
-    WeakReference<ShaderProgram> _shader;
+    WasWeakReference<ShaderProgram> _shader;
     MeshRenderer _plane;
 
     public LightPass()
@@ -543,7 +543,7 @@ void main()
 ";
     
     // light accumulation buffer
-    WeakReference<Framebuffer> _workbuffer;
+    WasWeakReference<Framebuffer> _workbuffer;
 
     public override void Init()
     {
@@ -762,7 +762,7 @@ void main()
         DepthMask = false;
     }
 
-    WeakReference<ShaderProgram> _shader;
+    WasWeakReference<ShaderProgram> _shader;
     MeshRenderer _quad;
 
     public override void Init()

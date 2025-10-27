@@ -43,18 +43,18 @@ namespace CrossEngine.Rendering.Buffers
         public abstract void Bind();
         public abstract void Unbind();
 
-        public abstract void AddVertexBuffer(WeakReference<VertexBuffer> vertexBuffer);
-        public abstract void SetIndexBuffer(WeakReference<IndexBuffer> indexBuffer);
+        public abstract void AddVertexBuffer(WasWeakReference<VertexBuffer> vertexBuffer);
+        public abstract void SetIndexBuffer(WasWeakReference<IndexBuffer> indexBuffer);
 
-        public abstract WeakReference<VertexBuffer>[] GetVertexBuffers();
-        public abstract WeakReference<IndexBuffer> GetIndexBuffer();
+        public abstract WasWeakReference<VertexBuffer>[] GetVertexBuffers();
+        public abstract WasWeakReference<IndexBuffer> GetIndexBuffer();
 
-        public static WeakReference<VertexArray> Create()
+        public static WasWeakReference<VertexArray> Create()
         {
-            return Create(new WeakReference<VertexArray>(null));
+            return Create(new WasWeakReference<VertexArray>(null));
         }
 
-        public static WeakReference<VertexArray> Create(WeakReference<VertexArray> wr)
+        public static WasWeakReference<VertexArray> Create(WeakReference<VertexArray> wr)
         {
             switch (RendererApi.GetApi())
             {

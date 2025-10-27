@@ -12,9 +12,9 @@ namespace CrossEngine.Rendering.Meshes;
 
 public class MeshRenderer : IDisposable
 {
-    WeakReference<VertexBuffer> vb;
-    WeakReference<IndexBuffer> ib;
-    WeakReference<VertexArray> va;
+    WasWeakReference<VertexBuffer> vb;
+    WasWeakReference<IndexBuffer> ib;
+    WasWeakReference<VertexArray> va;
     private int _vertexCount;
 
     // mby service request api

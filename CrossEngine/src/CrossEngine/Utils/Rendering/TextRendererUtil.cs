@@ -32,7 +32,7 @@ namespace CrossEngine.Utils.Rendering
             public const float SymbolHeight = 16;
             public static readonly Vector4 SymbolMargin = new Vector4(0, 0, 4, 0);
 
-            public WeakReference<Texture> AtlasTexture;
+            public WasWeakReference<Texture> AtlasTexture;
             public Vector4[] AtlasOffsets;
             public DrawMode Mode;
         }

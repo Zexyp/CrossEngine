@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime;
 using System.Threading.Tasks;
+using CrossEngine.Rendering;
 using CrossEngine.Serialization;
 using CrossEngine.Utils.Editor;
 
@@ -19,6 +20,8 @@ namespace CrossEngine.Assets
         virtual T GetFileAsset<T>(string file) where T : FileAsset => (T)GetFileAsset(typeof(T), file);
 
         virtual Task<Stream> OpenRelativeStream(string realtivePath) => OpenStream(GetFullPath(realtivePath));
+
+        GraphicsContext Graphics { get; }
     }
 
     public abstract class Asset : ISerializable

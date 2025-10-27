@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Utils.Extensions
 {
-    public static class WeakReferenceExtension
+    public static class WasWeakReferenceExtension
     {
-        public static T GetValue<T>(this WeakReference<T> value) where T : class
+        public static T GetValue<T>(this WasWeakReference<T> value) where T : class
         {
             if (value.TryGetTarget(out T result))
                 return result;
             return null;
         }
         
-        public static T Get<T>(this WeakReference<T> value) where T : class => value.TryGetTarget(out T result) ? result : null;
-        public static bool HasValue<T>(this WeakReference<T> value) where T : class => value.TryGetTarget(out _);
+        public static T Get<T>(this WasWeakReference<T> value) where T : class => value.TryGetTarget(out T result) ? result : null;
+        public static bool HasValue<T>(this WasWeakReference<T> value) where T : class => value.TryGetTarget(out _);
 
-        public static void Dispose<T>(this WeakReference<T> value) where T : class, IDisposable
+        public static void Dispose<T>(this WasWeakReference<T> value) where T : class, IDisposable
         {
             value.GetValue().Dispose();
             //value.SetTarget(null); // not sure

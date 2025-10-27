@@ -56,17 +56,17 @@ namespace CrossEngine.Loaders
             [SerializeInclude] [EditorDrag]
             public float refractiveIndex;
 
-            public WeakReference<Texture> mapDiffuse;
-            public WeakReference<Texture> mapSpecular;
-            public WeakReference<Texture> mapSpecularHighlight;
-            public WeakReference<Texture> mapNormal;
+            public WasWeakReference<Texture> mapDiffuse;
+            public WasWeakReference<Texture> mapSpecular;
+            public WasWeakReference<Texture> mapSpecularHighlight;
+            public WasWeakReference<Texture> mapNormal;
 
             public string texturePathDiffuse;
             public string texturePathSpecular;
             public string texturePathSpecularHighlight;
             public string texturePathNormal;
 
-            public WeakReference<ShaderProgram> Shader { get; set; }
+            public WasWeakReference<ShaderProgram> Shader { get; set; }
 
             string mountPoint = "uMaterial.";
 

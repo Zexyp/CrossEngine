@@ -72,12 +72,12 @@ namespace CrossEngine.Rendering.Shaders
             Dispose(false);
         }
 
-        public static WeakReference<ShaderProgram> Create(Shader vertex, Shader fragment)
+        public static WasWeakReference<ShaderProgram> Create(Shader vertex, Shader fragment)
         {
-            return Create(new WeakReference<ShaderProgram>(null), vertex, fragment);
+            return Create(new WasWeakReference<ShaderProgram>(null), vertex, fragment);
         }
         
-        public static WeakReference<ShaderProgram> Create(WeakReference<ShaderProgram> wr, Shader vertex, Shader fragment)
+        public static WasWeakReference<ShaderProgram> Create(WasWeakReference<ShaderProgram> wr, Shader vertex, Shader fragment)
         {
             switch (RendererApi.GetApi())
             {

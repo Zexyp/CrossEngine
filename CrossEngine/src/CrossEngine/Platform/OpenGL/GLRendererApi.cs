@@ -29,7 +29,7 @@ namespace CrossEngine.Platform.OpenGL
                 Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Vendor)));
         }
 
-        public override unsafe void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)
+        public override unsafe void DrawIndexed(WasWeakReference<VertexArray> vertexArray, uint indexCount = 0)
         {
             var va = vertexArray.GetValue();
             var ib = va.GetIndexBuffer().GetValue();
@@ -39,7 +39,7 @@ namespace CrossEngine.Platform.OpenGL
             // TODO: consider unbinding to keep the vertex array state safe
         }
 
-        public override unsafe void DrawArray(WeakReference<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
+        public override unsafe void DrawArray(WasWeakReference<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
         {
             vertexArray.GetValue().Bind();
             gl.DrawArrays(GLUtils.ToGLDrawMode(mode), 0, verticesCount);

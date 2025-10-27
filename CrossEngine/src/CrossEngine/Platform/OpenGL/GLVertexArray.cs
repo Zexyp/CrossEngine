@@ -26,8 +26,8 @@ namespace CrossEngine.Platform.OpenGL
     {
         internal uint _rendererId;
         private uint _vertexBufferIndex;
-        private WeakReference<IndexBuffer> _indexBuffer;
-        private List<WeakReference<VertexBuffer>> _vertexBuffers = new List<WeakReference<VertexBuffer>>();
+        private WasWeakReference<IndexBuffer> _indexBuffer;
+        private List<WasWeakReference<VertexBuffer>> _vertexBuffers = new List<WasWeakReference<VertexBuffer>>();
 
         public unsafe GLVertexArray()
         {
@@ -80,7 +80,7 @@ namespace CrossEngine.Platform.OpenGL
             gl.BindVertexArray(0);
         }
 
-        public override unsafe void AddVertexBuffer(WeakReference<VertexBuffer> vb)
+        public override unsafe void AddVertexBuffer(WasWeakReference<VertexBuffer> vb)
         {
             Profiler.Function();
 
@@ -155,7 +155,7 @@ namespace CrossEngine.Platform.OpenGL
             _vertexBuffers.Add(vb);
         }
 
-        public override void SetIndexBuffer(WeakReference<IndexBuffer> indexBuffer)
+        public override void SetIndexBuffer(WasWeakReference<IndexBuffer> indexBuffer)
         {
             Profiler.Function();
 
@@ -166,12 +166,12 @@ namespace CrossEngine.Platform.OpenGL
             _indexBuffer = indexBuffer;
         }
 
-        public override WeakReference<VertexBuffer>[] GetVertexBuffers()
+        public override WasWeakReference<VertexBuffer>[] GetVertexBuffers()
         {
             throw new NotImplementedException();
         }
 
-        public override WeakReference<IndexBuffer> GetIndexBuffer()
+        public override WasWeakReference<IndexBuffer> GetIndexBuffer()
         {
             return _indexBuffer;
         }

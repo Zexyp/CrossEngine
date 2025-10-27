@@ -26,9 +26,6 @@ namespace CrossEngine.Loaders
 {
     public static class ShaderPreprocessor
     {
-        [ThreadStatic]
-        internal static Func<Action, Task> ServiceRequest;
-
 #if !OPENGL_ES
         private const string ShaderProfile = "core";
         private const string ShaderVersion = "330";
@@ -60,7 +57,7 @@ void main() {{
     oColor = vec4(1, 0, 1, 1); // gl_FragColor no workie in es
 }}
 ";
-        public static WeakReference<ShaderProgram> DefaultShaderProgram { get; private set; }
+        public static WasWeakReference<ShaderProgram> DefaultShaderProgram { get; private set; }
 
         static Logger _log = new Logger("shader-preproc");
 

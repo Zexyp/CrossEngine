@@ -87,12 +87,12 @@ namespace CrossEngine.Rendering.Shaders
             Type = type;
         }
 
-        public static WeakReference<Shader> Create(string source, ShaderType type)
+        public static WasWeakReference<Shader> Create(string source, ShaderType type)
         {
-            return Create(new WeakReference<Shader>(null), source, type);
+            return Create(new WasWeakReference<Shader>(null), source, type);
         }
         
-        public static WeakReference<Shader> Create(WeakReference<Shader> wr, string source, ShaderType type)
+        public static WasWeakReference<Shader> Create(WasWeakReference<Shader> wr, string source, ShaderType type)
         {
             switch (RendererApi.GetApi())
             {

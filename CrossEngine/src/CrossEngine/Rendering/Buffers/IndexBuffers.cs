@@ -63,12 +63,12 @@ namespace CrossEngine.Rendering.Buffers
 
         public abstract unsafe void SetData(void* data, uint count, uint offset = 0);
 
-        public static unsafe WeakReference<IndexBuffer> Create(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
+        public static unsafe WasWeakReference<IndexBuffer> Create(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
-            return Create(new WeakReference<IndexBuffer>(null), indices, count, dataType, bufferUsage);
+            return Create(new WasWeakReference<IndexBuffer>(null), indices, count, dataType, bufferUsage);
         }
 
-        public static unsafe WeakReference<IndexBuffer> Create(WeakReference<IndexBuffer> wr, void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
+        public static unsafe WasWeakReference<IndexBuffer> Create(WasWeakReference<IndexBuffer> wr, void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
             switch (RendererApi.GetApi())
             {

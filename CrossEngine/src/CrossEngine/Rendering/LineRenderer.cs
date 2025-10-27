@@ -94,9 +94,9 @@ gdi_Color = (Vector4)In[""vColor""];
             public const uint MaxLines = 5000;
             public const uint MaxVertices = MaxLines * 2;
 
-            public WeakReference<VertexArray> lineVertexArray;
-            public WeakReference<VertexBuffer> lineVertexBuffer;
-            public WeakReference<ShaderProgram> lineShader;
+            public WasWeakReference<VertexArray> lineVertexArray;
+            public WasWeakReference<VertexBuffer> lineVertexBuffer;
+            public WasWeakReference<ShaderProgram> lineShader;
 
             public uint lineCount;
             public LineVertex[] lineVertexBufferBase;

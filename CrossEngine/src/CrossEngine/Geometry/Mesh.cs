@@ -11,7 +11,7 @@ namespace CrossEngine.Geometry;
 // TODO: mesh elements
 public interface IMesh : IDisposable
 {
-    WeakReference<VertexArray> VA { get; }
+    WasWeakReference<VertexArray> VA { get; }
     Array Vertices { get; }
     AABox Bounds => throw new NotSupportedException();
 }
@@ -28,12 +28,12 @@ public interface IPosition
 
 public class Mesh<T> : IMesh where T : struct, IPosition
 {
-    public WeakReference<VertexArray> VA { get; private set; }
+    public WasWeakReference<VertexArray> VA { get; private set; }
     public T[] Vertices;
     AABox IMesh.Bounds => _bounds;
 
     Array IMesh.Vertices => Vertices;
-    WeakReference<VertexBuffer> vb;
+    WasWeakReference<VertexBuffer> vb;
     private AABox _bounds;
     
     public Mesh(T[] vertices)
@@ -62,7 +62,7 @@ public class IndexedMesh<T> : Mesh<T>, IIndexedMesh where T : struct, IPosition
     public uint[] Indices;
 
     Array IIndexedMesh.Indices => Indices;
-    WeakReference<IndexBuffer> ib;
+    WasWeakReference<IndexBuffer> ib;
 
     public IndexedMesh(T[] vertices, uint[] indices) : base(vertices)
     {

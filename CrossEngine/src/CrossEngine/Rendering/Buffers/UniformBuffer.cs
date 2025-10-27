@@ -41,12 +41,12 @@ namespace CrossEngine.Rendering.Buffers
 
         public abstract unsafe void SetData(void* data, uint size, uint offset = 0);
 
-        public static unsafe WeakReference<VertexBuffer> Create(void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
+        public static unsafe WasWeakReference<VertexBuffer> Create(void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
-            return Create(new WeakReference<VertexBuffer>(null), vertices, size, bufferUsage);
+            return Create(new WasWeakReference<VertexBuffer>(null), vertices, size, bufferUsage);
         }
 
-        public static unsafe WeakReference<VertexBuffer> Create(WeakReference<VertexBuffer> wr, void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
+        public static unsafe WasWeakReference<VertexBuffer> Create(WasWeakReference<VertexBuffer> wr, void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
             switch (RendererApi.GetApi())
             {

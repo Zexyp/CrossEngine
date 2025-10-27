@@ -120,17 +120,17 @@ namespace CrossEngine.Rendering.Buffers
         public abstract uint GetDepthAttachmentRendererID();
         public abstract void BindColorAttachment(int attachmentIndex = 0, uint slot = 0);
         public abstract void BindDepthAttachment(uint slot = 0);
-        public abstract void BlitTo(WeakReference<Framebuffer>? target, IList<(int from, int to)> attachmentIndexes = null);
-        public abstract void BlitDepthTo(WeakReference<Framebuffer>? target);
+        public abstract void BlitTo(WasWeakReference<Framebuffer>? target, IList<(int from, int to)> attachmentIndexes = null);
+        public abstract void BlitDepthTo(WasWeakReference<Framebuffer>? target);
         public abstract void EnableColorAttachments(IList<int> attachmentIndexes = null);
         //public abstract ref FramebufferSpecification GetSpecification();
 
-        public static unsafe WeakReference<Framebuffer> Create(in FramebufferSpecification specification)
+        public static unsafe WasWeakReference<Framebuffer> Create(in FramebufferSpecification specification)
         {
-            return Create(new WeakReference<Framebuffer>(null), in specification);
+            return Create(new WasWeakReference<Framebuffer>(null), in specification);
         }
 
-        public static unsafe WeakReference<Framebuffer> Create(WeakReference<Framebuffer> wr, in FramebufferSpecification specification)
+        public static unsafe WasWeakReference<Framebuffer> Create(WasWeakReference<Framebuffer> wr, in FramebufferSpecification specification)
         {
             switch (RendererApi.GetApi())
             {

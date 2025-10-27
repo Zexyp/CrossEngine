@@ -208,7 +208,7 @@ namespace CrossEngine.Assets
             MaterialName = info.GetValue(nameof(MaterialName), MaterialName);
         }
 
-        private void LoadTexture(IAssetLoadContext context, string file, ref TextureAsset slot, ref WeakReference<Texture> texture)
+        private void LoadTexture(IAssetLoadContext context, string file, ref TextureAsset slot, ref WasWeakReference<Texture> texture)
         {
             if (file == null) return;
             slot = context.GetFileAsset<TextureAsset>(Path.Join(Path.GetDirectoryName(parent.RelativePath), file));
