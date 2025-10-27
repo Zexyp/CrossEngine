@@ -343,21 +343,16 @@ namespace CrossEngine.Assets
         {
             public bool Equals(string path1, string path2)
             {
-                string norm1 = NormalizePath(path1);
-                string norm2 = NormalizePath(path2);
+                string norm1 = PlatformHelper.NormalizePath(path1);
+                string norm2 = PlatformHelper.NormalizePath(path2);
 
                 return string.Equals(norm1, norm2);
             }
 
             public int GetHashCode(string path)
             {
-                string norm = NormalizePath(path);
+                string norm = PlatformHelper.NormalizePath(path);
                 return norm.GetHashCode();
-            }
-
-            private string NormalizePath(string path)
-            {
-                return path.Replace("\\", "/");
             }
         }
     }

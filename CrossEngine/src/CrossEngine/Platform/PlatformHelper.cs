@@ -78,11 +78,14 @@ namespace CrossEngine.Platform
 
         public static Stream FileRead(string path)
         {
+            path = NormalizePath(path);
+            Log.Trace($"file read '{path}'");
             return File.OpenRead(path);
         }
         
         public static Task<Stream> FileReadAsync(string path)
         {
+            path = NormalizePath(path);
             Log.Trace($"file read '{path}'");
 #if WINDOWS || LINUX
             return Task.FromResult(FileRead(path));
@@ -96,6 +99,7 @@ namespace CrossEngine.Platform
 
         public static Stream FileCreate(string path)
         {
+            path = NormalizePath(path);
             Log.Trace($"file create '{path}'");
 #if WINDOWS || LINUX
             var stream = File.Create(path);
@@ -108,6 +112,9 @@ namespace CrossEngine.Platform
 #endif
         }
 
-        //public void 
+        internal static string NormalizePath(string path)
+        {
+            return path.Replace("\\", "/");
+        }
     }
 }

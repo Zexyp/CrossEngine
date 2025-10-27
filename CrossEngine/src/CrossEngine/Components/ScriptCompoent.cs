@@ -10,6 +10,8 @@ public class ScriptCompoent : Component
     [SerializeInclude]
     [EditorAsset]
     public ScriptAsset Script;
+    
+    // TODO: variables
 
     internal Behaviour Behaviour = null;
 }
