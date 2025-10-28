@@ -60,7 +60,7 @@ namespace CrossEngine.Rendering.Renderables
 
     interface ISkyboxRenderData : IObjectRenderData
     {
-        WasWeakReference<Texture> Texture { get; }
+        Texture Texture { get; }
     }
 
     //interface IDrawable<T, D> where T : Renderable<D> where D : IObjectRenderData

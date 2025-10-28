@@ -17,8 +17,8 @@ namespace CrossEngine.Rendering
     {
         public override void Clear() { }
 
-        public override void DrawArray(WasWeakReference<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles) { }
-        public override void DrawIndexed(WasWeakReference<VertexArray> vertexArray, uint indexCount = 0) { }
+        public override void DrawArray(VertexArray vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles) { }
+        public override void DrawIndexed(VertexArray vertexArray, uint indexCount = 0) { }
 
         public override void Init() { }
 

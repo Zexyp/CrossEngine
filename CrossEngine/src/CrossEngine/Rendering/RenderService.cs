@@ -233,7 +233,7 @@ namespace CrossEngine.Rendering
 
         public class ScreenSurface : ISurface
         {
-            public WasWeakReference<Framebuffer> Buffer => null;
+            public Framebuffer Buffer => null;
             public Vector2 Size { get; private set; }
             public GraphicsContext Context { get; set; }
 

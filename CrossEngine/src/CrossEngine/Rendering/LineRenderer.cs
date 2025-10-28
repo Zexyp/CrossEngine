@@ -94,9 +94,9 @@ gdi_Color = (Vector4)In[""vColor""];
             public const uint MaxLines = 5000;
             public const uint MaxVertices = MaxLines * 2;
 
-            public WasWeakReference<VertexArray> lineVertexArray;
-            public WasWeakReference<VertexBuffer> lineVertexBuffer;
-            public WasWeakReference<ShaderProgram> lineShader;
+            public VertexArray lineVertexArray;
+            public VertexBuffer lineVertexBuffer;
+            public ShaderProgram lineShader;
 
             public uint lineCount;
             public LineVertex[] lineVertexBufferBase;
@@ -117,17 +117,17 @@ gdi_Color = (Vector4)In[""vColor""];
             data.lineVertexArray = VertexArray.Create();
 
             data.lineVertexBuffer = VertexBuffer.Create(null, (uint)(LineRendererData.MaxVertices * sizeof(LineVertex)), BufferUsageHint.DynamicDraw);
-            data.lineVertexBuffer.GetValue().SetLayout(new BufferLayout(
+            data.lineVertexBuffer.SetLayout(new BufferLayout(
                 new BufferElement(ShaderDataType.Float3, "aPosition"),
                 new BufferElement(ShaderDataType.Float4, "aColor")
             ));
 
-            data.lineVertexArray.GetValue().AddVertexBuffer(data.lineVertexBuffer);
+            data.lineVertexArray.AddVertexBuffer(data.lineVertexBuffer);
 
             data.lineVertexBufferBase = new LineVertex[LineRendererData.MaxVertices];
 
-            var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex).GetValue();
-            var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment).GetValue();
+            var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex);
+            var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment);
             data.lineShader = ShaderProgram.Create(vertex, fragment);
             vertex.Dispose();
             fragment.Dispose();
@@ -147,7 +147,7 @@ gdi_Color = (Vector4)In[""vColor""];
 
         public static unsafe void BeginScene(Matrix4x4 viewProjectionMatrix)
         {
-            var shader = data.lineShader.GetValue();
+            var shader = data.lineShader;
             shader.Use();
             shader.SetParameterMat4("uViewProjection", viewProjectionMatrix);
 
@@ -175,10 +175,10 @@ gdi_Color = (Vector4)In[""vColor""];
             fixed (LineVertex* p = &data.lineVertexBufferBase[0])
             {
                 dataSize = (uint)((byte*)data.lineVertexBufferPtr - (byte*)p);
-                data.lineVertexBuffer.GetValue().SetData(p, dataSize);
+                data.lineVertexBuffer.SetData(p, dataSize);
             }
 
-            data.lineShader.GetValue().Use();
+            data.lineShader.Use();
             _rapi.DrawArray(data.lineVertexArray, data.lineCount * 2, DrawMode.Lines);
 
             data.stats.DrawCalls++;

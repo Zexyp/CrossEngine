@@ -84,14 +84,14 @@ void main() {{
             return Assembly.GetExecutingAssembly().GetManifestResourceStream($"CrossEngine.res.shaders.{filename}");
         }
 
-        public static WeakReference<ShaderProgram> CreateProgramFromFile(string filepath)
+        public static ShaderProgram CreateProgramFromFile(string filepath)
         {
             _log.Debug($"processing '{filepath}'");
 
             return CreateProgramFromStream(File.OpenRead(filepath), path => File.OpenRead(Path.Join(Path.GetDirectoryName(filepath), path)));
         }
 
-        public static WeakReference<ShaderProgram> CreateProgramFromString(string source)
+        public static ShaderProgram CreateProgramFromString(string source)
         {
             using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(source)))
             {
@@ -99,13 +99,13 @@ void main() {{
             }
         }
 
-        public static WeakReference<ShaderProgram> CreateProgramFromStream(Stream stream, Func<string, Stream> includeCallback = null)
+        public static ShaderProgram CreateProgramFromStream(Stream stream, Func<string, Stream> includeCallback = null)
         {
             Profiler.BeginScope("shader preprocessor");
             var sources = SplitSources(stream, includeCallback);
             Profiler.EndScope();
 
-            var program = new WeakReference<ShaderProgram>(null);
+            var program = new WasWeakReference<ShaderProgram>(null);
 
             ServiceRequest.Invoke(() =>
             {
@@ -185,7 +185,7 @@ void main() {{
             return new ShaderSources() { Fragment = builderFragment.ToString(), Vertex = builderVertex.ToString() };
         }
 
-        public static void Free(WeakReference<ShaderProgram> program)
+        public static void Free(WasWeakReference<ShaderProgram> program)
         {
             ServiceRequest.Invoke(program.Dispose);
         }

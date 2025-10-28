@@ -12,7 +12,7 @@ namespace CrossEngine.Rendering.Renderables
     {
         Vector4 Color { get; }
         virtual Vector4 TextureOffsets => new Vector4(0, 0, 1, 1);
-        virtual WeakReference<Texture> Texture => null;
+        virtual Texture Texture => null;
         virtual BlendMode Blend => BlendMode.Opaque;
         virtual Vector4 DrawOffsets => new Vector4(0, 0, 1, 1);
     }

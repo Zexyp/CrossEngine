@@ -231,9 +231,9 @@ AttributesOut[1] = vEntityID;
 
 			public const uint MaxTextureSlots = 8; // 8 is minimum, desktop will take 32 np however my tincy lil sh*t chromium only 16
 
-			public WasWeakReference<ShaderProgram> discardingShader;
-			public WasWeakReference<ShaderProgram> regularShader;
-			public WasWeakReference<Texture> whiteTexture;
+			public ShaderProgram discardingShader;
+			public ShaderProgram regularShader;
+			public Texture whiteTexture;
 
 			public PrimitivesData quads;
 			public PrimitivesData tris;
@@ -247,9 +247,9 @@ AttributesOut[1] = vEntityID;
 				public uint IndexCount;
 				public PrimitiveVertex[] VertexBufferBase;
 				public unsafe PrimitiveVertex* VertexBufferPtr;
-				public WasWeakReference<VertexArray> VertexArray;
-				public WasWeakReference<VertexBuffer> VertexBuffer;
-				public WasWeakReference<Texture>[] TextureSlots;
+				public VertexArray VertexArray;
+				public VertexBuffer VertexBuffer;
+				public Texture[] TextureSlots;
 				public uint TextureSlotIndex;
 				public RendererStats Stats;
 			}
@@ -273,9 +273,9 @@ AttributesOut[1] = vEntityID;
 			
 			_rapi = rapi;
 
-			var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex).GetValue();
-			var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment).GetValue();
-			var fragmentDiscarding = Shader.Create(DiscardingFragmentShaderSource, ShaderType.Fragment).GetValue();
+			var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex);
+			var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment);
+			var fragmentDiscarding = Shader.Create(DiscardingFragmentShaderSource, ShaderType.Fragment);
 			data.regularShader = ShaderProgram.Create(vertex, fragment); //AssetManager.Shaders.GetShader("shaders/batch/texturedbatch.shader");
 			data.discardingShader = ShaderProgram.Create(vertex, fragmentDiscarding);
 			vertex.Dispose();
@@ -284,15 +284,15 @@ AttributesOut[1] = vEntityID;
 
 			data.whiteTexture = Texture.Create(1, 1, ColorFormat.RGBA);
 			uint whiteCol = 0xffffffff;
-			data.whiteTexture.GetValue().SetData(&whiteCol, sizeof(uint));
+			data.whiteTexture.SetData(&whiteCol, sizeof(uint));
 
 			int[] samplers = new int[Renderer2DData.MaxTextureSlots];
 			for (uint i = 0; i < Renderer2DData.MaxTextureSlots; i++)
 				samplers[i] = (int)i;
-			var shader = data.regularShader.GetValue();
+			var shader = data.regularShader;
 			shader.Use();
 			shader.SetParameterIntVec("uTextures", samplers);
-			shader = data.discardingShader.GetValue();
+			shader = data.discardingShader;
 			shader.Use();
 			shader.SetParameterIntVec("uTextures", samplers);
 
@@ -310,7 +310,7 @@ AttributesOut[1] = vEntityID;
 			// quads
 			{
 				data.quads.VertexBufferBase = new PrimitiveVertex[Renderer2DData.MaxQuadVertices];
-				data.quads.TextureSlots = new WasWeakReference<Texture>[Renderer2DData.MaxTextureSlots];
+				data.quads.TextureSlots = new Texture[Renderer2DData.MaxTextureSlots];
 
 				uint[] indices = new uint[(int)Renderer2DData.MaxQuadIndices];
 				uint offset = 0;
@@ -328,27 +328,27 @@ AttributesOut[1] = vEntityID;
 				}
 
 				data.quads.VertexBuffer = VertexBuffer.Create(null, (uint)(Renderer2DData.MaxQuadVertices * sizeof(PrimitiveVertex)), BufferUsageHint.DynamicDraw);
-				data.quads.VertexBuffer.GetValue().SetLayout(layout);
+				data.quads.VertexBuffer.SetLayout(layout);
 
-				WasWeakReference<IndexBuffer> quadIB;
+				IndexBuffer quadIB;
 				fixed (uint* p = &indices[0])
 					quadIB = IndexBuffer.Create(p, Renderer2DData.MaxQuadIndices, IndexDataType.UInt);
 				indices = null; // marked for deletion i hope
 
 				data.quads.VertexArray = VertexArray.Create();
-				data.quads.VertexArray.GetValue().AddVertexBuffer(data.quads.VertexBuffer);
-				data.quads.VertexArray.GetValue().SetIndexBuffer(quadIB);
+				data.quads.VertexArray.AddVertexBuffer(data.quads.VertexBuffer);
+				data.quads.VertexArray.SetIndexBuffer(quadIB);
 			}
 			// tris
 			{
 				data.tris.VertexBufferBase = new PrimitiveVertex[Renderer2DData.MaxTriVertices];
-				data.tris.TextureSlots = new WasWeakReference<Texture>[Renderer2DData.MaxTextureSlots];
+				data.tris.TextureSlots = new Texture[Renderer2DData.MaxTextureSlots];
 
 				data.tris.VertexBuffer = VertexBuffer.Create(null, (uint)(Renderer2DData.MaxTriVertices * sizeof(PrimitiveVertex)), BufferUsageHint.DynamicDraw);
-				data.tris.VertexBuffer.GetValue().SetLayout(layout);
+				data.tris.VertexBuffer.SetLayout(layout);
 
 				data.tris.VertexArray = VertexArray.Create();
-				data.tris.VertexArray.GetValue().AddVertexBuffer(data.tris.VertexBuffer);
+				data.tris.VertexArray.AddVertexBuffer(data.tris.VertexBuffer);
 			}
 
 			data.quads.TextureSlots[0] = data.whiteTexture;
@@ -363,7 +363,7 @@ AttributesOut[1] = vEntityID;
 			data.regularShader.Dispose();
 			data.whiteTexture.Dispose();
 
-			var va = data.quads.VertexArray.GetValue();
+			var va = data.quads.VertexArray;
             va.Dispose();
 			va.GetIndexBuffer().Dispose();
 			data.quads.VertexBuffer.Dispose();
@@ -412,12 +412,12 @@ AttributesOut[1] = vEntityID;
 				return;
 
 			fixed (PrimitiveVertex* p = data.quads.VertexBufferBase)
-				data.quads.VertexBuffer.GetValue().SetData(p, (uint)((byte*)data.quads.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
+				data.quads.VertexBuffer.SetData(p, (uint)((byte*)data.quads.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
 
 			// bind textures
 			for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
 			{
-				if (data.quads.TextureSlots[i]?.GetValue() != null) data.quads.TextureSlots[i].GetValue().Bind(i);
+				if (data.quads.TextureSlots[i] != null) data.quads.TextureSlots[i].Bind(i);
 			}
 
             Push(ref data.quads);
@@ -446,12 +446,12 @@ AttributesOut[1] = vEntityID;
 				return;
 
 			fixed (PrimitiveVertex* p = data.tris.VertexBufferBase)
-				data.tris.VertexBuffer.GetValue().SetData(p, (uint)((byte*)data.tris.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
+				data.tris.VertexBuffer.SetData(p, (uint)((byte*)data.tris.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
 
 			// bind textures
 			for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
 			{
-				if (data.tris.TextureSlots[i]?.GetValue() != null) data.tris.TextureSlots[i].GetValue().Bind(i);
+				if (data.tris.TextureSlots[i] != null) data.tris.TextureSlots[i].Bind(i);
 			}
 
 			Push(ref data.tris);
@@ -472,19 +472,19 @@ AttributesOut[1] = vEntityID;
 			{
 				case BlendMode.Opaque:
 					_rapi.SetBlendFunc(BlendFunc.None);
-					shader = data.regularShader.GetValue();
+					shader = data.regularShader;
 					break;
 				case BlendMode.Blend:
 					_rapi.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
-					shader = data.regularShader.GetValue();
+					shader = data.regularShader;
 					break;
 				case BlendMode.Clip:
 					_rapi.SetBlendFunc(BlendFunc.None);
-					shader = data.discardingShader.GetValue();
+					shader = data.discardingShader;
 					break;
                 case BlendMode.Add:
                     _rapi.SetBlendFunc(BlendFunc.One);
-                    shader = data.regularShader.GetValue();
+                    shader = data.regularShader;
                     break;
                 default: Debug.Assert(false); break;
 			}
@@ -494,7 +494,7 @@ AttributesOut[1] = vEntityID;
             shader.Use();
 			shader.SetParameterMat4("uViewProjection", data.viewProjectionMatrix);
 
-			if (primitive.VertexArray.GetValue().GetIndexBuffer() != null)
+			if (primitive.VertexArray.GetIndexBuffer() != null)
                 _rapi.DrawIndexed(primitive.VertexArray, primitive.IndexCount/*, DrawMode.Traingles*/);
             else
                 _rapi.DrawArray(primitive.VertexArray, primitive.IndexCount/*, DrawMode.Traingles*/);
@@ -531,7 +531,7 @@ AttributesOut[1] = vEntityID;
 			data.quads.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, WasWeakReference<Texture> texture, in Vector4 tintColor, int entityId = 0)
+		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, Texture texture, in Vector4 tintColor, int entityId = 0)
 		{
 			if (data.quads.IndexCount >= Renderer2DData.MaxQuadIndices)
 				NextQuadsBatch();
@@ -539,7 +539,7 @@ AttributesOut[1] = vEntityID;
 			float textureIndex = 0.0f;
 			for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
 			{
-				if (data.quads.TextureSlots[i].GetValue() == texture.GetValue())
+				if (data.quads.TextureSlots[i] == texture)
 				{
 					textureIndex = i;
 					break;
@@ -571,7 +571,7 @@ AttributesOut[1] = vEntityID;
 			data.quads.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, WasWeakReference<Texture> texture, in Vector4 tintColor, in Vector4 texOffsets, int entityId = 0)
+		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, Texture texture, in Vector4 tintColor, in Vector4 texOffsets, int entityId = 0)
 		{
 			if (data.quads.IndexCount >= Renderer2DData.MaxQuadIndices)
 				NextQuadsBatch();
@@ -579,7 +579,7 @@ AttributesOut[1] = vEntityID;
 			float textureIndex = 0.0f;
 			for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
 			{
-				if (data.quads.TextureSlots[i].GetValue() == texture.GetValue())
+				if (data.quads.TextureSlots[i] == texture)
 				{
 					textureIndex = i;
 					break;
@@ -636,7 +636,7 @@ AttributesOut[1] = vEntityID;
 			data.tris.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, WasWeakReference<Texture> texture, in Vector4 tintColor, int entityId = 0)
+		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, Texture texture, in Vector4 tintColor, int entityId = 0)
 		{
 			if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
 				NextTrisBatch();
@@ -644,7 +644,7 @@ AttributesOut[1] = vEntityID;
 			float textureIndex = 0.0f;
 			for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
 			{
-				if (data.tris.TextureSlots[i].GetValue() == texture.GetValue())
+				if (data.tris.TextureSlots[i] == texture)
 				{
 					textureIndex = i;
 					break;
@@ -678,7 +678,7 @@ AttributesOut[1] = vEntityID;
 			data.tris.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, WeakReference<Texture> texture, in Vector4 tintColor, Vector2 uv1, Vector2 uv2, Vector2 uv3, int entityId = 0)
+		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, Texture texture, in Vector4 tintColor, Vector2 uv1, Vector2 uv2, Vector2 uv3, int entityId = 0)
 		{
 			if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
 				NextTrisBatch();
@@ -686,7 +686,7 @@ AttributesOut[1] = vEntityID;
 			float textureIndex = 0.0f;
 			for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
 			{
-				if (data.tris.TextureSlots[i].GetValue() == texture.GetValue())
+				if (data.tris.TextureSlots[i] == texture)
 				{
 					textureIndex = i;
 					break;

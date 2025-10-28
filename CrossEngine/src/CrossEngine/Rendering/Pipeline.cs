@@ -18,7 +18,7 @@ public class Pipeline
 {
     Vector4? _clearColor = VecColor.Gray;
     List<Pass> _passes = new List<Pass>();
-    public WasWeakReference<Framebuffer> Buffer { get; protected set; }
+    public Framebuffer Buffer { get; protected set; }
     public ICamera Camera;
     
     private bool _initialized;
@@ -48,7 +48,7 @@ public class Pipeline
             return;
 
         var rapi = surface.Context.Api;
-        var buffer = Buffer.GetValue();
+        var buffer = Buffer;
 
         if (surface.Size != buffer.Size)
         {

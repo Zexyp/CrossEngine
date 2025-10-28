@@ -32,7 +32,7 @@ namespace CrossEngine.Components
         public SpriteAsset Sprite;
 
         Vector4 ISpriteRenderData.TextureOffsets => Sprite?.TextureOffsets ?? new Vector4(0, 0, 1, 1);
-        WeakReference<Texture> ISpriteRenderData.Texture => Sprite?.Atlas?.Texture?.Texture;
+        Texture ISpriteRenderData.Texture => Sprite?.Atlas?.Texture?.Texture;
         BlendMode ISpriteRenderData.Blend => Blend;
         Vector4 ISpriteRenderData.DrawOffsets => DrawOffsets;
         

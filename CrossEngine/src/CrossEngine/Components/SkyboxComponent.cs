@@ -16,5 +16,5 @@ public class SkyboxRendererComponent : RendererComponent, ISkyboxRenderData
     [EditorAsset]
     public SkyboxAsset Skybox;
 
-    WeakReference<Texture> ISkyboxRenderData.Texture => Skybox?.Texture;
+    Texture ISkyboxRenderData.Texture => Skybox?.Texture;
 }

@@ -13,24 +13,24 @@ namespace CrossEngine.Rendering.Materials;
 
 public interface IMaterial
 {
-    WeakReference<ShaderProgram> Shader { get; set; }
+    ShaderProgram Shader { get; set; }
     void Update(ShaderProgram shader);
 }
 
 public class DynamicMaterial : IMaterial
 {
-    public WeakReference<ShaderProgram> Shader { get; set; }
+    public ShaderProgram Shader { get; set; }
     public Dictionary<string, object> Parameters = new Dictionary<string, object>();
-    public Dictionary<string, WeakReference<Texture>> Samplers = new Dictionary<string, WeakReference<Texture>>();
+    public Dictionary<string, Texture> Samplers = new Dictionary<string, Texture>();
 
-    public DynamicMaterial(WeakReference<ShaderProgram> shader = null)
+    public DynamicMaterial(WasWeakReference<ShaderProgram> shader = null)
     {
         Shader = shader;
     }
 
     public void Use()
     {
-        var shader = Shader.GetValue();
+        var shader = Shader;
         shader.Use();
         
         Update(shader);
@@ -65,7 +65,7 @@ public class DynamicMaterial : IMaterial
         foreach (var pair in Samplers)
         {
             shader.SetParameterInt(pair.Key, slot);
-            pair.Value.GetValue().Bind((uint)slot);
+            pair.Value.Bind((uint)slot);
             slot++;
         }
     }
@@ -97,9 +97,9 @@ void main() {
     oEntityIDColor = uEntityID;
 }";
 
-    static WeakReference<ShaderProgram> _shader = ShaderPreprocessor.CreateProgramFromString(DefaultShaderSource);
+    static ShaderProgram _shader = ShaderPreprocessor.CreateProgramFromString(DefaultShaderSource);
 
-    public WeakReference<ShaderProgram> Shader { get => _shader; set => throw new InvalidOperationException(); }
+    public ShaderProgram Shader { get => _shader; set => throw new InvalidOperationException(); }
 
     public void Update(ShaderProgram shader)
     {

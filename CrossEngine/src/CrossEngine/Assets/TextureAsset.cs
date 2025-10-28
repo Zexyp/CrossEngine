@@ -17,7 +17,7 @@ namespace CrossEngine.Assets
 {
     public class TextureAsset : FileAsset
     {
-        public WasWeakReference<Texture> Texture = null;
+        public Texture Texture = null;
 
         public override bool Loaded => Texture != null;
 
@@ -68,7 +68,7 @@ namespace CrossEngine.Assets
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            TextureLoader.Free(Texture);            
+            TextureLoader.Free(Texture);
             Texture = null;
         }
     }
