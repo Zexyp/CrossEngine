@@ -20,10 +20,10 @@ namespace CrossEngine.Loaders
     // task are ass, just return a container and fill it later
     public static class TextureLoader
     {
-        public static WasWeakReference<Texture> DefaultTexture { get; private set; }
-        public static WasWeakReference<Texture> WhiteTexture { get; private set; }
-        public static WasWeakReference<Texture> NormalTexture { get; private set; }
-        public static WasWeakReference<Texture> BlackTexture { get; private set; }
+        public static Texture DefaultTexture { get; private set; }
+        public static Texture WhiteTexture { get; private set; }
+        public static Texture NormalTexture { get; private set; }
+        public static Texture BlackTexture { get; private set; }
 
         // wtf, how is this not crashing the whole thing?
         // (the static ctor is very funky - nobody knows when or how it gets called
@@ -59,7 +59,7 @@ namespace CrossEngine.Loaders
             BlackTexture = null;
         }
 
-        public static async Task<WasWeakReference<Texture>> LoadTextureFromFile(string filepath, ColorFormat? desiredFormat = null)
+        public static async Task<Texture> LoadTextureFromFile(string filepath, ColorFormat? desiredFormat = null)
         {
             using (Stream stream = await PlatformHelper.FileReadAsync(filepath))
             {
@@ -67,7 +67,7 @@ namespace CrossEngine.Loaders
             }
         }
 
-        public static WasWeakReference<Texture> LoadTextureFromBytes(byte[] filedata, ColorFormat? desiredFormat = null)
+        public static Texture LoadTextureFromBytes(byte[] filedata, ColorFormat? desiredFormat = null)
         {
             Profiler.BeginScope("texture parsing");
 
@@ -80,7 +80,7 @@ namespace CrossEngine.Loaders
             return InternalLoad(result, desiredFormat);
         }
 
-        public static WasWeakReference<Texture> LoadTextureFromStream(Stream filedata, ColorFormat? desiredFormat = null)
+        public static Texture LoadTextureFromStream(Stream filedata, ColorFormat? desiredFormat = null)
         {
             Profiler.BeginScope("texture parsing");
             
@@ -94,7 +94,7 @@ namespace CrossEngine.Loaders
         }
 
         // px, nx, py, ny, pz, nz
-        public static unsafe WasWeakReference<Texture> LoadCubemap(Stream[] filedata, ColorFormat? desiredFormat = null)
+        public static unsafe Texture LoadCubemap(Stream[] filedata, ColorFormat? desiredFormat = null)
         {
             if (filedata.Length != 6) throw new InvalidOperationException();
 
@@ -129,7 +129,7 @@ namespace CrossEngine.Loaders
             ServiceRequest.Invoke(texture.Dispose);
         }
 
-        private static unsafe WasWeakReference<Texture> InternalLoad(ImageResult result, ColorFormat? desiredFormat = null)
+        private static unsafe Texture InternalLoad(ImageResult result, ColorFormat? desiredFormat = null)
         {
             var gapi = RendererApi.GetApi();
 

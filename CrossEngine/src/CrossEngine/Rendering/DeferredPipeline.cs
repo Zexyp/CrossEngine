@@ -153,7 +153,7 @@ void main()
     public ISkyboxRenderData Skybox;
 
     private MeshRenderer _skyboxMeshRenderer;
-    private WasWeakReference<ShaderProgram> _skyboxShader;
+    private ShaderProgram _skyboxShader;
 
     public SkyboxPass()
     {
@@ -180,14 +180,14 @@ void main()
         if (Skybox?.Texture == null)
             return;
         
-        var shader = _skyboxShader.GetValue();
+        var shader = _skyboxShader;
         shader.Use();
         var view = Pipeline.Camera.GetViewMatrix();
         view.Translation = Vector3.Zero;
         shader.SetParameterMat4("uView", view);
         shader.SetParameterMat4("uProjection", Pipeline.Camera.ProjectionMatrix);
         shader.SetParameterMat4("uModel", Skybox.Transform);
-        Skybox.Texture.GetValue().Bind();
+        Skybox.Texture.Bind();
         _skyboxMeshRenderer.Draw(GraphicsContext.Current.Api);
     }
 }
@@ -422,7 +422,7 @@ class LightPass : Pass
 {
     public IList<ILightRenderData> lights;
     
-    WasWeakReference<ShaderProgram> _shader;
+    ShaderProgram _shader;
     MeshRenderer _plane;
 
     public LightPass()
@@ -543,7 +543,7 @@ void main()
 ";
     
     // light accumulation buffer
-    WasWeakReference<Framebuffer> _workbuffer;
+    Framebuffer _workbuffer;
 
     public override void Init()
     {
@@ -571,9 +571,9 @@ void main()
     public override void Draw()
     {
         // init vars
-        var shader = _shader.GetValue();
-        var gbuffer = Pipeline.Buffer.GetValue();
-        var workbuffer = _workbuffer.GetValue();
+        var shader = _shader;
+        var gbuffer = Pipeline.Buffer;
+        var workbuffer = _workbuffer;
         
         // init shader
         shader.Use();
@@ -762,7 +762,7 @@ void main()
         DepthMask = false;
     }
 
-    WasWeakReference<ShaderProgram> _shader;
+    ShaderProgram _shader;
     MeshRenderer _quad;
 
     public override void Init()
@@ -785,8 +785,8 @@ void main()
         var fogComp = (CrossEngine.Components.FogComponent)CrossEngine.Scenes.SceneManager.Current?.World.Storage.GetArray(typeof(CrossEngine.Components.FogComponent))?.FirstOrDefault();
         if (fogComp == null) return;
 
-        var gbuffer = Pipeline.Buffer.GetValue();
-        var shader = _shader.GetValue();
+        var gbuffer = Pipeline.Buffer;
+        var shader = _shader;
         gbuffer.BindColorAttachment(2);
         shader.Use();
         shader.SetParameterFloat("uStart", fogComp.Start);

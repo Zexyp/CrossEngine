@@ -12,9 +12,9 @@ namespace CrossEngine.Rendering.Meshes;
 
 public class MeshRenderer : IDisposable
 {
-    WasWeakReference<VertexBuffer> vb;
-    WasWeakReference<IndexBuffer> ib;
-    WasWeakReference<VertexArray> va;
+    VertexBuffer vb;
+    IndexBuffer ib;
+    VertexArray va;
     private int _vertexCount;
 
     // mby service request api
@@ -40,15 +40,15 @@ public class MeshRenderer : IDisposable
         // this is really nice
         BufferLayout layout = BufferLayout.FromStructType(elementType);
 
-        vb.GetValue().SetLayout(layout);
-        va.GetValue().AddVertexBuffer(vb);
+        vb.SetLayout(layout);
+        va.AddVertexBuffer(vb);
 
         if (mesh is IIndexedMesh indexed)
         {
             void* indicesp = Unsafe.AsPointer(ref MemoryMarshal.GetArrayDataReference(indexed.Indices));
             ib = IndexBuffer.Create(indicesp, (uint)indexed.Indices.Length, IndexDataType.UInt);
             
-            va.GetValue().SetIndexBuffer(ib);
+            va.SetIndexBuffer(ib);
         }
 
         _vertexCount = mesh.Vertices.Length;

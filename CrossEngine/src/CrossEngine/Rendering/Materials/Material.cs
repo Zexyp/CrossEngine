@@ -20,10 +20,10 @@ public interface IMaterial
 public class DynamicMaterial : IMaterial
 {
     public ShaderProgram Shader { get; set; }
-    public Dictionary<string, object> Parameters = new Dictionary<string, object>();
-    public Dictionary<string, Texture> Samplers = new Dictionary<string, Texture>();
+    public readonly Dictionary<string, object> Parameters = new Dictionary<string, object>();
+    public readonly Dictionary<string, Texture> Samplers = new Dictionary<string, Texture>();
 
-    public DynamicMaterial(WasWeakReference<ShaderProgram> shader = null)
+    public DynamicMaterial(ShaderProgram shader = null)
     {
         Shader = shader;
     }

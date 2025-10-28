@@ -47,7 +47,7 @@ namespace CrossEngine.Rendering.Renderables
                 return;
 
             IMaterial mater = (data.Material ?? defaultMaterial);
-            ShaderProgram shader = mater.Shader?.GetValue() ?? defaultMaterial.Shader.GetValue();
+            ShaderProgram shader = mater.Shader ?? defaultMaterial.Shader;
             shader.Use();
             mater.Update(shader);
             shader.SetParameterMat4("uViewProjection", _camera.GetViewProjectionMatrix());

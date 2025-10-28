@@ -13,9 +13,9 @@ using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Scenes
 {
-    public static class SceneRenderer
+    public class SceneRenderer
     {
-        public static void Render(Scene scene, ISurface surface)
+        public void Render(Scene scene, ISurface surface)
         {
             Debug.Assert(scene.IsInitialized);
 
