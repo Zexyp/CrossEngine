@@ -32,10 +32,18 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenBuffers(1, p);
 
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+        }
+        
+        protected internal override unsafe void Destroy()
+        {
+            Profiler.Function();
+            
+            // free any unmanaged objects here
+            fixed (uint* p = &_rendererId)
+                gl.DeleteBuffers(1, p);
+
+            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
         }
 
         public unsafe GLIndexBuffer(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw) : this()
@@ -46,30 +54,6 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.BindBuffer(GLEnum.ElementArrayBuffer, _rendererId);
             gl.BufferData(GLEnum.ElementArrayBuffer, Count * GetIndexDataTypeSize(DataType), indices, GLUtils.ToGLBufferUsage(_bufferUsage));
-        }
-
-        protected override unsafe void Dispose(bool disposing)
-        {
-            Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-            fixed (uint* p = &_rendererId)
-                gl.DeleteBuffers(1, p);
-
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
         }
 
         public override void Bind()

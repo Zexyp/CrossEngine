@@ -48,57 +48,22 @@ namespace CrossEngine.Rendering.Shaders
         Fragment,
     }
 
-    public abstract class Shader : IDisposable
+    public abstract class Shader : GpuObject
     {
         public ShaderType Type { get; private set; }
-
-        public bool Disposed { get; protected set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-
-            Disposed = true;
-        }
-
-        ~Shader()
-        {
-            Dispose(false);
-        }
 
         public Shader(ShaderType type)
         {
             Type = type;
         }
 
-        public static WasWeakReference<Shader> Create(string source, ShaderType type)
-        {
-            return Create(new WasWeakReference<Shader>(null), source, type);
-        }
-        
-        public static WasWeakReference<Shader> Create(WasWeakReference<Shader> wr, string source, ShaderType type)
+        public static Shader Create(string source, ShaderType type)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: wr.SetTarget(new GLShader(source, type)); return wr;
+                case GraphicsApi.OpenGL: return new GLShader(source, type);
 #if WINDOWS
                 case GraphicsApi.GDI: wr.SetTarget(new GdiShader(source, type)); return wr;
 #endif

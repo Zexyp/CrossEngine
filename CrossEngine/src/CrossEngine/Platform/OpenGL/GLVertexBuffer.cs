@@ -34,9 +34,6 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenBuffers(1, p);
 
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
@@ -48,28 +45,15 @@ namespace CrossEngine.Platform.OpenGL
             gl.BufferData(GLEnum.ArrayBuffer, size, vertices, GLUtils.ToGLBufferUsage(_bufferUsage));
         }
 
-        protected override unsafe void Dispose(bool disposing)
+        protected internal override unsafe void Destroy()
         {
             Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
+            
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 gl.DeleteBuffers(1, p);
 
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
         }
 
         public override void Bind()

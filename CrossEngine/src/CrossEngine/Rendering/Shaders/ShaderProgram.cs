@@ -19,7 +19,7 @@ using CrossEngine.Platform.Windows;
 
 namespace CrossEngine.Rendering.Shaders
 {
-    public abstract class ShaderProgram : IDisposable
+    public abstract class ShaderProgram : GpuObject
     {
         //Shader VertexShader;
         //Shader FragmentShader;
@@ -44,46 +44,13 @@ namespace CrossEngine.Rendering.Shaders
             protected set { throw new NotSupportedException(); }
         }
 
-        public bool Disposed { get; protected set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-
-            Disposed = true;
-        }
-
-        ~ShaderProgram()
-        {
-            Dispose(false);
-        }
-
-        public static WasWeakReference<ShaderProgram> Create(Shader vertex, Shader fragment)
-        {
-            return Create(new WasWeakReference<ShaderProgram>(null), vertex, fragment);
-        }
-        
-        public static WasWeakReference<ShaderProgram> Create(WasWeakReference<ShaderProgram> wr, Shader vertex, Shader fragment)
+        public static ShaderProgram Create(Shader vertex, Shader fragment)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: wr.SetTarget(new GLShaderProgram((GLShader)vertex, (GLShader)fragment)); return wr;
+                case GraphicsApi.OpenGL: return new GLShaderProgram((GLShader)vertex, (GLShader)fragment);
 #if WINDOWS
                 case GraphicsApi.GDI: wr.SetTarget(new GdiShaderProgram((GdiShader)vertex, (GdiShader)fragment)); return wr;
 #endif

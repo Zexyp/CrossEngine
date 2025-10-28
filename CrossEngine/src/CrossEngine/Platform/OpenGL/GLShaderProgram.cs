@@ -62,10 +62,17 @@ namespace CrossEngine.Platform.OpenGL
             Attributes = _attributes.AsReadOnly();
             Uniforms = _uniforms.AsReadOnly();
 
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+        }
+
+        protected internal override void Destroy()
+        {
+            Profiler.Function();
+            
+            // free any unmanaged objects here
+            gl.DeleteProgram(_rendererId);
+
+            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
         }
 
         public GLShaderProgram(GLShader vertex, GLShader fragment) : this()
@@ -106,29 +113,6 @@ namespace CrossEngine.Platform.OpenGL
             if (!linkSuccess) return;
 
             GetParameters();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-            gl.DeleteProgram(_rendererId);
-
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
         }
 
         public override void Use()

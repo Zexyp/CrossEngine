@@ -26,8 +26,8 @@ namespace CrossEngine.Platform.OpenGL
     {
         internal uint _rendererId;
         private uint _vertexBufferIndex;
-        private WasWeakReference<IndexBuffer> _indexBuffer;
-        private List<WasWeakReference<VertexBuffer>> _vertexBuffers = new List<WasWeakReference<VertexBuffer>>();
+        private IndexBuffer _indexBuffer;
+        private List<VertexBuffer> _vertexBuffers = new List<VertexBuffer>();
 
         public unsafe GLVertexArray()
         {
@@ -36,34 +36,18 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenVertexArrays(1, p);
 
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
-        protected override unsafe void Dispose(bool disposing)
+        protected internal override unsafe void Destroy()
         {
             Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
+            
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 gl.DeleteVertexArrays(1, p);
 
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
         }
 
         public override void Bind()
@@ -80,11 +64,9 @@ namespace CrossEngine.Platform.OpenGL
             gl.BindVertexArray(0);
         }
 
-        public override unsafe void AddVertexBuffer(WasWeakReference<VertexBuffer> vb)
+        public override unsafe void AddVertexBuffer(VertexBuffer vertexBuffer)
         {
             Profiler.Function();
-
-            var vertexBuffer = vb.GetValue();
 
             Debug.Assert(vertexBuffer.GetLayout() != null && vertexBuffer.GetLayout().Elements.Count > 0);
 
@@ -152,26 +134,26 @@ namespace CrossEngine.Platform.OpenGL
                 }
             }
 
-            _vertexBuffers.Add(vb);
+            _vertexBuffers.Add(vertexBuffer);
         }
 
-        public override void SetIndexBuffer(WasWeakReference<IndexBuffer> indexBuffer)
+        public override void SetIndexBuffer(IndexBuffer indexBuffer)
         {
             Profiler.Function();
 
             gl.BindVertexArray(_rendererId);
-            indexBuffer.GetValue().Bind();
+            indexBuffer.Bind();
             gl.BindVertexArray(0); // mby not needed
 
             _indexBuffer = indexBuffer;
         }
 
-        public override WasWeakReference<VertexBuffer>[] GetVertexBuffers()
+        public override VertexBuffer[] GetVertexBuffers()
         {
             throw new NotImplementedException();
         }
 
-        public override WasWeakReference<IndexBuffer> GetIndexBuffer()
+        public override IndexBuffer GetIndexBuffer()
         {
             return _indexBuffer;
         }

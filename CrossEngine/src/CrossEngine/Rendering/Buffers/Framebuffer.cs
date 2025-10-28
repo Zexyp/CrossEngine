@@ -75,36 +75,8 @@ namespace CrossEngine.Rendering.Buffers
         public FramebufferAttachmentSpecification Attachments;
     }
 
-    public abstract class Framebuffer : IDisposable
+    public abstract class Framebuffer : GpuObject
     {
-        public bool Disposed { get; protected set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-
-            Disposed = true;
-        }
-
-        ~Framebuffer()
-        {
-            Dispose(false);
-        }
-
         public abstract uint Width { get; }
         public abstract uint Height { get; }
         public IntVec2 Size => new IntVec2((int)Width, (int)Height);
@@ -120,26 +92,21 @@ namespace CrossEngine.Rendering.Buffers
         public abstract uint GetDepthAttachmentRendererID();
         public abstract void BindColorAttachment(int attachmentIndex = 0, uint slot = 0);
         public abstract void BindDepthAttachment(uint slot = 0);
-        public abstract void BlitTo(WasWeakReference<Framebuffer>? target, IList<(int from, int to)> attachmentIndexes = null);
-        public abstract void BlitDepthTo(WasWeakReference<Framebuffer>? target);
+        public abstract void BlitTo(Framebuffer? target, IList<(int from, int to)> attachmentIndexes = null);
+        public abstract void BlitDepthTo(Framebuffer? target);
         public abstract void EnableColorAttachments(IList<int> attachmentIndexes = null);
         //public abstract ref FramebufferSpecification GetSpecification();
 
-        public static unsafe WasWeakReference<Framebuffer> Create(in FramebufferSpecification specification)
-        {
-            return Create(new WasWeakReference<Framebuffer>(null), in specification);
-        }
-
-        public static unsafe WasWeakReference<Framebuffer> Create(WasWeakReference<Framebuffer> wr, in FramebufferSpecification specification)
+        public static unsafe Framebuffer Create(in FramebufferSpecification specification)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: wr.SetTarget(new GLFramebuffer(in specification)); return wr;
+                case GraphicsApi.OpenGL: return new GLFramebuffer(in specification);
             }
 
-            Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");
+            Debug.Assert(false, $"Undefined {nameof(GraphicsApi)} value");
             return null;
         }
     }

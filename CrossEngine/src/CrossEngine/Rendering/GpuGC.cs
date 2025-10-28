@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
 
 using CrossEngine.Logging;
+using CrossEngine.Rendering;
 
 namespace CrossEngine.Debugging
 {
-    public static class GPUGC
+    public static class GpuGC
     {
         private static readonly Logger Log = new Logger("gpugc");
 
@@ -17,22 +18,34 @@ namespace CrossEngine.Debugging
             public StackTrace Trace;
         }
 
-        private static readonly Dictionary<IDisposable, GPUObjectCreationInfo> _objs = new Dictionary<IDisposable, GPUObjectCreationInfo>();
+        private static readonly Dictionary<GpuObject, GPUObjectCreationInfo> _objs = new Dictionary<GpuObject, GPUObjectCreationInfo>();
+        private static readonly ConcurrentQueue<GpuObject> _toBeDestroyed = new();
 
-        internal static void Register(IDisposable obj)
+        internal static void Destroy(GpuObject obj)
+        {
+            _toBeDestroyed.Enqueue(obj);
+        }
+        
+        internal static void Collect()
+        {
+            while (_toBeDestroyed.TryDequeue(out var obj))
+                obj.Destroy();
+        }
+        
+        internal static void Register(GpuObject obj)
         {
             Log.Trace($"registering '{obj.GetType().Name}'");
             lock (_objs)
                 _objs.Add(obj, new() { Time = DateTime.Now, Trace = new StackTrace() });
         }
 
-        internal static void Unregister(IDisposable obj)
+        internal static void Unregister(GpuObject obj)
         {
             Log.Trace($"unregistering '{obj.GetType().Name}'");
             lock (_objs)
                 _objs.Remove(obj);
         }
-
+        
         public static void PrintCollected()
         {
             lock (_objs)
@@ -40,20 +53,6 @@ namespace CrossEngine.Debugging
                 {
                     Log.Warn($"{item.Key.ToString()} at [{item.Value.Time}]:\n{item.Value.Trace.ToString()}");
                 }
-        }
-
-        internal static void Collect()
-        {
-            lock (_objs)
-            {
-                Log.Trace("disposing...");
-                int c = _objs.Count;
-                foreach (var item in _objs)
-                {
-                    item.Key.Dispose();
-                }
-                Log.Trace($"disposed {c} objects");
-            }    
         }
     }
 }

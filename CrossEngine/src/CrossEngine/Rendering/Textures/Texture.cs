@@ -12,36 +12,8 @@ using CrossEngine.Platform.Windows;
 
 namespace CrossEngine.Rendering.Textures
 {
-    public abstract class Texture : IDisposable
+    public abstract class Texture : GpuObject
     {
-        public bool Disposed { get; protected set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-
-            Disposed = true;
-        }
-
-        ~Texture()
-        {
-            Dispose(false);
-        }
-
         public TextureTarget Target { get; protected set; }
 
         public abstract uint RendererId { get; }

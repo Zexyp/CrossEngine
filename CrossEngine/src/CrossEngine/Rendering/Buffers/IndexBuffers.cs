@@ -25,36 +25,8 @@ namespace CrossEngine.Rendering.Buffers
         UByte,
     }
 
-    public abstract class IndexBuffer : IDisposable
+    public abstract class IndexBuffer : GpuObject
     {
-        public bool Disposed { get; protected set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-
-            Disposed = true;
-        }
-
-        ~IndexBuffer()
-        {
-            Dispose(false);
-        }
-
         public IndexDataType DataType { get; protected set; }
         public uint Count { get; protected set; }
 
@@ -63,24 +35,19 @@ namespace CrossEngine.Rendering.Buffers
 
         public abstract unsafe void SetData(void* data, uint count, uint offset = 0);
 
-        public static unsafe WasWeakReference<IndexBuffer> Create(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
-        {
-            return Create(new WasWeakReference<IndexBuffer>(null), indices, count, dataType, bufferUsage);
-        }
-
-        public static unsafe WasWeakReference<IndexBuffer> Create(WasWeakReference<IndexBuffer> wr, void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
+        public static unsafe IndexBuffer Create(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: wr.SetTarget(new GLIndexBuffer(indices, count, dataType, bufferUsage)); return wr;
+                case GraphicsApi.OpenGL: return new GLIndexBuffer(indices, count, dataType, bufferUsage);
 #if WINDOWS
-                case GraphicsApi.GDI: wr.SetTarget(new GdiIndexBuffer(indices, count, dataType)); return wr;
+                case GraphicsApi.GDI: return new GdiIndexBuffer(indices, count, dataType));
 #endif
             }
 
-            Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");
+            Debug.Assert(false, $"Undefined {nameof(GraphicsApi)} value");
             return null;
         }
     }

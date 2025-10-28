@@ -87,8 +87,8 @@ namespace CrossEngine.Rendering
 
         public abstract void Clear();
 
-        public abstract void DrawIndexed(WasWeakReference<VertexArray> vertexArray, uint indexCount = 0/*, DrawMode mode*/);
-        public abstract void DrawArray(WasWeakReference<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles);
+        public abstract void DrawIndexed(VertexArray vertexArray, uint indexCount = 0/*, DrawMode mode*/);
+        public abstract void DrawArray(VertexArray vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles);
     }
 
     public enum PolygonMode

@@ -23,8 +23,6 @@ namespace CrossEngine.Platform.OpenGL
 
         public uint RendererId => _rendererId;
 
-        public bool Disposed { get; protected set; } = false;
-
         public GLShader(string source, ShaderType type) : base(type)
         {
             Profiler.Function();
@@ -38,21 +36,13 @@ namespace CrossEngine.Platform.OpenGL
             RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
 
-        protected override void Dispose(bool disposing)
+        protected internal override void Destroy()
         {
             Profiler.Function();
-
-            if (Disposed)
-                return;
-
+            
             gl.DeleteShader(_rendererId);
 
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
         }
 
         // true if error found

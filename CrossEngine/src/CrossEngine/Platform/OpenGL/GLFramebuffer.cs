@@ -106,23 +106,12 @@ namespace CrossEngine.Platform.OpenGL
 
             Invalidate();
 
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
         }
-
-        protected override unsafe void Dispose(bool disposing)
+        
+        protected internal override unsafe void Destroy()
         {
             Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
 
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
@@ -132,12 +121,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_depthAttachment)
                 gl.DeleteTextures(1, p);
 
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
             RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
         }
         
         public override void Bind()
@@ -259,10 +243,10 @@ namespace CrossEngine.Platform.OpenGL
                               (int)GLEnum.ColorBufferBit, GLEnum.Nearest);
         }
         
-        public override void BlitTo(WasWeakReference<Framebuffer>? target, IList<(int from, int to)> attachmentIndexes = null)
+        public override void BlitTo(Framebuffer? target, IList<(int from, int to)> attachmentIndexes = null)
         {
             gl.BindFramebuffer(GLEnum.ReadFramebuffer, this._rendererId);
-            gl.BindFramebuffer(GLEnum.DrawFramebuffer, target == null ? 0 : ((GLFramebuffer)target.GetValue())._rendererId);
+            gl.BindFramebuffer(GLEnum.DrawFramebuffer, target == null ? 0 : ((GLFramebuffer)target)._rendererId);
 
             if (attachmentIndexes != null)
                 for (int i = 0; i < attachmentIndexes.Count; i++)
@@ -277,10 +261,10 @@ namespace CrossEngine.Platform.OpenGL
             gl.BindFramebuffer(GLEnum.Framebuffer, 0);
         }
         
-        public override void BlitDepthTo(WasWeakReference<Framebuffer>? target)
+        public override void BlitDepthTo(Framebuffer? target)
         {
             gl.BindFramebuffer(GLEnum.ReadFramebuffer, this._rendererId);
-            gl.BindFramebuffer(GLEnum.DrawFramebuffer, target == null ? 0 : ((GLFramebuffer)target.GetValue())._rendererId);
+            gl.BindFramebuffer(GLEnum.DrawFramebuffer, target == null ? 0 : ((GLFramebuffer)target)._rendererId);
             
             gl.BlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height, (uint)GLEnum.DepthBufferBit, GLEnum.Nearest);
             gl.BindFramebuffer(GLEnum.Framebuffer, 0);

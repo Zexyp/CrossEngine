@@ -29,19 +29,18 @@ namespace CrossEngine.Platform.OpenGL
                 Marshal.PtrToStringUTF8((IntPtr)gl.GetString(GLEnum.Vendor)));
         }
 
-        public override unsafe void DrawIndexed(WasWeakReference<VertexArray> vertexArray, uint indexCount = 0)
+        public override unsafe void DrawIndexed(VertexArray vertexArray, uint indexCount = 0)
         {
-            var va = vertexArray.GetValue();
-            var ib = va.GetIndexBuffer().GetValue();
-            va.Bind();
+            var ib = vertexArray.GetIndexBuffer();
+            vertexArray.Bind();
             uint count = (indexCount != 0) ? indexCount : ib.Count;
             gl.DrawElements(GLEnum.Triangles, count, GLUtils.ToGLIndexDataType(ib.DataType), null);
             // TODO: consider unbinding to keep the vertex array state safe
         }
 
-        public override unsafe void DrawArray(WasWeakReference<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
+        public override unsafe void DrawArray(VertexArray vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
         {
-            vertexArray.GetValue().Bind();
+            vertexArray.Bind();
             gl.DrawArrays(GLUtils.ToGLDrawMode(mode), 0, verticesCount);
             // TODO: consider unbinding to keep the vertex array state safe
         }
