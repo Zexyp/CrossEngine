@@ -25,6 +25,7 @@ using CrossEngine.Rendering.Culling;
 using CrossEngine.Rendering.Meshes;
 using CrossEngine.Rendering.Renderables;
 using CrossEngine.Rendering.Shaders;
+using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Collections;
 using CrossEngine.Utils.Extensions;
@@ -32,48 +33,22 @@ using CrossEngine.Utils.Rendering;
 
 namespace CrossEngine.Components
 {
-    public class RenderSystem : Ecs.System
+    public class RenderSystem : Ecs.System, ISceneRenderData
     {
-        public Pipeline Pipeline => _pipeline;
-        public Func<Action, Task> RendererRequest { get; internal set; }
-        
-        event Action<RenderSystem> PrimaryCameraChanged;
-        
         private CameraComponent? _primaryCamera = null;
-        private ICamera _overrideCamera;
-        private Vector2 _lastSize = Vector2.One;
-        private Pipeline _pipeline;
         private bool _graphicsInitialized = false;
         public bool GraphicsInitialized => _graphicsInitialized;
-        public ICamera DrawCamera => OverrideCamera ?? PrimaryCamera;
+        public GraphicsContext Graphics;
         
-        private SkyboxPass _passSkybox;
-        private ScenePass _passScene;
-        private TransparentPass _passTransparent;
-        private LightPass _passLight;
-
-        public ICamera OverrideCamera
-        {
-            get => _overrideCamera;
-            set
-            {
-                _overrideCamera = value;
-                if (_overrideCamera != null && _overrideCamera is IResizableCamera rc)
-                    rc.Resize(_lastSize.X, _lastSize.Y);
-            }
-        }
-
-        public CameraComponent? PrimaryCamera
-        {
-            get => _primaryCamera;
-            private set
-            {
-                _primaryCamera = value;
-
-                _primaryCamera?.Resize(_lastSize.X, _lastSize.Y);
-                PrimaryCameraChanged?.Invoke(this);
-            }
-        }
+        IList<IObjectRenderData> ISceneRenderData.Objects => _objects;
+        IList<ILightRenderData> ISceneRenderData.Lights => _lights;
+        ISkyboxRenderData ISceneRenderData.Skybox => _skybox;
+        ICamera ISceneRenderData.Camera => _primaryCam;
+        
+        private IList<IObjectRenderData> _objects;
+        private IList<ILightRenderData> _lights;
+        private ISkyboxRenderData _skybox;
+        private CameraComponent _primaryCam = null;
 
         //public ISurface SetSurface(ISurface surface)
         //{
@@ -101,11 +76,6 @@ namespace CrossEngine.Components
 
         public RenderSystem()
         {
-            _pipeline = new DeferredPipeline();
-            _passScene = _pipeline.GetPass<ScenePass>();
-            _passSkybox = _pipeline.GetPass<SkyboxPass>();
-            _passTransparent = _pipeline.GetPass<TransparentPass>();
-            _passLight = _pipeline.GetPass<LightPass>();
         }
 
         protected internal override void OnInit()
@@ -118,10 +88,8 @@ namespace CrossEngine.Components
             World.Storage.AddNotifyRegister(typeof(SkyboxRendererComponent), RegisterSkybox);
             World.Storage.AddNotifyUnregister(typeof(SkyboxRendererComponent), UnregisterSkybox);
 
-            var coll = new CastWrapCollection<IObjectRenderData>(World.Storage.GetIndex(typeof(RendererComponent)));
-            _passScene.objects = coll;
-            _passTransparent.objects = coll;
-            _passLight.lights = new CastWrapCollection<ILightRenderData>(World.Storage.GetIndex(typeof(LightComponent)));
+            _objects = new CastWrapCollection<IObjectRenderData>(World.Storage.GetIndex(typeof(RendererComponent)));
+            _lights = new CastWrapCollection<ILightRenderData>(World.Storage.GetIndex(typeof(LightComponent)));
         }
 
         protected internal override void OnShutdown()
@@ -143,8 +111,8 @@ namespace CrossEngine.Components
             
             if (component.Primary)
             {
-                Deprioritize(PrimaryCamera);
-                PrimaryCamera = component;
+                Deprioritize(_primaryCam);
+                _primaryCam = component;
             }
         }
 
@@ -152,9 +120,9 @@ namespace CrossEngine.Components
         {
             CameraComponent component = (CameraComponent)c;
 
-            if (component == PrimaryCamera)
+            if (component == _primaryCam)
             {
-                PrimaryCamera = null;
+                _primaryCam = null;
             }
 
             component.PrimaryChanged -= OnCameraPrimaryChanged;
@@ -163,24 +131,24 @@ namespace CrossEngine.Components
         private void RegisterSkybox(Component c)
         {
             var skyboxcomp = (SkyboxRendererComponent)c;
-            _passSkybox.Skybox = skyboxcomp;
+            _skybox = skyboxcomp;
         }
 
         private void UnregisterSkybox(Component c)
         {
             var skyboxcomp = (SkyboxRendererComponent)c;
-            if (_passSkybox.Skybox == skyboxcomp)
-                _passSkybox.Skybox = null;
+            if (_skybox == skyboxcomp)
+                _skybox = null;
         }
 
         private void OnCameraPrimaryChanged(CameraComponent component)
         {
-            Deprioritize(PrimaryCamera);
+            Deprioritize(_primaryCam);
 
             if (component.Primary == false)
-                PrimaryCamera = null;
+                _primaryCam = null;
             else
-                PrimaryCamera = component;
+                _primaryCam = component;
         }
 
         private void Deprioritize(CameraComponent component)
@@ -192,39 +160,26 @@ namespace CrossEngine.Components
             component.PrimaryChanged += OnCameraPrimaryChanged;
         }
         
-        public void OnSurfaceResize(ISurface surface, float width, float height)
+        public void ProcessSurfaceResize(ISurface surface, float width, float height)
         {
-            _lastSize = new(width, height);
             _primaryCamera?.Resize(width, height);
-            if (_overrideCamera != null && _overrideCamera is IResizableCamera rc)
-                rc.Resize(width, height);
         }
 
-        public void GraphicsInit()
-        {
-            _pipeline.Init();
-            _graphicsInitialized = true;
-        }
-
-        public void GraphicsDestroy()
-        {
-            _graphicsInitialized = false;
-            _pipeline.Destroy();
-        }
-
+        /*
         public void CommitRenderable(IRenderable renderable, Type key)
         {
             RendererRequest.Invoke(renderable.Init);
-            _passScene._renderables.Add(key, renderable);
+            Renderables.Add(key, renderable);
         }
 
         public void WithdrawRenderable(IRenderable renderable)
         {
-            foreach(var item in _passScene._renderables.Where(kvp => kvp.Value == renderable))
+            foreach(var item in Renderables.Where(kvp => kvp.Value == renderable))
             {
-                _passScene._renderables.Remove(item.Key);
+                Renderables.Remove(item.Key);
                 RendererRequest.Invoke(renderable.Destroy);
             }
         }
+        */
     }
 }

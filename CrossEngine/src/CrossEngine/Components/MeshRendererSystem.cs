@@ -29,7 +29,7 @@ public class MeshRendererSystem : Ecs.System
     {
         foreach (var renderer in _renderers.Values)
         {
-            World.GetSystem<RenderSystem>().RendererRequest(renderer.Dispose);
+            renderer.Dispose();
         }
     }
 
@@ -68,7 +68,7 @@ public class MeshRendererSystem : Ecs.System
             _renderers.Add(mesh, newRenderer);
             ((IMeshRenderData)component).Renderer = newRenderer;
             
-            World.GetSystem<RenderSystem>().RendererRequest(() => // deal with it
+            World.GetSystem<RenderSystem>().Graphics.Commands.Submit(() => // deal with it
             {
                 newRenderer.Setup(mesh);
             });

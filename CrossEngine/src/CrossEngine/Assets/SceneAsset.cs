@@ -16,7 +16,7 @@ namespace CrossEngine.Assets
 
         public Scene Scene { get; internal set; }
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             using (Stream stream = await context.OpenRelativeStream(RelativePath))
             {
@@ -24,7 +24,7 @@ namespace CrossEngine.Assets
             }
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             Scene = null;
         }

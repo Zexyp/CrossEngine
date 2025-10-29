@@ -20,7 +20,8 @@ namespace CrossEngine.Scenes
     public class SceneService : Service, IUpdatedService, IScheduledService
     {
         readonly List<Scene> _scenes = new();
-        readonly List<Scene> _drawScenes = new();
+        readonly Dictionary<Scene, SceneRenderer> _drawScenes = new();
+        private RenderService _rs;
 
         readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
 
@@ -36,6 +37,8 @@ namespace CrossEngine.Scenes
 
         public override void OnAttach()
         {
+            _rs = Manager.GetService<RenderService>();
+            
             Manager.GetService<TimeService>().FixedUpdate += OnFixedUpdate;
             Manager.GetService<RenderService>().MainSurface.Update += OnRender;
         }
@@ -44,12 +47,7 @@ namespace CrossEngine.Scenes
         {
             Manager.GetService<RenderService>().MainSurface.Update -= OnRender;
             Manager.GetService<TimeService>().FixedUpdate -= OnFixedUpdate;
-        }
-
-        public override void OnDestroy()
-        {
-            _scheduler.RunOnCurrentThread();
-
+            
             while (_scenes.Count > 0)
             {
                 var scn = _scenes[0];
@@ -57,6 +55,13 @@ namespace CrossEngine.Scenes
                     Stop(scn);
                 Remove(scn);
             }
+            
+            _rs = null;
+        }
+
+        public override void OnDestroy()
+        {
+            _scheduler.RunOnCurrentThread();
 
             Debug.Assert(SceneManager.service == this);
             SceneManager.service = null;
@@ -90,46 +95,29 @@ namespace CrossEngine.Scenes
             }
         }
         
-        public Task Push(Scene scene)
-        {
-            return PushBackground(scene).ContinueWith(t => AttachRendering(scene)).Unwrap();
-        }
-
-        public Task PushBackground(Scene scene)
+        public void Push(Scene scene)
         {
             Debug.Assert(!_scenes.Contains(scene));
             
             Log.Debug("scene push started");
             
-            return PrepareRendering(scene)
-            .ContinueWith(t =>
-            {
-                scene.Init();
+            scene.Init();
             
-                _scenes.Add(scene);
-            
-                Log.Info("scene pushed");
-            });
+            _scenes.Add(scene);
         }
 
-        public Task Remove(Scene scene)
+        public void Remove(Scene scene)
         {
             Debug.Assert(_scenes.Contains(scene));
             
             Log.Debug("scene remove started");
             
+            scene.Deinit();
+            
+            if (_drawScenes.ContainsKey(scene))
+                DetachRenderer(scene);
             _scenes.Remove(scene);
-
-            return FinishRendering(scene).ContinueWith(t =>
-            {
-                scene.Deinit();
-                
-                var task = DetachRendering(scene);
-                
-                Log.Info("scene removed");
-                
-                return task;
-            }).Unwrap();
+            Log.Info("scene removed");
         }
 
         public void Start(Scene scene)
@@ -154,65 +142,40 @@ namespace CrossEngine.Scenes
 
         public void OnRender(ISurface surface)
         {
-            for (int i = 0; i < _drawScenes.Count; i++)
+            foreach (var pair in _drawScenes)
             {
-                SceneRenderer.Render(_drawScenes[i], surface);
+                pair.Value.Render(pair.Key.World.GetSystem<RenderSystem>(), surface);
             }
         }
         
-        // TODO: order of operations in detach and attach and prepare and finish is inconsistent: ServiceRequest
-        
-        private Task AttachRendering(Scene scene)
+        public Task AttachRenderer(Scene scene, SceneRenderer renderer)
         {
             var rs = scene.World.GetSystem<RenderSystem>();
-            var service = Manager.GetService<RenderService>();
             
-            return service.Execute(() =>
+            return _rs.Execute(() =>
             {
-                var sur = (ISurface)Manager.GetService<RenderService>().MainSurface;
-                
-                sur.Resize += rs.OnSurfaceResize;
-                rs.OnSurfaceResize(sur, sur.Width, sur.Height);
-                
-            }).ContinueWith(t => _drawScenes.Add(scene));
+                scene.World.GetSystem<RenderSystem>().Graphics = _rs.MainSurface.Context;
+                renderer.Init();
+                foreach (var rndrbl in renderer._renderables.Values)
+                {
+                    rndrbl.Init();
+                }
+            }).ContinueWith(t => _drawScenes.Add(scene, renderer));
         }
 
-        private Task DetachRendering(Scene scene)
+        public Task DetachRenderer(Scene scene)
         {
+            var renderer = _drawScenes[scene];
             _drawScenes.Remove(scene);
             
-            var rs = scene.World.GetSystem<RenderSystem>();
-            var service = Manager.GetService<RenderService>();
-            
-            return service.Execute(() =>
+            return _rs.Execute(() =>
             {
-                var sur = Manager.GetService<RenderService>().MainSurface;
-                sur.Resize -= rs.OnSurfaceResize;
-
-                rs.RendererRequest = null;
-            });
-        }
-
-        private Task PrepareRendering(Scene scene)
-        {
-            var rs = scene.World.GetSystem<RenderSystem>();
-            var service = Manager.GetService<RenderService>();
-
-            return service.Execute(() =>
-            {
-                rs.RendererRequest = service.Execute;
-                rs.GraphicsInit();
-            });
-        }
-        
-        private Task FinishRendering(Scene scene)
-        {
-            var rs = scene.World.GetSystem<RenderSystem>();
-            var service = Manager.GetService<RenderService>();
-
-            return service.Execute(() =>
-            {
-                rs.GraphicsDestroy();
+                foreach (var rndrbl in renderer._renderables.Values)
+                {
+                    rndrbl.Destroy();
+                }
+                renderer.Destroy();
+                scene.World.GetSystem<RenderSystem>().Graphics = null;
             });
         }
     }

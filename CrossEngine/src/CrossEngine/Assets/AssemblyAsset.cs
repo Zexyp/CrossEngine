@@ -22,12 +22,12 @@ namespace CrossEngine.Assets
 
         AssemblyLoadContext loadContext;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             (loadContext, Assembly) = await AssemblyManager.LoadFile(context.GetFullPath(RelativePath));
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             Assembly = null;
             AssemblyManager.Unload(loadContext);

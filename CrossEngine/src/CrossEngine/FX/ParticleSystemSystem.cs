@@ -43,7 +43,7 @@ namespace CrossEngine.FX.Particles
 #endif
         protected override void OnAttach()
         {
-            World.GetSystem<RenderSystem>().CommitRenderable(renderable, typeof(IParticleSystemRenderData));
+            //World.GetSystem<RenderSystem>().CommitRenderable(renderable, typeof(IParticleSystemRenderData));
         }
 
 #if INTERNAL
@@ -51,7 +51,7 @@ namespace CrossEngine.FX.Particles
 #endif
         protected override void OnDetach()
         {
-            World.GetSystem<RenderSystem>().WithdrawRenderable(renderable);
+            //World.GetSystem<RenderSystem>().WithdrawRenderable(renderable);
         }
     }
     

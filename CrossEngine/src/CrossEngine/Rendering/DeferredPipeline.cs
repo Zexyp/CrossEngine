@@ -22,6 +22,7 @@ using CrossEngine.Utils.Extensions;
 using CrossEngine.Utils.Rendering;
 using CrossEngine.Utils.Structs;
 using System.Drawing.Text;
+using CrossEngine.Scenes;
 
 namespace CrossEngine.Rendering;
 
@@ -150,8 +151,6 @@ void main()
 }
 ";
     
-    public ISkyboxRenderData Skybox;
-
     private MeshRenderer _skyboxMeshRenderer;
     private ShaderProgram _skyboxShader;
 
@@ -175,9 +174,9 @@ void main()
         _skyboxShader = null;
     }
 
-    public override void Draw()
+    public override void Draw(ISceneRenderData data)
     {
-        if (Skybox?.Texture == null)
+        if (data.Skybox?.Texture == null)
             return;
         
         var shader = _skyboxShader;
@@ -186,15 +185,14 @@ void main()
         view.Translation = Vector3.Zero;
         shader.SetParameterMat4("uView", view);
         shader.SetParameterMat4("uProjection", Pipeline.Camera.ProjectionMatrix);
-        shader.SetParameterMat4("uModel", Skybox.Transform);
-        Skybox.Texture.Bind();
+        shader.SetParameterMat4("uModel", data.Skybox.Transform);
+        data.Skybox.Texture.Bind();
         _skyboxMeshRenderer.Draw(GraphicsContext.Current.Api);
     }
 }
 
 class ScenePass : Pass
 {
-    public IList<IObjectRenderData> objects;
     private int _transparentIndex;
 
     public ScenePass()
@@ -225,29 +223,29 @@ class ScenePass : Pass
         {typeof(IMeshRenderData), new MeshRenderable()},
     };
     
-    public override void Draw()
+    public override void Draw(ISceneRenderData data)
     {
-        var transparentIndex = FilterTransparent();
+        var transparentIndex = FilterTransparent(data);
         
-        FrustumCulling(Pipeline.Camera.GetFrustum());
+        FrustumCulling(data, Pipeline.Camera.GetFrustum());
         
-        SortByDistance(Pipeline.Camera, transparentIndex);
+        SortByDistance(data, Pipeline.Camera, transparentIndex);
         
-        DrawObjects(Pipeline.Camera, objects, 0, transparentIndex);
+        DrawObjects(Pipeline.Camera, data.Objects, 0, transparentIndex);
         
         _transparentIndex = transparentIndex;
     }
 
-    public void DrawTransparent()
+    public void DrawTransparent(ISceneRenderData data)
     {
-        DrawObjects(Pipeline.Camera, objects, _transparentIndex, objects.Count);
+        DrawObjects(Pipeline.Camera, data.Objects, _transparentIndex, data.Objects.Count);
     }
     
-    private void SortByDistance(ICamera camera, int indexStart)
+    private void SortByDistance(ISceneRenderData data, ICamera camera, int indexStart)
     {
         var cameraPos = Matrix4x4Extension.SafeInvert(camera.GetViewMatrix()).Translation;
         
-        ArrayList.Adapter((IList)objects).Sort(indexStart, objects.Count - indexStart, new ComparisonComparer<IObjectRenderData>((o1, o2) =>
+        ArrayList.Adapter((IList)data.Objects).Sort(indexStart, data.Objects.Count - indexStart, new ComparisonComparer<IObjectRenderData>((o1, o2) =>
         {
             var d1 = Vector3.DistanceSquared(cameraPos, o1.Transform.Translation);
             var d2 = Vector3.DistanceSquared(cameraPos, o2.Transform.Translation);
@@ -255,11 +253,11 @@ class ScenePass : Pass
         }));
     }
 
-    private void FrustumCulling(in Frustum frustum)
+    private void FrustumCulling(ISceneRenderData data, in Frustum frustum)
     {
-        for (int i = 0; i < objects.Count; i++)
+        for (int i = 0; i < data.Objects.Count; i++)
         {
-            var obj = objects[i];
+            var obj = data.Objects[i];
             var volume = obj.GetVolume();
             
             CullChecker.Append(volume);
@@ -272,17 +270,17 @@ class ScenePass : Pass
         }
     }
     
-    private int FilterTransparent()
+    private int FilterTransparent(ISceneRenderData data)
     {
-        if (objects is not IList) throw new InvalidOperationException();
+        if (data.Objects is not IList) throw new InvalidOperationException();
         
-        ArrayList.Adapter((IList)objects).Sort(new ComparisonComparer<IObjectRenderData>((o1, o2) =>
+        ArrayList.Adapter((IList)data.Objects).Sort(new ComparisonComparer<IObjectRenderData>((o1, o2) =>
         {
             return IsTransparet(o1).CompareTo(IsTransparet(o2));
         }));
 
-        var index = FindFirstIndex(objects, o => IsTransparet(o));
-        return index == -1 ? objects.Count : index;
+        var index = FindFirstIndex(data.Objects, o => IsTransparet(o));
+        return index == -1 ? data.Objects.Count : index;
     }
     
     private static int FindFirstIndex<T>(IList<T> list, Predicate<T> predicate)
@@ -368,41 +366,10 @@ class ScenePass : Pass
         }
         */
     }
-    
-    // pot of boiling shit
-    private class InterfaceTypeComparer<T> : IEqualityComparer<Type>
-    {
-        public bool Equals(Type x, Type y)
-        {
-            if (x == y) return true;
-            if (x.IsAssignableFrom(y)) return true;
-            return false;
-        }
-
-        public int GetHashCode(Type obj)
-        {
-            if (obj.IsInterface)
-                return obj.GetHashCode();
-
-            Type baseInterface = null;
-            var ints = obj.GetInterfaces();
-            for (int i = ints.Length - 1; i >= 0; i--)
-            {
-                if (!typeof(T).IsAssignableFrom(ints[i]))
-                    continue;
-
-                baseInterface = ints[i];
-                break;
-            }
-            return baseInterface?.GetHashCode() ?? obj.GetHashCode();
-        }
-    }
 }
 
 class TransparentPass : Pass
 {
-    public IList<IObjectRenderData> objects;
-
     private ScenePass _scenePass;
     
     public TransparentPass(ScenePass scene)
@@ -412,16 +379,14 @@ class TransparentPass : Pass
         Depth = DepthFunc.Default;
     }
     
-    public override void Draw()
+    public override void Draw(ISceneRenderData data)
     {
-        _scenePass.DrawTransparent();
+        _scenePass.DrawTransparent(data);
     }
 }
 
 class LightPass : Pass
 {
-    public IList<ILightRenderData> lights;
-    
     ShaderProgram _shader;
     MeshRenderer _plane;
 
@@ -568,7 +533,7 @@ void main()
         _workbuffer.Dispose();
     }
 
-    public override void Draw()
+    public override void Draw(ISceneRenderData data)
     {
         // init vars
         var shader = _shader;
@@ -588,7 +553,7 @@ void main()
         // handle ambient lighting
         bool useAmbientAccumulator = false;
         Vector3 ambientAccumulator = Vector3.Zero;
-        foreach (var light in lights)
+        foreach (var light in data.Lights)
         {
             if (light is IAmbientLightRenderData ambient)
             {
@@ -687,9 +652,9 @@ void main()
                 NextBatch();
         }
 
-        for (int li = 0; li < lights.Count; li++)
+        for (int li = 0; li < data.Lights.Count; li++)
         {
-            switch (lights[li])
+            switch (data.Lights[li])
             {
                 case ISpotLightRenderData spot: AddSpotLight(spot); break;
                 case IDirectionalLightRenderData directional: AddDirectionalLight(directional); break;
@@ -780,7 +745,7 @@ void main()
         _quad = null;
     }
 
-    public override void Draw()
+    public override void Draw(ISceneRenderData data)
     {
         var fogComp = (CrossEngine.Components.FogComponent)CrossEngine.Scenes.SceneManager.Current?.World.Storage.GetArray(typeof(CrossEngine.Components.FogComponent))?.FirstOrDefault();
         if (fogComp == null) return;

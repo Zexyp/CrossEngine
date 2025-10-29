@@ -37,18 +37,11 @@ namespace CrossEngine.Rendering.Renderables
         public void Submit(IObjectRenderData data) => Submit((T)data);
     }
 
-    //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    //class RequiredRenderDataType : Attribute
-    //{
-    //    Type RequiredType;
-    //    public RequiredRenderDataType(Type type)
-    //    {
-    //        if (!type.IsInterface || !type.GetInterfaces().Contains(typeof(IObjectRenderData)))
-    //            throw new ArgumentException();
-    //
-    //        RequiredType = type;
-    //    }
-    //}
+    [Obsolete("not implemented")]
+    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = false)]
+    class RequiredRenderable<T> : Attribute where T : IRenderable
+    {
+    }
 
     public interface IObjectRenderData
     {
@@ -58,7 +51,7 @@ namespace CrossEngine.Rendering.Renderables
         IVolume GetVolume();
     }
 
-    interface ISkyboxRenderData : IObjectRenderData
+    public interface ISkyboxRenderData : IObjectRenderData
     {
         Texture Texture { get; }
     }

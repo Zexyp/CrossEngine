@@ -50,7 +50,7 @@ namespace Examples
             entity.AddComponent(new CameraComponent()).Primary = true;
 
             await SceneManager.Push(scene);
-            await SceneManager.Start(scene);
+            await SceneManager.AttachRenderer(scene, new SceneRenderer() {Pipeline = new DeferredPipeline()});
         }
 
         private void OnRender(ISurface surface)

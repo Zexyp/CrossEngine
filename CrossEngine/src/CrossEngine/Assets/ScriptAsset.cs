@@ -19,14 +19,14 @@ public class ScriptAsset : FileAsset
     private bool _exists;
     internal string FullPath;
     
-    public override Task Load(IAssetLoadContext context)
+    protected internal override Task Load(IAssetLoadContext context)
     {
         FullPath = context.GetFullPath(RelativePath);
         _exists = File.Exists(FullPath);
         return Task.CompletedTask;
     }
 
-    public override Task Unload(IAssetLoadContext context)
+    protected internal override Task Unload(IAssetLoadContext context)
     {
         _exists = false;
         return Task.CompletedTask;

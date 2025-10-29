@@ -37,12 +37,12 @@ namespace CrossEngine.Assets
         private TextureAtlasAsset atlas = null;
         private Guid idAtlas = Guid.Empty;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             atlas = context.GetDependency<TextureAtlasAsset>(idAtlas);
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             atlas = null;
         }
@@ -81,12 +81,12 @@ namespace CrossEngine.Assets
         private TextureAsset texture = null;
         private Guid idTexture = Guid.Empty;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             texture = context.GetDependency<TextureAsset>(idTexture);
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             texture = null;
         }

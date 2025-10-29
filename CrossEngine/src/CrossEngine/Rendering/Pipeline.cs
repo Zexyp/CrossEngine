@@ -9,6 +9,7 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Scenes;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Extensions;
 
@@ -41,7 +42,7 @@ public class Pipeline
         DetachPass(pass);
     }
 
-    public void Process(ISurface surface)
+    public void Process(ISceneRenderData data, ISurface surface)
     {
         Debug.Assert(_initialized);
         if (Camera is null)
@@ -79,7 +80,7 @@ public class Pipeline
 
             IPassConfig.Configure(pass, rapi, last);
 
-            pass.Draw();
+            pass.Draw(data);
 
             Profiler.EndScope();
             last = pass;
@@ -166,7 +167,7 @@ public abstract class Pass : IPassConfig
     public virtual void Init() { }
     public virtual void Destroy() { }
     
-    public abstract void Draw();
+    public abstract void Draw(ISceneRenderData data);
 }
 
 public interface IPassConfig

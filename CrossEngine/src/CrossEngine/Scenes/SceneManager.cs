@@ -17,17 +17,22 @@ namespace CrossEngine.Scenes
 
         public static Task Push(Scene scene)
         {
-            return service.Execute(() => service.Push(scene)).Unwrap();
-        }
-
-        public static Task PushBackground(Scene scene)
-        {
-            return service.Execute(() => service.PushBackground(scene)).Unwrap();
+            return service.Execute(() => service.Push(scene));
         }
 
         public static Task Remove(Scene scene)
         {
-            return service.Execute(() => service.Remove(scene)).Unwrap();
+            return service.Execute(() => service.Remove(scene));
+        }
+        
+        public static Task AttachRenderer(Scene scene, SceneRenderer renderer)
+        {
+            return service.Execute(() => service.AttachRenderer(scene, renderer));
+        }
+        
+        public static Task DetachRenderer(Scene scene)
+        {
+            return service.Execute(() => service.DetachRenderer(scene));
         }
         
         public static Task Start(Scene scene) => service.Execute(() => service.Start(scene));

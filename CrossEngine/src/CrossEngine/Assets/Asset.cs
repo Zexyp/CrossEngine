@@ -37,8 +37,8 @@ namespace CrossEngine.Assets
         [EditorString]
         public string Name;
 
-        public abstract Task Load(IAssetLoadContext context);
-        public abstract Task Unload(IAssetLoadContext context);
+        internal protected abstract Task Load(IAssetLoadContext context);
+        internal protected abstract Task Unload(IAssetLoadContext context);
 
         public virtual void GetObjectData(SerializationInfo info)
         {

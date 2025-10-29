@@ -25,7 +25,7 @@ namespace CrossEngine.Assets
         //[EditorNullable]
         //public ColorFormat? Format = null;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             if (RelativePath?.StartsWith("internal:") != true)
                 using (Stream stream = await context.OpenRelativeStream(RelativePath))
@@ -42,7 +42,7 @@ namespace CrossEngine.Assets
                 }
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             Texture.Dispose();
             Texture = null;
@@ -59,7 +59,7 @@ namespace CrossEngine.Assets
 
         private static string[] fixes = new[] { "px", "nx", "py", "ny", "pz", "nz" };
 
-        public override Task Load(IAssetLoadContext context)
+        protected internal override Task Load(IAssetLoadContext context)
         {
             var streams = fixes.Select(fix => context.OpenRelativeStream(Path.Join(Path.GetDirectoryName(RelativePath), Path.GetFileNameWithoutExtension(RelativePath) + $".{fix}" + Path.GetExtension(RelativePath))).Result).ToArray();
             return context.Graphics.Commands.Submit(() =>
@@ -69,7 +69,7 @@ namespace CrossEngine.Assets
             });
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             Texture.Dispose();
             Texture = null;

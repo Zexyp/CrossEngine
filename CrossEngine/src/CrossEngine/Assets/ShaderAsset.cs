@@ -14,7 +14,7 @@ namespace CrossEngine.Assets
 
         public override bool Loaded => Shader != null;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             var stream = RelativePath?.StartsWith("internal:") == true
                 ? ShaderPreprocessor.GetInternalShaderSource(RelativePath)
@@ -25,7 +25,7 @@ namespace CrossEngine.Assets
             });
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             Shader.Dispose();
             Shader = null;

@@ -103,7 +103,7 @@ namespace CrossEngine.Assets
             _material = new WavefrontMaterial();
         }
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             Shader = context.GetDependency<ShaderAsset>(idShader);
 
@@ -113,7 +113,7 @@ namespace CrossEngine.Assets
             if (idTextureSpecularHighlight != Guid.Empty) MapSpecularHighlight = context.GetDependency<TextureAsset>(idTextureSpecularHighlight);
         }
 
-        override public async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             _material.mapDiffuse = null;
             _material.mapNormal = null;
@@ -170,7 +170,7 @@ namespace CrossEngine.Assets
         private TextureAsset textureSpecularHighlight = null;
         private Guid idParent;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             Parent = context.GetDependency<MtlMaterialLibraryAsset>(idParent);
 
@@ -182,7 +182,7 @@ namespace CrossEngine.Assets
             LoadTexture(context, mat.texturePathSpecularHighlight,  ref textureSpecularHighlight,   ref mat.mapSpecularHighlight);
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             var mat = (WavefrontMaterial)Material;
 
@@ -248,7 +248,7 @@ namespace CrossEngine.Assets
             Materials = materials;
         }
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             if (Materials == null)
                 using (var stream = await context.OpenRelativeStream(RelativePath))
@@ -258,7 +258,7 @@ namespace CrossEngine.Assets
 
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             Materials = null;
             shader = null;

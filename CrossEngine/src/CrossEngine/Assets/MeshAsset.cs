@@ -33,7 +33,7 @@ namespace CrossEngine.Assets
 
         private IMesh _mesh;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             if (Generate?.StartsWith("internal:") == true)
             {
@@ -45,7 +45,7 @@ namespace CrossEngine.Assets
             }
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             _mesh = null;
         }
@@ -83,12 +83,12 @@ namespace CrossEngine.Assets
         private ObjModelAsset parent = null;
         private Guid idParent = Guid.Empty;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             parent = context.GetDependency<ObjModelAsset>(idParent);
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             parent = null;
         }
@@ -126,14 +126,14 @@ namespace CrossEngine.Assets
             Meshes = meshes;
         }
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             if (Meshes == null)
                 using (Stream stream = await context.OpenRelativeStream(RelativePath))
                     Meshes = MeshLoader.ParseObj(stream, out _);
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             Meshes = null;
         }
