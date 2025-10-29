@@ -22,10 +22,12 @@ namespace CrossEngine.Platform.Windows
 
         public unsafe GdiVertexBuffer(void* data, uint size)
         {
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             SetData(data, size);
+        }
+
+        protected internal override void Destroy()
+        {
+            stream.Dispose();
         }
 
         public override void Bind()

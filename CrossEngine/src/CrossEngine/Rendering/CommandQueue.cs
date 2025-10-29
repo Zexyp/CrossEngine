@@ -1,26 +1,36 @@
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CrossEngine.Rendering;
 
-public interface IRenderCommand
+public class CommandQueue : TaskScheduler
 {
-    void Execute(GraphicsContext ctx);
-}
+    TaskFactory _factory;
 
-public class CommandQueue
-{
-    private readonly ConcurrentQueue<IRenderCommand> _commands = new();
-    
-    public void Submit(IRenderCommand command)
+    public CommandQueue()
     {
-        _commands.Enqueue(command);
+        _factory = new TaskFactory(this);
     }
     
-    public void Flush(GraphicsContext ctx)
+    protected override IEnumerable<Task> GetScheduledTasks()
     {
-        while (_commands.TryDequeue(out var cmd))
-        {
-            cmd.Execute(ctx);
-        }
+        yield break;
+    }
+
+    protected override void QueueTask(Task task)
+    {
+        TryExecuteTask(task);
+    }
+
+    protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
+    {
+        return TryExecuteTask(task);
+    }
+
+    public Task Submit(Action action)
+    {
+        return _factory.StartNew(action);
     }
 }

@@ -26,7 +26,7 @@ namespace CrossEngine.Rendering.Buffers
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: return new GLVertexBuffer(vertices, size, bufferUsage);
 #if WINDOWS
-                case GraphicsApi.GDI: wr.SetTarget(new GdiVertexBuffer(vertices, size)); return wr;
+                case GraphicsApi.GDI: return new GdiVertexBuffer(vertices, size);
 #endif
             }
 

@@ -2,6 +2,7 @@
 using CrossEngine.Assets;
 using CrossEngine.Scenes;
 using CrossEngine.Serialization.Json;
+using CrossEngine.Serialization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -17,90 +18,34 @@ namespace CrossEngine.Serialization
 {
     public static class SceneSerializer
     {
-        static readonly JsonSerializerOptions options;
+        static readonly JsonConverter[] converters;
         static readonly TypeResolver resolver;
 
         private static readonly AssetGuidJsonConverter AssetConverter;
 
         static SceneSerializer()
         {
-            AssetGuidJsonConverter assConv;
-            
-            options = new()
-            {
-#if DEBUG
-                WriteIndented = true,
-#endif
-            };
-
-            foreach (var item in new JsonConverter[]
-                {
-                    new EntityStructureJsonConverter(),
-
-                    AssetConverter = new AssetGuidJsonConverter(),
-
-                    new SceneJsonConverter(),
-                }.Concat(Serialization.Serializer.BaseJsonConverters))
-            {
-                options.Converters.Add(item);
-            }
-
             resolver = new CrossAssemblyTypeResolver();
-            for (int i = 0; i < options.Converters.Count; i++)
+            converters = new JsonConverter[]
             {
-                if (options.Converters[i] is ITypeResolveConverter resolveMe)
-                    resolveMe.Resolver = resolver;
-            }
+                new EntityStructureJsonConverter(),
+
+                AssetConverter = new AssetGuidJsonConverter(),
+
+                new SceneJsonConverter(),
+            };
         }
 
         public static void SerializeJson(Stream stream, Scene scene)
         {
-            lock (options)
-            {
-                for (int i = 0; i < options.Converters.Count; i++)
-                {
-                    if (options.Converters[i] is IInitializedConverter initMe)
-                        initMe.Init();
-                }
-
-                JsonSerializer.Serialize(stream, scene, options);
-
-                for (int i = 0; i < options.Converters.Count; i++)
-                {
-                    if (options.Converters[i] is IInitializedConverter finishMe)
-                        finishMe.Finish();
-                }
-            }
+            Serializer.SerializeJson(stream, scene, resolver: resolver, converters: converters);
         }
 
-        public static Scene DeserializeJson(Stream stream, IAssetLoadContext assetContext = null)
+        public static Scene DeserializeJson(Stream stream, IAssetLoadContext assetContext)
         {
-            Scene scene;
-            
-            Debug.Assert(AssetManager.Current != null, "no asset lookup");
+            AssetConverter.AssetContext = assetContext;
 
-            assetContext ??= AssetManager.Current;
-
-            lock (options)
-            {
-                AssetConverter.AssetContext = assetContext;
-
-                for (int i = 0; i < options.Converters.Count; i++)
-                {
-                    if (options.Converters[i] is IInitializedConverter initMe)
-                        initMe.Init();
-                }
-
-                scene = JsonSerializer.Deserialize<Scene>(stream, options);
-
-                for (int i = 0; i < options.Converters.Count; i++)
-                {
-                    if (options.Converters[i] is IInitializedConverter finishMe)
-                        finishMe.Finish();
-                }
-            }
-
-            return scene;
+            return (Scene)Serializer.DeserializeJson(stream, typeof(Scene), resolver: resolver, converters: converters);
         }
     }
 }

@@ -19,6 +19,7 @@ using CrossEngine.Rendering.Buffers;
 using System.Numerics;
 using CrossEngine.Utils.Rendering;
 using System.Diagnostics;
+using CrossEngine.Debugging;
 
 namespace CrossEngine.Rendering
 {
@@ -121,6 +122,8 @@ namespace CrossEngine.Rendering
 
             _sw.Stop();
             _lastFrameDuration = _sw.Elapsed.TotalSeconds;
+
+            GpuGC.Collect();
         }
 
         private void OnWindowEvent(Window w, Event e)
@@ -169,6 +172,8 @@ namespace CrossEngine.Rendering
             context.SwapBuffers();
 
             Profiler.EndScope();
+
+            GpuGC.Collect();
         }
 
         private void Prepare()
@@ -201,32 +206,22 @@ namespace CrossEngine.Rendering
 
         private void CallingThreadSetup()
         {
-            ShaderPreprocessor.ServiceRequest = Execute;
-            TextureLoader.ServiceRequest = Execute;
+
         }
 
         private void CallingThreadDestroy()
         {
-            TextureLoader.ServiceRequest = null;
-            ShaderPreprocessor.ServiceRequest = null;
+            
         }
 
         private void RenderThreadSetup()
         {
-            Task OnServiceRequest(Action action)
-            {
-                action.Invoke();
-                return Task.CompletedTask;
-            }
 
-            ShaderPreprocessor.ServiceRequest = OnServiceRequest;
-            TextureLoader.ServiceRequest = OnServiceRequest;
         }
 
         private void RenderThreadDestroy()
         {
-            TextureLoader.ServiceRequest = null;
-            ShaderPreprocessor.ServiceRequest = null;
+            
         }
 
         private void OnInternalServiceReqest(Action action) => Execute(action);

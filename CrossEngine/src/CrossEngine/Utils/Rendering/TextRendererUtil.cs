@@ -48,7 +48,7 @@ namespace CrossEngine.Utils.Rendering
             Log.Default.Debug($"initializing {nameof(TextRendererUtil)}");
 
             data.AtlasTexture = TextureLoader.LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngine.res.utils.debug_font_atlas.png"));
-            var tex = data.AtlasTexture.GetValue();
+            var tex = data.AtlasTexture;
             tex.SetFilterParameter(FilterParameter.Nearest);
             data.AtlasOffsets = TextureAtlas.CreateOffsets(tex.Size, new Vector2(TextRendererUtilData.SymbolWidth, TextRendererUtilData.SymbolHeight), TextRendererUtilData.SymbolsCount, margin: TextRendererUtilData.SymbolMargin);
         }

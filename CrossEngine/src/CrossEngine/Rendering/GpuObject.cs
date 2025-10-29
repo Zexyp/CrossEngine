@@ -27,10 +27,10 @@ public abstract class GpuObject : IDisposable
     
     protected virtual void Dispose(bool disposing)
     {
-        if(this.disposed)
+        if (this.disposed)
             return;
         
-        if(disposing)
+        if (disposing)
         {
             // managed resources here
         }

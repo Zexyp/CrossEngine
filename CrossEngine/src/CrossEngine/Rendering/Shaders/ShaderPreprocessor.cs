@@ -2,7 +2,7 @@
 #define SET_LINE
 
 #if WASM
-#error File reading is not okie dokie
+//#error File reading is not okie dokie
 #endif
 
 using CrossEngine.Logging;
@@ -57,7 +57,7 @@ void main() {{
     oColor = vec4(1, 0, 1, 1); // gl_FragColor no workie in es
 }}
 ";
-        public static WasWeakReference<ShaderProgram> DefaultShaderProgram { get; private set; }
+        public static ShaderProgram DefaultShaderProgram { get; private set; }
 
         static Logger _log = new Logger("shader-preproc");
 
@@ -78,7 +78,7 @@ void main() {{
             DefaultShaderProgram = null;
         }
 
-        internal static Stream GetInternalShader(string filename)
+        internal static Stream GetInternalShaderSource(string filename)
         {
             filename = filename.RemovePrefix("internal:").Replace("/", ".");
             return Assembly.GetExecutingAssembly().GetManifestResourceStream($"CrossEngine.res.shaders.{filename}");
@@ -91,7 +91,7 @@ void main() {{
             return CreateProgramFromStream(File.OpenRead(filepath), path => File.OpenRead(Path.Join(Path.GetDirectoryName(filepath), path)));
         }
 
-        public static ShaderProgram CreateProgramFromString(string source)
+        public static  ShaderProgram CreateProgramFromString(string source)
         {
             using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(source)))
             {
@@ -105,18 +105,13 @@ void main() {{
             var sources = SplitSources(stream, includeCallback);
             Profiler.EndScope();
 
-            var program = new WasWeakReference<ShaderProgram>(null);
+            var vertex = Shader.Create(sources.Vertex, ShaderType.Vertex);
+            var fragment = Shader.Create(sources.Fragment, ShaderType.Fragment);
 
-            ServiceRequest.Invoke(() =>
-            {
-                var vertex = Shader.Create(sources.Vertex, ShaderType.Vertex);
-                var fragment = Shader.Create(sources.Fragment, ShaderType.Fragment);
+            var program = ShaderProgram.Create(vertex, fragment);
 
-                program = ShaderProgram.Create(program, vertex.GetValue(), fragment.GetValue());
-
-                vertex.Dispose();
-                fragment.Dispose();
-            });
+            vertex.Dispose();
+            fragment.Dispose();
 
             return program;
         }
@@ -184,11 +179,6 @@ void main() {{
 
             return new ShaderSources() { Fragment = builderFragment.ToString(), Vertex = builderVertex.ToString() };
         }
-
-        public static void Free(WasWeakReference<ShaderProgram> program)
-        {
-            ServiceRequest.Invoke(program.Dispose);
-        }
         
         private static Stream InternalInclude(string path, Func<string, Stream> fallback)
         {
@@ -197,7 +187,7 @@ void main() {{
             if (!path.StartsWith("internal:"))
                 return fallback.Invoke(path);
                 
-            return GetInternalShader(path);
+            return GetInternalShaderSource(path);
         }
     }
 }

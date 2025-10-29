@@ -12,7 +12,6 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Debugging;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Extensions;
-using Silk.NET.OpenGL;
 using Framebuffer = CrossEngine.Rendering.Buffers.Framebuffer;
 using CrossEngine.Utils.Structs;
 
@@ -243,7 +242,7 @@ namespace CrossEngine.Platform.OpenGL
                               (int)GLEnum.ColorBufferBit, GLEnum.Nearest);
         }
         
-        public override void BlitTo(Framebuffer? target, IList<(int from, int to)> attachmentIndexes = null)
+        public override unsafe void BlitTo(Framebuffer? target, IList<(int from, int to)> attachmentIndexes = null)
         {
             gl.BindFramebuffer(GLEnum.ReadFramebuffer, this._rendererId);
             gl.BindFramebuffer(GLEnum.DrawFramebuffer, target == null ? 0 : ((GLFramebuffer)target)._rendererId);
@@ -252,8 +251,14 @@ namespace CrossEngine.Platform.OpenGL
                 for (int i = 0; i < attachmentIndexes.Count; i++)
                 {
                     var index = attachmentIndexes[i];
-                    gl.ReadBuffer(GLEnum.ColorAttachment0 + index.from);
-                    gl.DrawBuffer(GLEnum.ColorAttachment0 + index.to);
+                    GLEnum attachmentFrom = GLEnum.ColorAttachment0 + index.from;
+                    GLEnum attachmentTo = GLEnum.ColorAttachment0 + index.to;
+                    gl.ReadBuffer(attachmentFrom);
+#if !OPENGL_ES
+                    gl.DrawBuffer(attachmentTo);
+#else
+                    gl.DrawBuffers(1, &attachmentTo);
+#endif
                     gl.BlitFramebuffer(0, 0, (int)specification.Width, (int)specification.Height, 0, 0, (int)specification.Width, (int)specification.Height, (uint)GLEnum.ColorBufferBit, GLEnum.Nearest);
                 }
             else

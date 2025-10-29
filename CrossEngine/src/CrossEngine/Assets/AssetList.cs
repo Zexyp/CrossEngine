@@ -18,17 +18,14 @@ using CrossEngine.Utils.Collections;
 using System.Diagnostics;
 using Microsoft.VisualBasic;
 using System.Security.Cryptography;
+using CrossEngine.Rendering;
 
 namespace CrossEngine.Assets
 {
     public class AssetList : IAssetLoadContext, ISerializable
     {
-        [EditorString]
-        public string DirectoryOffset = "./";
-        [EditorString]
-        public string RuntimeFilepath;
-
         public bool IsLoaded => _loaded;
+        internal LoadContext Context;
 
         Dictionary<Type, Dictionary<Guid, Asset>> _collections = new();
         Dictionary<string, List<FileAsset>> _fileAssets = new(new PathEqualityComparer());
@@ -117,14 +114,19 @@ namespace CrossEngine.Assets
             if (!type.IsSubclassOf(typeof(Asset)))
                 throw new ArgumentException();
 
-            if (!_collections.ContainsKey(type))
-                throw new KeyNotFoundException();
+            if (_collections.ContainsKey(type))
+                foreach (Asset asset in _collections[type].Values)
+                    if (asset.Name == name)
+                        return asset;
 
-            foreach (Asset asset in _collections[type].Values)
+            foreach (var pair in _collections)
             {
-                if (asset.Name == name)
-                    return asset;
+                if (type.IsAssignableFrom(pair.Key))
+                    foreach (Asset asset in pair.Value.Values)
+                        if (asset.Name == name)
+                            return asset;
             }
+            
             throw new KeyNotFoundException();
         }
 
@@ -215,7 +217,7 @@ namespace CrossEngine.Assets
             return result;
         }
 
-        public async Task<bool> UnloadAll()
+        internal async Task<bool> UnloadAll()
         {
             var result = true;
             foreach (var col in _collections.Reverse().Select(p => p.Value))
@@ -231,7 +233,7 @@ namespace CrossEngine.Assets
             return result;
         }
 
-        public async Task<bool> LoadAsset(Asset asset)
+        internal async Task<bool> LoadAsset(Asset asset)
         {
             try
             {
@@ -248,7 +250,7 @@ namespace CrossEngine.Assets
             return true;
         }
 
-        public async Task<bool> UnloadAsset(Asset asset)
+        internal async Task<bool> UnloadAsset(Asset asset)
         {
             try
             {
@@ -296,7 +298,7 @@ namespace CrossEngine.Assets
 
         string IAssetLoadContext.GetFullPath(string realtivePath)
         {
-            return Path.Join(Path.GetDirectoryName(RuntimeFilepath), DirectoryOffset, realtivePath);
+            return Path.Join(Context.Path, realtivePath);
         }
 
         public Asset GetDependency(Type type, Guid id)
@@ -314,12 +316,13 @@ namespace CrossEngine.Assets
             LoadAsset(result);
             return result;
         }
+        
+        GraphicsContext IAssetLoadContext.Graphics => Context.Graphics;
         #endregion
 
         #region ISerializable
         void ISerializable.GetObjectData(SerializationInfo info)
         {
-            info.AddValue(nameof(DirectoryOffset), DirectoryOffset);
             List<Asset> imTooLazy = new();
             foreach (var col in _collections.Values)
                 foreach (Asset asset in col.Values)
@@ -329,8 +332,6 @@ namespace CrossEngine.Assets
 
         void ISerializable.SetObjectData(SerializationInfo info)
         {
-            DirectoryOffset = info.GetValue(nameof(DirectoryOffset), DirectoryOffset);
-
             var assets = info.GetValue<Asset[]>("Assets");
             for (int i = 0; i < assets.Length; i++)
             {

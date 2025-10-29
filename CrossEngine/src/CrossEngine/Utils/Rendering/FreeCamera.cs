@@ -27,7 +27,7 @@ namespace CrossEngine.Utils.Rendering
         public float Far = 100;
         public float Speed = 1;
 
-        public Matrix4x4 GetViewMatrix() => Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation)) * Matrix4x4.CreateTranslation(-Position);
+        public Matrix4x4 GetViewMatrix() => Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
         
         public void Update()
         {

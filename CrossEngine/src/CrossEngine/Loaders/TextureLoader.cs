@@ -106,29 +106,15 @@ namespace CrossEngine.Loaders
             var ny = ImageResult.FromStream(filedata[3]);
             var pz = ImageResult.FromStream(filedata[4]);
             var nz = ImageResult.FromStream(filedata[5]);
-            var refe = new WasWeakReference<Texture>(null);
             var firstWidth = px.Width;
             var firstHeigh = px.Height;
             var arrAll = new[] { px, nx, py, ny, pz, nz };
             Debug.Assert(arrAll.All(el => el.Width == firstWidth && el.Height == firstHeigh));
             
-            ServiceRequest.Invoke(() =>
-            {
-                fixed (void* pxp = px.Data, nxp = nx.Data, pyp = py.Data, nyp = ny.Data, pzp = pz.Data, nzp = nz.Data)
-                    refe.SetTarget(GLTexture.CreateCubemap((uint)firstWidth, (uint)firstHeigh, new[] { pxp, nxp, pyp, nyp, pzp, nzp }));
-            });
-
-            return refe;
+            fixed (void* pxp = px.Data, nxp = nx.Data, pyp = py.Data, nyp = ny.Data, pzp = pz.Data, nzp = nz.Data)
+                return GLTexture.CreateCubemap((uint)firstWidth, (uint)firstHeigh, new[] { pxp, nxp, pyp, nyp, pzp, nzp });
         }
-
-        public static void Free(WasWeakReference<Texture> texture)
-        {
-            if (new[] { BlackTexture, WhiteTexture, NormalTexture, DefaultTexture }.Contains(texture))
-                return;
-
-            ServiceRequest.Invoke(texture.Dispose);
-        }
-
+        
         private static unsafe Texture InternalLoad(ImageResult result, ColorFormat? desiredFormat = null)
         {
             var gapi = RendererApi.GetApi();
@@ -136,19 +122,14 @@ namespace CrossEngine.Loaders
             var format = ColorComponentsToColorFormat(result.Comp);
             ColorFormat desired = desiredFormat ?? format;
 
-            WasWeakReference<Texture> texture = new WasWeakReference<Texture>(null);
-
-            ServiceRequest.Invoke(() =>
+            var texture = Texture.Create((uint)result.Width, (uint)result.Height, format);
+            fixed (void* p = result.Data)
             {
-                Texture.Create(texture, (uint)result.Width, (uint)result.Height, format);
-                fixed (void* p = result.Data)
-                {
-                    if (RendererApi.GetApi() == GraphicsApi.OpenGL)
-                        ((GLTexture)texture.GetValue()).SetData(p, (uint)result.Width, (uint)result.Height, format, desired);
-                    else
-                        texture.GetValue().SetData(p, (uint)(result.Width * result.Height * GetPixelSize(result.Comp)));
-                }
-            });
+                if (RendererApi.GetApi() == GraphicsApi.OpenGL)
+                    ((GLTexture)texture).SetData(p, (uint)result.Width, (uint)result.Height, format, desired);
+                else
+                    texture.SetData(p, (uint)(result.Width * result.Height * GetPixelSize(result.Comp)));
+            }
 
             return texture;
         }

@@ -26,15 +26,12 @@ namespace CrossEngine.Platform.Windows
 
         public GdiTexture(uint width, uint height, ColorFormat internalFormat)
         {
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             this.width = width;
             this.height = height;
             bitmap = new Bitmap((int)width, (int)height, GdiUtils.ToGdiPixelFormat(internalFormat));
         }
 
-        protected override void Dispose(bool disposing)
+        protected internal override void Destroy()
         {
             bitmap.Dispose();
         }

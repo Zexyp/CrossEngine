@@ -62,7 +62,7 @@ public class DeferredPipeline : Pipeline
 
     protected override void OnBeforePasses()
     {
-        var buffer = Buffer.GetValue();
+        var buffer = Buffer;
         buffer.EnableColorAttachments([AttachmentIndexId, AttachmentIndexPosition, AttachmentIndexNormal]);
         buffer.ClearAttachment(AttachmentIndexId, IntVec4.Zero);
         buffer.ClearAttachment(AttachmentIndexPosition, Vector4.Zero);

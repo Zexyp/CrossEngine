@@ -29,12 +29,12 @@ namespace CrossEngine.Platform.Windows
             buffered.Clear(state.clearColor);
         }
 
-        public override void DrawArray(WeakReference<VertexArray> vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
+        public override void DrawArray(VertexArray vertexArray, uint verticesCount, DrawMode mode = DrawMode.Traingles)
         {
             if (state.viewport.Width == 0 || state.viewport.Height == 0)
                 return;
 
-            var va = (GdiVertexArray)vertexArray.GetValue();
+            var va = (GdiVertexArray)vertexArray;
             try
             {
                 for (uint i = 0; i < verticesCount;)
@@ -48,13 +48,13 @@ namespace CrossEngine.Platform.Windows
             }
         }
 
-        public override unsafe void DrawIndexed(WeakReference<VertexArray> vertexArray, uint indexCount = 0)
+        public override unsafe void DrawIndexed(VertexArray vertexArray, uint indexCount = 0)
         {
             if (state.viewport.Width == 0 || state.viewport.Height == 0)
                 return;
 
-            var va = (GdiVertexArray)vertexArray.GetValue();
-            var ib = (GdiIndexBuffer)va.GetIndexBuffer().GetValue();
+            var va = (GdiVertexArray)vertexArray;
+            var ib = (GdiIndexBuffer)va.GetIndexBuffer();
             var ibStart = GdiHelper.StreamStart(ib.stream);
             uint count = (indexCount != 0) ? indexCount : ib.Count;
 

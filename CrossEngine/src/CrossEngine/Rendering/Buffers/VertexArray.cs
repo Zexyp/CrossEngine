@@ -29,7 +29,7 @@ namespace CrossEngine.Rendering.Buffers
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: return new GLVertexArray();
 #if WINDOWS
-                case GraphicsApi.GDI: wr.SetTarget(new GdiVertexArray()); return wr;
+                case GraphicsApi.GDI: return new GdiVertexArray();
 #endif
             }
 

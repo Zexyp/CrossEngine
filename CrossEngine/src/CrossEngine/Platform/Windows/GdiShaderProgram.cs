@@ -61,11 +61,13 @@ namespace CrossEngine.Platform.Windows
 
         internal GdiShaderProgram(GdiShader vertex, GdiShader fragment)
         {
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             this.vertex = vertex.script;
             this.fragment = fragment.script;
+        }
+
+        protected internal override void Destroy()
+        {
+            
         }
 
         internal (PointF, Color) Run(GdiVertexArray va, uint index)
@@ -114,12 +116,12 @@ namespace CrossEngine.Platform.Windows
             return (point, color);
         }
 
-        private unsafe ShaderVariables LoadVariables(WeakReference<VertexBuffer>[] vas, uint index)
+        private unsafe ShaderVariables LoadVariables(VertexBuffer[] vas, uint index)
         {
             var vars = new ShaderVariables(uniforms);
 
             Debug.Assert(vas.Length == 1);
-            var vb = (GdiVertexBuffer)vas[0].GetValue();
+            var vb = (GdiVertexBuffer)vas[0];
             var layout = vb.GetLayout();
             byte* streamStart = GdiHelper.StreamStart(vb.stream);
             byte* indexedElement = streamStart + index * layout.Stride;

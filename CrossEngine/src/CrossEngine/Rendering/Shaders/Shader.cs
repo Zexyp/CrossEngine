@@ -65,7 +65,7 @@ namespace CrossEngine.Rendering.Shaders
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: return new GLShader(source, type);
 #if WINDOWS
-                case GraphicsApi.GDI: wr.SetTarget(new GdiShader(source, type)); return wr;
+                case GraphicsApi.GDI: return new GdiShader(source, type);
 #endif
             }
 

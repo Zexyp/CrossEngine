@@ -43,7 +43,7 @@ namespace CrossEngine.Rendering.Buffers
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: return new GLIndexBuffer(indices, count, dataType, bufferUsage);
 #if WINDOWS
-                case GraphicsApi.GDI: return new GdiIndexBuffer(indices, count, dataType));
+                case GraphicsApi.GDI: return new GdiIndexBuffer(indices, count, dataType);
 #endif
             }
 

@@ -2,7 +2,6 @@
 using CrossEngine.Logging;
 using CrossEngine.Rendering;
 using CrossEngine.Core.Services;
-using Silk.NET.GLFW;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +9,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+
+#if WINDOWS || LINUX
+using Silk.NET.GLFW;
+#endif
 
 namespace CrossEngine.Platform
 {
@@ -42,6 +45,9 @@ namespace CrossEngine.Platform
             //Glfw.GlfwWindow.glfw.WindowHint(WindowHintBool.DoubleBuffer, true);
             //glfw.WindowHint(WindowHintBool.Decorated, true);
             //glfw.WindowHint(WindowHintBool.OpenGLForwardCompat, true);
+#endif
+#if WASM
+            Interop.Initialize();
 #endif
         }
 

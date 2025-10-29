@@ -37,7 +37,7 @@ namespace CrossEngine.Rendering.Textures
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: return new GLTexture(width, height, internalFormat);
 #if WINDOWS
-                case GraphicsApi.GDI: wr.SetTarget(new GdiTexture(width, height, internalFormat)); return wr;
+                case GraphicsApi.GDI: return new GdiTexture(width, height, internalFormat);
 #endif
             }
 

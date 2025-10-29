@@ -56,17 +56,17 @@ namespace CrossEngine.Loaders
             [SerializeInclude] [EditorDrag]
             public float refractiveIndex;
 
-            public WasWeakReference<Texture> mapDiffuse;
-            public WasWeakReference<Texture> mapSpecular;
-            public WasWeakReference<Texture> mapSpecularHighlight;
-            public WasWeakReference<Texture> mapNormal;
+            public Texture mapDiffuse;
+            public Texture mapSpecular;
+            public Texture mapSpecularHighlight;
+            public Texture mapNormal;
 
             public string texturePathDiffuse;
             public string texturePathSpecular;
             public string texturePathSpecularHighlight;
             public string texturePathNormal;
 
-            public WasWeakReference<ShaderProgram> Shader { get; set; }
+            public ShaderProgram Shader { get; set; }
 
             string mountPoint = "uMaterial.";
 
@@ -82,13 +82,13 @@ namespace CrossEngine.Loaders
                 shader.SetParameterFloat(mountPoint + "RefractiveIndex", refractiveIndex);
                 
                 shader.SetParameterInt(mountPoint + "MapDiffuse", 0);
-                (mapDiffuse ?? TextureLoader.WhiteTexture).GetValue().Bind(0);
+                (mapDiffuse ?? TextureLoader.WhiteTexture).Bind(0);
                 shader.SetParameterInt(mountPoint + "MapSpecular", 1);
-                (mapSpecular ?? TextureLoader.WhiteTexture).GetValue().Bind(1);
+                (mapSpecular ?? TextureLoader.WhiteTexture).Bind(1);
                 shader.SetParameterInt(mountPoint + "MapSpecularHighlight", 2);
-                (mapSpecularHighlight ?? TextureLoader.WhiteTexture).GetValue().Bind(2);
+                (mapSpecularHighlight ?? TextureLoader.WhiteTexture).Bind(2);
                 shader.SetParameterInt(mountPoint + "MapNormal", 3);
-                (mapNormal ?? TextureLoader.NormalTexture).GetValue().Bind(3);
+                (mapNormal ?? TextureLoader.NormalTexture).Bind(3);
             }
 
             public void GetObjectData(SerializationInfo info) => Serializer.UseAttributesWrite(this, info);

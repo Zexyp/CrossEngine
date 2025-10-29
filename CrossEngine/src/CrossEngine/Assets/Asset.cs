@@ -24,6 +24,12 @@ namespace CrossEngine.Assets
         GraphicsContext Graphics { get; }
     }
 
+    struct LoadContext
+    {
+        public GraphicsContext Graphics;
+        public string Path;
+    }
+
     public abstract class Asset : ISerializable
     {
         public Guid Id { get; internal set; }

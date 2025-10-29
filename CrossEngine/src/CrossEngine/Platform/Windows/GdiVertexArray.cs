@@ -12,16 +12,19 @@ namespace CrossEngine.Platform.Windows
 {
     class GdiVertexArray : VertexArray
     {
-        internal List<WeakReference<VertexBuffer>> vertexBuffers = new List<WeakReference<VertexBuffer>>();
-        internal WeakReference<IndexBuffer> indexBuffer;
+        internal List<VertexBuffer> vertexBuffers = new List<VertexBuffer>();
+        internal IndexBuffer indexBuffer;
 
         public GdiVertexArray()
         {
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
         }
 
-        public override void AddVertexBuffer(WeakReference<VertexBuffer> vertexBuffer)
+        protected internal override void Destroy()
+        {
+            
+        }
+
+        public override void AddVertexBuffer(VertexBuffer vertexBuffer)
         {
             vertexBuffers.Add(vertexBuffer);
         }
@@ -36,9 +39,9 @@ namespace CrossEngine.Platform.Windows
             state.va = null;
         }
 
-        public override WeakReference<VertexBuffer>[] GetVertexBuffers() => vertexBuffers.ToArray();
+        public override VertexBuffer[] GetVertexBuffers() => vertexBuffers.ToArray();
 
-        public override WeakReference<IndexBuffer> GetIndexBuffer() => indexBuffer;
-        public override void SetIndexBuffer(WeakReference<IndexBuffer> indexBuffer) => this.indexBuffer = indexBuffer;
+        public override IndexBuffer GetIndexBuffer() => indexBuffer;
+        public override void SetIndexBuffer(IndexBuffer indexBuffer) => this.indexBuffer = indexBuffer;
     }
 }

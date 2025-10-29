@@ -20,7 +20,7 @@ namespace CrossEngine.Assets
         {
             using (Stream stream = await context.OpenRelativeStream(RelativePath))
             {
-                Scene = SceneSerializer.DeserializeJson(stream);
+                Scene = SceneSerializer.DeserializeJson(stream, context);
             }
         }
 

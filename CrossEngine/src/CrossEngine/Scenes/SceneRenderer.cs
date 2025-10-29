@@ -15,7 +15,9 @@ namespace CrossEngine.Scenes
 {
     public class SceneRenderer
     {
-        public void Render(Scene scene, ISurface surface)
+        public ICamera OverrideCamera;
+
+        public static void Render(Scene scene, ISurface surface)
         {
             Debug.Assert(scene.IsInitialized);
 

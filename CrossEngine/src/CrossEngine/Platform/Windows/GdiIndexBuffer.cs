@@ -20,13 +20,15 @@ namespace CrossEngine.Platform.Windows
 
         public unsafe GdiIndexBuffer(void* indices, uint count, IndexDataType dataType)
         {
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             DataType = dataType;
             Count = count;
 
             SetData(indices, count);
+        }
+
+        protected internal override void Destroy()
+        {
+            stream.Dispose();
         }
 
         public override void Bind()

@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
-using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Platform.Wasm
 {

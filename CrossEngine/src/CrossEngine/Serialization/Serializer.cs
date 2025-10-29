@@ -14,8 +14,7 @@ namespace CrossEngine.Serialization
     public static class Serializer
     {
         // TODO: move this somewhere
-        public static readonly JsonConverter[] BaseJsonConverters = new JsonConverter[]
-        {
+        public static readonly JsonConverter[] BaseJsonConverters = {
             new SerializableJsonConverter(),
 
             new Vector2JsonConverter(),
@@ -26,7 +25,6 @@ namespace CrossEngine.Serialization
         };
 
         static readonly JsonSerializerOptions options;
-        static readonly TypeResolver resolver;
 
         static Serializer()
         {
@@ -41,33 +39,78 @@ namespace CrossEngine.Serialization
             {
                 options.Converters.Add(BaseJsonConverters[i]);
             }
+        }
 
-            resolver = TypeResolver.Default;
+        public static void SerializeJson(Stream stream, object value, TypeResolver resolver = null, JsonConverter[] converters = null)
+        {
+            if (converters != null)
+                for (int i = 0; i < converters.Length; i++)
+                {
+                    options.Converters.Add(converters[i]);
+                }
+            
             for (int i = 0; i < options.Converters.Count; i++)
             {
                 if (options.Converters[i] is ITypeResolveConverter resolveMe)
-                    resolveMe.Resolver = resolver;
+                    resolveMe.Resolver = resolver ?? TypeResolver.Default;
             }
-        }
-
-        public static void SerializeJson(Stream stream, object value)
-        {
+            
+            for (int i = 0; i < options.Converters.Count; i++)
+            {
+                if (options.Converters[i] is IInitializedConverter initMe)
+                    initMe.Init();
+            }
+            
             JsonSerializer.Serialize(stream, value, options);
+            
+            for (int i = 0; i < options.Converters.Count; i++)
+            {
+                if (options.Converters[i] is IInitializedConverter finishMe)
+                    finishMe.Finish();
+            }
+            
+            if (converters != null)
+                for (int i = 0; i < converters.Length; i++)
+                {
+                    options.Converters.Remove(converters[i]);
+                }
         }
 
-        public static object DeserializeJson(Stream stream, Type type)
+        public static object DeserializeJson(Stream stream, Type type, TypeResolver resolver = null, JsonConverter[] converters = null)
         {
-            return JsonSerializer.Deserialize(stream, type, options);
-        }
-
-        public static void SerializeJson<T>(Stream stream, T value)
-        {
-            JsonSerializer.Serialize(stream, value, options);
-        }
-
-        public static T DeserializeJson<T>(Stream stream)
-        {
-            return JsonSerializer.Deserialize<T>(stream, options);
+            if (converters != null)
+                for (int i = 0; i < converters.Length; i++)
+                {
+                    options.Converters.Add(converters[i]);
+                }
+            
+            for (int i = 0; i < options.Converters.Count; i++)
+            {
+                if (options.Converters[i] is ITypeResolveConverter resolveMe)
+                    resolveMe.Resolver = resolver ?? TypeResolver.Default;
+            }
+            
+            for (int i = 0; i < options.Converters.Count; i++)
+            {
+                if (options.Converters[i] is IInitializedConverter initMe)
+                    initMe.Init();
+            }
+            
+            var value = JsonSerializer.Deserialize(stream, type, options);
+            
+            for (int i = 0; i < options.Converters.Count; i++)
+            {
+                if (options.Converters[i] is IInitializedConverter finishMe)
+                    finishMe.Finish();
+            }
+            
+            if (converters != null)
+                for (int i = 0; i < converters.Length; i++)
+                {
+                    options.Converters.Remove(converters[i]);
+                }
+            
+            return value;
         }
 
         public static void UseAttributesWrite(object target, SerializationInfo info)

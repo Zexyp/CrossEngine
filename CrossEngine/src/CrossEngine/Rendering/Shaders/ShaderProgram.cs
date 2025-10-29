@@ -52,7 +52,7 @@ namespace CrossEngine.Rendering.Shaders
                 case GraphicsApi.OpenGLES:
                 case GraphicsApi.OpenGL: return new GLShaderProgram((GLShader)vertex, (GLShader)fragment);
 #if WINDOWS
-                case GraphicsApi.GDI: wr.SetTarget(new GdiShaderProgram((GdiShader)vertex, (GdiShader)fragment)); return wr;
+                case GraphicsApi.GDI: return new GdiShaderProgram((GdiShader)vertex, (GdiShader)fragment);
 #endif
             }
 

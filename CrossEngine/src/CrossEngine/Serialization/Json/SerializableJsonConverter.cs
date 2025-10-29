@@ -61,7 +61,7 @@ namespace CrossEngine.Serialization.Json
                 Debug.Fail(msg);
             }
 
-            var serializable = (ISerializable)Activator.CreateInstance(type);
+            var serializable = CreateInstance(type);
 
             serializable.SetObjectData(info);
 
@@ -72,5 +72,6 @@ namespace CrossEngine.Serialization.Json
 
         protected virtual void OnSerializeContent(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options, SerializationInfo info) { }
         protected virtual void OnDeserializeContent(JsonElement reader, ISerializable value, JsonSerializerOptions options, SerializationInfo info) { }
+        protected virtual ISerializable CreateInstance(Type type) => (ISerializable)Activator.CreateInstance(type);
     }
 }

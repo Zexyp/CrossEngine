@@ -24,15 +24,17 @@ namespace CrossEngine.Platform.Windows
 
         public GdiShader(string source, ShaderType type) : base(type)
         {
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
             if (CheckDiagnose(source))
                 return;
             
             // crazy 💀
             var options = ScriptOptions.Default.WithReferences(typeof(Color).Assembly, typeof(Matrix4x4).Assembly).WithImports("System.Drawing", "System.Numerics");
             script = CSharpScript.Create(source, options, typeof(ShaderVariables));
+        }
+
+        protected internal override void Destroy()
+        {
+            
         }
 
         private bool CheckDiagnose(string source)

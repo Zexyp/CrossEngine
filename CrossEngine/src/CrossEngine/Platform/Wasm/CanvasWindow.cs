@@ -2,6 +2,7 @@ using CrossEngine.Display;
 using CrossEngine.Events;
 using CrossEngine.Inputs;
 using CrossEngine.Logging;
+using CrossEngine.Rendering;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -25,17 +26,16 @@ namespace CrossEngine.Platform.Wasm
             _instance = this;
         }
 
-        public override void Init()
+        public override GraphicsContext InitGraphics(GraphicsApi api)
         {
-            Interop.Initialize();
+            // idk why but context needs to be created before interop initializes
+            Graphics = new EGLContext();
+            Graphics.Init();
+            return Graphics;
         }
 
         public override unsafe void Create()
         {
-            // idk why but context needs to be created before interop initializes
-            Context = new EGLContext();
-            Context.Init();
-
             SetupCallbacks();
 
             // very sketchy
@@ -47,7 +47,7 @@ namespace CrossEngine.Platform.Wasm
 
         public override void Destroy()
         {
-            Context.Shutdown();
+            Graphics?.Shutdown();
 
             RemoveCallbacks();
         }

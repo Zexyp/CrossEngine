@@ -44,7 +44,7 @@ namespace CrossEngine.Assets
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            TextureLoader.Free(Texture);
+            Texture.Dispose();
             Texture = null;
         }
     }
@@ -59,16 +59,19 @@ namespace CrossEngine.Assets
 
         private static string[] fixes = new[] { "px", "nx", "py", "ny", "pz", "nz" };
 
-        public override async Task Load(IAssetLoadContext context)
+        public override Task Load(IAssetLoadContext context)
         {
             var streams = fixes.Select(fix => context.OpenRelativeStream(Path.Join(Path.GetDirectoryName(RelativePath), Path.GetFileNameWithoutExtension(RelativePath) + $".{fix}" + Path.GetExtension(RelativePath))).Result).ToArray();
-            Texture = TextureLoader.LoadCubemap(streams);
-            streams.ToList().ForEach(s => s.Dispose());
+            return context.Graphics.Commands.Submit(() =>
+            {
+                Texture = TextureLoader.LoadCubemap(streams);
+                Array.ForEach(streams, s => s.Dispose());
+            });
         }
 
         public override async Task Unload(IAssetLoadContext context)
         {
-            TextureLoader.Free(Texture);
+            Texture.Dispose();
             Texture = null;
         }
     }

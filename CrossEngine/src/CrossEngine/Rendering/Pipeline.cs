@@ -88,7 +88,11 @@ public class Pipeline
         OnAfterPasses();
 
         rapi.SetDepthMask(true);
-        buffer.BlitTo(surface.Buffer, new[] {(0, 0), (1, 1)});
+        // lazy fix
+        if (surface.Buffer != null)
+            buffer.BlitTo(surface.Buffer, new[] {(0, 0), (1, 1)});
+        else
+            buffer.BlitTo(surface.Buffer);
         buffer.BlitDepthTo(surface.Buffer);
 
         buffer.Unbind();

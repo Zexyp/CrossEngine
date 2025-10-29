@@ -140,7 +140,7 @@ namespace CrossEngine.Scenes
             return entity;
         }
 
-        public void Init()
+        internal void Init()
         {
             Debug.Assert(!IsInitialized);
             
@@ -152,7 +152,7 @@ namespace CrossEngine.Scenes
             }
         }
 
-        public void Deinit()
+        internal void Deinit()
         {
             Debug.Assert(IsInitialized);
 
@@ -164,14 +164,18 @@ namespace CrossEngine.Scenes
             IsInitialized = false;
         }
 
-        public void Start()
+        internal void Start()
         {
+            Debug.Assert(IsInitialized && !IsStarted);
+
             World.Start();
             IsStarted = true;
         }
 
-        public void Stop()
+        internal void Stop()
         {
+            Debug.Assert(IsInitialized && IsStarted);
+
             IsStarted = false;
             World.Stop();
         }
