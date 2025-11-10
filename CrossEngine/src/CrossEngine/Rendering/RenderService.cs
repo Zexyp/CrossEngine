@@ -103,15 +103,15 @@ namespace CrossEngine.Rendering
         private void Destroy()
         {
             GraphicsContext.SetupCurrent(_context);
-
-            Shutdown();
-
+            
             var ws = Manager.GetService<WindowService>();
             ws.WindowEvent -= OnWindowEvent;
             ws.WindowUpdate -= OnWindowUpdate;
             
+            Shutdown();
+            
             ws.MainWindow.Graphics.Dispose();
-
+            
             _context.Api.Dispose();
             _context.Api = null;
 
@@ -119,11 +119,12 @@ namespace CrossEngine.Rendering
 
             _context.Dispose();
             _context = null;
-
+            
             _sw.Stop();
             _lastFrameDuration = _sw.Elapsed.TotalSeconds;
 
             GpuGC.Collect();
+            GpuGC.PrintCollected(trim: true);
         }
 
         private void OnWindowEvent(Window w, Event e)

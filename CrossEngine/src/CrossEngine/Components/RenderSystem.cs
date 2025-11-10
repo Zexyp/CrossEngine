@@ -35,11 +35,6 @@ namespace CrossEngine.Components
 {
     public class RenderSystem : Ecs.System, ISceneRenderData
     {
-        private CameraComponent? _primaryCamera = null;
-        private bool _graphicsInitialized = false;
-        public bool GraphicsInitialized => _graphicsInitialized;
-        public GraphicsContext Graphics;
-        
         IList<IObjectRenderData> ISceneRenderData.Objects => _objects;
         IList<ILightRenderData> ISceneRenderData.Lights => _lights;
         ISkyboxRenderData ISceneRenderData.Skybox => _skybox;
@@ -48,7 +43,21 @@ namespace CrossEngine.Components
         private IList<IObjectRenderData> _objects;
         private IList<ILightRenderData> _lights;
         private ISkyboxRenderData _skybox;
-        private CameraComponent _primaryCam = null;
+        private CameraComponent? _primaryCam = null;
+        private Vector2 _viewportSize = Vector2.One;
+
+        internal GraphicsContext Graphics;
+
+        public Vector2 ViewportSize
+        {
+            get => _viewportSize;
+            set
+            {
+                if (_viewportSize != value)
+                    ProcessViewportResize(value.X, value.Y);
+                _viewportSize = value;
+            }
+        }
 
         //public ISurface SetSurface(ISurface surface)
         //{
@@ -112,7 +121,7 @@ namespace CrossEngine.Components
             if (component.Primary)
             {
                 Deprioritize(_primaryCam);
-                _primaryCam = component;
+                SetPrimary(component);
             }
         }
 
@@ -148,7 +157,7 @@ namespace CrossEngine.Components
             if (component.Primary == false)
                 _primaryCam = null;
             else
-                _primaryCam = component;
+                SetPrimary(component);
         }
 
         private void Deprioritize(CameraComponent component)
@@ -160,9 +169,15 @@ namespace CrossEngine.Components
             component.PrimaryChanged += OnCameraPrimaryChanged;
         }
         
-        public void ProcessSurfaceResize(ISurface surface, float width, float height)
+        internal void ProcessViewportResize(float width, float height)
         {
-            _primaryCamera?.Resize(width, height);
+            _primaryCam?.Resize(width, height);
+        }
+
+        private void SetPrimary(CameraComponent component)
+        {
+            _primaryCam = component;
+            _primaryCam?.Resize(_viewportSize.X, _viewportSize.Y);
         }
 
         /*

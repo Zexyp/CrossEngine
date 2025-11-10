@@ -46,19 +46,25 @@ namespace CrossEngine.Rendering
                 _objs.Remove(obj);
         }
         
-        public static void PrintCollected()
+        public static void PrintCollected(bool trim = false)
         {
             lock (_objs)
                 foreach (var item in _objs)
                 {
-                    //const int Skip = 2;
-                    //var traceLine = string.Join("\n", item.Value.Trace.GetFrames().Skip(Skip).Select(f =>
-                    //{
-                    //    var method = f.GetMethod();
-                    //    return $"    at {method.DeclaringType.Name}.{method.Name}";
-                    //}));
+                    string line = null;
+                    if (trim)
+                    {
+                        const int Skip = 3;
+                        line = "    ...\n" + string.Join("\n", item.Value.Trace.GetFrames().Skip(Skip).Select(f =>
+                        {
+                            var method = f.GetMethod();
+                            return $"    at {method.DeclaringType.Name}.{method.Name}";
+                        }));
+                    }
+                    else
+                        line = $"{item.Value.Trace}";
                     
-                    Log.Warn($"{item.Key.ToString()} at [{item.Value.Time}]:\n{item.Value.Trace}");
+                    Log.Warn($"{item.Key.ToString()} at [{item.Value.Time}]:\n{line}");
                 }
         }
     }

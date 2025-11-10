@@ -36,7 +36,7 @@ namespace CrossEngine.Debugging
             // text
             var t = $"{1d / frameDuration:000.00} fps\n{frameDuration * 1000:00.000} ms\n[{(Debugger.IsAttached ? "debugger" : "standalone")}]";
             var offset = new Vector3(0, Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 3, 0);
-            TextRendererUtil.DrawText(Matrix4x4.CreateTranslation(offset), t, ColorHelper.U32ToVec4(0x7f1fb311));
+            TextRendererUtil.DrawText(Matrix4x4.CreateTranslation(offset), t, ColorHelper.U32ToVec4(0x7fff006d));
 
             // graph
             var graphY = Size.Y - TextRendererUtil.TextRendererUtilData.SymbolHeight * 3;
@@ -50,7 +50,7 @@ namespace CrossEngine.Debugging
                 Renderer2D.DrawQuad(Matrix4x4.CreateTranslation(new Vector3(0, 0.5f, 0)) *
                                     Matrix4x4.CreateScale(new Vector3(1, barHeight, 1)) *
                                     Matrix4x4.CreateTranslation(new Vector3(ioff + graphX, -barHeight + graphY, 0)),
-                    new Vector4(0, .5f, .5f, .75f));
+                    ColorHelper.U32ToVec4(0x7fC191FF)); // cool yogurt color
             }
 
             _deltasIndex++;

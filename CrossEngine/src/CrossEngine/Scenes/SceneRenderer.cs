@@ -22,6 +22,7 @@ namespace CrossEngine.Scenes
         IList<ILightRenderData> Lights { get; }
         ISkyboxRenderData Skybox { get; }
         ICamera Camera { get; }
+        Vector2 ViewportSize { get; set; }
     }
     
     public class SceneRenderer
@@ -63,6 +64,7 @@ namespace CrossEngine.Scenes
             surface.Context.Api.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
 
             Pipeline.Camera = OverrideCamera ?? scene.Camera;
+            scene.ViewportSize = surface.Size;
             Pipeline.Process(scene, surface);
         }
     }

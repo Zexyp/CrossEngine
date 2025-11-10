@@ -61,6 +61,12 @@ public class DeferredPipeline : Pipeline
         Buffer = Framebuffer.Create(spec);
     }
 
+    protected override void OnDestroy()
+    {
+        Buffer.Dispose();
+        Buffer = null;
+    }
+
     protected override void OnBeforePasses()
     {
         var buffer = Buffer;

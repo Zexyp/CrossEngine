@@ -22,6 +22,7 @@ public abstract class GpuObject : IDisposable
     public void Dispose()
     {
         Dispose(disposing: true);
+        GpuGC.Unregister(this);
         GC.SuppressFinalize(this);
     }
     

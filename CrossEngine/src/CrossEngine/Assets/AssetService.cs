@@ -32,12 +32,14 @@ namespace CrossEngine.Assets
             AssetManager.UnloadRequest = null;
         }
 
-        public override void OnDestroy()
-        {
-        }
-
         public override void OnInit()
         {
+            //_scheduler.RunOnCurrentThread(); maybe?
+        }
+        
+        public override void OnDestroy()
+        {
+            _scheduler.RunOnCurrentThread();
         }
 
         public void OnUpdate()
