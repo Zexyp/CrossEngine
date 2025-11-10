@@ -10,7 +10,5 @@ class Program
 
         var app = new SimpleApp();
         app.Run();
-        
-        GpuGC.PrintCollected();
     }
 }

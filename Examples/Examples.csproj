@@ -11,4 +11,8 @@
       <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Include="bin\Debug\net9.0\logo.png" />
+    </ItemGroup>
+
 </Project>

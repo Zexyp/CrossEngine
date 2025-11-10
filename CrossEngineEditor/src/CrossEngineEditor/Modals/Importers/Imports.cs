@@ -12,7 +12,7 @@ using CrossEngineEditor.Utils;
 using ImGuiNET;
 using static CrossEngine.Loaders.MeshLoader;
 
-namespace CrossEngineEditor.Modals.Importer;
+namespace CrossEngineEditor.Modals.Importers;
 
 public class ObjImport : ImportModal
 {

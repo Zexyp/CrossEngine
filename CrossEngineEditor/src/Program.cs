@@ -1,4 +1,5 @@
 ﻿using CrossEngine.Debugging;
+using CrossEngine.Rendering;
 using CrossEngineEditor;
 
 namespace CrossEngineEditor
@@ -10,7 +11,7 @@ namespace CrossEngineEditor
             var app = new EditorApplication();
             app.Run();
 
-            GPUGC.PrintCollected();
+            GpuGC.PrintCollected();
         }
     }
 }

@@ -418,7 +418,7 @@ namespace CrossEngineEditor.Panels
 
         private void AttachPass(Scene scene)
         {
-            scene?.World.GetSystem<RenderSystem>().Pipeline.PushBack(_viewportPass);
+            Rendererer.Pipeline.PushBack(_viewportPass);
             for (int i = 0; i < _overlays.Count; i++) 
                 if (_overlays[i].Draw)
                     _overlays[i].Overlay.Prepare();
@@ -429,7 +429,7 @@ namespace CrossEngineEditor.Panels
             for (int i = 0; i < _overlays.Count; i++)
                 if (_overlays[i].Draw)
                     _overlays[i].Overlay.Finish();
-            scene?.World.GetSystem<RenderSystem>().Pipeline.Remove(_viewportPass);
+            Rendererer.Pipeline.Remove(_viewportPass);
         }
 
         private void DrawMenuBar()
@@ -661,17 +661,17 @@ namespace CrossEngineEditor.Panels
 
         private class ViewportPass : Pass
         {
-            public List<(IViewportOverlay Overlay, bool Draw)> Overlays;
+            List<(IViewportOverlay Overlay, bool Draw)> _overlays;
             
-            public override void Draw()
+            public override void Draw(ISceneRenderData data)
             {
-                var buffer = Pipeline.Buffer.GetValue();
+                var buffer = Pipeline.Buffer;
                 buffer.Bind();
 
                 IViewportOverlay last = null;
-                for (int i = 0; i < Overlays.Count; i++)
+                for (int i = 0; i < _overlays.Count; i++)
                 {
-                    var (overlay, draw) = Overlays[i];
+                    var (overlay, draw) = _overlays[i];
                     if (!draw) continue;
                     
                     buffer.EnableColorAttachments(overlay.ModifyAttachments);
@@ -688,6 +688,24 @@ namespace CrossEngineEditor.Panels
                     }
 
                     last = overlay;
+                }
+            }
+
+            public void AddOverlay(IViewportOverlay overlay)
+            {
+                _overlays.Add((overlay, false));
+            }
+            
+            public void RemoveOverlay(IViewportOverlay overlay)
+            {
+                _overlays.RemoveAll(tup => tup.Overlay == overlay);
+            }
+            
+            public void EnableOverlay(IViewportOverlay overlay, bool enable)
+            {
+                for (var i = 0; i < _overlays.Count; i++)
+                {
+                    if (_overlays[i].Overlay == overlay) _overlays[i] = (overlay, enable);
                 }
             }
         }

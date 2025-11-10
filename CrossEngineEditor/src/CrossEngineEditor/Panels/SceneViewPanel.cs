@@ -24,9 +24,10 @@ namespace CrossEngineEditor.Panels
         protected virtual Scene Scene { get => Context.Scene; }
 
         protected Vector2 ViewportSize { get; private set; }
-        protected WeakReference<Framebuffer> Framebuffer { get; private set; }
+        protected Framebuffer Framebuffer { get; private set; }
         protected bool ViewportResized;
         protected FramebufferSurface Surface;
+        protected SceneRenderer Rendererer;
 
         public SceneViewPanel() : base("Scene View")
         {
@@ -71,22 +72,20 @@ namespace CrossEngineEditor.Panels
             // needs to be set back so SceneManager can render only from given scene data
             // as of latest rewrite this is not valid
             // wtf is this comment
-            var renderSys = Scene.World.GetSystem<RenderSystem>();
-            if (!renderSys.GraphicsInitialized || Framebuffer == null)
+            if (Framebuffer == null)
             {
                 ImGui.TextDisabled("Initializing...");
                 return;
             }
-            renderSys.OverrideCamera = DrawCamera;
-            if (renderSys.DrawCamera == null)
+            if (DrawCamera == null)
             {
                 ImGui.TextDisabled("No camera");
                 return;
             }
 
-            var viewportBuffer = Framebuffer.GetValue();
+            var viewportBuffer = Framebuffer;
             viewportBuffer.Bind();
-            ((GLFramebuffer)Framebuffer.GetValue()).EnableAllColorAttachments(true);
+            ((GLFramebuffer)Framebuffer).EnableAllColorAttachments(true);
             
             lock (Scene)
             {
@@ -98,7 +97,7 @@ namespace CrossEngineEditor.Panels
             renderSys.OverrideCamera = null;
 
             // draw the framebuffer as image
-            ImGui.Image(new IntPtr(Framebuffer.GetValue()?.GetColorAttachmentRendererID(0) ?? 0),
+            ImGui.Image(new IntPtr(Framebuffer?.GetColorAttachmentRendererID(0) ?? 0),
                 ViewportSize,
                 new Vector2(0, 1),
                 new Vector2(1, 0));
@@ -140,13 +139,13 @@ namespace CrossEngineEditor.Panels
 
         protected virtual void OnCameraResize()
         {
-            if (Framebuffer?.HasValue() == true)
+            if (Framebuffer != null)
                 Surface.DoResize(ViewportSize.X, ViewportSize.Y);
         }
 
         protected virtual void OnSurfaceUpdate(ISurface surface)
         {
-            SceneRenderer.Render(Scene, surface);
+            Rendererer.Render(Scene, surface);
         }
 
         protected virtual void OnSurfaceResize(ISurface surface, float width, float height)

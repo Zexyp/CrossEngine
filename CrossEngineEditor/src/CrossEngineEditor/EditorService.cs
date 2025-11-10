@@ -138,7 +138,7 @@ namespace CrossEngineEditor
             rs.Execute(() =>
             {
                 dockspaceIconTexture = TextureLoader.LoadTextureFromStream(GetIconStream());
-                dockspaceIconTexture.GetValue().SetFilterParameter(FilterParameter.Nearest);
+                dockspaceIconTexture.SetFilterParameter(FilterParameter.Nearest);
             });
 
             Init();
@@ -237,7 +237,7 @@ namespace CrossEngineEditor
         }
 
         #region Dockspace
-        private WeakReference<Texture> dockspaceIconTexture;
+        private Texture dockspaceIconTexture;
 
         private unsafe void SetupDockspace(Window window)
         {
@@ -267,7 +267,7 @@ namespace CrossEngineEditor
 
             Vector2 lastCur = ImGui.GetCursorPos();
             ImGui.SetCursorPos((ImGui.GetWindowSize() - new Vector2(256, 256)) * 0.5f);
-            ImGui.Image(new IntPtr(dockspaceIconTexture.GetValue()?.RendererId ?? 0), new Vector2(256, 256), new Vector2(0, 1), new Vector2(1, 0), new Vector4(1, 1, 1, 0.25f));
+            ImGui.Image(new IntPtr(dockspaceIconTexture?.RendererId ?? 0), new Vector2(256, 256), new Vector2(0, 1), new Vector2(1, 0), new Vector4(1, 1, 1, 0.25f));
             ImGui.SetCursorPos(lastCur);
 
             Vector4 col = *ImGui.GetStyleColorVec4(ImGuiCol.DockingEmptyBg);

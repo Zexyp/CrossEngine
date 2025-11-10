@@ -159,10 +159,10 @@ namespace CrossEngineEditor.Viewport
 
         public void Draw()
         {
-            var cam = Context.Scene?.World.GetSystem<RenderSystem>().PrimaryCamera;
-            cam ??= Context.ActiveEntity?.GetComponent<CameraComponent>();
+            var cam = Context.ActiveEntity?.GetComponent<CameraComponent>();
             if (cam == null)
                 return;
+
             var camTrans = cam.Entity?.Transform?.GetWorldTransformMatrix() ?? Matrix4x4.Identity;
             LineRenderer.BeginScene(Camera.GetViewProjectionMatrix());
             LineRenderer.DrawBox(Matrix4x4.CreateScale(2) * Matrix4x4Extension.SafeInvert(cam.ProjectionMatrix) * camTrans, VecColor.Black);
@@ -182,7 +182,7 @@ namespace CrossEngineEditor.Viewport
         [EditorDrag]
         public float Size = 1;
         
-        private WeakReference<Texture> _iconTexture;
+        private Texture _iconTexture;
         private Vector4[] _offsets = TextureAtlas.CreateOffsets(new Vector2(80, 16), new Vector2(16, 16), 5);
 
         private const int IconCamera = 0;
@@ -232,7 +232,7 @@ namespace CrossEngineEditor.Viewport
         public void Init()
         {
             _iconTexture = TextureLoader.LoadTextureFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("CrossEngineEditor.res.icons.png"));
-            _iconTexture.GetValue().SetFilterParameter(FilterParameter.Nearest);
+            _iconTexture.SetFilterParameter(FilterParameter.Nearest);
         }
 
         public void Destroy()
