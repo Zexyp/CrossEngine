@@ -24,6 +24,8 @@ class InterfaceTypeComparer<T> : IEqualityComparer<Type>
         {
             if (!typeof(T).IsAssignableFrom(ints[i]))
                 continue;
+            if (ints[i].IsAssignableFrom(typeof(T)))
+                continue;
 
             baseInterface = ints[i];
             break;

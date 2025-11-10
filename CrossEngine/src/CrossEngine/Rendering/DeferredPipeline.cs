@@ -22,6 +22,7 @@ using CrossEngine.Utils.Extensions;
 using CrossEngine.Utils.Rendering;
 using CrossEngine.Utils.Structs;
 using System.Drawing.Text;
+using CrossEngine.Logging;
 using CrossEngine.Scenes;
 
 namespace CrossEngine.Rendering;
@@ -322,7 +323,7 @@ class ScenePass : Pass
             if (!_renderables.TryGetValue(group.Key, out var rndrbl))
             {
                 // fixme
-                //Log.Default.Warn($"no usable renderable for '{type.FullName}'");
+                Log.Default.Warn($"no usable renderable for '{group.Key.FullName}'");
                 continue;
             }
             

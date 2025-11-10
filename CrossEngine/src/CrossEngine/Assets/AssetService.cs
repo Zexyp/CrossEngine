@@ -49,12 +49,16 @@ namespace CrossEngine.Assets
 
         internal Task LoadAssets(AssetList list)
         {
+            Debug.Assert(list != null);
+            
             list.Context.Graphics = Manager.GetService<RenderService>().MainSurface.Context;
             return Execute(list.LoadAll);
         }
         
         internal Task UnloadAssets(AssetList list)
         {
+            Debug.Assert(list != null);
+            
             return Execute(list.UnloadAll).ContinueWith(t => list.Context.Graphics = null);
         }
     }

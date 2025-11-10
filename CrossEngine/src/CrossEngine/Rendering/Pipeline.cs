@@ -17,7 +17,6 @@ namespace CrossEngine.Rendering;
 
 public class Pipeline
 {
-    Vector4? _clearColor = VecColor.Gray;
     List<Pass> _passes = new List<Pass>();
     public Framebuffer Buffer { get; protected set; }
     public ICamera Camera;
@@ -60,9 +59,9 @@ public class Pipeline
         rapi.SetViewport(0, 0, (uint)surface.Size.X, (uint)surface.Size.Y);
         
         // clear
-        if (_clearColor != null)
+        if (data.ClearColor != null)
         {
-            var color = _clearColor.Value;
+            var color = data.ClearColor.Value;
             rapi.SetClearColor(color);
             rapi.Clear();
         }

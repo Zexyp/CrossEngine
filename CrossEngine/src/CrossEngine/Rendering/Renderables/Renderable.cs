@@ -46,7 +46,7 @@ namespace CrossEngine.Rendering.Renderables
     public interface IObjectRenderData
     {
         Matrix4x4 Transform { get; }
-        virtual int Id { get => throw new NotImplementedException(); }
+        virtual int Id => 0;
         bool IsVisible { get; set; }
         IVolume GetVolume();
     }

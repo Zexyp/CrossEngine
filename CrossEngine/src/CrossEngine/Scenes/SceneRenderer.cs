@@ -22,7 +22,9 @@ namespace CrossEngine.Scenes
         IList<ILightRenderData> Lights { get; }
         ISkyboxRenderData Skybox { get; }
         ICamera Camera { get; }
+        Vector4? ClearColor { get; }
         Vector2 ViewportSize { get; set; }
+        
     }
     
     public class SceneRenderer

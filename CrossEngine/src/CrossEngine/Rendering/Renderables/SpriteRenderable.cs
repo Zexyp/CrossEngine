@@ -8,7 +8,7 @@ using CrossEngine.Utils.Rendering;
 
 namespace CrossEngine.Rendering.Renderables
 {
-    interface ISpriteRenderData : IObjectRenderData
+    public interface ISpriteRenderData : IObjectRenderData
     {
         Vector4 Color { get; }
         virtual Vector4 TextureOffsets => new Vector4(0, 0, 1, 1);

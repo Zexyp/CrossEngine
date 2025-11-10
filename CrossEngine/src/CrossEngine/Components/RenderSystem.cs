@@ -39,7 +39,8 @@ namespace CrossEngine.Components
         IList<ILightRenderData> ISceneRenderData.Lights => _lights;
         ISkyboxRenderData ISceneRenderData.Skybox => _skybox;
         ICamera ISceneRenderData.Camera => _primaryCam;
-        
+        Vector4? ISceneRenderData.ClearColor { get; } = VecColor.Gray;
+
         private IList<IObjectRenderData> _objects;
         private IList<ILightRenderData> _lights;
         private ISkyboxRenderData _skybox;
