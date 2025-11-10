@@ -121,6 +121,7 @@
 
     </When>
 
+    <!-- web -->
     <When Condition="'$(OSPlatform)'=='Web'">
 
       <!-- include platform -->
@@ -138,8 +139,6 @@
       <!-- fuckery -->
       <PropertyGroup>
         <OutputType>Exe</OutputType>
-
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
         <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
         <InvariantGlobalization>true</InvariantGlobalization>
