@@ -8,11 +8,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CrossEngine\CrossEngine.csproj" />
+        <ProjectReference Include="../CrossEngine/CrossEngine.csproj" />
+        <ProjectReference Include="vendor/mapper/MapMess/MapMess.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="bin\Debug\net9.0\logo.png" />
+        <None Update="res/logo.png" CopyToOutputDirectory="Always"/>
+        <None Remove="vendor/**"/>
+        <Compile Remove="vendor/**" />
     </ItemGroup>
 
 </Project>

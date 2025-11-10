@@ -8,7 +8,7 @@ class Program
     {
         Console.WriteLine("Hello, World!");
 
-        var app = new SimpleApp();
+        var app = new MapApp();
         app.Run();
     }
 }
