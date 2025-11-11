@@ -53,20 +53,20 @@ public class MeshRendererSystem : Ecs.System
         
         if (mesh == null) // no mesh
         {
-            ((IMeshRenderData)component).Renderer = null;
+            component.renderer = null;
             return;
         }
         
         if (_renderers.TryGetValue(mesh, out var renderer)) // already loaded
         {
-            ((IMeshRenderData)component).Renderer = renderer;
+            component.renderer = renderer;
             return;
         }
         else
         {
             var newRenderer = new MeshRenderer();
             _renderers.Add(mesh, newRenderer);
-            ((IMeshRenderData)component).Renderer = newRenderer;
+            component.renderer = newRenderer;
             
             World.GetSystem<RenderSystem>().Graphics.Commands.Submit(() => // deal with it
             {

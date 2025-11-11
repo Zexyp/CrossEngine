@@ -74,7 +74,7 @@ namespace CrossEngine.Components
         {
             // rip depth
             // TODO: fix
-            _projection = Matrix4x4Extension.CreatePerspectiveFieldOfView(MathExt.ToRadConstF * _fov, _aspect, _near, _far);
+            _projection = Matrix4x4Ext.CreatePerspectiveFieldOfView(MathExt.ToRadConstF * _fov, _aspect, _near, _far);
             _projectionDirty = false;
         }
 

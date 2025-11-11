@@ -10,23 +10,9 @@ using CrossEngine.Utils.Maths;
 
 namespace CrossEngine.Utils
 {
-    static class Vector2Extension
+    static class Vector2Ext
     {
-        public static Vector2 Rotate(Vector2 vec, float angleRad)
-        {
-            float cos = MathF.Cos(angleRad);
-            float sin = MathF.Sin(angleRad);
-
-            float xPrime = vec.X * cos - vec.Y * sin;
-            float yPrime = vec.X * sin - vec.Y * cos;
-
-            vec.X = xPrime;
-            vec.Y = yPrime;
-
-            return vec;
-        }
-        
-        public static Vector2 RotateAroundOrigin(Vector2 vec, float angleRad, Vector2 origin)
+        public static Vector2 Rotate(Vector2 vec, float angleRad, Vector2 origin = default)
         {
             float x = vec.X - origin.X;
             float y = vec.Y - origin.Y;
@@ -46,11 +32,8 @@ namespace CrossEngine.Utils
         }
     }
 
-    public static class Vector3Extension
+    public static class Vector3Ext
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 XY(this Vector3 v) => new Vector2(v.X, v.Y);
-
         static Random random = new Random();
 
         // vectors between 1 and -1;
@@ -74,21 +57,14 @@ namespace CrossEngine.Utils
         {
             return (new Vector3((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble()) - new Vector3(0.5f)) * 2;
         }
+        
+        public static bool Compare(Vector3 a, Vector3 b, float precision = float.Epsilon)
+        {
+            return MathExt.Compare(a.X, b.X, precision) && MathExt.Compare(a.Y, b.Y, precision) && MathExt.Compare(a.Z, b.Z, precision);
+        }
     }
 
-    public static class Vector4Extension
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 XYZ(in this Vector4 v) => new Vector3(v.X, v.Y, v.Z);
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 XY(in this Vector4 v) => new Vector2(v.X, v.Y);
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Quaternion AsQuat(in this Vector4 q) => new Quaternion(q.X, q.Y, q.Z, q.W);
-    }
-
-    public static class Matrix4x4Extension
+    public static class Matrix4x4Ext
     {
         //public static Matrix4x4 CreateShearX(float value)
         //{
@@ -577,9 +553,14 @@ namespace CrossEngine.Utils
             return true;
         }
         */
+        
+        public static bool Compare(Vector4 a, Vector4 b, float precision = float.Epsilon)
+        {
+            return MathExt.Compare(a.X, b.X, precision) && MathExt.Compare(a.Y, b.Y, precision) && MathExt.Compare(a.Z, b.Z, precision) && MathExt.Compare(a.W, b.W, precision);
+        }
     }
 
-    public static class QuaternionExtension
+    public static class QuaternionExt
     {
         public static Vector3 ToEuler(Quaternion q)
         {
@@ -607,9 +588,6 @@ namespace CrossEngine.Utils
 
             return angles;
         }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 AsVec4(in this Quaternion q) => new Vector4(q.X, q.Y, q.Z, q.W);
 
         //public static Quaternion ToQuaternion(Vector3 euler)
         //{
@@ -634,23 +612,23 @@ namespace CrossEngine.Utils
         //    return q;
         //}
 
-        public static Quaternion RotateX(float angle)
+        public static Quaternion RotateX(float radians)
         {
-            return Quaternion.CreateFromAxisAngle(Vector3.UnitX, angle);
+            return Quaternion.CreateFromAxisAngle(Vector3.UnitX, radians);
         }
-        public static Quaternion RotateY(float angle)
+        public static Quaternion RotateY(float radians)
         {
-            return Quaternion.CreateFromAxisAngle(Vector3.UnitY, angle);
+            return Quaternion.CreateFromAxisAngle(Vector3.UnitY, radians);
         }
-        public static Quaternion RotateZ(float angle)
+        public static Quaternion RotateZ(float radians)
         {
-            return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, angle);
+            return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, radians);
         }
 
-        public static Quaternion RotateXYZ(float x, float y, float z)
+        public static Quaternion RotateXYZ(float xradians, float yradians, float zradians)
         {
             // pitch yaw roll
-            return RotateX(x) * RotateY(y) * RotateZ(z);
+            return RotateX(xradians) * RotateY(yradians) * RotateZ(zradians);
         }
 
         public static Quaternion RotateXYZ(Vector3 vec) => RotateXYZ(vec.X, vec.Y, vec.Z);

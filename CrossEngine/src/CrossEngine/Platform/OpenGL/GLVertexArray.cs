@@ -28,7 +28,7 @@ namespace CrossEngine.Platform.OpenGL
         private uint _vertexBufferIndex;
         private IndexBuffer _indexBuffer;
         private List<VertexBuffer> _vertexBuffers = new List<VertexBuffer>();
-
+        
         public unsafe GLVertexArray()
         {
             Profiler.Function();
@@ -36,7 +36,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenVertexArrays(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
 
         protected internal override unsafe void Destroy()
@@ -47,7 +47,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.DeleteVertexArrays(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         public override void Bind()
@@ -156,6 +156,11 @@ namespace CrossEngine.Platform.OpenGL
         public override IndexBuffer GetIndexBuffer()
         {
             return _indexBuffer;
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

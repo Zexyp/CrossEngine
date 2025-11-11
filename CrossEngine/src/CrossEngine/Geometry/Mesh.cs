@@ -21,12 +21,13 @@ public interface IIndexedMesh : IMesh
     Array Indices { get; }
 }
 
-public interface IPosition
+// used for bounding box calculation
+public interface IVertex
 {
     Vector3 Position { get; }
 }
 
-public class Mesh<T> : IMesh where T : struct, IPosition
+public class Mesh<T> : IMesh where T : struct, IVertex
 {
     public VertexArray VA { get; private set; }
     public T[] Vertices;
@@ -57,7 +58,7 @@ public class Mesh<T> : IMesh where T : struct, IPosition
     }
 }
 
-public class IndexedMesh<T> : Mesh<T>, IIndexedMesh where T : struct, IPosition
+public class IndexedMesh<T> : Mesh<T>, IIndexedMesh where T : struct, IVertex
 {
     public uint[] Indices;
 

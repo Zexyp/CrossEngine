@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.Intrinsics;
 using CrossEngine.Assets;
 using CrossEngine.Components;
 using CrossEngine.Core;
@@ -198,11 +199,11 @@ namespace CrossEngine.FX.Particles
                 Vector4 color = particle.color.Sample(life);
                 if (particle.colorVariation != Vector4.Zero)
                 {
-                    color = new Vector4(ColorHelper.RGBToHSV(color.XYZ()), color.W);
+                    color = new Vector4(ColorHelper.RGBToHSV(color.AsVector128().AsVector3()), color.W);
                     color.X += particle.colorVariation.X;
                     color.Y += particle.colorVariation.Y;
                     color.Z += particle.colorVariation.Z;
-                    color = new Vector4(ColorHelper.HSVToRGB(color.XYZ()), color.W);
+                    color = new Vector4(ColorHelper.HSVToRGB(color.AsVector128().AsVector3()), color.W);
                     color.W += particle.colorVariation.W;
                 }
 
@@ -210,7 +211,7 @@ namespace CrossEngine.FX.Particles
                 size = size - size * particle.sizeVariation;
 
                 Matrix4x4 matrix = Matrix4x4.CreateScale(size);
-                matrix *= Matrix4x4.CreateRotationZ(particle.rotation) * Matrix4x4Extension.CreateBillboard(cameraRight, cameraUp, cameraLook, particle.position);
+                matrix *= Matrix4x4.CreateRotationZ(particle.rotation) * Matrix4x4Ext.CreateBillboard(cameraRight, cameraUp, cameraLook, particle.position);
                 if (Space == ParticleSpace.Local)
                     matrix *= matrixLocal;
                 
@@ -253,7 +254,7 @@ namespace CrossEngine.FX.Particles
             particle.position = Vector3.Zero;
 
             // velocity
-            particle.velocity = Vector3Extension.RandomSphereVolume() * Properties.velocityVariation + Properties.velocity;
+            particle.velocity = Vector3Ext.RandomSphereVolume() * Properties.velocityVariation + Properties.velocity;
             // rotation
             particle.rotation = ((float)random.NextDouble() * 2.0f - 1.0f) * (float)Math.PI * Properties.rotationVariation + Properties.rotation;
             particle.rotationVelocity = Properties.rotationVelocity;

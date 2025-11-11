@@ -4,73 +4,81 @@ using ImGuiNET;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace CrossEngineEditor.Utils
+using IG = ImGuiNET.ImGui;
+
+namespace CrossEngine.Utils.ImGui
 {
-    static class ImGuiUtil
+    public static class ImGuiUtil
     {
         // ❤️ https://github.com/ocornut/imgui/issues/2913
         // item spacing decides spacing
         public static void BeginPaddedGroup()
         {
             //Outer group
-            ImGui.BeginGroup();
+            IG.BeginGroup();
 
-            ImGui.Dummy(new Vector2());
-            ImGui.Dummy(new Vector2());
-            ImGui.SameLine();
+            IG.Dummy(new Vector2());
+            IG.Dummy(new Vector2());
+            IG.SameLine();
                 
             //Inner group
-            ImGui.BeginGroup();
+            IG.BeginGroup();
         }
 
         public static void EndPaddedGroup()
         {
             //End inner group
-            ImGui.EndGroup();
+            IG.EndGroup();
 
-            ImGui.SameLine();
-            ImGui.Dummy(new Vector2());
-            ImGui.Dummy(new Vector2());
+            IG.SameLine();
+            IG.Dummy(new Vector2());
+            IG.Dummy(new Vector2());
 
             //End outer group
-            ImGui.EndGroup();
+            IG.EndGroup();
             
-            var style = ImGui.GetStyle();
-            ImGui.GetWindowDrawList().AddRect(
-                ImGui.GetItemRectMin(),
-                ImGui.GetItemRectMax(), 
-                ImGui.ColorConvertFloat4ToU32(style.Colors[(int)ImGuiCol.Separator]), style.FrameRounding, ImDrawFlags.None, 1.5f);
+            var style = IG.GetStyle();
+            IG.GetWindowDrawList().AddRect(
+                IG.GetItemRectMin(),
+                IG.GetItemRectMax(), 
+                IG.ColorConvertFloat4ToU32(style.Colors[(int)ImGuiCol.Separator]), style.FrameRounding, ImDrawFlags.None, 1.5f);
         }
 
+        // is not dumb and fills till end of column
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SmartSeparator(float thickness = 1.5f)
         {
-            var colwidth = ImGui.GetColumnWidth();
-            ImGui.Dummy(new Vector2(colwidth, thickness));
-            Vector2 p = ImGui.GetCursorScreenPos();
-            ImGui.GetWindowDrawList().AddLine(new Vector2(p.X, p.Y), new Vector2(p.X + colwidth, p.Y), ImGui.GetColorU32(ImGuiCol.Separator), thickness);
-            ImGui.Dummy(new Vector2(colwidth, thickness));
+            var colwidth = IG.GetColumnWidth();
+            IG.Dummy(new Vector2(colwidth, thickness));
+            Vector2 p = IG.GetCursorScreenPos();
+            IG.GetWindowDrawList().AddLine(new Vector2(p.X, p.Y), new Vector2(p.X + colwidth, p.Y), IG.GetColorU32(ImGuiCol.Separator), thickness);
+            IG.Dummy(new Vector2(colwidth, thickness));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool SquareButton(string text)
         {
-            var style = ImGui.GetStyle();
-            var font = ImGui.GetFont();
-            return ImGui.Button(text, new(style.FramePadding.Y * 2 + font.FontSize * font.Scale));
+            var style = IG.GetStyle();
+            var font = IG.GetFont();
+            return IG.Button(text, new(style.FramePadding.Y * 2 + font.FontSize * font.Scale));
         }
 
         public static bool CenterButton(string label)
         {
-            var style = ImGui.GetStyle();
-            float size = ImGui.CalcTextSize(label).X + style.FramePadding.X * 2.0f;
-            float avail = ImGui.GetContentRegionAvail().X;
+            var style = IG.GetStyle();
+            float size = IG.CalcTextSize(label).X + style.FramePadding.X * 2.0f;
+            float avail = IG.GetContentRegionAvail().X;
 
             float off = (avail - size) * .5f;
             if (off > 0.0f)
-                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + off);
+                IG.SetCursorPosX(IG.GetCursorPosX() + off);
 
-            return ImGui.Button(label);
+            return IG.Button(label);
+        }
+
+        public static bool FullWidthButton(string label)
+        {
+            return IG.Button(label, new(IG.GetColumnWidth(), 0.0f));
         }
     }
 }

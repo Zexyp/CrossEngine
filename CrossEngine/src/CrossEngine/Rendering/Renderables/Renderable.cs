@@ -45,10 +45,11 @@ namespace CrossEngine.Rendering.Renderables
 
     public interface IObjectRenderData
     {
-        Matrix4x4 Transform { get; }
+        Matrix4x4 Transform => Matrix4x4.Identity;
         virtual int Id => 0;
-        bool IsVisible { get; set; }
         IVolume GetVolume();
+        bool IsVisible { get; set; }
+        bool IsEnabled => true;
     }
 
     public interface ISkyboxRenderData : IObjectRenderData

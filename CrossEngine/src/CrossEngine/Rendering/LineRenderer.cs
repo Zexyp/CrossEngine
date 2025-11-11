@@ -323,7 +323,7 @@ gdi_Color = (Vector4)In[""vColor""];
         /// </summary>
         /// <param name="matrix"></param>
         /// <param name="len"></param>
-        public static void DrawAxies(Matrix4x4 matrix, float len = 1.0f)
+        public static void DrawAxes(Matrix4x4 matrix, float len = 1.0f)
         {
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(len, 0, 0), matrix), new Vector4(1, 0, 0, 1));
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(0, len, 0), matrix), new Vector4(0, 1, 0, 1));

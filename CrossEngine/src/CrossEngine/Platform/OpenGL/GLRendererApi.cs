@@ -103,5 +103,15 @@ namespace CrossEngine.Platform.OpenGL
         }
 
         public override void SetLineWidth(float width) => gl.LineWidth(width);
+
+        internal static void LogObjectCreation(GpuObject obj)
+        {
+            Log.Trace($"created {obj}");
+        }
+
+        internal static void LogObjectDeletion(GpuObject obj)
+        {
+            Log.Trace($"deleted {obj}");
+        }
     }
 }

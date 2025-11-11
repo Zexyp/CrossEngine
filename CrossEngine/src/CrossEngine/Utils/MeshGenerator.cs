@@ -10,13 +10,13 @@ namespace CrossEngine.Utils;
 
 public static class MeshGenerator
 {
-    public struct GeneratorVertex : IPosition
+    public struct GeneratorVertex : IVertex
     {
         public Vector3 Position;
         public Vector2 TexCoord;
         public Vector3 Normal;
 
-        Vector3 IPosition.Position => Position;
+        Vector3 IVertex.Position => Position;
     }
 
     public static IndexedMesh<GeneratorVertex> GenerateCube(Vector3 size, IntVec3? numberOfVertices = null)

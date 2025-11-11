@@ -22,7 +22,7 @@ namespace CrossEngine.Platform.OpenGL
         uint _rendererId;
 
         public uint RendererId => _rendererId;
-
+        
         public GLShader(string source, ShaderType type) : base(type)
         {
             Profiler.Function();
@@ -33,7 +33,7 @@ namespace CrossEngine.Platform.OpenGL
 
             CheckCompileErrors();
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
 
         protected internal override void Destroy()
@@ -42,7 +42,7 @@ namespace CrossEngine.Platform.OpenGL
             
             gl.DeleteShader(_rendererId);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         // true if error found
@@ -65,6 +65,11 @@ namespace CrossEngine.Platform.OpenGL
                 return true;
             }
             return false;
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

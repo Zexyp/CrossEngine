@@ -16,12 +16,12 @@ namespace CrossEngine.Rendering.Cameras
 
         public void SetOrtho(float width, float height, float near = 1, float far = -1)
         {
-            ProjectionMatrix = Matrix4x4Extension.CreateOrthographic(width, height, near, far);
+            ProjectionMatrix = Matrix4x4Ext.CreateOrthographic(width, height, near, far);
         }
 
         public void SetPerspective(float fov, float aspect, float near = .1f, float far = 1000)
         {
-            ProjectionMatrix = Matrix4x4Extension.CreatePerspectiveFieldOfView(fov, aspect, near, far);
+            ProjectionMatrix = Matrix4x4Ext.CreatePerspectiveFieldOfView(fov, aspect, near, far);
         }
 
         public Matrix4x4 GetViewMatrix() => ViewMatrix;

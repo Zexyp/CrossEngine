@@ -34,7 +34,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenBuffers(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
 
         public unsafe GLVertexBuffer(void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw) : this()
@@ -53,7 +53,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.DeleteBuffers(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         public override void Bind()
@@ -79,6 +79,11 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
             gl.BufferSubData(GLEnum.ArrayBuffer, (int)offset, size, data);
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

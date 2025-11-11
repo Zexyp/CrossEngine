@@ -24,7 +24,7 @@ namespace CrossEngine.Platform.OpenGL
         internal uint _rendererId;
 
         private BufferUsageHint _bufferUsage;
-
+        
         unsafe GLIndexBuffer()
         {
             Profiler.Function();
@@ -32,7 +32,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenBuffers(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
         
         protected internal override unsafe void Destroy()
@@ -43,7 +43,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.DeleteBuffers(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         public unsafe GLIndexBuffer(void* indices, uint count, IndexDataType dataType, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw) : this()
@@ -89,6 +89,11 @@ namespace CrossEngine.Platform.OpenGL
 
             Debug.Assert(false, $"Unknown {nameof(IndexDataType)} value");
             return 0;
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

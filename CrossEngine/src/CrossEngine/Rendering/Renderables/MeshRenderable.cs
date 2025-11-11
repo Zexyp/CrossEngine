@@ -17,9 +17,9 @@ using static CrossEngine.Display.WindowService;
 
 namespace CrossEngine.Rendering.Renderables
 {
-    interface IMeshRenderData : IObjectRenderData
+    public interface IMeshRenderData : IObjectRenderData
     {
-        MeshRenderer Renderer { get; internal set; }
+        MeshRenderer Renderer { get; }
         IMaterial Material { get; }
     }
     
@@ -42,8 +42,9 @@ namespace CrossEngine.Rendering.Renderables
         {
             var volume = data.GetVolume();
             CullChecker.Append(volume);
-            
-            if (data.Renderer == null)
+
+            var rend = data.Renderer;
+            if (rend == null)
                 return;
 
             IMaterial mater = (data.Material ?? defaultMaterial);
@@ -54,7 +55,7 @@ namespace CrossEngine.Rendering.Renderables
             shader.SetParameterMat4("uModel", data.Transform);
             shader.SetParameterInt("uEntityID", data.Id);
 
-            data.Renderer.Draw(GraphicsContext.Current.Api);
+            rend.Draw(GraphicsContext.Current.Api);
         }
     }
 }

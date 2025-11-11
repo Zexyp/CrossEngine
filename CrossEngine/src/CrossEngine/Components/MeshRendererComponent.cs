@@ -40,8 +40,10 @@ namespace CrossEngine.Components
             
         private MeshAsset _mesh;
 
-        MeshRenderer IMeshRenderData.Renderer { get; set; }
+        MeshRenderer IMeshRenderData.Renderer => renderer;
         IMaterial IMeshRenderData.Material => Material?.Material;
+        
+        internal MeshRenderer renderer;
 
         protected override IVolume GetVolume()
         {

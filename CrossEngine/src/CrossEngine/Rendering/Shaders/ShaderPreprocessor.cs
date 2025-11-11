@@ -156,6 +156,7 @@ void main() {{
                     if (currentBuilder == null && string.IsNullOrWhiteSpace(line))
                         continue;
                     
+                    Debug.Assert(currentBuilder != null, "no builder bound");
                     currentBuilder.AppendLine(line);
 
                     if (appendLineNumber)

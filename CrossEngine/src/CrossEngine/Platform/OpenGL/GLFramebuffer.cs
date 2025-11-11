@@ -26,7 +26,7 @@ using static CrossEngine.Platform.OpenGL.GLContext;
 
 namespace CrossEngine.Platform.OpenGL
 {
-    public class GLFramebuffer : Framebuffer
+    class GLFramebuffer : Framebuffer
     {
         public static uint MaxFramebufferSize = 8192;
 
@@ -105,7 +105,7 @@ namespace CrossEngine.Platform.OpenGL
 
             Invalidate();
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
         
         protected internal override unsafe void Destroy()
@@ -120,7 +120,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_depthAttachment)
                 gl.DeleteTextures(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            GLRendererApi.LogObjectDeletion(this);
         }
         
         public override void Bind()
@@ -469,5 +469,10 @@ namespace CrossEngine.Platform.OpenGL
         //    Width = width;
         //    Height = height;
         //}
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
+        }
     }
 }

@@ -23,13 +23,13 @@ namespace CrossEngine.Loaders
 {
     public static class MeshLoader
     {
-        public struct WavefrontVertex : IPosition
+        public struct WavefrontVertex : IVertex
         {
             public Vector3 Position;
             public Vector2 TexCoord;
             public Vector3 Normal;
 
-            Vector3 IPosition.Position => Position;
+            Vector3 IVertex.Position => Position;
 
             public WavefrontVertex(Vector3 position, Vector2 texCoord, Vector3 normal)
             {

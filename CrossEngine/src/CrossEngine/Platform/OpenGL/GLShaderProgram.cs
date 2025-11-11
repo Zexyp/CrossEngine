@@ -52,7 +52,7 @@ namespace CrossEngine.Platform.OpenGL
 
         public override IReadOnlyDictionary<string, IShaderParameter> Attributes { get; protected set; }
         public override IReadOnlyDictionary<string, IShaderParameter> Uniforms { get; protected set; }
-
+        
         GLShaderProgram()
         {
             Profiler.Function();
@@ -62,7 +62,7 @@ namespace CrossEngine.Platform.OpenGL
             Attributes = _attributes.AsReadOnly();
             Uniforms = _uniforms.AsReadOnly();
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         protected internal override void Destroy()
@@ -72,7 +72,7 @@ namespace CrossEngine.Platform.OpenGL
             // free any unmanaged objects here
             gl.DeleteProgram(_rendererId);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         public GLShaderProgram(GLShader vertex, GLShader fragment) : this()
@@ -326,6 +326,11 @@ namespace CrossEngine.Platform.OpenGL
 
                 RendererApi.Log.Debug("shader uniform parameter: {0} {1}", uniform.Type, uniform.Name);
             }
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

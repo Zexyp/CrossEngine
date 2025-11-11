@@ -3,7 +3,7 @@ using System;
 namespace CrossEngine.Utils.Maths;
 
 // this was translated using machine translation, expect the unexpected!
-[Obsolete]
+[Obsolete("AI slop")]
 public static class Easing
 {
     public static double InSine(double x) => 1 - Math.Cos((x * Math.PI) / 2);
@@ -88,7 +88,7 @@ public static class Easing
     public static double InOutBounce(double x) => x < 0.5 ? (1 - OutBounce(1 - 2 * x)) / 2 : (1 + OutBounce(2 * x - 1)) / 2;
 }
 
-[Obsolete]
+[Obsolete("AI slop")]
 public static class EasingF
 {
     public static float InSine(float x) => 1 - MathF.Cos((x * MathF.PI) / 2);

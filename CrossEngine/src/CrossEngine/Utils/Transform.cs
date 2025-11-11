@@ -55,7 +55,7 @@ public class Transform : ITransformCache
             if (_worldTransformProvider == null)
                 _translation = value;
             else
-                _translation = Vector3.Transform(value, Matrix4x4Extension.SafeInvert(_worldTransformProvider.GetMatrix()));
+                _translation = Vector3.Transform(value, Matrix4x4Ext.SafeInvert(_worldTransformProvider.GetMatrix()));
             Invalidate();
         }
     }

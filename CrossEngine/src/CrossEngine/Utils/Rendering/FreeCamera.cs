@@ -14,6 +14,8 @@ using CrossEngine.Utils.Maths;
 
 namespace CrossEngine.Utils.Rendering
 {
+    // TODO: add orbit
+    
     public class FreeCamera : IResizableCamera
     {
         public Matrix4x4 ProjectionMatrix { get => Matrix4x4.CreatePerspectiveFieldOfView(MathExt.ToRadConstF * Fov, Aspect, Near, Far); }
@@ -27,6 +29,8 @@ namespace CrossEngine.Utils.Rendering
         public float Far = 100;
         public float Speed = 1;
 
+        private float _height = 256;
+        
         public Matrix4x4 GetViewMatrix() => Matrix4x4.CreateTranslation(-Position) * Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(Rotation));
         
         public void Update()
@@ -55,7 +59,7 @@ namespace CrossEngine.Utils.Rendering
 
             if (Input.GetMouse(Button.Left))
             {
-                var rotateOffset = Input.GetMousePositionDelta() / 256;
+                var rotateOffset = Input.GetMousePositionDelta() / (_height / 2);
                 LookRot += rotateOffset;
                 LookRot.Y = Math.Clamp(LookRot.Y, -MathF.PI / 2, MathF.PI / 2);
                 Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, LookRot.X) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, LookRot.Y);
@@ -67,6 +71,7 @@ namespace CrossEngine.Utils.Rendering
 
         public void Resize(float width, float height)
         {
+            _height = height;
             Aspect = width / height;
         }
     }

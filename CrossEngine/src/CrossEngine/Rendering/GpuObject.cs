@@ -7,6 +7,7 @@ public abstract class GpuObject : IDisposable
 {
     public bool Disposed => disposed;
     private bool disposed = false;
+    public virtual uint RendererId => throw new NotSupportedException();
 
     public GpuObject()
     {

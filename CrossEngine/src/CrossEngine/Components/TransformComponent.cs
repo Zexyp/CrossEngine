@@ -25,7 +25,7 @@ public class TransformComponent : Component, ITransform
         set
         {
             _transform.Rotation = value;
-            _euler = QuaternionExtension.ToEuler(_transform.Rotation) * MathExt.ToDegConstF;
+            _euler = QuaternionExt.ToEuler(_transform.Rotation) * MathExt.ToDegConstF;
         }
     }
     [SerializeInclude]
@@ -42,7 +42,7 @@ public class TransformComponent : Component, ITransform
         set
         {
             _euler = value;
-            _transform.Rotation = QuaternionExtension.RotateXYZ(_euler * MathExt.ToRadConstF);
+            _transform.Rotation = QuaternionExt.RotateXYZ(_euler * MathExt.ToRadConstF);
         }
     }
 

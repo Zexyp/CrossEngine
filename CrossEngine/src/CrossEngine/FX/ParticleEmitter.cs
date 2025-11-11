@@ -34,7 +34,7 @@ namespace CrossEngine.FX.Particles
 
         public override void Emit(ref Particle particle)
         {
-            particle.position = Vector3Extension.RandomCubeVolume() * Size;
+            particle.position = Vector3Ext.RandomCubeVolume() * Size;
         }
 
         public override void DebugDraw(in Matrix4x4 transform)
@@ -60,7 +60,7 @@ namespace CrossEngine.FX.Particles
 
         public override void Emit(ref Particle particle)
         {
-            particle.position = Vector3Extension.RandomSphereVolume() * Size;
+            particle.position = Vector3Ext.RandomSphereVolume() * Size;
         }
 
         public override void DebugDraw(in Matrix4x4 transform)

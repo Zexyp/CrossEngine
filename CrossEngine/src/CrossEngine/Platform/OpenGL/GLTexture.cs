@@ -25,9 +25,10 @@ namespace CrossEngine.Platform.OpenGL
         private GLEnum _dataFormat;
         private int _internalFormat;
 
-        public override uint RendererId => _rendererId;
         public override uint Width => _width;
         public override uint Height => _height;
+        
+        public override uint RendererId => _rendererId;
 
         unsafe GLTexture()
         {
@@ -36,7 +37,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenTextures(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
 
         protected internal override unsafe void Destroy()
@@ -47,7 +48,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.DeleteTextures(1, p);
 
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         public unsafe GLTexture(uint width, uint height, ColorFormat internalFormat) : this()
@@ -128,6 +129,9 @@ namespace CrossEngine.Platform.OpenGL
         {
             int glfilt = (int)GLUtils.ToGLFilterParameter(filter);
             GLEnum gltarg = GLUtils.ToGLTextureTarget(Target);
+            
+            gl.BindTexture(gltarg, _rendererId);
+            
             gl.TexParameter(gltarg, GLEnum.TextureMinFilter, glfilt);
             gl.TexParameter(gltarg, GLEnum.TextureMagFilter, glfilt);
 
@@ -138,9 +142,17 @@ namespace CrossEngine.Platform.OpenGL
         {
             int glwrap = (int)GLUtils.ToGLWrapParameter(wrap);
             GLEnum gltarg = GLUtils.ToGLTextureTarget(Target);
+            
+            gl.BindTexture(gltarg, _rendererId);
+            
             //gl.TexParameter(gltarg, GLEnum.TextureWrapR, glwrap); // for 3d texture
             gl.TexParameter(gltarg, GLEnum.TextureWrapS, glwrap);
             gl.TexParameter(gltarg, GLEnum.TextureWrapT, glwrap);
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

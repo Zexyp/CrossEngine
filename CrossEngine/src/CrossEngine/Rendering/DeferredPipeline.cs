@@ -250,7 +250,7 @@ class ScenePass : Pass
     
     private void SortByDistance(ISceneRenderData data, ICamera camera, int indexStart)
     {
-        var cameraPos = Matrix4x4Extension.SafeInvert(camera.GetViewMatrix()).Translation;
+        var cameraPos = Matrix4x4Ext.SafeInvert(camera.GetViewMatrix()).Translation;
         
         ArrayList.Adapter((IList)data.Objects).Sort(indexStart, data.Objects.Count - indexStart, new ComparisonComparer<IObjectRenderData>((o1, o2) =>
         {
@@ -331,7 +331,7 @@ class ScenePass : Pass
 
             foreach (var rd in group)
             {
-                if (!rd.IsVisible)
+                if (!rd.IsVisible || !rd.IsEnabled)
                     continue;
 
                 var type = rd.GetType();
@@ -549,7 +549,7 @@ void main()
         
         // init shader
         shader.Use();
-        shader.SetParameterVec3("uViewPosition", Matrix4x4Extension.SafeInvert(Pipeline.Camera.GetViewMatrix()).Translation);
+        shader.SetParameterVec3("uViewPosition", Matrix4x4Ext.SafeInvert(Pipeline.Camera.GetViewMatrix()).Translation);
         shader.SetParameterInt("uColor", DeferredPipeline.AttachmentIndexColor);
         shader.SetParameterInt("uPosition", DeferredPipeline.AttachmentIndexPosition);
         shader.SetParameterInt("uNormal", DeferredPipeline.AttachmentIndexNormal);
@@ -764,7 +764,7 @@ void main()
         shader.SetParameterFloat("uStart", fogComp.Start);
         shader.SetParameterFloat("uDensity", fogComp.Density);
         shader.SetParameterVec4("uColor", fogComp.Color);
-        shader.SetParameterVec3("uViewPosition", Matrix4x4Extension.SafeInvert(Pipeline.Camera.GetViewMatrix()).Translation);
+        shader.SetParameterVec3("uViewPosition", Matrix4x4Ext.SafeInvert(Pipeline.Camera.GetViewMatrix()).Translation);
         _quad.Draw(GraphicsContext.Current.Api);
     }
 }
