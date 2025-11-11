@@ -51,6 +51,7 @@ public class MapApp : Application
         {
             base.Content();
             
+            LineRenderer.SetLineWidth(4);
             LineRenderer.DrawAxes(Matrix4x4.CreateFromQuaternion(Quaternion.Inverse(camera.Rotation)) * Matrix4x4.CreateScale(new Vector3(size, -size, 1)) * Matrix4x4.CreateTranslation(new (Size.X - size * 2, Size.Y - size * 2, 0)));
         }
     }
@@ -190,6 +191,7 @@ void main() {
         if (tileMesh != null)
         {
             surface.Context.Api.SetDepthFunc(DepthFunc.Default);
+            LineRenderer.SetLineWidth(1);
             LineRenderer.BeginScene(((ICamera)camera).GetViewProjectionMatrix());
             LineRenderer.DrawBox(tileMesh.Bounds.Min, tileMesh.Bounds.Max, ColorHelper.U32ToVec4(0xffFFA500));
             LineRenderer.EndScene();
