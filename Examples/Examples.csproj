@@ -13,9 +13,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="res/logo.png" CopyToOutputDirectory="Always"/>
         <None Remove="vendor/**"/>
         <Compile Remove="vendor/**" />
     </ItemGroup>
+
+    <Target Name="CopyContent" AfterTargets="AfterBuild">
+        <Copy SourceFiles="res/logo.png" DestinationFolder="$(OutDir)" />
+    </Target>
 
 </Project>
