@@ -153,6 +153,10 @@ void main() {
         
         Manager.GetService<RenderService>().Execute(() =>
         {
+            if (rdata.tile.material.Samplers.ContainsKey("uTexture"))
+                rdata.tile.material.Samplers["uTexture"].Dispose();
+            rdata.tile.material.Shader.Dispose();
+            
             rdata.tile.renderer?.Dispose();
             renderer.Destroy();
             renderer = null;
@@ -437,6 +441,9 @@ void main() {
 
                         bool SetTexture()
                         {
+                            if (rdata.tile.material.Samplers.ContainsKey("uTexture"))
+                                rdata.tile.material.Samplers["uTexture"].Dispose();
+                            
                             var tex = TextureLoader.LoadTextureFromStream(streamTexture);
                             rdata.tile.material.Samplers["uTexture"] = tex;
                             return true;
