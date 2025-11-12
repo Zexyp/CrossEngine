@@ -419,7 +419,8 @@ void main() {
                                 for (int i = 0; i < typedVerts.Length / 3; i++)
                                 {
                                     var pos = new Vector3(typedVerts[i * 3], typedVerts[i * 3 + 1], typedVerts[i * 3 + 2]) / ushort.MaxValue * diff - diff / 2;
-                                    var uv = new Vector2(typedUVs[i * 2], typedUVs[i * 2 + 1]) / ushort.MaxValue;
+                                    Vector2 uv = Vector2.Zero;
+                                    if (typedUVs != null) uv = new Vector2(typedUVs[i * 2], typedUVs[i * 2 + 1]) / ushort.MaxValue;
                                     uv.Y = 1 - uv.Y;
                                     verts.Add(new MapVert() { Position = pos, UV = uv });
                                 }
@@ -441,6 +442,9 @@ void main() {
 
                         bool SetTexture()
                         {
+                            if (streamTexture == null)
+                                return false;
+                            
                             if (rdata.tile.material.Samplers.ContainsKey("uTexture"))
                                 rdata.tile.material.Samplers["uTexture"].Dispose();
                             
