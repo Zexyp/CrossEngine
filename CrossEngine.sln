@@ -7,11 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngine", "CrossEngine\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossEngineEditor", "CrossEngineEditor\CrossEngineEditor.csproj", "{7D573E61-2C5D-4F44-B8EB-F1D242DC592E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample", "Sample\Sample.csproj", "{B9591FC0-3FA8-4E05-9904-1EB4B1AEEE7E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample", "Examples\Sample\Sample.csproj", "{B9591FC0-3FA8-4E05-9904-1EB4B1AEEE7E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "Sandbox\Sandbox.csproj", "{5EEFF4DA-8AD9-E42C-6F15-4A668E5D6006}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples", "Examples\Examples.csproj", "{E0194591-8CD9-4E11-B78B-DEA35367A5E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapViewer", "Examples\MapViewer\MapViewer.csproj", "{E0194591-8CD9-4E11-B78B-DEA35367A5E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
