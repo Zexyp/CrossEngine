@@ -9,7 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="../CrossEngine/CrossEngine.csproj" />
-        <ProjectReference Include="vendor/mapper/MapMess/MapMess.csproj" />
+        <ProjectReference Include="vendor/MapMess/MapMess/MapMess.csproj" />
     </ItemGroup>
 
     <ItemGroup>

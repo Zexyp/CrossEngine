@@ -14,9 +14,8 @@ using CrossEngine.Logging;
 using CrossEngine.Utils;
 using CrossEngine.Utils.Editor;
 using CrossEngineEditor.Utils.Reflection;
-using System.Xml.Linq;
-using Silk.NET.Core.Native;
 using CrossEngine.Assets;
+using CrossEngine.Utils.ImGui;
 using CrossEngine.Utils.Structs;
 using CrossEngineEditor.Utils.UI;
 

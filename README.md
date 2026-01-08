@@ -18,11 +18,11 @@
 - ECS based
     - Entities
     - Components
-    - Component systems
+    - Systems
 - Built-in components
     - Cameras
     - Sprites
-    - unimplemented cool particle system idea
+    - Particle system
 
 ## Setup
 ### Linux

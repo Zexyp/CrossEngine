@@ -23,7 +23,7 @@ using CrossEngine.Utils.ImGui;
 using CrossEngine.Utils.Rendering;
 using CrossEngine.Utils.Structs;
 using ImGuiNET;
-using Mapper;
+using MapMess;
 using Examples.Maps;
 
 namespace Examples;
@@ -72,17 +72,17 @@ public class MapApp : Application
 
     public override void OnInit()
     {
-        Mapper.Log.SetMessageCallback((m, l) =>
+        MapMess.Log.SetMessageCallback((m, l) =>
         {
             switch (l)
             {
-                case Mapper.Log.Level.Error:
+                case MapMess.Log.Level.Error:
                     mapLog.Error(m);
                     if (lastError == null)
                         lastError = "";
                     lastError += $"Error: {m}\n";
                     break;
-                case Mapper.Log.Level.Communication:
+                case MapMess.Log.Level.Communication:
                 default:
                     mapLog.Info(m);
                     break;

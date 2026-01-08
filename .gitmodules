@@ -1,6 +1,6 @@
 [submodule "CrossEngineEditor/vendor/ShellFileDialogs"]
 	path = CrossEngineEditor/vendor/ShellFileDialogs
 	url = https://github.com/Profy/ShellFileDialogs.git
-[submodule "Examples/vendor/mapper"]
-	path = Examples/vendor/mapper
-	url = https://github.com/Zexyp/mapper
+[submodule "Examples/vendor/MapMess"]
+	path = Examples/vendor/MapMess
+	url = https://github.com/Zexyp/MapMess
