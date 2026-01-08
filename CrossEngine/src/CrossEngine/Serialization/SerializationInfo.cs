@@ -43,5 +43,13 @@ namespace CrossEngine.Serialization
             value = succ ? (T)objval : default;
             return succ;
         }
+
+        protected delegate bool TryParseDelegate<T>(out T result);
+        protected bool WrapOutTry<T>(out object value, TryParseDelegate<T> func)
+        {
+            var result = func(out var v);
+            value = v;
+            return result;
+        }
     }
 }

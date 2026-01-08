@@ -34,10 +34,7 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenBuffers(1, p);
 
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
 
         public unsafe GLVertexBuffer(void* vertices, uint size, BufferUsageHint bufferUsage = BufferUsageHint.StaticDraw) : this()
@@ -48,28 +45,15 @@ namespace CrossEngine.Platform.OpenGL
             gl.BufferData(GLEnum.ArrayBuffer, size, vertices, GLUtils.ToGLBufferUsage(_bufferUsage));
         }
 
-        protected override unsafe void Dispose(bool disposing)
+        protected internal override unsafe void Destroy()
         {
             Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
+            
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 gl.DeleteBuffers(1, p);
 
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         public override void Bind()
@@ -95,6 +79,11 @@ namespace CrossEngine.Platform.OpenGL
 
             gl.BindBuffer(GLEnum.ArrayBuffer, _rendererId);
             gl.BufferSubData(GLEnum.ArrayBuffer, (int)offset, size, data);
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define LOG_MISSING_UNIFORM
+
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -8,6 +10,8 @@ using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
 using CrossEngine.Utils;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -48,20 +52,27 @@ namespace CrossEngine.Platform.OpenGL
 
         public override IReadOnlyDictionary<string, IShaderParameter> Attributes { get; protected set; }
         public override IReadOnlyDictionary<string, IShaderParameter> Uniforms { get; protected set; }
-
+        
         GLShaderProgram()
         {
             Profiler.Function();
 
             _rendererId = gl.CreateProgram();
 
-            Attributes = _attributes;
-            Uniforms = _uniforms;
+            Attributes = _attributes.AsReadOnly();
+            Uniforms = _uniforms.AsReadOnly();
 
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
+            GLRendererApi.LogObjectDeletion(this);
+        }
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+        protected internal override void Destroy()
+        {
+            Profiler.Function();
+            
+            // free any unmanaged objects here
+            gl.DeleteProgram(_rendererId);
+
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         public GLShaderProgram(GLShader vertex, GLShader fragment) : this()
@@ -102,29 +113,6 @@ namespace CrossEngine.Platform.OpenGL
             if (!linkSuccess) return;
 
             GetParameters();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-            gl.DeleteProgram(_rendererId);
-
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
         }
 
         public override void Use()
@@ -216,33 +204,33 @@ namespace CrossEngine.Platform.OpenGL
 
         // ##### simple #####
 
-        public override void SetParameter1(string name, float value)
+        public override void SetParameterFloat(string name, float value)
         {
             gl.Uniform1(GetUniformLocation(name), value);
         }
 
-        public override void SetParameter1(string name, int value)
+        public override void SetParameterInt(string name, int value)
         {
             gl.Uniform1(GetUniformLocation(name), value);
         }
 
         // ##### vec2 #####
 
-        public override void SetParameter2(string name, float x, float y)
+        public override void SetParameterVec2(string name, float x, float y)
         {
             gl.Uniform2(GetUniformLocation(name), x, y);
         }
 
         // ##### vec3 #####
 
-        public override void SetParameter3(string name, float x, float y, float z)
+        public override void SetParameterVec3(string name, float x, float y, float z)
         {
             gl.Uniform3(GetUniformLocation(name), x, y, z);
         }
 
         // ##### vec4 #####
 
-        public override void SetParameter4(string name, float x, float y, float z, float w)
+        public override void SetParameterVec4(string name, float x, float y, float z, float w)
         {
             gl.Uniform4(GetUniformLocation(name), x, y, z, w);
         }
@@ -256,7 +244,7 @@ namespace CrossEngine.Platform.OpenGL
 
         // ##### other #####
 
-        public override unsafe void SetParameter1(string name, int[] intVec)
+        public override unsafe void SetParameterIntVec(string name, int[] intVec)
         {
             Debug.Assert(intVec.Length > 0);
 
@@ -273,9 +261,11 @@ namespace CrossEngine.Platform.OpenGL
             int location = gl.GetUniformLocation(_rendererId, name);
             if (location != -1)
                 _uniformLocationCache.Add(name, location);
+#if LOG_MISSING_UNIFORM
             else
-                RendererApi.Log.Warn($"no uniform named '{name}' found");
-
+                RendererApi.Log.Debug($"no uniform named '{name}' found");
+#endif
+            
             return location;
         }
 
@@ -293,7 +283,7 @@ namespace CrossEngine.Platform.OpenGL
                 fixed (byte* p = infoLog)
                 {
                     gl.GetProgramInfoLog(_rendererId, length, &length, p);
-                    message = GLHelper.PtrToStringUtf8((IntPtr)p);
+                    message = Marshal.PtrToStringUTF8((IntPtr)p);
                 }
                 RendererApi.Log.Error("shader program linking failed!\n" + message);
                 return true;
@@ -336,6 +326,11 @@ namespace CrossEngine.Platform.OpenGL
 
                 RendererApi.Log.Debug("shader uniform parameter: {0} {1}", uniform.Type, uniform.Name);
             }
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

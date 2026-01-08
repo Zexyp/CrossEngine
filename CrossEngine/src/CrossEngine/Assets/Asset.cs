@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime;
 using System.Threading.Tasks;
+using CrossEngine.Rendering;
 using CrossEngine.Serialization;
 using CrossEngine.Utils.Editor;
 
@@ -13,18 +14,20 @@ namespace CrossEngine.Assets
         string GetFullPath(string realtivePath);
         Task<Stream> OpenStream(string path);
 
-        Task LoadChild(Type type, Guid id, Action<Asset> returnCallback);
-        Task FreeChild(Asset asset);
-
-        Loader GetLoader(Type type);
+        Asset GetDependency(Type type, Guid id);
+        virtual T GetDependency<T>(Guid id) where T : Asset => (T)GetDependency(typeof(T), id);
+        Asset GetFileAsset(Type type, string file);
+        virtual T GetFileAsset<T>(string file) where T : FileAsset => (T)GetFileAsset(typeof(T), file);
 
         virtual Task<Stream> OpenRelativeStream(string realtivePath) => OpenStream(GetFullPath(realtivePath));
 
-        virtual T GetLoader<T>() where T : Loader => (T)GetLoader(typeof(T));
-        virtual async Task LoadChild<T>(Guid id, Action<T> returnCallback) where T : Asset
-        {
-            await LoadChild(typeof(T), id, a => returnCallback?.Invoke((T)a));
-        }
+        GraphicsContext Graphics { get; }
+    }
+
+    struct LoadContext
+    {
+        public GraphicsContext Graphics;
+        public string Path;
     }
 
     public abstract class Asset : ISerializable
@@ -34,8 +37,8 @@ namespace CrossEngine.Assets
         [EditorString]
         public string Name;
 
-        public abstract Task Load(IAssetLoadContext context);
-        public abstract Task Unload(IAssetLoadContext context);
+        internal protected abstract Task Load(IAssetLoadContext context);
+        internal protected abstract Task Unload(IAssetLoadContext context);
 
         public virtual void GetObjectData(SerializationInfo info)
         {
@@ -55,11 +58,41 @@ namespace CrossEngine.Assets
             else guid = Guid.Empty;
         }
 
-        public string GetName() => Name != null ? Name : Id.ToString();
+        public virtual string GetName() => Name ?? Id.ToString();
     }
 
-    public class DependantAssetAttribute : Attribute
+    public abstract class FileAsset : Asset
     {
+        [EditorString]
+        public string RelativePath
+        {
+            get => _relativePath;
+            set
+            {
+                var old = _relativePath;
+                _relativePath = value;
+                RelativePathChanged?.Invoke(this, old);
+            }
+        }
 
+        internal event Action<FileAsset, string> RelativePathChanged;
+
+        private string _relativePath;
+
+        public override void GetObjectData(SerializationInfo info)
+        {
+            base.GetObjectData(info);
+
+            info.AddValue(nameof(RelativePath), RelativePath);
+        }
+
+        public override void SetObjectData(SerializationInfo info)
+        {
+            base.SetObjectData(info);
+
+            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
+        }
+
+        public override string GetName() => Name ?? RelativePath ?? Id.ToString();
     }
 }

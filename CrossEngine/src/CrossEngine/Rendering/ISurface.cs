@@ -1,0 +1,55 @@
+﻿using CrossEngine.Rendering.Buffers;
+using CrossEngine.Utils;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Text;
+using System.Threading.Tasks;
+using CrossEngine.Utils.Extensions;
+
+namespace CrossEngine.Rendering
+{
+    public interface ISurface
+    {
+        public Framebuffer Buffer { get; }
+        public Vector2 Size { get; }
+        public virtual float Width => Size.X;
+        public virtual float Height => Size.Y;
+        public GraphicsContext Context { get; }
+
+        public event Action<ISurface, float, float> Resize;
+        public event Action<ISurface> Update;
+
+        void DoResize(float width, float height) => throw new NotSupportedException();
+        void DoUpdate() => throw new NotSupportedException();
+    }
+
+    public class FramebufferSurface : ISurface
+    {
+        public Framebuffer Buffer { get; set; }
+
+        public Vector2 Size { get; private set; }
+        public GraphicsContext Context { get; set; }
+
+        public event Action<ISurface, float, float> Resize;
+        public event Action<ISurface> Update;
+
+        public FramebufferSurface(Framebuffer buffer = null)
+        {
+            Buffer = buffer;
+        }
+
+        public void DoResize(float width, float height)
+        {
+            Size = new(width, height);
+            Buffer.Resize((uint)width, (uint)height);
+            Resize?.Invoke(this, width, height);
+        }
+
+        public void DoUpdate()
+        {
+            Update?.Invoke(this);
+        }
+    }
+}

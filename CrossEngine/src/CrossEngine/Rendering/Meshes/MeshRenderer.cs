@@ -1,0 +1,75 @@
+using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using CrossEngine.Geometry;
+using CrossEngine.Rendering.Buffers;
+using CrossEngine.Rendering.Materials;
+using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
+
+namespace CrossEngine.Rendering.Meshes;
+
+public class MeshRenderer : IDisposable
+{
+    VertexBuffer vb;
+    IndexBuffer ib;
+    VertexArray va;
+    private int _vertexCount;
+
+    // mby service request api
+    public static MeshRenderer FromMesh(IMesh mesh)
+    {
+        throw new NotImplementedException();
+    }
+
+    public unsafe void Setup(IMesh mesh)
+    {
+        ArgumentNullException.ThrowIfNull(mesh);
+        
+        Debug.Assert(va == null && vb == null && ib == null);
+
+        var elementType = mesh.Vertices.GetType().GetElementType();
+        int elementSize = Marshal.SizeOf(elementType);
+        
+        va = VertexArray.Create();
+        
+        void* verteciesp = Unsafe.AsPointer(ref MemoryMarshal.GetArrayDataReference(mesh.Vertices));
+        vb = VertexBuffer.Create(verteciesp, (uint)(elementSize * mesh.Vertices.Length));
+        
+        // this is really nice
+        BufferLayout layout = BufferLayout.FromStructType(elementType);
+
+        vb.SetLayout(layout);
+        va.AddVertexBuffer(vb);
+
+        if (mesh is IIndexedMesh indexed)
+        {
+            void* indicesp = Unsafe.AsPointer(ref MemoryMarshal.GetArrayDataReference(indexed.Indices));
+            ib = IndexBuffer.Create(indicesp, (uint)indexed.Indices.Length, IndexDataType.UInt);
+            
+            va.SetIndexBuffer(ib);
+        }
+
+        _vertexCount = mesh.Vertices.Length;
+    }
+
+    public void Dispose()
+    {
+        vb.Dispose();
+        va.Dispose();
+        ib?.Dispose();
+        
+        vb = null;
+        va = null;
+        ib = null;
+    }
+
+    public void Draw(RendererApi api)
+    {
+        if (ib == null)
+            api.DrawArray(va, (uint)_vertexCount);
+        else
+            api.DrawIndexed(va);
+    }
+}

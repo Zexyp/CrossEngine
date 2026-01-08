@@ -1,5 +1,4 @@
-﻿using CrossEngine.Components;
-using CrossEngine.Ecs;
+﻿using CrossEngine.Ecs;
 using CrossEngine.Inputs;
 using CrossEngineEditor.Utils;
 using CrossEngineEditor.Utils.UI;
@@ -10,7 +9,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using static CrossEngine.Services.WindowService;
+using static CrossEngine.Display.WindowService;
 
 namespace CrossEngineEditor.Panels
 {
@@ -28,12 +27,22 @@ namespace CrossEngineEditor.Panels
                 if (ImGui.BeginMenu("Entity", Context.Scene != null))
                 {
                     if (ImGui.MenuItem("Add"))
-                        Context.Scene.CreateEntity();
+                        Context.ActiveEntity = Context.Scene.CreateEntity();
                     if (ImGui.MenuItem("Add Empty"))
-                        Context.Scene.CreateEntity();
+                        Context.ActiveEntity = Context.Scene.CreateEmptyEntity();
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Duplicate", Context.ActiveEntity != null))
+                    {
+                        var newent = (Entity)Context.ActiveEntity.Clone();
+                        Context.Scene.AddEntity(newent);
+                        Context.ActiveEntity = newent;
+                    }
                     ImGui.Separator();
                     if (ImGui.MenuItem("Delete", Context.ActiveEntity != null))
+                    {
                         Context.Scene.RemoveEntity(Context.ActiveEntity);
+                        Context.ActiveEntity = null;
+                    }
 
                     ImGui.EndMenu();
                 }
@@ -42,7 +51,10 @@ namespace CrossEngineEditor.Panels
             }
 
             if (Context.Scene == null)
+            {
+                ImGui.TextDisabled("No scene selected");
                 return;
+            }
             
             foreach (var ent in Context.Scene.Entities.Where(e => e.Parent == null).ToArray())
             {
@@ -66,7 +78,8 @@ namespace CrossEngineEditor.Panels
 
             //if (node == Context.ActiveEntity) ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.259f, 0.588f, 0.98f, 1.0f));
 
-            string label = node.TryGetComponent<TagComponent>(out var tagComponent) ? tagComponent.Tag : $"Entity (Id: {node.Id})";
+            string label = node.ToString();
+            //string label = node.TryGetComponent<TagComponent>(out var tagComponent) ? tagComponent.Tag : $"Entity (Id: {node.Id})";
             label ??= "";
 
             bool opened = ImGui.TreeNodeEx(node.GetHashCode().ToString(), flags, label);
@@ -110,11 +123,11 @@ namespace CrossEngineEditor.Panels
                         ddEntityContext.Source.Parent = node.Parent;
                         if (node.Parent == null)
                         {
-                            Context.Scene.ShifEntity(ddEntityContext.Source, Context.Scene.Entities.IndexOf(node));
+                            Context.Scene.MoveEntity(ddEntityContext.Source, Context.Scene.Entities.IndexOf(node));
                         }
                         else
                         {
-                            node.Parent.ShiftChild(ddEntityContext.Source, node.Parent.Children.IndexOf(node));
+                            node.Parent.MoveChild(ddEntityContext.Source, node.Parent.Children.IndexOf(node));
                         }
                     }
                     ddEntityContext.End();

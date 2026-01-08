@@ -1,5 +1,4 @@
-﻿using CrossEngine.Services;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,36 +8,34 @@ namespace CrossEngine.Scenes
 {
     public static class SceneManager
     {
+        public static Scene Current { get => _current; internal set => _current = value; }
+
         internal static SceneService service;
 
         [ThreadStatic]
-        static Scene _current;
+        private static Scene _current;
 
-        public static Scene Current { get => _current; internal set => _current = value; }
-
-        public static void Load(Scene scene, SceneService.SceneConfig? config = null)
+        public static Task Push(Scene scene)
         {
-            service.Execute(() => service.Push(scene, config ?? new SceneService.SceneConfig() { Render = true, Update = true, Resize = true }));
+            return service.Execute(() => service.Push(scene));
         }
 
-        public static void Unload(Scene scene)
+        public static Task Remove(Scene scene)
         {
-            service.Execute(() => service.Remove(scene));
+            return service.Execute(() => service.Remove(scene));
         }
-
-        public static void Start(Scene scene)
+        
+        public static Task AttachRenderer(Scene scene, SceneRenderer renderer)
         {
-            service.Execute(() => service.Start(scene));
+            return service.Execute(() => service.AttachRenderer(scene, renderer));
         }
-
-        public static void Stop(Scene scene)
+        
+        public static Task DetachRenderer(Scene scene)
         {
-            service.Execute(() => service.Stop(scene));
+            return service.Execute(() => service.DetachRenderer(scene));
         }
-
-        public static void Configure(Scene scene, SceneService.SceneConfig config)
-        {
-            service.Execute(() => service.SetConfig(scene, config));
-        }
+        
+        public static Task Start(Scene scene) => service.Execute(() => service.Start(scene));
+        public static Task Stop(Scene scene) => service.Execute(() => service.Stop(scene));
     }
 }

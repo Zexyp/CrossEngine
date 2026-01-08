@@ -8,45 +8,34 @@ using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Textures
 {
-    public class TextureAtlas
+    public static class TextureAtlas
     {
-        public Vector4 Margin { get; private init; }
-        public int NumTiles { get; private init; }
-
-        Vector4[] spriteOffsets;
-        
-        public TextureAtlas(Vector2 sheetSize, Vector2 spriteSize, int numTiles, Vector4 margin = default)
+        // margin: left, top, right, bottom
+        // offsets: offx, offy, scalex, scaley
+        public static Vector4[] CreateOffsets(Vector2 sheetSize, Vector2 spriteSize, int numTiles, Vector4 margin = default)
         {
-            NumTiles = numTiles;
-            Margin = margin;
-
-            this.spriteOffsets = new Vector4[NumTiles];
-
-            var x = 2;
-            var y = 3;
+            Vector4[] spriteOffsets = new Vector4[numTiles];
+            
             var sheetWidth = sheetSize.X;
             var sheetHeight = sheetSize.Y;
             var spriteWidth = spriteSize.X;
             var spriteHeight = spriteSize.Y;
 
-            float offx = Margin.X / sheetWidth;
-            float offy = (Margin.Y + Margin.W) / sheetHeight;
-            for (int i = 0; i < NumTiles; i++)
+            float offx = margin.X / sheetWidth;
+            float offy = (margin.Y + margin.W) / sheetHeight;
+            for (int i = 0; i < numTiles; i++)
             {
                 spriteOffsets[i] = new Vector4(offx, -offy, (spriteWidth) / sheetWidth, (spriteHeight) / sheetHeight);
                 spriteOffsets[i].Y -= spriteOffsets[i].W;
-                offx += (spriteWidth + Margin.X + Margin.Z) / sheetWidth;
+                offx += (spriteWidth + margin.X + margin.Z) / sheetWidth;
                 if (offx >= 1)
                 {
-                    offx = Margin.X / sheetWidth;
-                    offy += (spriteHeight + Margin.Y + Margin.W) / sheetHeight;
+                    offx = margin.X / sheetWidth;
+                    offy += (spriteHeight + margin.Y + margin.W) / sheetHeight;
                 }
             }
-        }
-
-        public Vector4 GetTextureOffsets(int index)
-        {
-            return spriteOffsets[index];
+            
+            return spriteOffsets;
         }
     }
 }

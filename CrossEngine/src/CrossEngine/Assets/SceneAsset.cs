@@ -10,40 +10,23 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Assets
 {
-    [DependantAsset]
-    public class SceneAsset : Asset
+    public class SceneAsset : FileAsset
     {
         public override bool Loaded => Scene != null;
 
         public Scene Scene { get; internal set; }
-        [EditorString]
-        public string RelativePath;
 
-        public override async Task Load(IAssetLoadContext context)
+        protected internal override async Task Load(IAssetLoadContext context)
         {
             using (Stream stream = await context.OpenRelativeStream(RelativePath))
             {
-                Scene = SceneSerializer.DeserializeJson(stream);
+                Scene = SceneSerializer.DeserializeJson(stream, context);
             }
         }
 
-        public override async Task Unload(IAssetLoadContext context)
+        protected internal override async Task Unload(IAssetLoadContext context)
         {
             Scene = null;
-        }
-
-        public override void GetObjectData(SerializationInfo info)
-        {
-            base.GetObjectData(info);
-
-            info.AddValue(nameof(RelativePath), RelativePath);
-        }
-
-        public override void SetObjectData(SerializationInfo info)
-        {
-            base.SetObjectData(info);
-
-            RelativePath = info.GetValue(nameof(RelativePath), RelativePath);
         }
     }
 }

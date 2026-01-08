@@ -13,10 +13,13 @@ using CrossEngine.Profiling;
 using CrossEngine.Utils;
 
 using CrossEngine.Platform.OpenGL;
+#if WINDOWS
+using CrossEngine.Platform.Windows;
+#endif
 
 namespace CrossEngine.Rendering.Shaders
 {
-    public abstract class ShaderProgram : IDisposable
+    public abstract class ShaderProgram : GpuObject
     {
         //Shader VertexShader;
         //Shader FragmentShader;
@@ -41,41 +44,16 @@ namespace CrossEngine.Rendering.Shaders
             protected set { throw new NotSupportedException(); }
         }
 
-        public bool Disposed { get; protected set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-
-            Disposed = true;
-        }
-
-        ~ShaderProgram()
-        {
-            Dispose(false);
-        }
-
-        public static WeakReference<ShaderProgram> Create(Shader vertex, Shader fragment)
+        public static ShaderProgram Create(Shader vertex, Shader fragment)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<ShaderProgram>(new GLShaderProgram((GLShader)vertex, (GLShader)fragment));
+                case GraphicsApi.OpenGL: return new GLShaderProgram((GLShader)vertex, (GLShader)fragment);
+#if WINDOWS
+                case GraphicsApi.GDI: return new GdiShaderProgram((GdiShader)vertex, (GdiShader)fragment);
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");
@@ -87,21 +65,21 @@ namespace CrossEngine.Rendering.Shaders
 
         // TODO: add more and polish
         #region Uniforms
-        public abstract void SetParameter1(string name, float value);
-        public abstract void SetParameter1(string name, int value);
+        public abstract void SetParameterFloat(string name, float value);
+        public abstract void SetParameterInt(string name, int value);
         
-        public abstract void SetParameter2(string name, float x, float y);
-        public void SetParameter2(string name, Vector2 vec) => SetParameter2(name, vec.X, vec.Y);
+        public abstract void SetParameterVec2(string name, float x, float y);
+        public void SetParameterVec2(string name, Vector2 vec) => SetParameterVec2(name, vec.X, vec.Y);
 
-        public abstract void SetParameter3(string name, float x, float y, float z);
-        public void SetParameter3(string name, Vector3 vec) => SetParameter3(name, vec.X, vec.Y, vec.Z);
+        public abstract void SetParameterVec3(string name, float x, float y, float z);
+        public void SetParameterVec3(string name, Vector3 vec) => SetParameterVec3(name, vec.X, vec.Y, vec.Z);
 
-        public abstract void SetParameter4(string name, float x, float y, float z, float w);
-        public void SetParameter4(string name, Vector4 vec) => SetParameter4(name, vec.X, vec.Y, vec.Z, vec.W);
+        public abstract void SetParameterVec4(string name, float x, float y, float z, float w);
+        public void SetParameterVec4(string name, Vector4 vec) => SetParameterVec4(name, vec.X, vec.Y, vec.Z, vec.W);
 
         public abstract void SetParameterMat4(string name, Matrix4x4 mat);
 
-        public abstract void SetParameter1(string name, int[] intVec);
+        public abstract void SetParameterIntVec(string name, int[] intVec);
         #endregion
     }
 }

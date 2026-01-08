@@ -1,0 +1,39 @@
+﻿using CrossEngine.Assets;
+using CrossEngine.Serialization.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using CrossEngine.Logging;
+
+namespace CrossEngine.Serialization.Json
+{
+    internal class AssetGuidJsonConverter : ElementJsonConverter<Asset>
+    {
+        public IAssetLoadContext AssetContext;
+
+        public override bool CanConvert(Type typeToConvert) => typeToConvert.IsSubclassOf(typeof(Asset));
+
+        public override void Write(Utf8JsonWriter writer, Asset value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value.Id, options);
+        }
+
+        public override Asset Read(JsonElement reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var id = reader.GetGuid();
+            try
+            {
+                return AssetContext.GetDependency(typeToConvert, id);
+            }
+            catch (KeyNotFoundException e)
+            {
+                Log.Default.Error($"asset not found '{id}'");
+                return null;
+            }
+        }
+    }
+}

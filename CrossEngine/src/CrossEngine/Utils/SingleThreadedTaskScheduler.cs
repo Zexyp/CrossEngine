@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define DEBUG_STACK_TRACE
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,8 +14,14 @@ namespace CrossEngine.Utils
 {
     internal class SingleThreadedTaskScheduler : TaskScheduler
     {
+        struct TaskInfo
+        {
+            public Task Task;
+            public StackTrace Trace;
+        }
+        
         private bool isExecuting;
-        private readonly ConcurrentQueue<Task> taskQueue = new ConcurrentQueue<Task>();
+        private readonly ConcurrentQueue<TaskInfo> taskQueue = new();
 
         public Task Schedule(Action action)
         {
@@ -28,14 +36,41 @@ namespace CrossEngine.Utils
                         this
                     );
         }
+        
+        public Task<TResult> Schedule<TResult>(Func<TResult> func)
+        {
+            Debug.Assert(func != null);
+            
+            return
+                Task.Factory.StartNew
+                (
+                    func,
+                    CancellationToken.None,
+                    TaskCreationOptions.None,
+                    this
+                );
+        }
 
         public void RunOnCurrentThread()
         {
             isExecuting = true;
 
-            foreach (var task in taskQueue)
+            foreach (var info in taskQueue)
             {
-                TryExecuteTask(task);
+#if DEBUG_STACK_TRACE
+                if (!info.Task.IsCompleted)
+                {
+                    var indent = "  ";
+                    Debugger.Log(0, "CrossEngine", $"task stack trace =>\n{indent}" + string.Join($"\n{indent}", info.Trace.GetFrames().Select(x =>
+                    {
+                        var meth = x.GetMethod();
+                        if (meth.DeclaringType.FullName.StartsWith(nameof(System)))
+                            return "...";
+                        return $"{meth.DeclaringType.FullName}.{meth.Name}";
+                    })) + "\n");
+                }
+#endif
+                TryExecuteTask(info.Task);
             }
             
             isExecuting = false;
@@ -45,7 +80,13 @@ namespace CrossEngine.Utils
 
         protected override void QueueTask(Task task)
         {
-            taskQueue.Enqueue(task);
+            taskQueue.Enqueue(new TaskInfo
+            {
+                Task = task,
+#if DEBUG_STACK_TRACE
+                Trace = new StackTrace(),
+#endif
+            });
         }
 
         protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)

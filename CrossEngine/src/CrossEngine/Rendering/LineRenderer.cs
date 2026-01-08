@@ -4,16 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
-
+using CrossEngine.Logging;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Buffers;
 using CrossEngine.Utils;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Rendering
 {
     public class LineRenderer
     {
         #region Shader Sources
+#if OPENGL
         const string VertexShaderSource =
 #if !OPENGL_ES
 "#version 330 core" +
@@ -56,7 +58,24 @@ void main()
 {
    oColor = vColor;
 }";
-#endregion
+#elif GDI
+        const string VertexShaderSource =
+@"
+Matrix4x4 uViewProjection = (Matrix4x4)Uniforms[""uViewProjection""];
+Vector3 aPosition = (Vector3)AttributesIn[0];
+Vector4 aColor = (Vector4)AttributesIn[1];
+
+Out[""vColor""] = aColor;
+
+gdi_Position = Vector4.Transform(new Vector4(aPosition, 1), uViewProjection);
+";
+
+        const string FragmentShaderSource =
+@"
+gdi_Color = (Vector4)In[""vColor""];
+";
+#endif
+        #endregion
 
         struct LineVertex
         {
@@ -75,9 +94,9 @@ void main()
             public const uint MaxLines = 5000;
             public const uint MaxVertices = MaxLines * 2;
 
-            public WeakReference<VertexArray> lineVertexArray;
-            public WeakReference<VertexBuffer> lineVertexBuffer;
-            public WeakReference<ShaderProgram> lineShader;
+            public VertexArray lineVertexArray;
+            public VertexBuffer lineVertexBuffer;
+            public ShaderProgram lineShader;
 
             public uint lineCount;
             public LineVertex[] lineVertexBufferBase;
@@ -91,22 +110,24 @@ void main()
 
         public static unsafe void Init(RendererApi rapi)
         {
+            Log.Default.Debug($"initializing {nameof(LineRenderer)}");
+
             _rapi = rapi;
 
             data.lineVertexArray = VertexArray.Create();
 
             data.lineVertexBuffer = VertexBuffer.Create(null, (uint)(LineRendererData.MaxVertices * sizeof(LineVertex)), BufferUsageHint.DynamicDraw);
-            data.lineVertexBuffer.GetValue().SetLayout(new BufferLayout(
+            data.lineVertexBuffer.SetLayout(new BufferLayout(
                 new BufferElement(ShaderDataType.Float3, "aPosition"),
                 new BufferElement(ShaderDataType.Float4, "aColor")
             ));
 
-            data.lineVertexArray.GetValue().AddVertexBuffer(data.lineVertexBuffer);
+            data.lineVertexArray.AddVertexBuffer(data.lineVertexBuffer);
 
             data.lineVertexBufferBase = new LineVertex[LineRendererData.MaxVertices];
 
-            var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex).GetValue();
-            var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment).GetValue();
+            var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex);
+            var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment);
             data.lineShader = ShaderProgram.Create(vertex, fragment);
             vertex.Dispose();
             fragment.Dispose();
@@ -114,6 +135,8 @@ void main()
 
         public static void Shutdown()
         {
+            Log.Default.Debug($"shutting down {nameof(LineRenderer)}");
+
             data.lineShader.Dispose();
             data.lineVertexArray.Dispose();
             data.lineVertexBuffer.Dispose();
@@ -124,7 +147,7 @@ void main()
 
         public static unsafe void BeginScene(Matrix4x4 viewProjectionMatrix)
         {
-            var shader = data.lineShader.GetValue();
+            var shader = data.lineShader;
             shader.Use();
             shader.SetParameterMat4("uViewProjection", viewProjectionMatrix);
 
@@ -152,10 +175,10 @@ void main()
             fixed (LineVertex* p = &data.lineVertexBufferBase[0])
             {
                 dataSize = (uint)((byte*)data.lineVertexBufferPtr - (byte*)p);
-                data.lineVertexBuffer.GetValue().SetData(p, dataSize);
+                data.lineVertexBuffer.SetData(p, dataSize);
             }
 
-            data.lineShader.GetValue().Use();
+            data.lineShader.Use();
             _rapi.DrawArray(data.lineVertexArray, data.lineCount * 2, DrawMode.Lines);
 
             data.stats.DrawCalls++;
@@ -235,7 +258,9 @@ void main()
 
             for (int i = 0; i < points.Length; i++)
             {
-                points[i] = Vector3.Transform(boxVertices[i], matrix);
+                // upsík dupsík, this was broken too much, now it should work
+                var p = Vector4.Transform(new Vector4(boxVertices[i], 1), matrix);
+                points[i] = new Vector3(p.X, p.Y, p.Z) / p.W;
             }
 
             DrawLine(points[0], points[1], color);
@@ -273,7 +298,7 @@ void main()
             DrawLine(new Vector3(max.X, max.Y, min.Z), new Vector3(min.X, max.Y, min.Z), color);
         }
 
-        static public void DrawCircle(Matrix4x4 matrix, Vector4 color, int segments = 16, float radius = 1.0f)
+        static public void DrawCircle(Matrix4x4 matrix, Vector4 color, float radius = 1.0f, int segments = 16)
         {
             Vector3[] points = new Vector3[segments];
             float increment = MathF.PI * 2 / points.Length;
@@ -298,18 +323,20 @@ void main()
         /// </summary>
         /// <param name="matrix"></param>
         /// <param name="len"></param>
-        public static void DrawAxies(Matrix4x4 matrix, float len = 1.0f)
+        public static void DrawAxes(Matrix4x4 matrix, float len = 1.0f)
         {
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(len, 0, 0), matrix), new Vector4(1, 0, 0, 1));
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(0, len, 0), matrix), new Vector4(0, 1, 0, 1));
             DrawLine(Vector3.Transform(Vector3.Zero, matrix), Vector3.Transform(new Vector3(0, 0, len), matrix), new Vector4(0, 0, 1, 1));
         }
 
-        static public void DrawSphere(Matrix4x4 matrix, Vector4 color, int segments = 16, float radius = 1.0f)
+        public static void DrawSphere(Vector3 position, Vector4 color, float radius = 1.0f, int segments = 16) =>
+            DrawSphere(Matrix4x4.CreateTranslation(position), color, radius, segments);
+        public static void DrawSphere(Matrix4x4 matrix, Vector4 color, float radius = 1.0f, int segments = 16)
         {
-            DrawCircle(Matrix4x4.CreateRotationX(MathF.PI / 2) * matrix, color, segments, radius);
-            DrawCircle(Matrix4x4.CreateRotationY(MathF.PI / 2) * matrix, color, segments, radius);
-            DrawCircle(Matrix4x4.CreateRotationZ(MathF.PI / 2) * matrix, color, segments, radius);
+            DrawCircle(Matrix4x4.CreateRotationX(MathF.PI / 2) * matrix, color, radius, segments);
+            DrawCircle(Matrix4x4.CreateRotationY(MathF.PI / 2) * matrix, color, radius, segments);
+            DrawCircle(Matrix4x4.CreateRotationZ(MathF.PI / 2) * matrix, color, radius, segments);
         }
         #endregion
     }

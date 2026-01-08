@@ -27,6 +27,8 @@ namespace CrossEngine.Display
 
     public abstract class Window : IDisposable
     {
+        // interface should have handle, window data, get rapi/context
+        
         protected struct WindowData
         {
             public uint Width, Height;
@@ -36,7 +38,7 @@ namespace CrossEngine.Display
 
         protected WindowData Data;
 
-        public GraphicsContext Context { get; protected set; }
+        public GraphicsContext Graphics { get; protected set; }
 
         public uint Width { get => Data.Width; set { Data.Width = value; if (Handle != IntPtr.Zero) UpdateSize(); } }
         public uint Height { get => Data.Height; set { Data.Height = value; if (Handle != IntPtr.Zero) UpdateSize(); } }
@@ -52,7 +54,7 @@ namespace CrossEngine.Display
         public readonly Mouse Mouse = new Mouse();
 
         // event emission
-        public abstract event OnEventFunction Event;
+        public abstract event Action<Event> Event;
 
         public Window()
         {
@@ -65,7 +67,8 @@ namespace CrossEngine.Display
             GC.SuppressFinalize(this);
         }
 
-        //public abstract void SetIcon(System.Drawing.Image image);
+        public abstract GraphicsContext InitGraphics(GraphicsApi api);
+
         public abstract void Create();
         public abstract void Destroy();
         public abstract void PollEvents();

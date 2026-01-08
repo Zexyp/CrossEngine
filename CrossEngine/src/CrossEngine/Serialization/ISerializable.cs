@@ -5,4 +5,6 @@
         internal protected void GetObjectData(SerializationInfo info);
         internal protected void SetObjectData(SerializationInfo info);
     }
+
+    // 🤔 IFileSerializable
 }

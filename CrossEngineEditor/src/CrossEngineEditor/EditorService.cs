@@ -1,96 +1,159 @@
-﻿using CrossEngine.Assets.Loaders;
-using CrossEngine.Display;
+﻿using CrossEngine.Display;
 using CrossEngine.Profiling;
 using CrossEngine.Rendering.Textures;
 using CrossEngine.Scenes;
-using CrossEngine.Services;
-using CrossEngine.Utils;
-using CrossEngine.Logging;
-using CrossEngine.Serialization;
-using CrossEngine.Utils.ImGui;
-using CrossEngine.Assets;
-
-using CrossEngineEditor.Utils;
+using CrossEngine.Core.Services;
 using CrossEngineEditor.Panels;
-using CrossEngineEditor.Popups;
-
+using CrossEngine.Utils;
 using ImGuiNET;
-using StbImageSharp;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using CrossEngine.Logging;
 using System.Diagnostics;
+using System.Reflection;
+using CrossEngineEditor.Utils;
+using StbImageSharp;
+using CrossEngine.Assets;
 using System.Text.Json;
+using CrossEngine.Serialization;
+using CrossEngine.Utils.ImGui;
 using System.Threading.Channels;
+using CrossEngine.Loaders;
+using CrossEngine.Rendering;
+using CrossEngineEditor.Modals;
+using CrossEngineEditor.Platform;
+using System.IO;
+using CrossEngine.Assemblies;
+using CrossEngine.Core;
+using CrossEngine.Events;
+using CrossEngine.Platform.Glfw;
+using CrossEngine.Utils.Extensions;
+using CrossEngine.Utils.IO;
+using CrossEngineEditor.Modals.Importer;
 
 namespace CrossEngineEditor
 {
     internal class EditorService : Service
     {
-        readonly EditorContext Context = new EditorContext();
-        readonly List<EditorPanel> _panels = new List<EditorPanel>();
-        readonly List<EditorPopup> _popups = new List<EditorPopup>();
-        readonly List<EditorPanel> _registeredPanels = new List<EditorPanel>();
-        public EditorPreferences Preferences = new EditorPreferences();
-        //readonly List<EditorModal> _modals = new List<EditorModal>();
-        private Window window = null;
+        public readonly PanelManager Panels = new PanelManager();
+        public IniFile Preferences;
+        
+        internal const string ConfigPreferencesPath = "preferences.ini";
+        internal const string ConfigRecentsPath = "recents.ini";
         internal static Logger Log = new Logger("editor") { Color = 0xffCE1E6B };
 
-        public override void OnStart()
-        {
-            Log.Info("editor started");
+        public readonly EditorContext Context;
+        private Window window = null;
+        
+        // static modals
+        private ExitModal _exitModal = new ExitModal() { Exit = () => EditorApplication.Instance.Close()}; // iks de
+        private BlockModal _contextBlockModal = new BlockModal("Context Change");
+        private int _blockDepth = 0;
+        
+        public EditorProject Project { get; set; }
+        private List<string> _recentProjects;
 
-            string preferencesPath = "preferences.json";
-            if (File.Exists(preferencesPath))
+        private Stream GetIconStream() => Assembly.GetAssembly(typeof(Application))
+            .GetManifestResourceStream("CrossEngine.res.logo.png");
+
+        private List<ImportModal> _importers = new();
+
+        public EditorService()
+        {
+            Context = new EditorContext((msg) =>
             {
-                Preferences = EditorPreferences.Read(preferencesPath);
-            }
+                if (Panels.GetModal<BlockModal>() == null)
+                {
+                    _contextBlockModal.Open = null;
+                    _contextBlockModal.Text = msg;
+                    Panels.PushModal(_contextBlockModal);
+                }
+                _blockDepth++;
+            }, () =>
+            {
+                _blockDepth--;
+                if (_blockDepth == 0)
+                {
+                    _contextBlockModal.Open = false;
+                    _contextBlockModal.Text = "";
+                }
+            });
+            
+            Panels.RegisterPanel(new InspectorPanel());
+            Panels.RegisterPanel(new HierarchyPanel());
+            //Panels.RegisterPanel(new SceneViewPanel(rs));
+            Panels.RegisterPanel(new ViewportPanel());
+            Panels.RegisterPanel(new GamePanel());
+            Panels.RegisterPanel(new AssetListPanel());
+            Panels.RegisterPanel(new SimpleThemeGeneratorPanel());
+            
+            _importers.Add(new ObjImport());
+            _importers.Add(new AtlasImport());
+            
+#if DEBUG
+            //Panels.PushPanel(new WidgetTestPanel());
+#endif
+        }
+
+        public override void OnInit()
+        {
+            ReadConfig();
+            
+            Manager.Event += OnEvent;
+            
+            Log.Info("editor started");
         }
 
         public override void OnDestroy()
         {
-            while (_panels.Count > 0)
-                RemovePanel(_panels[0]);
+            Manager.Event -= OnEvent;
 
-            _registeredPanels.Clear();
-
+            WriteConfig();
+            
             Log.Info("editor closed");
         }
 
         public override unsafe void OnAttach()
         {
-            var rs = Manager.GetService<RenderService>();
+            // visuals
             Manager.GetService<WindowService>().Execute(() =>
             {
-                window = Manager.GetService<WindowService>().Window;
+                window = Manager.GetService<WindowService>().MainWindow;
                 
                 // eeww
+#if WINDOWS
                 Theming.UseImmersiveDarkMode(Process.GetCurrentProcess().MainWindowHandle, true);
-                var result = ImageResult.FromMemory(CrossEngine.Properties.Resources.Logo, ColorComponents.RedGreenBlueAlpha);
+#endif
+                
+                var result = ImageResult.FromStream(GetIconStream(), ColorComponents.RedGreenBlueAlpha);
                 fixed (void* p = &result.Data[0])
                     window.SetIcon(p, (uint)result.Width, (uint)result.Height);
 
             });
-            rs.Frame += OnRender;
+            var rs = Manager.GetService<RenderService>();
             rs.Execute(() =>
             {
-                dockspaceIconTexture = TextureLoader.LoadTexture(CrossEngine.Properties.Resources.Logo);
-                dockspaceIconTexture.GetValue().SetFilterParameter(FilterParameter.Nearest);
+                dockspaceIconTexture = TextureLoader.LoadTextureFromStream(GetIconStream());
+                dockspaceIconTexture.SetFilterParameter(FilterParameter.Nearest);
             });
 
             Init();
+            
+            rs.MainSurface.Update += OnRender;
         }
 
         public override void OnDetach()
         {
-            Deinit();
-
+            // dispose visuals
             var rs = Manager.GetService<RenderService>();
-            rs.Frame -= OnRender;
+            rs.MainSurface.Update -= OnRender;
+            
+            Deinit();
+            
             rs.Execute(() =>
             {
                 dockspaceIconTexture.Dispose();
@@ -98,10 +161,54 @@ namespace CrossEngineEditor
             });
         }
 
-        private void OnRender(RenderService rs)
+        private void OnRender(ISurface surface)
         {
             Profiler.BeginScope();
 
+            try
+            {
+                try
+                {
+                    InternalRender();
+                }
+                catch (NotImplementedException nie)
+                {
+                    // check if exception is coming from within assembly
+                    var trace = new StackTrace(nie);
+                    var frame = trace.GetFrame(0);
+                    if (frame.GetMethod().DeclaringType.Assembly != Assembly.GetExecutingAssembly())
+                        throw;
+                    
+                    Log.Error($"action at {frame.GetMethod().DeclaringType}.{frame.GetMethod().Name} in {frame.GetFileName()}:{frame.GetFileLineNumber()} not implemented ({nie.Message})");
+                    
+                    Panels.PushModal(new ActionModal("Not implemented", "sigh"));
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Fatal($"ui drawing fail");
+                throw;
+            }
+
+            Profiler.EndScope();
+        }
+        
+        private void OnEvent(CrossEngine.Events.Event e)
+        {
+            if (e is WindowCloseEvent wce)
+            {
+                ((GlfwWindow)window).RequestWindowAttention();
+                if (Panels.GetModal<ExitModal>() == null)
+                {
+                    _exitModal.Open = true;
+                    Panels.PushModal(_exitModal);
+                }
+                wce.Handled = true;
+            }
+        }
+
+        private void InternalRender()
+        {
             SetupDockspace(window);
 
             DrawMainMenuBar();
@@ -109,54 +216,28 @@ namespace CrossEngineEditor
             var io = ImGui.GetIO();
 
             ImGui.ShowDemoWindow();
-            Profiler.BeginScope($"{nameof(EditorService)}.{nameof(EditorService.DrawPanels)}");
-            DrawPanels();
-            Profiler.EndScope();
+            Panels.Draw();
 
             EndDockspace();
-
-            Profiler.EndScope();
         }
 
         private void Init()
         {
-            Context.AssetsChanged += OnContextAssetsChanged;
             Context.SceneChanged += OnContextSceneChanged;
-
-            var rs = Manager.GetService<RenderService>();
-            RegisterPanel(new InspectorPanel());
-            RegisterPanel(new HierarchyPanel());
-            RegisterPanel(new ViewportPanel(rs));
-            RegisterPanel(new GamePanel(rs));
-            RegisterPanel(new AssetListPanel());
-            RegisterPanel(new SimpleThemeGeneratorPanel());
-
-            // debug thingy
-            // ######
-            var scene = new Scene();
-            scene.CreateEntity();
-            scene.CreateEntity();
-            scene.CreateEntity();
-            scene.Entities[1].Parent = scene.Entities[0];
-            scene.Entities[0].AddComponent(new CrossEngine.Components.OrthographicCameraComponent() { Primary = true, Size = 5 });
-            scene.Entities[0].AddComponent<CrossEngine.Components.PerspectiveCameraComponent>();
-            scene.Entities[0].AddComponent<CrossEngine.Components.SpriteRendererComponent>();
-            scene.Entities[0].AddComponent<CrossEngine.Components.TagComponent>();
-
-            Context.Scene = scene;
-            // ######
+            
+            Panels.Init(Context);
         }
 
         private void Deinit()
         {
-            Context.Clear();
+            Panels.Destroy();
+            //Context.Clear();
 
-            Context.AssetsChanged -= OnContextAssetsChanged;
             Context.SceneChanged -= OnContextSceneChanged;
         }
 
         #region Dockspace
-        private WeakReference<Texture> dockspaceIconTexture;
+        private Texture dockspaceIconTexture;
 
         private unsafe void SetupDockspace(Window window)
         {
@@ -186,7 +267,7 @@ namespace CrossEngineEditor
 
             Vector2 lastCur = ImGui.GetCursorPos();
             ImGui.SetCursorPos((ImGui.GetWindowSize() - new Vector2(256, 256)) * 0.5f);
-            ImGui.Image(new IntPtr(dockspaceIconTexture.GetValue()?.RendererId ?? 0), new Vector2(256, 256), new Vector2(0, 1), new Vector2(1, 0), new Vector4(1, 1, 1, 0.25f));
+            ImGui.Image(new IntPtr(dockspaceIconTexture?.RendererId ?? 0), new Vector2(256, 256), new Vector2(0, 1), new Vector2(1, 0), new Vector4(1, 1, 1, 0.25f));
             ImGui.SetCursorPos(lastCur);
 
             Vector4 col = *ImGui.GetStyleColorVec4(ImGuiCol.DockingEmptyBg);
@@ -205,70 +286,246 @@ namespace CrossEngineEditor
 
         private void DrawMainMenuBar()
         {
+            void DrawSceneDropdown()
+            {
+                var disable = Context.Assets == null;
+                if (disable) ImGui.BeginDisabled();
+                var name = GetCurrentSceneAsset()?.GetName();
+                name ??= Context.Scene == null ? InspectDrawer.NullExpression : "<unknown>";
+                ImGui.SetNextItemWidth(120);
+                if (ImGui.BeginCombo("Scene", name))
+                {
+                    if (ImGui.MenuItem("New"))
+                    {
+                        void CreateScene() => Context.SetScene(new Scene());
+
+                        DialogDestructive(CreateScene, Context.Scene != null);
+                    }
+                    
+                    ImGui.Separator();
+                    
+                    if (ImGui.MenuItem("Save As...", Context.Scene != null))
+                    {
+                        DialogFileSave().ContinueWith(t =>
+                        {
+                            var filepath = t.Result;
+                            if (filepath != null)
+                                using (Stream stream = EditorPlatformHelper.FileCreate(filepath))
+                                    SceneSerializer.SerializeJson(stream, Context.Scene);
+                        });
+                    }
+                    if (ImGui.MenuItem("Dump", Context.Scene != null))
+                        using (var stream = Console.OpenStandardOutput())
+                            SceneSerializer.SerializeJson(stream, Context.Scene);
+                    
+                    ImGui.Separator();
+
+                    if (Context.Assets?.HasCollection<SceneAsset>() == true)
+                    {
+                        foreach (var item in Context.Assets.GetCollection<SceneAsset>())
+                        {
+                            if (!item.Loaded) ImGui.BeginDisabled();
+                            var isSelected = item.Scene != null && item.Scene == Context.Scene;
+                            if (ImGui.Selectable(item.GetName(), isSelected))
+                            {
+                                void LoadScene()
+                                {
+                                    Context.SetScene(item.Scene);
+                                }
+                                DialogDestructive(LoadScene, Context.Scene != null);
+                            }
+                            if (isSelected) ImGui.SetItemDefaultFocus();
+                            if (!item.Loaded) ImGui.EndDisabled();
+                        }
+                    }
+
+                    ImGui.EndCombo();
+                }
+                
+                if (disable) ImGui.EndDisabled();
+            }
+            
             if (ImGui.BeginMainMenuBar())
             {
                 if (ImGui.BeginMenu("File"))
                 {
-                    //ImGui.Separator();
+                    void OpenProject(string path)
+                    {
+                        Context.Clear().ContinueWith(t =>
+                        {
+                            try
+                            {
+                                Project = new EditorProject();
+                                Project.Load(Context, path, ini =>
+                                {
+                                    for (int i = 0; i < Panels.Registered.Count; i++)
+                                    {
+                                        var panel = Panels.Registered[i];
+                                        var info = IniSerializationInfo.FromSection(ini[$"workspace.{panel.GetType().FullName}"]);
+                                        panel.LoadState(info);
+                                    }
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                EditorService.Log.Error($"project load failed: {e}");
+                                DialogGenericError();
+                            }
+
+                            AppendRecent(Project.Filepath);
+                        });
+                    }
+
+                    void SaveProject()
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(Project.Filepath));
+                        Project.Save(Context, Project.Filepath, ini =>
+                        {
+                            for (int i = 0; i < Panels.Registered.Count; i++)
+                            {
+                                var panel = Panels.Registered[i];
+                                var info = IniSerializationInfo.FromSection(ini[$"workspace.{panel.GetType().FullName}"]);
+                                panel.SaveState(info);
+                            }
+                        });
+                        if (Context.Assets != null)
+                        {
+                            if (!File.Exists(Context.Assets.RuntimeFilepath))
+                                Panels.PushModal(new ActionModal("Assets not saved", "Unsaved"));
+                            else
+                                AssetManager.WriteFile(Context.Assets, Context.Assets.RuntimeFilepath);
+                        }
+                        if (Context.Scene != null)
+                        {
+                            string filepath;
+                            if (!File.Exists(filepath = ((IAssetLoadContext)Context.Assets)?.GetFullPath(GetCurrentSceneAsset()?.RelativePath)))
+                                Panels.PushModal(new ActionModal("Scene not saved", "Unsaved"));
+                            else
+                                using (Stream stream = EditorPlatformHelper.FileCreate(filepath))
+                                    SceneSerializer.SerializeJson(stream, Context.Scene);
+                        }
+                        
+                        AppendRecent(Project.Filepath);
+                    }
+
+                    if (ImGui.MenuItem("New..."))
+                    {
+                        DialogDestructive(() =>
+                        {
+                            Panels.PushModal(new CreateProjectModal() {Callback = path =>
+                            {
+                                Context.Clear().ContinueWith(t =>
+                                {
+                                    if (Path.Exists(path))
+                                    {
+                                        DialogGenericError();
+                                        return;
+                                    }
+
+                                    Project = new EditorProject();
+                                    Project.Filepath = path;
+                                    SaveProject();
+                                });
+
+                            }});
+                        });
+                    }
+                    if (ImGui.MenuItem("Open..."))
+                    {
+                        DialogDestructive(() =>
+                        {
+                            DialogFileOpen().ContinueWith(t =>
+                            {
+                                if (t.Result == null) return;
+                                OpenProject(t.Result);
+                            });
+                        });
+                    }
+                    if (ImGui.BeginMenu("Open Recent"))
+                    {
+                        for (int i = 0; i < _recentProjects.Count; i++)
+                        {
+                            var projpath = _recentProjects[i];
+                            if (ImGui.Selectable(projpath))
+                            {
+                                if (File.Exists(projpath)) DialogDestructive(() => OpenProject(projpath));
+                                else Panels.PushModal(new ActionModal("File not found.\nRemove from recents?", "Upsík dupsík", ActionModal.ButtonFlags.Yes | ActionModal.ButtonFlags.Cancel) {Success =
+                                    () => _recentProjects.Remove(projpath)
+                                });
+                            }
+                        }
+
+                        ImGui.Separator();
+
+                        if (ImGui.MenuItem("Clear"))
+                            DialogDestructive(_recentProjects.Clear);
+                        
+                        ImGui.EndMenu();
+                    }
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Close", Project != null))
+                    {
+                        DialogDestructive(() => { Project = null; });
+                    }
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Save", Project != null))
+                    {
+                        SaveProject();
+                    }
+                    if (ImGui.MenuItem("Save As...", Project != null))
+                    {
+                        DialogFileSave().ContinueWith(t =>
+                        {
+                            if (t.Result == null) return;
+                            Project.Save(Context, t.Result);
+                        });
+                    }
+                    ImGui.Separator();
+                    if (ImGui.BeginMenu("Import", Context.Assets != null))
+                    {
+                        for (int i = 0; i < _importers.Count; i++)
+                        {
+                            var importer = _importers[i];
+                            if (ImGui.MenuItem(importer.GetType().Name))
+                            {
+                                importer.Open = true;
+                                Panels.PushModal(importer);
+                            }
+                        }
+                        ImGui.EndMenu();
+                    }
+                    ImGui.Separator();
                     if (ImGui.MenuItem("Quit"))
-                        EditorApplication.Instance.Close();
+                    {
+                        _exitModal.Open = true;
+                        Panels.PushModal(_exitModal);
+                    }
 
                     ImGui.EndMenu();
                 }
 
                 if (ImGui.BeginMenu("Edit"))
                 {
-                    if (ImGui.MenuItem("Preferences"))
-                        PushPanel(new PreferencesPanel());
-
-                    ImGui.EndMenu();
-                }
-
-                if (ImGui.BeginMenu("Scene"))
-                {
-                    if (ImGui.MenuItem("New"))
-                    {
-                        Context.Scene = new Scene();
-                    }
-                    if (ImGui.BeginMenu("Load", Context.Assets?.HasCollection<SceneAsset>() == true))
-                    {
-                        foreach (var item in Context.Assets.GetCollection<SceneAsset>())
-                        {
-                            if (!item.Loaded) ImGui.BeginDisabled();
-                            if (ImGui.Selectable(item.GetName(), item.Scene != null && item.Scene == Context.Scene))
-                            {
-                                Context.Scene = null;
-                                Context.Scene = item.Scene;
-                            }
-                            if (!item.Loaded) ImGui.EndDisabled();
-                        }
-
-                        ImGui.EndMenu();
-                    }
+                    if (ImGui.MenuItem("Undo")) throw new NotImplementedException();
+                    if (ImGui.MenuItem("Redo")) throw new NotImplementedException();
+                    
                     ImGui.Separator();
-                    if (ImGui.MenuItem("Save As...", Context.Scene != null))
-                    {
-                        var filepath = ShellFileDialogs.FileSaveDialog.ShowDialog(0, null, null, null, null);
-                        if (filepath != null)
-                            using (Stream stream = File.OpenWrite(filepath))
-                            {
-                                stream.SetLength(0);
-                                SceneSerializer.SerializeJson(stream, Context.Scene);
-                            }
-                    }
-
+                    
+                    if (ImGui.MenuItem("Preferences..."))
+                        Panels.PushModal(new PreferencesModal());
+                    
                     ImGui.EndMenu();
                 }
-
+                
                 if (ImGui.BeginMenu("Window"))
                 {
                     if (ImGui.BeginMenu("Panels"))
                     {
-                        for (int i = 0; i < _registeredPanels.Count; i++)
+                        for (int i = 0; i < Panels.Registered.Count; i++)
                         {
-                            var p = _registeredPanels[i];
-                            if (ImGui.MenuItem(p.WindowName, null, p.Open ?? true))
-                                p.Open = (p.Open ?? true) ? false : null;
+                            var p = Panels.Registered[i];
+                            if (ImGui.MenuItem(p.WindowName, null, p.Open ?? false))
+                                p.Open = !p.Open;
                         }
 
                         ImGui.EndMenu();
@@ -281,144 +538,121 @@ namespace CrossEngineEditor
 
                     ImGui.EndMenu();
                 }
+                
+                ImGui.SameLine();
+                DrawSceneDropdown();
 
-                var dis = Context.Scene == null;
-                if (dis) ImGui.BeginDisabled();
-                ImGui.SetCursorPosX(ImGui.GetColumnWidth() / 2);
-                var on = Context.Mode == EditorContext.Playmode.Playing || Context.Mode == EditorContext.Playmode.Paused;
-                if (on) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered]);
-                if (ImGui.ArrowButton("##play", on ? ImGuiDir.Down : ImGuiDir.Right))
-                {
-                    if (on)
-                        StopScene();
-                    else
-                        StartScene();
-                }
-                if (on) ImGui.PopStyleColor();
-                if (dis) ImGui.EndDisabled();
+                ImGui.SameLine();
+                if (ImGui.Button("start") && Context.Scene != null)
+                    SceneManager.Start(Context.Scene);
+
+                var projectText = Project == null ? "*" : Project.Filepath;
+                projectText ??= "Initializing...";
+                ImGui.SameLine(ImGui.GetWindowWidth() - ImGui.CalcTextSize(projectText).X - ImGui.GetStyle().ItemSpacing.X * 2);
+                ImGui.TextDisabled(projectText);
 
                 ImGui.EndMainMenuBar();
             }
         }
         #endregion
 
-        #region Panel Methods
-        private void RegisterPanel(EditorPanel panel)
+        #region Context Changes
+        private void OnContextSceneChanged(Scene old)
         {
-            if (_registeredPanels.Contains(panel)) throw new InvalidOperationException();
-
-            panel.Open = (panel.Open ?? true) ? null : false;
-
-            _registeredPanels.Add(panel);
-
-            PushPanel(panel);
-
-            Log.Trace($"registered panel '{panel.GetType().FullName}'");
-        }
-
-        private void UnregisterPanel(EditorPanel panel)
-        {
-            if (!_registeredPanels.Contains(panel)) throw new InvalidOperationException();
-
-            _registeredPanels.Remove(panel);
-
-            RemovePanel(panel);
-
-            Log.Trace($"unregistered panel '{panel.GetType().FullName}'");
-        }
-
-        private void PushPanel(EditorPanel panel)
-        {
-            _panels.Add(panel);
-            panel.Context = Context;
-
-            panel.Attached = true;
-            panel.OnAttach();
-
-            if (panel.Open != false) panel.OnOpen();
-        }
-
-        private void RemovePanel(EditorPanel panel)
-        {
-            if (panel.Open != false) panel.OnClose();
-
-            panel.OnDetach();
-            panel.Attached = false;
-
-            panel.Context = null;
-            _panels.Remove(panel);
-        }
-
-        //public T GetPanel<T>() where T : EditorPanel
-        //{
-        //    return (T)GetPanel(typeof(T));
-        //}
-        //
-        //public EditorPanel GetPanel(Type typeOfPanel)
-        //{
-        //    for (int i = 0; i < _panels.Count; i++)
-        //    {
-        //        if (_panels[i].GetType() == typeOfPanel)
-        //            return _panels[i];
-        //    }
-        //    return null;
-        //}
-
-        private void DrawPanels()
-        {
-            for (int i = 0; i < _panels.Count; i++)
-            {
-                var p = _panels[i];
-
-                try
-                {
-                    p.Draw();
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"incident while drawing a panel '{p.WindowName}' ({p.GetType().FullName}): {e}");
-                }
-            }
+            Context.ActiveEntity = null;
         }
         #endregion
 
-        private void OnContextSceneChanged(Scene old)
+        #region Dialogs
+        internal Task<string> DialogFileOpen()
         {
-            if (old != null) SceneManager.Unload(old);
-
-            if (Context.Scene != null) SceneManager.Load(Context.Scene, new SceneService.SceneConfig() { Update = false, Render = false, Resize = false });
+            var modal = new BlockModal("File Dialog") { Text = "File open dialog is open." };
+            Panels.PushModal(modal);
+            return Task.Run(() => { var result = EditorPlatformHelper.FileOpenDialog(); modal.Open = false; return result; });
         }
 
-        private void OnContextAssetsChanged(AssetPool old)
+        internal Task<string> DialogFileSave()
         {
-            if (old != null) AssetManager.Unload();
-
-            AssetManager.Bind(Context.Assets);
-
-            if (Context.Assets != null) AssetManager.Load();
+            var modal = new BlockModal("File Dialog") { Text = "File save dialog is open." };
+            Panels.PushModal(modal);
+            return Task.Run(() => { var result = EditorPlatformHelper.FileSaveDialog(); modal.Open = false; return result; });
         }
 
-        Scene prevScene;
-        private void StartScene()
+        internal Task<string> DialogPickDirectory()
         {
-            Debug.Assert(prevScene == null);
-            prevScene = Context.Scene;
-            Context.Scene = (Scene)Context.Scene.Clone();
+            var modal = new BlockModal("File Dialog") { Text = "Pick directory dialog is open." };
+            Panels.PushModal(modal);
+            return Task.Run(() => { var result = EditorPlatformHelper.DirectoryPickDialog(); modal.Open = false; return result; });
+        }
+
+        internal void DialogDestructive(Action action, bool destructiveIf = true)
+        {
+            if (destructiveIf)
+                Panels.PushModal(new ActionModal("Are you sure?", "Destructive", ActionModal.ButtonFlags.YesNo)
+                {
+                    Color = ActionModal.TextColor.Warn,
+                    Success = action
+                });
+            else
+                action.Invoke();
+        }
+
+        internal void DialogGenericError(string msg = null)
+        {
+            Panels.PushModal(new ActionModal(msg ?? "Whoops...\nThat's an error.", "Error") { Color = ActionModal.TextColor.Error });
+        }
+        #endregion
+
+        internal SceneAsset GetCurrentSceneAsset()
+        {
+            if (Context.Scene == null || Context.Assets?.HasCollection<SceneAsset>() == false)
+                return null;
             
-            SceneManager.Start(Context.Scene);
-            SceneManager.Configure(Context.Scene, new SceneService.SceneConfig() { Update = true, Render = false, Resize = false });
-            Context.Mode = EditorContext.Playmode.Playing;
+            return  Context.Assets.GetCollection<SceneAsset>().FirstOrDefault(a => a.Scene == Context.Scene);
         }
 
-        private void StopScene()
-        {
-            Context.Mode = EditorContext.Playmode.Stopped;
-            SceneManager.Configure(Context.Scene, new SceneService.SceneConfig() { Update = false, Render = false, Resize = false });
-            SceneManager.Stop(Context.Scene);
+        internal void RendererRequest(Action action) => Manager.GetService<RenderService>().Execute(action);
 
-            Debug.Assert(prevScene != null);
-            Context.Scene = prevScene;
-            prevScene = null;
+        private void ReadConfig()
+        {
+            Log.Debug("configuring");
+            
+            // assert files
+            if (!File.Exists(ConfigPreferencesPath)) EditorPlatformHelper.FileCreate(ConfigPreferencesPath).Close();
+            if (!File.Exists(ConfigRecentsPath)) EditorPlatformHelper.FileCreate(ConfigRecentsPath).Close();
+            
+            Preferences = IniFile.Load(File.OpenRead(ConfigPreferencesPath));
+            
+            var ediini = IniFile.Load(File.OpenRead(ConfigRecentsPath));
+            int i = 0;
+            _recentProjects = new();
+            while (ediini["recents"].TryReadString($"recent{i}", out var recent))
+            {
+                _recentProjects.Add(recent);
+                i++;
+            }
+        }
+
+        private void WriteConfig()
+        {
+            Log.Debug("saving configuration");
+
+            var ediini = new IniFile();
+            for (int i = 0; i < _recentProjects.Count; i++)
+            {
+                ediini["recents"].Write($"recent{i}", _recentProjects[i]);
+            }
+            IniFile.Dump(ediini, File.Create(ConfigRecentsPath));
+        }
+
+        private void AppendRecent(string filepath)
+        {
+            if (filepath == null)
+                return;
+
+            if (_recentProjects.Contains(filepath))
+                _recentProjects.Remove(filepath);
+            _recentProjects.Insert(0, filepath);
         }
     }
 }

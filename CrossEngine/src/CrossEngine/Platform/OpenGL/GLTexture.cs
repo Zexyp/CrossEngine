@@ -25,9 +25,10 @@ namespace CrossEngine.Platform.OpenGL
         private GLEnum _dataFormat;
         private int _internalFormat;
 
-        public override uint RendererId => _rendererId;
         public override uint Width => _width;
         public override uint Height => _height;
+        
+        public override uint RendererId => _rendererId;
 
         unsafe GLTexture()
         {
@@ -36,39 +37,43 @@ namespace CrossEngine.Platform.OpenGL
             fixed (uint* p = &_rendererId)
                 gl.GenTextures(1, p);
 
-            GC.KeepAlive(this);
-            GPUGC.Register(this);
-
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
 
-        public unsafe GLTexture(uint width, uint height, ColorFormat internalFormat) : this()
-        {
-            SetData(null, width, height, internalFormat, internalFormat);
-        }
-
-        protected override unsafe void Dispose(bool disposing)
+        protected internal override unsafe void Destroy()
         {
             Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
+            
             // free any unmanaged objects here
             fixed (uint* p = &_rendererId)
                 gl.DeleteTextures(1, p);
 
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
+            GLRendererApi.LogObjectDeletion(this);
+        }
 
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
+        public unsafe GLTexture(uint width, uint height, ColorFormat internalFormat) : this()
+        {
+            Target = TextureTarget.Texture2D;
+            SetData(null, width, height, internalFormat, internalFormat);
+        }
 
-            Disposed = true;
+        public static unsafe GLTexture CreateCubemap(uint width, uint height, void*[] images)
+        {
+            Debug.Assert(images.Length == 6);
+            var tex = new GLTexture();
+            tex.Target = TextureTarget.TextureCubeMap;
+            GLEnum gltarg = GLUtils.ToGLTextureTarget(tex.Target);
+            gl.BindTexture(gltarg, tex._rendererId);
+            
+            for(int i = 0; i < 6; i++)
+            {
+                gl.TexImage2D((GLEnum)(GLEnum.TextureCubeMapPositiveX + i), 0, (int)GLEnum.Rgb, width, height, 0, GLEnum.Rgb, GLEnum.UnsignedByte, images[i]);
+            }
+            
+            tex.SetFilterParameter(FilterParameter.Default);
+            tex.SetWrapParameter(WrapParameter.Default);
+
+            return tex;
         }
 
         public override void Bind(uint slot = 0)
@@ -124,6 +129,9 @@ namespace CrossEngine.Platform.OpenGL
         {
             int glfilt = (int)GLUtils.ToGLFilterParameter(filter);
             GLEnum gltarg = GLUtils.ToGLTextureTarget(Target);
+            
+            gl.BindTexture(gltarg, _rendererId);
+            
             gl.TexParameter(gltarg, GLEnum.TextureMinFilter, glfilt);
             gl.TexParameter(gltarg, GLEnum.TextureMagFilter, glfilt);
 
@@ -134,9 +142,17 @@ namespace CrossEngine.Platform.OpenGL
         {
             int glwrap = (int)GLUtils.ToGLWrapParameter(wrap);
             GLEnum gltarg = GLUtils.ToGLTextureTarget(Target);
+            
+            gl.BindTexture(gltarg, _rendererId);
+            
             //gl.TexParameter(gltarg, GLEnum.TextureWrapR, glwrap); // for 3d texture
             gl.TexParameter(gltarg, GLEnum.TextureWrapS, glwrap);
             gl.TexParameter(gltarg, GLEnum.TextureWrapT, glwrap);
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

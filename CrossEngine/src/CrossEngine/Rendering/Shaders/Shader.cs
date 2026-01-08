@@ -10,6 +10,9 @@ using CrossEngine.Logging;
 using CrossEngine.Profiling;
 
 using CrossEngine.Platform.OpenGL;
+#if WINDOWS
+using CrossEngine.Platform.Windows;
+#endif
 
 namespace CrossEngine.Rendering.Shaders
 {
@@ -33,6 +36,7 @@ namespace CrossEngine.Rendering.Shaders
         Bool,
 
         Sampler2D,
+        SamplerCube,
     }
 
     public enum ShaderType
@@ -44,52 +48,25 @@ namespace CrossEngine.Rendering.Shaders
         Fragment,
     }
 
-    public abstract class Shader : IDisposable
+    public abstract class Shader : GpuObject
     {
         public ShaderType Type { get; private set; }
-
-        public bool Disposed { get; protected set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            Profiler.Function();
-
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-
-            Disposed = true;
-        }
-
-        ~Shader()
-        {
-            Dispose(false);
-        }
 
         public Shader(ShaderType type)
         {
             Type = type;
         }
 
-        public static WeakReference<Shader> Create(string source, ShaderType type)
+        public static Shader Create(string source, ShaderType type)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: return new WeakReference<Shader>(new GLShader(source, type));
+                case GraphicsApi.OpenGL: return new GLShader(source, type);
+#if WINDOWS
+                case GraphicsApi.GDI: return new GdiShader(source, type);
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

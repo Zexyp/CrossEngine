@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CrossEngine.Assets;
+using CrossEngine.Logging;
 
 namespace CrossEngine.Serialization.Json
 {
@@ -52,9 +54,14 @@ namespace CrossEngine.Serialization.Json
 
             Type type = Resolver?.Resolve(typeString) ?? Type.GetType(typeString);
 
-            Debug.Assert(type != null, $"Type '{typeString}' not resolved");
+            if (type == null)
+            {
+                var msg = $"type '{typeString}' not resolved";
+                Log.Default.Error(msg);
+                Debug.Fail(msg);
+            }
 
-            var serializable = (ISerializable)Activator.CreateInstance(type);
+            var serializable = CreateInstance(type);
 
             serializable.SetObjectData(info);
 
@@ -65,5 +72,6 @@ namespace CrossEngine.Serialization.Json
 
         protected virtual void OnSerializeContent(Utf8JsonWriter writer, ISerializable value, JsonSerializerOptions options, SerializationInfo info) { }
         protected virtual void OnDeserializeContent(JsonElement reader, ISerializable value, JsonSerializerOptions options, SerializationInfo info) { }
+        protected virtual ISerializable CreateInstance(Type type) => (ISerializable)Activator.CreateInstance(type);
     }
 }

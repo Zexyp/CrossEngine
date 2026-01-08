@@ -1,7 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
-#define GL
+﻿#define GL
 
 using System;
 #if GLES
@@ -16,7 +13,7 @@ namespace CrossEngine.Utils.ImGui
 {
     using ImGui = ImGuiNET.ImGui;
 
-    public enum TextureCoordinate
+    enum TextureCoordinate
     {
         S = TextureParameterName.TextureWrapS,
         T = TextureParameterName.TextureWrapT,

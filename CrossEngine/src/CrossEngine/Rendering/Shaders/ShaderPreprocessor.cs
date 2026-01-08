@@ -1,0 +1,194 @@
+﻿#define SHOW_SOURCES
+#define SET_LINE
+
+#if WASM
+//#error File reading is not okie dokie
+#endif
+
+using CrossEngine.Logging;
+using CrossEngine.Platform;
+using CrossEngine.Profiling;
+using CrossEngine.Rendering.Buffers;
+using CrossEngine.Utils;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using CrossEngine.Rendering.Shaders;
+using CrossEngine.Utils.Extensions;
+
+namespace CrossEngine.Loaders
+{
+    public static class ShaderPreprocessor
+    {
+#if !OPENGL_ES
+        private const string ShaderProfile = "core";
+        private const string ShaderVersion = "330";
+        private const string ShaderPrecision = "";
+        private const string ShaderMatInit = " = mat4(1)";
+#else
+        private const string ShaderProfile = "es";
+        private const string ShaderVersion = "300";
+        private const string ShaderPrecision = "precision highp float;";
+        private const string ShaderMatInit = "";
+#endif
+
+        private const string DefaultShaderProgramSource =
+$@"#type vertex
+#version {ShaderVersion} {ShaderProfile}
+{ShaderPrecision}
+layout(location = 0) in vec3 aPosition;
+uniform mat4 uViewProjection{ShaderMatInit};
+uniform mat4 uModel{ShaderMatInit};
+void main() {{
+    gl_Position = uViewProjection * uModel * vec4(aPosition, 1.0);
+}}
+
+#type fragment
+#version {ShaderVersion} {ShaderProfile}
+{ShaderPrecision}
+layout(location = 0) out vec4 oColor;
+void main() {{
+    oColor = vec4(1, 0, 1, 1); // gl_FragColor no workie in es
+}}
+";
+        public static ShaderProgram DefaultShaderProgram { get; private set; }
+
+        static Logger _log = new Logger("shader-preproc");
+
+        public struct ShaderSources
+        {
+            public string Vertex, Fragment;
+        }
+
+        internal static void Init()
+        {
+            // erm
+            DefaultShaderProgram = ShaderPreprocessor.CreateProgramFromString(DefaultShaderProgramSource);
+        }
+
+        internal static void Shutdown()
+        {
+            DefaultShaderProgram.Dispose();
+            DefaultShaderProgram = null;
+        }
+
+        internal static Stream GetInternalShaderSource(string filename)
+        {
+            filename = filename.RemovePrefix("internal:").Replace("/", ".");
+            return Assembly.GetExecutingAssembly().GetManifestResourceStream($"CrossEngine.res.shaders.{filename}");
+        }
+
+        public static ShaderProgram CreateProgramFromFile(string filepath)
+        {
+            _log.Debug($"processing '{filepath}'");
+
+            return CreateProgramFromStream(File.OpenRead(filepath), path => File.OpenRead(Path.Join(Path.GetDirectoryName(filepath), path)));
+        }
+
+        public static  ShaderProgram CreateProgramFromString(string source)
+        {
+            using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(source)))
+            {
+                return CreateProgramFromStream(stream);
+            }
+        }
+
+        public static ShaderProgram CreateProgramFromStream(Stream stream, Func<string, Stream> includeCallback = null)
+        {
+            Profiler.BeginScope("shader preprocessor");
+            var sources = SplitSources(stream, includeCallback);
+            Profiler.EndScope();
+
+            var vertex = Shader.Create(sources.Vertex, ShaderType.Vertex);
+            var fragment = Shader.Create(sources.Fragment, ShaderType.Fragment);
+
+            var program = ShaderProgram.Create(vertex, fragment);
+
+            vertex.Dispose();
+            fragment.Dispose();
+
+            return program;
+        }
+
+        public static ShaderSources SplitSources(Stream stream, Func<string, Stream> includeCallback = null)
+        {
+            StringBuilder builderVertex = new StringBuilder();
+            StringBuilder builderFragment = new StringBuilder();
+            StringBuilder currentBuilder = null;
+            Stack<StreamReader> readersStack = new Stack<StreamReader>(new[] { new StreamReader(stream) });
+            int lineNumber = 0;
+            while (readersStack.TryPeek(out var reader))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    bool appendLineNumber = false;
+                    lineNumber++;
+                    switch (line)
+                    {
+                        case string s when s.StartsWith("#include"):
+                            string include = Regex.Match(s, "^#include\\s+\\\"(.+?)\\\"$").Groups[1].Value;
+                            stream = InternalInclude(include, includeCallback);
+                            readersStack.Push(new StreamReader(stream));
+                            goto jump_reader; // we need to break while
+                        case string s when s.StartsWith("#type"):
+                            string type = Regex.Match(s, "^#type\\s+(.+?)$").Groups[1].Value;
+                            switch (type)
+                            {
+                                case "vertex": currentBuilder = builderVertex; break;
+                                case "fragment": currentBuilder = builderFragment; break;
+                                case "geometry": throw new NotImplementedException();
+                                default: Debug.Assert(false, "unknown shader type encountered while preprocessing shader"); break;
+                            }
+                            continue;
+                        case string s when s.StartsWith("#version"):
+                            appendLineNumber = true;
+                            break;
+                    }
+
+                    // if file starts with whitespace
+                    if (currentBuilder == null && string.IsNullOrWhiteSpace(line))
+                        continue;
+                    
+                    Debug.Assert(currentBuilder != null, "no builder bound");
+                    currentBuilder.AppendLine(line);
+
+                    if (appendLineNumber)
+                    {
+#if SET_LINE
+                        currentBuilder.AppendLine($"#line {lineNumber}");
+#endif
+                    }
+                }
+                
+                if (reader.EndOfStream)
+                    readersStack.Pop().Close();
+
+                jump_reader:;
+            }
+
+#if SHOW_SOURCES
+            _log.Trace($"vertex:\n{builderVertex.ToString()}");
+            _log.Trace($"fragment:\n{builderFragment.ToString()}");
+#endif
+
+            return new ShaderSources() { Fragment = builderFragment.ToString(), Vertex = builderVertex.ToString() };
+        }
+        
+        private static Stream InternalInclude(string path, Func<string, Stream> fallback)
+        {
+            _log.Trace($"including '{path}'");
+
+            if (!path.StartsWith("internal:"))
+                return fallback.Invoke(path);
+                
+            return GetInternalShaderSource(path);
+        }
+    }
+}

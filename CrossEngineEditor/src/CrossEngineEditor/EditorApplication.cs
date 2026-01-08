@@ -2,7 +2,7 @@
 using CrossEngine.Core;
 using CrossEngine.Events;
 using CrossEngine.Rendering;
-using CrossEngine.Services;
+using CrossEngine.Core.Services;
 using CrossEngine.Utils.ImGui;
 using CrossEngineEditor.Panels;
 using System;
@@ -17,68 +17,54 @@ using CrossEngine.Debugging;
 using CrossEngine.Inputs;
 using CrossEngine.Utils;
 using System.Numerics;
+using CrossEngine.Display;
+using CrossEngine.Scenes;
+using CrossEngine.Assets;
+using CrossEngine.Utils.Rendering;
 
 namespace CrossEngineEditor
 {
     internal class EditorApplication : Application
     {
-        public static EditorApplication Instance; // 🖕
+        public static EditorApplication Instance { get; private set; }
+        public static EditorService Service { get; private set; }
 
         public EditorApplication()
         {
-            Debug.Assert(Instance == null);
-            Instance = this;
-
-            // provides a nice smooth shutdown
-            //AppDomain.CurrentDomain.ProcessExit <- this is nice but works like ass
-            Console.CancelKeyPress += (object? sender, ConsoleCancelEventArgs e) =>
-            {
-                Console.WriteLine("Interrupted");
-                CloseWait();
-                Environment.Exit(25);
-            };
-
+            RenderService rs;
+            MetricsOverlay mo;
             // register
             Manager.Register(new TimeService());
+            Manager.Register(new ConsoleInputService());
             Manager.Register(new InputService());
             Manager.Register(new WindowService(
                 WindowService.Mode.ThreadLoop
-                ));
-            Manager.Register(new RenderService());
+            ));
+            Manager.Register(rs = new RenderService());
+            // is not nice but
             Manager.Register(new ImGuiService("res/fonts/JetBrainsMono[wght].ttf"));
             Manager.Register(new SceneService());
             Manager.Register(new AssetService());
+            Manager.Register(new OverlayService(mo = new MetricsOverlay(rs)));
 
-            //Manager.Register(new OverlayService());
-
+            // yippee
             Manager.Register(new EditorService());
 
-
             // configure
-            Manager.GetService<WindowService>().WindowEvent += OnEvent;
-            //Manager.GetService<OverlayService>().AddOverlay(new HelloOverlay());
         }
-
-        class HelloOverlay : Overlay
+        
+        public override void OnInit()
         {
-            protected override void Content()
-            {
-                var mat = Matrix4x4.CreateTranslation(new Vector3(-Size.X / 2, Size.Y / 2, 0));
-                var t = $"{1d / Time.UnscaledDelta:000.00} fps\n{Time.UnscaledDelta * 1000:00.000} ms";
-                TextRendererUtil.DrawText(mat, t, new Vector4(1, 0, 0, 1));
-            }
+            Debug.Assert(Instance == null && Service == null);
+            
+            Instance = this;
+            Service = Manager.GetService<EditorService>();
         }
 
         public override void OnDestroy()
         {
-            base.OnDestroy();
             Instance = null;
-        }
-
-        private void OnEvent(WindowService ws, Event e)
-        {
-            if (e is WindowCloseEvent)
-                Close();
+            Service = null;
         }
     }
 }

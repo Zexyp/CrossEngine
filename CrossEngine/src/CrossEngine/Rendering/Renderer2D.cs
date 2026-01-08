@@ -9,6 +9,8 @@ using CrossEngine.Rendering.Buffers;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Rendering.Textures;
 using System.Linq;
+using CrossEngine.Logging;
+using CrossEngine.Utils.Extensions;
 
 namespace CrossEngine.Rendering
 {
@@ -24,16 +26,10 @@ namespace CrossEngine.Rendering
 		}
 	}
 
-	public enum BlendMode
-	{
-		Opaque = default,
-		Blend,
-		Clip,
-	}
-
-	public class Renderer2D
+    public class Renderer2D
 	{
 		#region Shader Sources
+#if OPENGL
 		static readonly string VertexShaderSource =
 #if !OPENGL_ES
 			"#version 330 core\n" +
@@ -90,7 +86,7 @@ namespace CrossEngine.Rendering
 			"void main()\n" +
 			"{\n" +
             "    vec4 texColor = vColor;\n" +
-#if !OPENGL_ES
+#if false
 			"    texColor *= texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
 #else
             "    switch (int(vTexIndex))\n" +
@@ -129,7 +125,7 @@ namespace CrossEngine.Rendering
 			"\n" +
 			"void main()\n" +
 			"{\n" +
-#if !OPENGL_ES
+#if false
 			"    vec4 texColor = texture(uTextures[int(vTexIndex + 0.5)], vTexCoord);\n" +
 #else
             "    vec4 texColor;\n" +
@@ -145,9 +141,73 @@ namespace CrossEngine.Rendering
             "    oColor = texColor;\n" +
             "    oEntityIDColor = vEntityID;\n" +
 			"}\n";
-#endregion
+#elif GDI
+		static readonly string VertexShaderSource =
+@"
+var aPosition = (Vector3)AttributesIn[0];
+var aColor = (Vector4)AttributesIn[1];
+var aTexCoord = (Vector2)AttributesIn[2];
+var aTexIndex = (float)AttributesIn[3];
+var aEntityID = (int)AttributesIn[4];
 
-		public struct PrimitiveVertex
+var uViewProjection = (Matrix4x4)Uniforms[""uViewProjection""];
+
+Out[""vColor""] = aColor;
+Out[""vTexCoord""] = aTexCoord;
+Out[""vTexIndex""] = aTexIndex;
+Out[""vEntityID""] = aEntityID;
+
+gdi_Position = Vector4.Transform(new Vector4(aPosition, 1), uViewProjection);
+";
+		static readonly string FragmentShaderSource =
+@"
+var vColor = (Vector4)In[""vColor""];
+var vTexCoord = (Vector2)In[""vTexCoord""];
+var vTexIndex = (float)In[""vTexIndex""];
+var vEntityID = (int)In[""vEntityID""];
+
+var uTextures = (int[])Uniforms[""uTextures""];
+
+Vector4 texColor = vColor;
+
+texColor *= Sample(uTextures[(int)vTexIndex], vTexCoord);
+
+AttributesOut[0] = texColor;
+AttributesOut[1] = vEntityID;
+";
+		static readonly string DiscardingFragmentShaderSource = "";
+#else
+#error
+#endif
+        #endregion
+        static readonly uint[] quadIndices = new uint[6] {
+	        0,
+	        1,
+	        2,
+	        2,
+	        3,
+	        0,
+        };
+        static readonly Vector3[] quadVertexPositions = new Vector3[4] {
+	        new Vector3(-0.5f, -0.5f,  0.0f),
+	        new Vector3( 0.5f, -0.5f,  0.0f),
+	        new Vector3( 0.5f,  0.5f,  0.0f),
+	        new Vector3(-0.5f,  0.5f,  0.0f),
+        };
+        static readonly Vector2[] quadTextureCoords = new Vector2[4] {
+	        new Vector2(0.0f, 0.0f),
+	        new Vector2(1.0f, 0.0f),
+	        new Vector2(1.0f, 1.0f),
+	        new Vector2(0.0f, 1.0f),
+        };
+
+        static readonly Vector2[] triTextureCoords = new Vector2[3] {
+	        new Vector2(0.5f, 0.0f),
+	        new Vector2(0.0f, 1.0f),
+	        new Vector2(1.0f, 0.0f),
+        };
+        
+        public struct PrimitiveVertex
 		{
 			public Vector3 position;
 			public Vector4 color;
@@ -171,9 +231,9 @@ namespace CrossEngine.Rendering
 
 			public const uint MaxTextureSlots = 8; // 8 is minimum, desktop will take 32 np however my tincy lil sh*t chromium only 16
 
-			public WeakReference<ShaderProgram> discardingShader;
-			public WeakReference<ShaderProgram> regularShader;
-			public WeakReference<Texture> whiteTexture;
+			public ShaderProgram discardingShader;
+			public ShaderProgram regularShader;
+			public Texture whiteTexture;
 
 			public PrimitivesData quads;
 			public PrimitivesData tris;
@@ -187,9 +247,9 @@ namespace CrossEngine.Rendering
 				public uint IndexCount;
 				public PrimitiveVertex[] VertexBufferBase;
 				public unsafe PrimitiveVertex* VertexBufferPtr;
-				public WeakReference<VertexArray> VertexArray;
-				public WeakReference<VertexBuffer> VertexBuffer;
-				public WeakReference<Texture>[] TextureSlots;
+				public VertexArray VertexArray;
+				public VertexBuffer VertexBuffer;
+				public Texture[] TextureSlots;
 				public uint TextureSlotIndex;
 				public RendererStats Stats;
 			}
@@ -204,42 +264,18 @@ namespace CrossEngine.Rendering
 
 		public static Renderer2DData data;
 
-		static readonly uint[] quadIndices = new uint[6] {
-				0,
-				1,
-				2,
-				2,
-				3,
-				0,
-			};
-		static readonly Vector3[] quadVertexPositions = new Vector3[4] {
-				new Vector3(-0.5f, -0.5f,  0.0f),
-				new Vector3( 0.5f, -0.5f,  0.0f),
-				new Vector3( 0.5f,  0.5f,  0.0f),
-				new Vector3(-0.5f,  0.5f,  0.0f),
-			};
-		static readonly Vector2[] quadTextureCoords = new Vector2[4] {
-				new Vector2(0.0f, 0.0f),
-				new Vector2(1.0f, 0.0f),
-				new Vector2(1.0f, 1.0f),
-				new Vector2(0.0f, 1.0f),
-			};
-
-		static readonly Vector2[] triTextureCoords = new Vector2[3] {
-				new Vector2(0.5f, 0.0f),
-				new Vector2(0.0f, 1.0f),
-				new Vector2(1.0f, 0.0f),
-			};
-
+		[ThreadStatic]
 		private static RendererApi _rapi;
 
 		public static unsafe void Init(RendererApi rapi)
 		{
+			Log.Default.Debug($"initializing {nameof(Renderer2D)}");
+			
 			_rapi = rapi;
 
-			var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex).GetValue();
-			var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment).GetValue();
-			var fragmentDiscarding = Shader.Create(DiscardingFragmentShaderSource, ShaderType.Fragment).GetValue();
+			var vertex = Shader.Create(VertexShaderSource, ShaderType.Vertex);
+			var fragment = Shader.Create(FragmentShaderSource, ShaderType.Fragment);
+			var fragmentDiscarding = Shader.Create(DiscardingFragmentShaderSource, ShaderType.Fragment);
 			data.regularShader = ShaderProgram.Create(vertex, fragment); //AssetManager.Shaders.GetShader("shaders/batch/texturedbatch.shader");
 			data.discardingShader = ShaderProgram.Create(vertex, fragmentDiscarding);
 			vertex.Dispose();
@@ -248,17 +284,17 @@ namespace CrossEngine.Rendering
 
 			data.whiteTexture = Texture.Create(1, 1, ColorFormat.RGBA);
 			uint whiteCol = 0xffffffff;
-			data.whiteTexture.GetValue().SetData(&whiteCol, sizeof(uint));
+			data.whiteTexture.SetData(&whiteCol, sizeof(uint));
 
 			int[] samplers = new int[Renderer2DData.MaxTextureSlots];
 			for (uint i = 0; i < Renderer2DData.MaxTextureSlots; i++)
 				samplers[i] = (int)i;
-			var shader = data.regularShader.GetValue();
+			var shader = data.regularShader;
 			shader.Use();
-			shader.SetParameter1("uTextures", samplers);
-			shader = data.discardingShader.GetValue();
+			shader.SetParameterIntVec("uTextures", samplers);
+			shader = data.discardingShader;
 			shader.Use();
-			shader.SetParameter1("uTextures", samplers);
+			shader.SetParameterIntVec("uTextures", samplers);
 
 			//data.cameraUniformBuffer = new UniformBuffer(null, sizeof(Renderer2DData.CameraData), BufferUsage.DynamicDraw);
 			//data.cameraUniformBuffer.BindTo(0);
@@ -274,7 +310,7 @@ namespace CrossEngine.Rendering
 			// quads
 			{
 				data.quads.VertexBufferBase = new PrimitiveVertex[Renderer2DData.MaxQuadVertices];
-				data.quads.TextureSlots = new WeakReference<Texture>[Renderer2DData.MaxTextureSlots];
+				data.quads.TextureSlots = new Texture[Renderer2DData.MaxTextureSlots];
 
 				uint[] indices = new uint[(int)Renderer2DData.MaxQuadIndices];
 				uint offset = 0;
@@ -292,27 +328,27 @@ namespace CrossEngine.Rendering
 				}
 
 				data.quads.VertexBuffer = VertexBuffer.Create(null, (uint)(Renderer2DData.MaxQuadVertices * sizeof(PrimitiveVertex)), BufferUsageHint.DynamicDraw);
-				data.quads.VertexBuffer.GetValue().SetLayout(layout);
+				data.quads.VertexBuffer.SetLayout(layout);
 
-				WeakReference<IndexBuffer> quadIB;
+				IndexBuffer quadIB;
 				fixed (uint* p = &indices[0])
 					quadIB = IndexBuffer.Create(p, Renderer2DData.MaxQuadIndices, IndexDataType.UInt);
 				indices = null; // marked for deletion i hope
 
 				data.quads.VertexArray = VertexArray.Create();
-				data.quads.VertexArray.GetValue().AddVertexBuffer(data.quads.VertexBuffer);
-				data.quads.VertexArray.GetValue().SetIndexBuffer(quadIB);
+				data.quads.VertexArray.AddVertexBuffer(data.quads.VertexBuffer);
+				data.quads.VertexArray.SetIndexBuffer(quadIB);
 			}
 			// tris
 			{
 				data.tris.VertexBufferBase = new PrimitiveVertex[Renderer2DData.MaxTriVertices];
-				data.tris.TextureSlots = new WeakReference<Texture>[Renderer2DData.MaxTextureSlots];
+				data.tris.TextureSlots = new Texture[Renderer2DData.MaxTextureSlots];
 
 				data.tris.VertexBuffer = VertexBuffer.Create(null, (uint)(Renderer2DData.MaxTriVertices * sizeof(PrimitiveVertex)), BufferUsageHint.DynamicDraw);
-				data.tris.VertexBuffer.GetValue().SetLayout(layout);
+				data.tris.VertexBuffer.SetLayout(layout);
 
 				data.tris.VertexArray = VertexArray.Create();
-				data.tris.VertexArray.GetValue().AddVertexBuffer(data.tris.VertexBuffer);
+				data.tris.VertexArray.AddVertexBuffer(data.tris.VertexBuffer);
 			}
 
 			data.quads.TextureSlots[0] = data.whiteTexture;
@@ -321,11 +357,13 @@ namespace CrossEngine.Rendering
 
 		public static void Shutdown()
 		{
+			Log.Default.Debug($"shutting down {nameof(Renderer2D)}");
+			
 			data.discardingShader.Dispose();
 			data.regularShader.Dispose();
 			data.whiteTexture.Dispose();
 
-			var va = data.quads.VertexArray.GetValue();
+			var va = data.quads.VertexArray;
             va.Dispose();
 			va.GetIndexBuffer().Dispose();
 			data.quads.VertexBuffer.Dispose();
@@ -348,8 +386,8 @@ namespace CrossEngine.Rendering
 
 		public static void Flush()
 		{
-			FlushQuads();
-			FlushTris();
+			NextQuadsBatch();
+			NextTrisBatch();
 		}
 
 		public static void EndScene()
@@ -374,12 +412,12 @@ namespace CrossEngine.Rendering
 				return;
 
 			fixed (PrimitiveVertex* p = data.quads.VertexBufferBase)
-				data.quads.VertexBuffer.GetValue().SetData(p, (uint)((byte*)data.quads.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
+				data.quads.VertexBuffer.SetData(p, (uint)((byte*)data.quads.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
 
 			// bind textures
 			for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
 			{
-				if (data.quads.TextureSlots[i]?.GetValue() != null) data.quads.TextureSlots[i].GetValue().Bind(i);
+				if (data.quads.TextureSlots[i] != null) data.quads.TextureSlots[i].Bind(i);
 			}
 
             Push(ref data.quads);
@@ -408,12 +446,12 @@ namespace CrossEngine.Rendering
 				return;
 
 			fixed (PrimitiveVertex* p = data.tris.VertexBufferBase)
-				data.tris.VertexBuffer.GetValue().SetData(p, (uint)((byte*)data.tris.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
+				data.tris.VertexBuffer.SetData(p, (uint)((byte*)data.tris.VertexBufferPtr - (byte*)p)); // we need the count of bytes not structs that's why we need to cast these
 
 			// bind textures
 			for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
 			{
-				if (data.tris.TextureSlots[i]?.GetValue() != null) data.tris.TextureSlots[i].GetValue().Bind(i);
+				if (data.tris.TextureSlots[i] != null) data.tris.TextureSlots[i].Bind(i);
 			}
 
 			Push(ref data.tris);
@@ -434,16 +472,21 @@ namespace CrossEngine.Rendering
 			{
 				case BlendMode.Opaque:
 					_rapi.SetBlendFunc(BlendFunc.None);
-					shader = data.regularShader.GetValue();
+					shader = data.regularShader;
 					break;
 				case BlendMode.Blend:
 					_rapi.SetBlendFunc(BlendFunc.OneMinusSrcAlpha);
-					shader = data.regularShader.GetValue();
+					shader = data.regularShader;
 					break;
 				case BlendMode.Clip:
 					_rapi.SetBlendFunc(BlendFunc.None);
-					shader = data.discardingShader.GetValue();
+					shader = data.discardingShader;
 					break;
+                case BlendMode.Add:
+                    _rapi.SetBlendFunc(BlendFunc.One);
+                    shader = data.regularShader;
+                    break;
+                default: Debug.Assert(false); break;
 			}
 
 			Debug.Assert(shader != null);
@@ -451,16 +494,18 @@ namespace CrossEngine.Rendering
             shader.Use();
 			shader.SetParameterMat4("uViewProjection", data.viewProjectionMatrix);
 
-			if (primitive.VertexArray.GetValue().GetIndexBuffer() != null)
+			if (primitive.VertexArray.GetIndexBuffer() != null)
                 _rapi.DrawIndexed(primitive.VertexArray, primitive.IndexCount/*, DrawMode.Traingles*/);
             else
                 _rapi.DrawArray(primitive.VertexArray, primitive.IndexCount/*, DrawMode.Traingles*/);
         }
 		#endregion
 
-		public static void SetBlending(BlendMode mode)
+		public static BlendMode SetBlending(BlendMode mode)
 		{
-			data.blending = mode;
+			var last = data.blending;
+            data.blending = mode;
+			return last;
 		}
 
 		#region Quads
@@ -486,7 +531,7 @@ namespace CrossEngine.Rendering
 			data.quads.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, WeakReference<Texture> texture, in Vector4 tintColor, int entityId = 0)
+		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, Texture texture, in Vector4 tintColor, int entityId = 0)
 		{
 			if (data.quads.IndexCount >= Renderer2DData.MaxQuadIndices)
 				NextQuadsBatch();
@@ -494,7 +539,7 @@ namespace CrossEngine.Rendering
 			float textureIndex = 0.0f;
 			for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
 			{
-				if (data.quads.TextureSlots[i].GetValue() == texture.GetValue())
+				if (data.quads.TextureSlots[i] == texture)
 				{
 					textureIndex = i;
 					break;
@@ -526,7 +571,7 @@ namespace CrossEngine.Rendering
 			data.quads.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, WeakReference<Texture> texture, in Vector4 tintColor, in Vector4 texOffsets, int entityId = 0)
+		public static unsafe void DrawTexturedQuad(in Matrix4x4 transform, Texture texture, in Vector4 tintColor, in Vector4 texOffsets, int entityId = 0)
 		{
 			if (data.quads.IndexCount >= Renderer2DData.MaxQuadIndices)
 				NextQuadsBatch();
@@ -534,7 +579,7 @@ namespace CrossEngine.Rendering
 			float textureIndex = 0.0f;
 			for (uint i = 0; i < data.quads.TextureSlotIndex; i++)
 			{
-				if (data.quads.TextureSlots[i].GetValue() == texture.GetValue())
+				if (data.quads.TextureSlots[i] == texture)
 				{
 					textureIndex = i;
 					break;
@@ -591,7 +636,7 @@ namespace CrossEngine.Rendering
 			data.tris.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, WeakReference<Texture> texture, in Vector4 tintColor, int entityId = 0)
+		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, Texture texture, in Vector4 tintColor, int entityId = 0)
 		{
 			if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
 				NextTrisBatch();
@@ -599,7 +644,7 @@ namespace CrossEngine.Rendering
 			float textureIndex = 0.0f;
 			for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
 			{
-				if (data.tris.TextureSlots[i].GetValue() == texture.GetValue())
+				if (data.tris.TextureSlots[i] == texture)
 				{
 					textureIndex = i;
 					break;
@@ -633,7 +678,7 @@ namespace CrossEngine.Rendering
 			data.tris.Stats.ItemCount++;
 		}
 
-		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, WeakReference<Texture> texture, in Vector4 tintColor, Vector2 uv1, Vector2 uv2, Vector2 uv3, int entityId = 0)
+		public static unsafe void DrawTexturedTri(Vector3 p1, Vector3 p2, Vector3 p3, Texture texture, in Vector4 tintColor, Vector2 uv1, Vector2 uv2, Vector2 uv3, int entityId = 0)
 		{
 			if (data.tris.IndexCount >= Renderer2DData.MaxTriVertices)
 				NextTrisBatch();
@@ -641,7 +686,7 @@ namespace CrossEngine.Rendering
 			float textureIndex = 0.0f;
 			for (uint i = 0; i < data.tris.TextureSlotIndex; i++)
 			{
-				if (data.tris.TextureSlots[i].GetValue() == texture.GetValue())
+				if (data.tris.TextureSlots[i] == texture)
 				{
 					textureIndex = i;
 					break;
@@ -677,7 +722,6 @@ namespace CrossEngine.Rendering
 			data.tris.Stats.ItemCount++;
 		}
 		#endregion
-
 
 		//// simple
 		//public static void DrawQuad(Vector2 position, Vector2 size, Vector4 color) => DrawQuad(new Vector3(position, 0.0f), size, color);

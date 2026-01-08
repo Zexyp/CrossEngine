@@ -1,5 +1,5 @@
-﻿using CrossEngine.Platform.Windows;
-using CrossEngine.Services;
+﻿using CrossEngine.Platform.Glfw;
+using CrossEngine.Core.Services;
 using System;
 
 using ImGuiNET;
@@ -8,6 +8,9 @@ using Silk.NET.OpenGL.Extensions.ImGui;
 using System.IO;
 using CrossEngine.Logging;
 using CrossEngine.Core;
+using CrossEngine.Display;
+using CrossEngine.Rendering;
+using System.Numerics;
 
 namespace CrossEngine.Utils.ImGui
 {
@@ -16,6 +19,7 @@ namespace CrossEngine.Utils.ImGui
         MyImGuiController controller;
 
         private string fontpath = null;
+        private Logger _log = new Logger("imgui-service");
 
         public ImGuiService(string fontpath = null)
         {
@@ -24,9 +28,11 @@ namespace CrossEngine.Utils.ImGui
 
         public override void OnDetach()
         {
+            _log.Trace("detaching");
+
             var rs = Manager.GetService<RenderService>();
-            rs.BeforeFrame -= OnBeforeFrame;
-            rs.AfterFrame -= OnAfterFrame;
+            rs.MainSurface.BeforeUpdate -= OnBeforeDraw;
+            rs.MainSurface.AfterUpdate -= OnAfterDraw;
 
             rs.Execute(() =>
             {
@@ -36,15 +42,17 @@ namespace CrossEngine.Utils.ImGui
 
         public override unsafe void OnAttach()
         {
+            _log.Trace("attaching");
+            
             var rs = Manager.GetService<RenderService>();
-            rs.BeforeFrame += OnBeforeFrame;
-            rs.AfterFrame += OnAfterFrame;
+            rs.MainSurface.BeforeUpdate += OnBeforeDraw;
+            rs.MainSurface.AfterUpdate += OnAfterDraw;
 
             rs.Execute(() =>
             {
                 controller = new MyImGuiController(
                     CrossEngine.Platform.OpenGL.GLContext.gl,
-                    Manager.GetService<WindowService>().Window,
+                    Manager.GetService<WindowService>().MainWindow,
                     () =>
                     {
                         var io = IG.GetIO();
@@ -54,23 +62,26 @@ namespace CrossEngine.Utils.ImGui
                         SetupTheme();
 
                         io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;    // Enable Docking
+
+                        // behaviour
+                        IG.SetColorEditOptions(ImGuiColorEditFlags.Float | ImGuiColorEditFlags.AlphaPreviewHalf | ImGuiColorEditFlags.AlphaBar);
                     });
             });
         }
 
-        private void OnBeforeFrame(RenderService rs)
+        private void OnBeforeDraw(ISurface surface)
         {
             controller.Update(Time.UnscaledDeltaF);
         }
 
-        private unsafe void OnAfterFrame(RenderService rs)
+        private unsafe void OnAfterDraw(ISurface surface)
         {
-            var w = Manager.GetService<WindowService>().Window;
-            rs.RendererApi.SetViewport(0, 0, w.Width, w.Height);
+            var w = Manager.GetService<WindowService>().MainWindow;
+            w.Graphics.Api.SetViewport(0, 0, w.Width, w.Height); // not sure about this
             controller.Render();
         }
 
-        public override void OnStart()
+        public override void OnInit()
         {
             
         }
@@ -89,14 +100,11 @@ namespace CrossEngine.Utils.ImGui
             //colors[(int)ImGuiCol.SliderGrab] = new(0.24f, 0.90f, 0.66f, 0.78f);
             // #3EE6A9, #50112C
 
-            if (fontpath != null)
-                colors[(int)ImGuiCol.Text] = new(0.86f, 0.93f, 0.89f, 1);
-            else
-                colors[(int)ImGuiCol.Text] = new(0.86f, 0.93f, 0.89f, 1);
+            colors[(int)ImGuiCol.Text] = new(0.86f, 0.93f, 0.89f, 1);
             colors[(int)ImGuiCol.TextDisabled] = new(0.86f, 0.93f, 0.89f, 0.28f);
             colors[(int)ImGuiCol.WindowBg] = new(0.051851857f, 0.057037048f, 0.07000001f, .5f); //1f
             colors[(int)ImGuiCol.ChildBg] = new(0.2f, 0.22000003f, 0.27f, 0.58f);
-            colors[(int)ImGuiCol.PopupBg] = new(0.2f, 0.22000003f, 0.27f, 0.9f);
+            colors[(int)ImGuiCol.PopupBg] = new Vector4(0.2f, 0.22000003f, 0.27f, 0.9f) / 1.5f;
             colors[(int)ImGuiCol.Border] = new(0.16296297f, 0.17925929f, 0.22000001f, 0.6f);
             colors[(int)ImGuiCol.BorderShadow] = new(0.2f, 0.22000003f, 0.27f, 0f);
             colors[(int)ImGuiCol.FrameBg] = new(0.2f, 0.22000003f, 0.27f, 1f);
@@ -147,6 +155,7 @@ namespace CrossEngine.Utils.ImGui
             colors[(int)ImGuiCol.ModalWindowDimBg] = new(0.2f, 0.22000003f, 0.27f, 0.73f);
             colors[(int)ImGuiCol.SeparatorHovered] = new(0.5f, 0.07470119f, 0.25498015f, 0.78f);
             colors[(int)ImGuiCol.SeparatorActive] = new(0.5f, 0.07470119f, 0.25498015f, 1f);
+            colors[(int)ImGuiCol.ModalWindowDimBg] = new(0f, 0f, 0f, .5f);
 
             style.WindowRounding = 4;
             style.FrameRounding = 4;

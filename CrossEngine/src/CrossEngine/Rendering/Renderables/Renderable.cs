@@ -4,13 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
-
+using CrossEngine.Geometry;
 using CrossEngine.Rendering.Cameras;
+using CrossEngine.Rendering.Culling;
+using CrossEngine.Rendering.Materials;
+using CrossEngine.Rendering.Meshes;
+using CrossEngine.Rendering.Textures;
 
 namespace CrossEngine.Rendering.Renderables
 {
     public interface IRenderable
     {
+        virtual void Init() { }
+        virtual void Destroy() { }
+        
         virtual void Begin(ICamera camera) { }
         virtual void End() { }
 
@@ -19,6 +26,9 @@ namespace CrossEngine.Rendering.Renderables
 
     public abstract class Renderable<T> : IRenderable where T : IObjectRenderData
     {
+        public virtual void Init() { }
+        public virtual void Destroy() { }
+        
         public virtual void Begin(ICamera camera) { }
         public virtual void End() { }
 
@@ -27,22 +37,24 @@ namespace CrossEngine.Rendering.Renderables
         public void Submit(IObjectRenderData data) => Submit((T)data);
     }
 
-    //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    //class RequiredRenderDataType : Attribute
-    //{
-    //    Type RequiredType;
-    //    public RequiredRenderDataType(Type type)
-    //    {
-    //        if (!type.IsInterface || !type.GetInterfaces().Contains(typeof(IObjectRenderData)))
-    //            throw new ArgumentException();
-    //
-    //        RequiredType = type;
-    //    }
-    //}
+    [Obsolete("not implemented")]
+    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = false)]
+    class RequiredRenderable<T> : Attribute where T : IRenderable
+    {
+    }
 
     public interface IObjectRenderData
     {
-        Matrix4x4 Transform { get; }
+        Matrix4x4 Transform => Matrix4x4.Identity;
+        virtual int Id => 0;
+        IVolume GetVolume();
+        bool IsVisible { get; set; }
+        bool IsEnabled => true;
+    }
+
+    public interface ISkyboxRenderData : IObjectRenderData
+    {
+        Texture Texture { get; }
     }
 
     //interface IDrawable<T, D> where T : Renderable<D> where D : IObjectRenderData

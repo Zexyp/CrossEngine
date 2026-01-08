@@ -10,13 +10,25 @@ namespace CrossEngine.Utils.ImGui
 {
     public static class ImGuiNull
     {
-        public unsafe static bool Begin(string name, ref bool? open, ImGuiWindowFlags flags)
+        public unsafe static bool Begin(string name, ref bool? open, ImGuiWindowFlags flags = ImGuiWindowFlags.None)
         {
             byte[] buffer = Encoding.UTF8.GetBytes(name);
             byte result;
             byte openval = (open ?? false) ? (byte)1 : (byte)0;
             fixed (byte* p = buffer)
                 result = ImGuiNative.igBegin(p, open.HasValue ? &openval : null, flags);
+            if (open != null)
+                open = openval != 0;
+            return result != 0;
+        }
+
+        public unsafe static bool BeginPopupModal(string name, ref bool? open, ImGuiWindowFlags flags = ImGuiWindowFlags.None)
+        {
+            byte[] buffer = Encoding.UTF8.GetBytes(name);
+            byte result;
+            byte openval = (open ?? false) ? (byte)1 : (byte)0;
+            fixed (byte* p = buffer)
+                result = ImGuiNative.igBeginPopupModal(p, open.HasValue ? &openval : null, flags);
             if (open != null)
                 open = openval != 0;
             return result != 0;

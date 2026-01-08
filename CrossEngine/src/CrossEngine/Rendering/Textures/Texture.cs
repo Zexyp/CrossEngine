@@ -5,42 +5,17 @@ using System.Diagnostics;
 using CrossEngine.Utils;
 
 using CrossEngine.Platform.OpenGL;
+using CrossEngine.Utils.Structs;
+#if WINDOWS
+using CrossEngine.Platform.Windows;
+#endif
 
 namespace CrossEngine.Rendering.Textures
 {
-    public abstract class Texture : IDisposable
+    public abstract class Texture : GpuObject
     {
-        public bool Disposed { get; protected set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (Disposed)
-                return;
-
-            if (disposing)
-            {
-                // free any other managed objects here
-            }
-
-            // free any unmanaged objects here
-
-            Disposed = true;
-        }
-
-        ~Texture()
-        {
-            Dispose(false);
-        }
-
         public TextureTarget Target { get; protected set; }
 
-        public abstract uint RendererId { get; }
         public abstract uint Width { get; }
         public abstract uint Height { get; }
         public IntVec2 Size => new IntVec2((int)Width, (int)Height);
@@ -53,18 +28,16 @@ namespace CrossEngine.Rendering.Textures
         public abstract void SetFilterParameter(FilterParameter filter);
         public abstract void SetWrapParameter(WrapParameter wrap);
 
-        public static WeakReference<Texture> Create(uint width, uint height, ColorFormat internalFormat)
-        {
-            return Create(new WeakReference<Texture>(null), width, height, internalFormat);
-        }
-
-        public static WeakReference<Texture> Create(WeakReference<Texture> wr, uint width, uint height, ColorFormat internalFormat)
+        public static Texture Create(uint width, uint height, ColorFormat internalFormat)
         {
             switch (RendererApi.GetApi())
             {
                 case GraphicsApi.None: Debug.Assert(false, $"No API is not supported"); return null;
                 case GraphicsApi.OpenGLES:
-                case GraphicsApi.OpenGL: wr.SetTarget(new GLTexture(width, height, internalFormat)); return wr;
+                case GraphicsApi.OpenGL: return new GLTexture(width, height, internalFormat);
+#if WINDOWS
+                case GraphicsApi.GDI: return new GdiTexture(width, height, internalFormat);
+#endif
             }
 
             Debug.Assert(false, $"Udefined {nameof(GraphicsApi)} value");

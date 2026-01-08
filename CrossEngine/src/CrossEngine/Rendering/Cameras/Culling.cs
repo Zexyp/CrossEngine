@@ -8,6 +8,11 @@ using CrossEngine.Utils;
 
 namespace CrossEngine.Rendering.Culling
 {
+    public interface IVolume
+    {
+        public Halfspace IsInFrustum(in Frustum frustum);
+    }
+
     public enum Halfspace
     {
         Outside = 0,
@@ -15,10 +20,13 @@ namespace CrossEngine.Rendering.Culling
         Inside
     }
 
-    public struct AABox
+    public struct AABox : IVolume
     {
         public Vector3 corner;
         public float x, y, z;
+
+        public Vector3 Min => corner;
+        public Vector3 Max => corner + new Vector3(x, y, z);
 
         public static AABox CreateFromExtents(Vector3 min, Vector3 max)
         {
@@ -28,6 +36,34 @@ namespace CrossEngine.Rendering.Culling
             b.y = max.Y - min.Y;
             b.z = max.Z - min.Z;
             return b;
+        }
+
+        public static AABox Transform(AABox a, Matrix4x4 transform)
+        {
+            Vector3[] corners = new Vector3[8]
+            {
+                new Vector3(a.Min.X, a.Min.Y, a.Min.Z),
+                new Vector3(a.Min.X, a.Min.Y, a.Max.Z),
+                new Vector3(a.Min.X, a.Max.Y, a.Min.Z),
+                new Vector3(a.Min.X, a.Max.Y, a.Max.Z),
+                new Vector3(a.Max.X, a.Min.Y, a.Min.Z),
+                new Vector3(a.Max.X, a.Min.Y, a.Max.Z),
+                new Vector3(a.Max.X, a.Max.Y, a.Min.Z),
+                new Vector3(a.Max.X, a.Max.Y, a.Max.Z),
+            };
+            
+            Vector3 transformed = Vector3.Transform(corners[0], transform);
+            var newMin = transformed;
+            var newMax = transformed;
+
+            for (int i = 1; i < 8; i++)
+            {
+                transformed = Vector3.Transform(corners[i], transform);
+                newMin = Vector3.Min(newMin, transformed);
+                newMax = Vector3.Max(newMax, transformed);
+            }
+            
+            return AABox.CreateFromExtents(newMin, newMax);
         }
 
         public Vector3 GetVertexP(Vector3 normal)
@@ -53,9 +89,11 @@ namespace CrossEngine.Rendering.Culling
                 res.Z += z;
             return res;
         }
+
+        public Halfspace IsInFrustum(in Frustum frustum) => frustum.IsAABoxIn(this);
     }
 
-    public struct Sphere
+    public struct Sphere : IVolume
     {
         public Vector3 center;
         public float radius;
@@ -65,6 +103,8 @@ namespace CrossEngine.Rendering.Culling
             this.center = center;
             this.radius = radius;
         }
+        
+        public Halfspace IsInFrustum(in Frustum frustum) => frustum.IsSphereIn(center, radius);
     }
 
     // should be called Frustrum becase it's frustrating
@@ -142,7 +182,7 @@ namespace CrossEngine.Rendering.Culling
         }
         #endregion
 
-        public static Frustum Create(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
+        public static Frustum Create(in Matrix4x4 projectionMatrix, in Matrix4x4 viewMatrix)
         {
             Frustum frustum = new Frustum();
             frustum.Update(projectionMatrix, viewMatrix);
@@ -153,7 +193,7 @@ namespace CrossEngine.Rendering.Culling
         Vector3 centrus;
 #endif
 
-        public unsafe void Update(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
+        public unsafe void Update(in Matrix4x4 projectionMatrix, in Matrix4x4 viewMatrix)
         {
             var result = Matrix4x4.Invert(viewMatrix, out var inv);
             Debug.Assert(result);

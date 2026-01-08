@@ -4,6 +4,8 @@ using CrossEngine.Profiling;
 using CrossEngine.Rendering;
 using CrossEngine.Rendering.Shaders;
 using CrossEngine.Debugging;
+using System.Runtime.InteropServices;
+
 
 #if WASM
 using GLEnum = Silk.NET.OpenGLES.GLEnum;
@@ -20,9 +22,7 @@ namespace CrossEngine.Platform.OpenGL
         uint _rendererId;
 
         public uint RendererId => _rendererId;
-
-        public bool Disposed { get; protected set; } = false;
-
+        
         public GLShader(string source, ShaderType type) : base(type)
         {
             Profiler.Function();
@@ -33,24 +33,16 @@ namespace CrossEngine.Platform.OpenGL
 
             CheckCompileErrors();
 
-            RendererApi.Log.Trace($"{this.GetType().Name} created (id: {_rendererId})");
+            GLRendererApi.LogObjectCreation(this);
         }
 
-        protected override void Dispose(bool disposing)
+        protected internal override void Destroy()
         {
             Profiler.Function();
-
-            if (Disposed)
-                return;
-
+            
             gl.DeleteShader(_rendererId);
 
-            GC.ReRegisterForFinalize(this);
-            GPUGC.Unregister(this);
-
-            RendererApi.Log.Trace($"{this.GetType().Name} deleted (id: {_rendererId})");
-
-            Disposed = true;
+            GLRendererApi.LogObjectDeletion(this);
         }
 
         // true if error found
@@ -67,12 +59,17 @@ namespace CrossEngine.Platform.OpenGL
                 fixed (byte* p = infoLog)
                 {
                     gl.GetShaderInfoLog(_rendererId, length, &length, p);
-                    message = GLHelper.PtrToStringUtf8((IntPtr)p);
+                    message = Marshal.PtrToStringUTF8((IntPtr)p);
                 }
                 RendererApi.Log.Error($"{Type} shader compilation failed!\n" + message);
                 return true;
             }
             return false;
+        }
+        
+        public override string ToString()
+        {
+            return $"{this.GetType().Name} (id: {_rendererId})";
         }
     }
 }

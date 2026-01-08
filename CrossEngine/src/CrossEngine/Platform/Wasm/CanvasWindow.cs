@@ -2,6 +2,7 @@ using CrossEngine.Display;
 using CrossEngine.Events;
 using CrossEngine.Inputs;
 using CrossEngine.Logging;
+using CrossEngine.Rendering;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -15,7 +16,7 @@ namespace CrossEngine.Platform.Wasm
         public override double Time => _time;
         public override bool ShouldClose { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         public override nint Handle => throw new System.NotImplementedException();
-        public override event OnEventFunction Event;
+        public override event Action<Event> Event;
 
         private double _time;
         private static CanvasWindow _instance;
@@ -25,15 +26,17 @@ namespace CrossEngine.Platform.Wasm
             _instance = this;
         }
 
-        public override unsafe void Create()
+        public override GraphicsContext InitGraphics(GraphicsApi api)
         {
             // idk why but context needs to be created before interop initializes
-            Context = new EGLContext();
-            Context.Init();
+            Graphics = new EGLContext();
+            Graphics.Init();
+            return Graphics;
+        }
 
+        public override unsafe void Create()
+        {
             SetupCallbacks();
-
-            Interop.Initialize();
 
             // very sketchy
             var holder = this;
@@ -44,7 +47,7 @@ namespace CrossEngine.Platform.Wasm
 
         public override void Destroy()
         {
-            Context.Shutdown();
+            Graphics?.Shutdown();
 
             RemoveCallbacks();
         }

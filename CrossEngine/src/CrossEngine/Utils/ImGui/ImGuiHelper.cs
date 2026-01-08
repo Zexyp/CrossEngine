@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CrossEngine.Utils.ImGui
 {
-    static class ImGuiHelper
+    public static class ImGuiHelper
     {
         public static IntPtr ImDrawCallback_ResetRenderState = -8;
 

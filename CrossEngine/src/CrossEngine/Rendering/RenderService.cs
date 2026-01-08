@@ -1,0 +1,255 @@
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+using CrossEngine.Display;
+using CrossEngine.Rendering;
+using CrossEngine.Profiling;
+using CrossEngine.Core.Services;
+using CrossEngine.Events;
+using CrossEngine.Utils;
+using CrossEngine.Platform;
+using CrossEngine.Loaders;
+using CrossEngine.Rendering.Shaders;
+using CrossEngine.Rendering.Buffers;
+using System.Numerics;
+using CrossEngine.Utils.Rendering;
+using System.Diagnostics;
+using CrossEngine.Debugging;
+
+namespace CrossEngine.Rendering
+{
+    public class RenderService : Service, IScheduledService
+    {
+        public bool IgnoreRefresh { get; set; } = false;
+        public ScreenSurface MainSurface => _surface;
+
+        readonly SingleThreadedTaskScheduler _scheduler = new SingleThreadedTaskScheduler();
+        private Stopwatch _sw = new Stopwatch();
+        private double _lastFrameDuration = 0;
+        GraphicsContext _context;
+        GraphicsApi _api;
+        ScreenSurface _surface = new ScreenSurface();
+
+        public RenderService(GraphicsApi? api = null)
+        {
+            _api = api ?? PlatformHelper.GetGraphicsApi();
+        }
+
+        public override void OnAttach()
+        {
+            var ws = Manager.GetService<WindowService>();
+            ws.Execute(Setup);
+
+            CallingThreadSetup();
+        }
+
+        public override void OnDetach()
+        {
+            CallingThreadDestroy();
+
+            var ws = Manager.GetService<WindowService>();
+            ws.Execute(Destroy);
+        }
+
+        public override void OnInit()
+        {
+
+        }
+
+        public override void OnDestroy()
+        {
+
+        }
+
+        public Task Execute(Action action) => _scheduler.Schedule(action);
+        public Task<TResult> Execute<TResult>(Func<TResult> func) => _scheduler.Schedule(func);
+        public TaskScheduler GetScheduler() => _scheduler;
+
+        public double GetLastFrameDuration() => _lastFrameDuration;
+
+        private void Setup()
+        {
+            _sw.Restart();
+
+            var ws = Manager.GetService<WindowService>();
+            ws.WindowEvent += OnWindowEvent;
+            ws.WindowUpdate += OnWindowUpdate;
+            
+            _context = ws.MainWindow.InitGraphics(_api);
+            _context.Init();
+            _context.MakeCurrent();
+
+            GraphicsContext.SetupCurrent(_context);
+
+            _context.Api = RendererApi.Create(_api);
+            _context.Api.Init();
+
+            _context.Api.SetClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+            _context.Api.SetViewport(0, 0, ws.MainWindow.Width, ws.MainWindow.Height);
+            
+            _surface.Context = _context;
+            _surface.DoResize(ws.MainWindow.Width, ws.MainWindow.Height);
+
+            Prepare();
+
+            GraphicsContext.SetupCurrent(null);
+        }
+
+        private void Destroy()
+        {
+            GraphicsContext.SetupCurrent(_context);
+            
+            var ws = Manager.GetService<WindowService>();
+            ws.WindowEvent -= OnWindowEvent;
+            ws.WindowUpdate -= OnWindowUpdate;
+            
+            Shutdown();
+            
+            ws.MainWindow.Graphics.Dispose();
+            
+            _context.Api.Dispose();
+            _context.Api = null;
+
+            GraphicsContext.SetupCurrent(null);
+
+            _context.Dispose();
+            _context = null;
+            
+            _sw.Stop();
+            _lastFrameDuration = _sw.Elapsed.TotalSeconds;
+
+            GpuGC.Collect();
+            GpuGC.PrintCollected(trim: true);
+        }
+
+        private void OnWindowEvent(Window w, Event e)
+        {
+            GraphicsContext.SetupCurrent(w.Graphics);
+
+            // this is supposed to fix state when resizing window
+            // it's unfortunate that when just holding the window nothing happens
+            // also used when window dictates it's own redrawing
+            if (!IgnoreRefresh && (e is WindowRefreshEvent))
+                DrawPresent(w.Graphics);
+
+            if (e is WindowResizeEvent wre)
+            {
+                w.Graphics.Api.SetViewport(0, 0, wre.Width, wre.Height);
+                _surface.DoResize(wre.Width, wre.Height);
+            }
+            
+            GraphicsContext.SetupCurrent(null);
+        }
+
+        private void OnWindowUpdate(Window w)
+        {
+            GraphicsContext.SetupCurrent(w.Graphics);
+            
+            DrawPresent(w.Graphics);
+            
+            GraphicsContext.SetupCurrent(null);
+        }
+
+        private void DrawPresent(GraphicsContext context)
+        {
+            _lastFrameDuration = _sw.Elapsed.TotalSeconds;
+            _sw.Restart();
+
+            Profiler.BeginScope("Render");
+
+            _scheduler.RunOnCurrentThread();
+
+            _surface.DoUpdate();
+
+            Profiler.EndScope();
+
+            Profiler.BeginScope("Swap");
+
+            context.SwapBuffers();
+
+            Profiler.EndScope();
+
+            GpuGC.Collect();
+        }
+
+        private void Prepare()
+        {
+            RenderThreadSetup();
+
+            ShaderPreprocessor.Init();
+            TextureLoader.Init();
+
+            Renderer2D.Init(_context.Api);
+            LineRenderer.Init(_context.Api);
+            TextRendererUtil.Init();
+
+            _scheduler.RunOnCurrentThread();
+        }
+
+        private void Shutdown()
+        {
+            _scheduler.RunOnCurrentThread();
+
+            TextRendererUtil.Shutdown();
+            LineRenderer.Shutdown();
+            Renderer2D.Shutdown();
+
+            TextureLoader.Shutdown();
+            ShaderPreprocessor.Shutdown();
+
+            RenderThreadDestroy();
+        }
+
+        private void CallingThreadSetup()
+        {
+
+        }
+
+        private void CallingThreadDestroy()
+        {
+            
+        }
+
+        private void RenderThreadSetup()
+        {
+
+        }
+
+        private void RenderThreadDestroy()
+        {
+            
+        }
+
+        private void OnInternalServiceReqest(Action action) => Execute(action);
+
+        public class ScreenSurface : ISurface
+        {
+            public Framebuffer Buffer => null;
+            public Vector2 Size { get; private set; }
+            public GraphicsContext Context { get; set; }
+
+            public event Action<ISurface, float, float> Resize;
+            public event Action<ISurface> BeforeUpdate;
+            public event Action<ISurface> Update;
+            public event Action<ISurface> AfterUpdate;
+
+            public void DoResize(float width, float height)
+            {
+                Size = new(width, height);
+                Resize?.Invoke(this, width, height);
+            }
+
+            public void DoUpdate()
+            {
+                BeforeUpdate?.Invoke(this);
+                Update?.Invoke(this);
+                AfterUpdate?.Invoke(this);
+            }
+        }
+    }
+}
